@@ -20,7 +20,7 @@ export type MeteogramProps = {
 const black = "#000000";
 const background = "#87CEEB";
 
-const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
+const defaultMargin = { top: 40, right: 20, bottom: 40, left: 60 };
 
 export default function Meteogram({
   width,
@@ -44,7 +44,7 @@ export default function Meteogram({
   const dateScale = scaleBand<Date>({
     domain: weatherData.map((d) => d.date),
     // padding: 0.2,
-  }).rangeRound([0, xMax]);
+  }).range([0, xMax]).align(0);
 
   const mslScale = scaleLinear<number>({
     domain: [0, 20_000],
