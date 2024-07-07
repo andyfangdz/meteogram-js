@@ -505,7 +505,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/card@npm:2.0.31":
+"@nextui-org/card@npm:2.0.31, @nextui-org/card@npm:^2.0.31":
   version: 2.0.31
   resolution: "@nextui-org/card@npm:2.0.31"
   dependencies:
@@ -554,7 +554,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/chip@npm:2.0.30":
+"@nextui-org/chip@npm:2.0.30, @nextui-org/chip@npm:^2.0.30":
   version: 2.0.30
   resolution: "@nextui-org/chip@npm:2.0.30"
   dependencies:
@@ -574,7 +574,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/code@npm:2.0.29":
+"@nextui-org/code@npm:2.0.29, @nextui-org/code@npm:^2.0.29":
   version: 2.0.29
   resolution: "@nextui-org/code@npm:2.0.29"
   dependencies:
@@ -641,7 +641,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/divider@npm:2.0.28":
+"@nextui-org/divider@npm:2.0.28, @nextui-org/divider@npm:^2.0.28":
   version: 2.0.28
   resolution: "@nextui-org/divider@npm:2.0.28"
   dependencies:
@@ -854,7 +854,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/navbar@npm:2.0.33":
+"@nextui-org/navbar@npm:2.0.33, @nextui-org/navbar@npm:^2.0.33":
   version: 2.0.33
   resolution: "@nextui-org/navbar@npm:2.0.33"
   dependencies:
@@ -1129,7 +1129,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/skeleton@npm:2.0.29":
+"@nextui-org/skeleton@npm:2.0.29, @nextui-org/skeleton@npm:^2.0.29":
   version: 2.0.29
   resolution: "@nextui-org/skeleton@npm:2.0.29"
   dependencies:
@@ -1204,7 +1204,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/spinner@npm:2.0.30":
+"@nextui-org/spinner@npm:2.0.30, @nextui-org/spinner@npm:^2.0.30":
   version: 2.0.30
   resolution: "@nextui-org/spinner@npm:2.0.30"
   dependencies:
@@ -1350,7 +1350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/tooltip@npm:2.0.36":
+"@nextui-org/tooltip@npm:2.0.36, @nextui-org/tooltip@npm:^2.0.36":
   version: 2.0.36
   resolution: "@nextui-org/tooltip@npm:2.0.36"
   dependencies:
@@ -5755,10 +5755,18 @@ __metadata:
   resolution: "meteogram-js@workspace:."
   dependencies:
     "@nextui-org/button": "npm:^2.0.34"
+    "@nextui-org/card": "npm:^2.0.31"
+    "@nextui-org/chip": "npm:^2.0.30"
+    "@nextui-org/code": "npm:^2.0.29"
+    "@nextui-org/divider": "npm:^2.0.28"
+    "@nextui-org/navbar": "npm:^2.0.33"
     "@nextui-org/react": "npm:^2.4.2"
+    "@nextui-org/skeleton": "npm:^2.0.29"
+    "@nextui-org/spinner": "npm:^2.0.30"
     "@nextui-org/switch": "npm:^2.0.31"
     "@nextui-org/system": "npm:^2.2.2"
     "@nextui-org/theme": "npm:^2.2.6"
+    "@nextui-org/tooltip": "npm:^2.0.36"
     "@types/lodash": "npm:^4"
     "@types/node": "npm:^20"
     "@types/react": "npm:^18.3.3"

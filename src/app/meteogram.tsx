@@ -1,67 +1,38 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Group } from "@visx/group";
-import { BarGroup } from "@visx/shape";
 import { AxisBottom, AxisLeft } from "@visx/axis";
-import cityTemperature, {
-  CityTemperature,
-} from "@visx/mock-data/lib/mocks/cityTemperature";
-import { scaleBand, scaleLinear, scaleOrdinal } from "@visx/scale";
-import { timeParse, utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
+import { scaleBand, scaleLinear } from "@visx/scale";
+import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
 
-import fetchWeatherData, { CloudData } from "./meteo-vars";
+import { CloudData } from "./meteo-vars";
+import { Spinner } from "@nextui-org/spinner";
+import LoadingSkeleton from "./loading-skeleton";
 
-export type BarGroupProps = {
+export type MeteogramProps = {
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
-  events?: boolean;
   useLocalTime?: boolean;
+  weatherData: CloudData[];
 };
-
-type CityName = "New York" | "San Francisco" | "Austin";
-
-const blue = "#aeeef8";
-export const green = "#e5fd3d";
 const black = "#000000";
-const purple = "#9caff6";
-export const background = "#87CEEB";
-const xPadding = 60;
-const yPadding = 20;
+const background = "#87CEEB";
 
-const data = cityTemperature.slice(0, 8);
-const keys = Object.keys(data[0]).filter((d) => d !== "date") as CityName[];
 const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
-
-const parseDate = timeParse("%Y-%m-%d");
-
-// accessors
-const getDate = (d: CityTemperature) => d.date;
-
-const cityScale = scaleBand<string>({
-  domain: keys,
-  padding: 0.1,
-});
-const colorScale = scaleOrdinal<string, string>({
-  domain: keys,
-  range: [blue, green, purple],
-});
 
 export default function Meteogram({
   width,
   height,
-  events = false,
+  weatherData,
   margin = defaultMargin,
   useLocalTime = false,
-}: BarGroupProps) {
-  let [weatherData, setWeatherData] = useState<CloudData[]>([]);
-  useEffect(() => {
-    fetchWeatherData().then((data) => setWeatherData(data));
-  }, []);
+}: MeteogramProps) {
+
 
   if (weatherData.length === 0) {
-    return null;
+    return <LoadingSkeleton />;
   }
 
   // bounds
@@ -76,7 +47,7 @@ export default function Meteogram({
   }).rangeRound([0, xMax]);
 
   const mslScale = scaleLinear<number>({
-    domain: [0, 15_000],
+    domain: [0, 20_000],
   }).range([yMax, 0]);
 
   const cloudScale = scaleLinear<number>({
