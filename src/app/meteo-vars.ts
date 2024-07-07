@@ -23,7 +23,7 @@ const params = {
 const FEET_PER_METER = 3.28084;
 
 
-interface CloudData {
+export interface CloudData {
     date: Date;
     cloud: {
         hpa: number;
