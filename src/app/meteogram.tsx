@@ -82,7 +82,10 @@ export default function Meteogram({
                       stroke: cloud.cloudCoverage > 50 ? black : "transparent",
                       strokeWidth: cloud.cloudCoverage > 50 ? 1 : 0,
                     }
-                  : {})}
+                  : {
+                      stroke: "transparent",
+                      strokeWidth: 0,
+                    })}
               />
             ))}
           </Group>
