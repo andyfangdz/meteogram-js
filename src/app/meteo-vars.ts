@@ -14,7 +14,9 @@ const GEOPOTENTIAL_HEIGHT_HPA_VARS = HPA_LEVELS.map(
 
 const VARIABLES = [...CLOUD_COVER_HPA_VARS, ...GEOPOTENTIAL_HEIGHT_HPA_VARS];
 
-export const LOCATIONS = {
+export const LOCATIONS: {
+  [key: string]: { longitude: number; latitude: number };
+} = {
   KFRG: {
     longitude: -73.41639,
     latitude: 40.73443,

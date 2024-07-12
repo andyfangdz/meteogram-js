@@ -28,9 +28,7 @@ export default function LocationDropdown({
         disallowEmptySelection
         selectionMode="single"
         selectedKeys={[location]}
-        onSelectionChange={(selectedKeys) =>
-          setLocation(selectedKeys.values().next().value)
-        }
+        onAction={(location) => setLocation(location as string)}
       >
         {Object.keys(LOCATIONS).map((location) => (
           <DropdownItem key={location}>

@@ -28,9 +28,7 @@ export default function ModelDropdown({
         disallowEmptySelection
         selectionMode="single"
         selectedKeys={[model]}
-        onSelectionChange={(selectedKeys) =>
-          setModel(selectedKeys.values().next().value)
-        }
+        onAction={(model) => setModel(model as string)}
       >
         {MODEL_NAMES.map((model) => (
           <DropdownItem key={model}>
