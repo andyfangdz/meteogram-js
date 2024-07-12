@@ -28,7 +28,7 @@ export default function Home() {
     fetchWeatherData(model, location).then((data) => {
       setWeatherData(data);
       setLastUpdate(new Date());
-      setTimeout(updateWeatherData, 60 * 1000);
+      // setTimeout(updateWeatherData, 60 * 1000);
     });
   };
   useEffect(updateWeatherData, [model, location]);
