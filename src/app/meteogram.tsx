@@ -16,6 +16,7 @@ export type MeteogramProps = {
   margin?: { top: number; right: number; bottom: number; left: number };
   useLocalTime?: boolean;
   weatherData: CloudData[];
+  highlightCeilingCoverage?: boolean;
 };
 const black = "#000000";
 const background = "#87CEEB";
@@ -28,6 +29,7 @@ export default function Meteogram({
   weatherData,
   margin = defaultMargin,
   useLocalTime = false,
+  highlightCeilingCoverage = true,
 }: MeteogramProps) {
   if (weatherData.length === 0) {
     return <LoadingSkeleton />;
@@ -75,8 +77,12 @@ export default function Meteogram({
                 width={dateScale.bandwidth()}
                 height={mslScale(cloud.mslFtBottom) - mslScale(cloud.mslFtTop)}
                 fill={`rgba(255, 255, 255, ${cloudScale(cloud.cloudCoverage)})`}
-                stroke={cloud.cloudCoverage > 50 ? black : "transparent"}
-                strokeWidth={cloud.cloudCoverage > 50 ? 1 : 0}
+                {...(highlightCeilingCoverage
+                  ? {
+                      stroke: cloud.cloudCoverage > 50 ? black : "transparent",
+                      strokeWidth: cloud.cloudCoverage > 50 ? 1 : 0,
+                    }
+                  : {})}
               />
             ))}
           </Group>

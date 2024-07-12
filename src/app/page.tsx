@@ -19,6 +19,8 @@ const lastUpdateFormat = timeFormat("%H:%M:%S");
 
 export default function Home() {
   let [useLocalTime, setUseLocalTime] = useState<boolean>(false);
+  let [highlightCeilingCoverage, sethighlightCeilingCoverage] =
+    useState<boolean>(true);
   let [weatherData, setWeatherData] = useState<CloudData[]>([]);
   let [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   let [location, setLocation] = useState<string>("KFRG");
@@ -50,6 +52,12 @@ export default function Home() {
           <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
             Use Local Time
           </Switch>
+          <Switch
+            isSelected={highlightCeilingCoverage}
+            onValueChange={sethighlightCeilingCoverage}
+          >
+            Highlight Ceiling Coverage
+          </Switch>
         </div>
         <div className="contents">
           <Meteogram
@@ -57,6 +65,7 @@ export default function Home() {
             height={800}
             useLocalTime={useLocalTime}
             weatherData={weatherData}
+            highlightCeilingCoverage={highlightCeilingCoverage}
           />
         </div>
       </main>
