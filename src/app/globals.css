@@ -26,21 +26,15 @@
     rgb(var(--background-start-rgb));
 } */
 html {
-  height: 100%;
   width: 100%;
 }
 
 body {
-  height: 100%;
   width: 100%;
-}
-body > [data-overlay-container] {
-  height: 100%;
 }
 main {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 @layer utilities {
   .text-balance {
