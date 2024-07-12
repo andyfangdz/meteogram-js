@@ -5,38 +5,67 @@ const url = "https://api.open-meteo.com/v1/forecast";
 
 const HPA_LEVELS = range(1000, 500, -25);
 
+export const MODEL_NAMES = ["gfs_seamless", "gfs_hrrr"];
+
 const CLOUD_COVER_HPA_VARS = HPA_LEVELS.map((hpa) => `cloud_cover_${hpa}hPa`);
 const GEOPOTENTIAL_HEIGHT_HPA_VARS = HPA_LEVELS.map(
-  (hpa) => `geopotential_height_${hpa}hPa`
+  (hpa) => `geopotential_height_${hpa}hPa`,
 );
 
 const VARIABLES = [...CLOUD_COVER_HPA_VARS, ...GEOPOTENTIAL_HEIGHT_HPA_VARS];
 
+export const LOCATIONS = {
+  KFRG: {
+    longitude: -73.41639,
+    latitude: 40.73443,
+  },
+  KNYC: {
+    longitude: -73.9666699,
+    latitude: 40.78333,
+  },
+  KHWV: {
+    longitude: -72.8688899,
+    latitude: 40.82167,
+  },
+  KISP: {
+    longitude: -73.10167,
+    latitude: 40.79389,
+  },
+};
+
 const params = {
-  latitude: 40.729275,
-  longitude: -73.41342,
-  minutely_15: VARIABLES.join(","),
-  models: "gfs_hrrr",
-  forecast_minutely_15: 4 * 36,
+  cell_selection: "nearest",
 };
 
 const FEET_PER_METER = 3.28084;
 
-
 export interface CloudData {
-    date: Date;
-    cloud: {
-        hpa: number;
-        mslFt: number;
-        cloudCoverage: number;
-        mslFtBottom: number;
-        mslFtTop: number;
-    }[];
+  date: Date;
+  cloud: {
+    hpa: number;
+    mslFt: number;
+    cloudCoverage: number;
+    mslFtBottom: number;
+    mslFtTop: number;
+  }[];
 }
 
-export default async function fetchWeatherData(): Promise<CloudData[]> {
+export default async function fetchWeatherData(
+  model: string,
+  location: string,
+): Promise<CloudData[]> {
   console.log(CLOUD_COVER_HPA_VARS, GEOPOTENTIAL_HEIGHT_HPA_VARS);
-  const responses = await fetchWeatherApi(url, params);
+  const modelVarsKey = model === "gfs_hrrr" ? "minutely_15" : "hourly";
+  const modelStepKey =
+    model === "gfs_hrrr" ? "forecast_minutely_15" : "forecast_hourly";
+  const modelStepSize = model === "gfs_hrrr" ? 4 * 36 : 24 * 5;
+  const responses = await fetchWeatherApi(url, {
+    ...params,
+    ...LOCATIONS[location],
+    models: model,
+    [modelVarsKey]: VARIABLES.join(","),
+    [modelStepKey]: modelStepSize,
+  });
 
   // Process first location. Add a for-loop for multiple locations or weather models
   const response = responses[0];
@@ -44,12 +73,13 @@ export default async function fetchWeatherData(): Promise<CloudData[]> {
   // Attributes for timezone and location
   const utcOffsetSeconds = response.utcOffsetSeconds();
 
-  const forecastData = response.minutely15()!;
-
+  const forecastData =
+    model === "gfs_hrrr" ? response.minutely15()! : response.hourly()!;
+  console.log(forecastData);
   const cloudData = range(
     Number(forecastData.time()),
     Number(forecastData.timeEnd()),
-    forecastData.interval()
+    forecastData.interval(),
   ).map((time, index) => ({
     date: new Date((time + utcOffsetSeconds) * 1000),
     cloud: HPA_LEVELS.map((hpa, hpaIndex) => ({
@@ -63,16 +93,14 @@ export default async function fetchWeatherData(): Promise<CloudData[]> {
 
   const cloudDataWithMslRange = cloudData.map((dateAndCloud) => ({
     date: dateAndCloud.date,
-    cloud: dateAndCloud.cloud.slice(0, -1)
-      .map((cloud, index) => ({
-        ...cloud,
-        mslFtBottom:
-          index === 0
-            ? 0
-            : (dateAndCloud.cloud[index - 1].mslFt + cloud.mslFt) / 2,
-        mslFtTop: (cloud.mslFt + dateAndCloud.cloud[index + 1].mslFt) / 2,
-      }))
-      ,
+    cloud: dateAndCloud.cloud.slice(0, -1).map((cloud, index) => ({
+      ...cloud,
+      mslFtBottom:
+        index === 0
+          ? 0
+          : (dateAndCloud.cloud[index - 1].mslFt + cloud.mslFt) / 2,
+      mslFtTop: (cloud.mslFt + dateAndCloud.cloud[index + 1].mslFt) / 2,
+    })),
   }));
 
   return cloudDataWithMslRange;

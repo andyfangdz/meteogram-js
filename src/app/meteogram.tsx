@@ -29,8 +29,6 @@ export default function Meteogram({
   margin = defaultMargin,
   useLocalTime = false,
 }: MeteogramProps) {
-
-
   if (weatherData.length === 0) {
     return <LoadingSkeleton />;
   }
@@ -44,7 +42,9 @@ export default function Meteogram({
   const dateScale = scaleBand<Date>({
     domain: weatherData.map((d) => d.date),
     // padding: 0.2,
-  }).range([0, xMax]).align(0);
+  })
+    .range([0, xMax])
+    .align(0);
 
   const mslScale = scaleLinear<number>({
     domain: [0, 20_000],

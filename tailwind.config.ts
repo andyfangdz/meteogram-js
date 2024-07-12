@@ -1,6 +1,6 @@
 import path from "path";
 import type { Config } from "tailwindcss";
-import {nextui} from "@nextui-org/react";
+import { nextui } from "@nextui-org/react";
 const nexUiThemePath = path.dirname(require.resolve("@nextui-org/theme"));
 
 const config: Config = {

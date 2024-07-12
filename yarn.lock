@@ -230,6 +230,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@juggle/resize-observer@npm:^3.3.1":
+  version: 3.4.0
+  resolution: "@juggle/resize-observer@npm:3.4.0"
+  checksum: 10c0/12930242357298c6f2ad5d4ec7cf631dfb344ca7c8c830ab7f64e6ac11eb1aae486901d8d880fd08fb1b257800c160a0da3aee1e7ed9adac0ccbb9b7c5d93347
+  languageName: node
+  linkType: hard
+
 "@next/env@npm:14.2.4":
   version: 14.2.4
   resolution: "@next/env@npm:14.2.4"
@@ -657,7 +664,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/dropdown@npm:2.1.26":
+"@nextui-org/dropdown@npm:2.1.26, @nextui-org/dropdown@npm:^2.1.26":
   version: 2.1.26
   resolution: "@nextui-org/dropdown@npm:2.1.26"
   dependencies:
@@ -2281,6 +2288,37 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: 10c0/0f61f52fbbb28f153a169b770b8e3b237a6e407fbeaca2dabdd4b19dfe42fb28e77d669731e7a271258ef61f8a86621fefb81fe1d248b110763070eb0c73c8ef
+  languageName: node
+  linkType: hard
+
+"@react-hook/latest@npm:^1.0.2":
+  version: 1.0.3
+  resolution: "@react-hook/latest@npm:1.0.3"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10c0/d6a166c21121da519a516e8089ba28a2779d37b6017732ab55476c0d354754ad215394135765254f8752a7c6661c3fb868d088769a644848602f00f8821248ed
+  languageName: node
+  linkType: hard
+
+"@react-hook/passive-layout-effect@npm:^1.2.0":
+  version: 1.2.1
+  resolution: "@react-hook/passive-layout-effect@npm:1.2.1"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10c0/5c9e6b3df1c91fc2b1d4f711ca96b5f8cb3f6a13a2e97dac7cce623e58d7ee57999c45db3778d0af0b2522b3a5b7463232ef21cb3ee9900437172d48f766d933
+  languageName: node
+  linkType: hard
+
+"@react-hook/resize-observer@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@react-hook/resize-observer@npm:2.0.1"
+  dependencies:
+    "@juggle/resize-observer": "npm:^3.3.1"
+    "@react-hook/latest": "npm:^1.0.2"
+    "@react-hook/passive-layout-effect": "npm:^1.2.0"
+  peerDependencies:
+    react: ">=18"
+  checksum: 10c0/f36b181b1faecbe3894a23e3ad9d1206afc64287d60fa55f3018679a03161a2ecefc857575ee2a2dc2008cc6d3ded760d45bf6b4bf2102d5da6460aa349317db
   languageName: node
   linkType: hard
 
@@ -4370,6 +4408,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-config-prettier@npm:^9.1.0":
+  version: 9.1.0
+  resolution: "eslint-config-prettier@npm:9.1.0"
+  peerDependencies:
+    eslint: ">=7.0.0"
+  bin:
+    eslint-config-prettier: bin/cli.js
+  checksum: 10c0/6d332694b36bc9ac6fdb18d3ca2f6ac42afa2ad61f0493e89226950a7091e38981b66bac2b47ba39d15b73fff2cd32c78b850a9cf9eed9ca9a96bfb2f3a2f10d
+  languageName: node
+  linkType: hard
+
 "eslint-import-resolver-node@npm:^0.3.6, eslint-import-resolver-node@npm:^0.3.9":
   version: 0.3.9
   resolution: "eslint-import-resolver-node@npm:0.3.9"
@@ -5759,6 +5808,7 @@ __metadata:
     "@nextui-org/chip": "npm:^2.0.30"
     "@nextui-org/code": "npm:^2.0.29"
     "@nextui-org/divider": "npm:^2.0.28"
+    "@nextui-org/dropdown": "npm:^2.1.26"
     "@nextui-org/navbar": "npm:^2.0.33"
     "@nextui-org/react": "npm:^2.4.2"
     "@nextui-org/skeleton": "npm:^2.0.29"
@@ -5767,6 +5817,7 @@ __metadata:
     "@nextui-org/system": "npm:^2.2.2"
     "@nextui-org/theme": "npm:^2.2.6"
     "@nextui-org/tooltip": "npm:^2.0.36"
+    "@react-hook/resize-observer": "npm:^2.0.1"
     "@types/lodash": "npm:^4"
     "@types/node": "npm:^20"
     "@types/react": "npm:^18.3.3"
@@ -5780,11 +5831,13 @@ __metadata:
     "@visx/vendor": "npm:^3.5.0"
     eslint: "npm:^8"
     eslint-config-next: "npm:14.2.4"
+    eslint-config-prettier: "npm:^9.1.0"
     framer-motion: "npm:^11.2.13"
     lodash: "npm:^4.17.21"
     next: "npm:14.2.4"
     openmeteo: "npm:^1.1.4"
     postcss: "npm:^8"
+    prettier: "npm:^3.3.2"
     react: "npm:^18"
     react-dom: "npm:^18"
     tailwindcss: "npm:^3.4.1"
@@ -6431,6 +6484,15 @@ __metadata:
   version: 1.2.1
   resolution: "prelude-ls@npm:1.2.1"
   checksum: 10c0/b00d617431e7886c520a6f498a2e14c75ec58f6d93ba48c3b639cf241b54232d90daa05d83a9e9b9fef6baa63cb7e1e4602c2372fea5bc169668401eb127d0cd
+  languageName: node
+  linkType: hard
+
+"prettier@npm:^3.3.2":
+  version: 3.3.2
+  resolution: "prettier@npm:3.3.2"
+  bin:
+    prettier: bin/prettier.cjs
+  checksum: 10c0/39ed27d17f0238da6dd6571d63026566bd790d3d0edac57c285fbab525982060c8f1e01955fe38134ab10f0951a6076da37f015db8173c02f14bc7f0803a384c
   languageName: node
   linkType: hard
 
