@@ -10,10 +10,11 @@ import { Switch } from "@nextui-org/switch";
 import { Chip } from "@nextui-org/chip";
 import { timeFormat } from "@visx/vendor/d3-time-format";
 import { Button, ButtonGroup } from "@nextui-org/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import fetchWeatherData, { CloudData } from "./meteo-vars";
 import ModelDropdown from "./model-dropdown";
 import LocationDropdown from "./location-dropdown";
+import { useTimeout } from "usehooks-ts";
 
 const lastUpdateFormat = timeFormat("%H:%M:%S");
 
@@ -25,15 +26,28 @@ export default function Home() {
   let [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   let [location, setLocation] = useState<string>("KFRG");
   let [model, setModel] = useState<string>("gfs_hrrr");
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateWeatherData = () => {
     fetchWeatherData(model, location).then((data) => {
       setWeatherData(data);
       setLastUpdate(new Date());
-      // setTimeout(updateWeatherData, 60 * 1000);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      timerRef.current = setTimeout(updateWeatherData, 10 * 1000);
     });
   };
   useEffect(updateWeatherData, [model, location]);
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
   return (
     <NextUIProvider>
       <main className="items-center justify-between p-24">

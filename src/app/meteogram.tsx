@@ -86,7 +86,13 @@ export default function Meteogram({
                       stroke: "transparent",
                       strokeWidth: 0,
                     })}
-              />
+              >
+                <title>
+                  {`Time: ${d.date.toLocaleDateString()} ${d.date.toLocaleTimeString()}\n` +
+                    `Cloud Cover: ${cloud.cloudCoverage.toFixed(2)}%\n` +
+                    `Geopotential Height: ${cloud.mslFt.toFixed(2)}ft MSL`}
+                </title>
+              </rect>
             ))}
           </Group>
         ))}

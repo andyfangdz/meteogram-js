@@ -65,7 +65,8 @@ const RAW_RUNTIME_STATE =
           ["react", "npm:18.3.1"],\
           ["react-dom", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:18.3.1"],\
           ["tailwindcss", "npm:3.4.4"],\
-          ["typescript", "patch:typescript@npm%3A5.5.3#optional!builtin<compat/typescript>::version=5.5.3&hash=379a07"]\
+          ["typescript", "patch:typescript@npm%3A5.5.3#optional!builtin<compat/typescript>::version=5.5.3&hash=379a07"],\
+          ["usehooks-ts", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.1.0"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -9587,7 +9588,8 @@ const RAW_RUNTIME_STATE =
           ["react", "npm:18.3.1"],\
           ["react-dom", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:18.3.1"],\
           ["tailwindcss", "npm:3.4.4"],\
-          ["typescript", "patch:typescript@npm%3A5.5.3#optional!builtin<compat/typescript>::version=5.5.3&hash=379a07"]\
+          ["typescript", "patch:typescript@npm%3A5.5.3#optional!builtin<compat/typescript>::version=5.5.3&hash=379a07"],\
+          ["usehooks-ts", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.1.0"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -11581,6 +11583,29 @@ const RAW_RUNTIME_STATE =
           ["detect-node-es", "npm:1.1.0"],\
           ["react", "npm:18.3.1"],\
           ["tslib", "npm:2.6.3"]\
+        ],\
+        "packagePeers": [\
+          "@types/react",\
+          "react"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["usehooks-ts", [\
+      ["npm:3.1.0", {\
+        "packageLocation": "../../../../AppData/Local/Yarn/Berry/cache/usehooks-ts-npm-3.1.0-5f674100de-10c0.zip/node_modules/usehooks-ts/",\
+        "packageDependencies": [\
+          ["usehooks-ts", "npm:3.1.0"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.1.0", {\
+        "packageLocation": "./.yarn/__virtual__/usehooks-ts-virtual-e796442c39/5/AppData/Local/Yarn/Berry/cache/usehooks-ts-npm-3.1.0-5f674100de-10c0.zip/node_modules/usehooks-ts/",\
+        "packageDependencies": [\
+          ["usehooks-ts", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.1.0"],\
+          ["@types/react", "npm:18.3.3"],\
+          ["lodash.debounce", "npm:4.0.8"],\
+          ["react", "npm:18.3.1"]\
         ],\
         "packagePeers": [\
           "@types/react",\

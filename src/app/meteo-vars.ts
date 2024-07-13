@@ -3,7 +3,7 @@ import range from "lodash/range";
 
 const url = "https://api.open-meteo.com/v1/forecast";
 
-const HPA_LEVELS = range(1000, 500, -25);
+const HPA_LEVELS = range(1000, 250, -25);
 
 export const MODEL_NAMES = ["gfs_seamless", "gfs_hrrr"];
 
