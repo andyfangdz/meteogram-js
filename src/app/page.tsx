@@ -36,7 +36,7 @@ export default function Home() {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      timerRef.current = setTimeout(updateWeatherData, 10 * 1000);
+      timerRef.current = setTimeout(updateWeatherData, 60 * 1000);
     });
   };
   useEffect(updateWeatherData, [model, location]);
