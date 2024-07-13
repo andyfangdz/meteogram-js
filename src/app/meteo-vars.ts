@@ -56,7 +56,6 @@ export default async function fetchWeatherData(
   model: string,
   location: string,
 ): Promise<CloudData[]> {
-  console.log(CLOUD_COVER_HPA_VARS, GEOPOTENTIAL_HEIGHT_HPA_VARS);
   const modelVarsKey = model === "gfs_hrrr" ? "minutely_15" : "hourly";
   const modelStepKey =
     model === "gfs_hrrr" ? "forecast_minutely_15" : "forecast_hourly";
@@ -77,7 +76,6 @@ export default async function fetchWeatherData(
 
   const forecastData =
     model === "gfs_hrrr" ? response.minutely15()! : response.hourly()!;
-  console.log(forecastData);
   const cloudData = range(
     Number(forecastData.time()),
     Number(forecastData.timeEnd()),
