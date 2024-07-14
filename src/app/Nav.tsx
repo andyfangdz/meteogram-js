@@ -11,6 +11,7 @@ import {
   Button,
   ButtonGroup,
   Chip,
+  Switch,
 } from "@nextui-org/react";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
@@ -24,6 +25,10 @@ export default function Nav({
   setModel,
   updateWeatherData,
   lastUpdate,
+  useLocalTime,
+  setUseLocalTime,
+  highlightCeilingCoverage,
+  sethighlightCeilingCoverage,
 }: {
   location: string;
   setLocation: Dispatch<SetStateAction<string>>;
@@ -31,6 +36,10 @@ export default function Nav({
   setModel: Dispatch<SetStateAction<string>>;
   updateWeatherData: () => void;
   lastUpdate: Date | null;
+  useLocalTime: boolean;
+  setUseLocalTime: Dispatch<SetStateAction<boolean>>;
+  highlightCeilingCoverage: boolean;
+  sethighlightCeilingCoverage: Dispatch<SetStateAction<boolean>>;
 }) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -52,7 +61,6 @@ export default function Nav({
       <NavbarContent>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-          className="sm:hidden"
         />
         <NavbarBrand>
           <p className="font-bold text-inherit">Meteogram</p>
@@ -66,13 +74,13 @@ export default function Nav({
         <NavbarItem>
           <ModelDropdown model={model} setModel={setModel} />
         </NavbarItem>
-      </NavbarContent>
-      <NavbarContent justify="end">
         <NavbarItem>
           <Chip>
             Last Update: {lastUpdate ? lastUpdateFormat(lastUpdate) : "Never"}
           </Chip>
         </NavbarItem>
+      </NavbarContent>
+      <NavbarContent justify="end">
         <NavbarItem>
           <ButtonGroup>
             <Button color="primary" onClick={updateWeatherData}>
@@ -87,6 +95,24 @@ export default function Nav({
         </NavbarMenuItem>
         <NavbarMenuItem>
           <ModelDropdown model={model} setModel={setModel} />
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <Chip>
+            Last Update: {lastUpdate ? lastUpdateFormat(lastUpdate) : "Never"}
+          </Chip>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
+            Use Local Time
+          </Switch>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <Switch
+            isSelected={highlightCeilingCoverage}
+            onValueChange={sethighlightCeilingCoverage}
+          >
+            Highlight Ceiling Coverage
+          </Switch>
         </NavbarMenuItem>
       </NavbarMenu>
     </Navbar>

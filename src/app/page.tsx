@@ -45,19 +45,13 @@ export default function Home() {
         setModel={setModel}
         updateWeatherData={updateWeatherData}
         lastUpdate={lastUpdate}
+        useLocalTime={useLocalTime}
+        setUseLocalTime={setUseLocalTime}
+        highlightCeilingCoverage={highlightCeilingCoverage}
+        sethighlightCeilingCoverage={sethighlightCeilingCoverage}
       />
       <main className="items-center justify-between p-24">
-        <div className="controls flex flex-row">
-          <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
-            Use Local Time
-          </Switch>
-          <Switch
-            isSelected={highlightCeilingCoverage}
-            onValueChange={sethighlightCeilingCoverage}
-          >
-            Highlight Ceiling Coverage
-          </Switch>
-        </div>
+        <div className="controls flex flex-row"></div>
         <div className="contents">
           <Meteogram
             width={1200}
