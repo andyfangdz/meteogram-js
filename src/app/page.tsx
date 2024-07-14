@@ -1,13 +1,10 @@
 "use client";
 import Meteogram from "./meteogram";
-import {
-  NextUIProvider,
-} from "@nextui-org/react";
+import { NextUIProvider } from "@nextui-org/react";
 import { Switch } from "@nextui-org/switch";
 import { useEffect, useState, useRef } from "react";
 import fetchWeatherData, { CloudData } from "./meteo-vars";
 import Nav from "./Nav";
-
 
 export default function Home() {
   let [useLocalTime, setUseLocalTime] = useState<boolean>(false);
@@ -51,8 +48,6 @@ export default function Home() {
       />
       <main className="items-center justify-between p-24">
         <div className="controls flex flex-row">
-
-
           <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
             Use Local Time
           </Switch>
