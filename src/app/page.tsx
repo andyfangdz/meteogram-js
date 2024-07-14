@@ -1,22 +1,13 @@
 "use client";
 import Meteogram from "./meteogram";
 import {
-  Divider,
-  Navbar,
-  NavbarBrand,
   NextUIProvider,
 } from "@nextui-org/react";
 import { Switch } from "@nextui-org/switch";
-import { Chip } from "@nextui-org/chip";
-import { timeFormat } from "@visx/vendor/d3-time-format";
-import { Button, ButtonGroup } from "@nextui-org/button";
 import { useEffect, useState, useRef } from "react";
 import fetchWeatherData, { CloudData } from "./meteo-vars";
-import ModelDropdown from "./model-dropdown";
-import LocationDropdown from "./location-dropdown";
-import { useTimeout } from "usehooks-ts";
+import Nav from "./Nav";
 
-const lastUpdateFormat = timeFormat("%H:%M:%S");
 
 export default function Home() {
   let [useLocalTime, setUseLocalTime] = useState<boolean>(false);
@@ -50,18 +41,17 @@ export default function Home() {
   }, []);
   return (
     <NextUIProvider>
+      <Nav
+        location={location}
+        setLocation={setLocation}
+        model={model}
+        setModel={setModel}
+        updateWeatherData={updateWeatherData}
+        lastUpdate={lastUpdate}
+      />
       <main className="items-center justify-between p-24">
         <div className="controls flex flex-row">
-          <LocationDropdown location={location} setLocation={setLocation} />
-          <ModelDropdown model={model} setModel={setModel} />
-          <Chip>
-            Last Update: {lastUpdate ? lastUpdateFormat(lastUpdate) : "Never"}
-          </Chip>
-          <ButtonGroup>
-            <Button color="primary" onClick={updateWeatherData}>
-              Refresh
-            </Button>
-          </ButtonGroup>
+
 
           <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
             Use Local Time

@@ -1,0 +1,94 @@
+import React, { Dispatch, SetStateAction } from "react";
+import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
+  Link,
+  Button,
+  ButtonGroup,
+  Chip,
+} from "@nextui-org/react";
+import LocationDropdown from "./location-dropdown";
+import ModelDropdown from "./model-dropdown";
+import { timeFormat } from "@visx/vendor/d3-time-format";
+const lastUpdateFormat = timeFormat("%H:%M:%S");
+
+export default function Nav({
+  location,
+  setLocation,
+  model,
+  setModel,
+  updateWeatherData,
+  lastUpdate,
+}: {
+  location: string;
+  setLocation: Dispatch<SetStateAction<string>>;
+  model: string;
+  setModel: Dispatch<SetStateAction<string>>;
+  updateWeatherData: () => void;
+  lastUpdate: Date | null;
+}) {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+  const menuItems = [
+    "Profile",
+    "Dashboard",
+    "Activity",
+    "Analytics",
+    "System",
+    "Deployments",
+    "My Settings",
+    "Team Settings",
+    "Help & Feedback",
+    "Log Out",
+  ];
+
+  return (
+    <Navbar onMenuOpenChange={setIsMenuOpen}>
+      <NavbarContent>
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          className="sm:hidden"
+        />
+        <NavbarBrand>
+          <p className="font-bold text-inherit">Meteogram</p>
+        </NavbarBrand>
+      </NavbarContent>
+
+      <NavbarContent className="hidden sm:flex gap-4" justify="center">
+        <NavbarItem>
+          <LocationDropdown location={location} setLocation={setLocation} />
+        </NavbarItem>
+        <NavbarItem>
+          <ModelDropdown model={model} setModel={setModel} />
+        </NavbarItem>
+      </NavbarContent>
+      <NavbarContent justify="end">
+        <NavbarItem>
+          <Chip>
+            Last Update: {lastUpdate ? lastUpdateFormat(lastUpdate) : "Never"}
+          </Chip>
+        </NavbarItem>
+        <NavbarItem>
+          <ButtonGroup>
+            <Button color="primary" onClick={updateWeatherData}>
+              Refresh
+            </Button>
+          </ButtonGroup>
+        </NavbarItem>
+      </NavbarContent>
+      <NavbarMenu>
+        <NavbarMenuItem>
+          <LocationDropdown location={location} setLocation={setLocation} />
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <ModelDropdown model={model} setModel={setModel} />
+        </NavbarMenuItem>
+      </NavbarMenu>
+    </Navbar>
+  );
+}
