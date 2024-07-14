@@ -7,7 +7,6 @@ import { scaleBand, scaleLinear } from "@visx/scale";
 import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
 
 import { CloudData } from "./meteo-vars";
-import { Spinner } from "@nextui-org/spinner";
 import LoadingSkeleton from "./loading-skeleton";
 
 export type MeteogramProps = {

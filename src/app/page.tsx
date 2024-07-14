@@ -1,7 +1,6 @@
 "use client";
 import Meteogram from "./meteogram";
 import { NextUIProvider } from "@nextui-org/react";
-import { Switch } from "@nextui-org/switch";
 import { useEffect, useState, useRef } from "react";
 import fetchWeatherData, { CloudData } from "./meteo-vars";
 import Nav from "./Nav";
