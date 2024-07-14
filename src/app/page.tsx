@@ -50,7 +50,6 @@ export default function Home() {
         sethighlightCeilingCoverage={sethighlightCeilingCoverage}
       />
       <main className="items-center justify-between p-24">
-        <div className="controls flex flex-row"></div>
         <div className="contents">
           <Meteogram
             width={1200}
