@@ -33,6 +33,10 @@ export const LOCATIONS: {
     longitude: -73.10167,
     latitude: 40.79389,
   },
+  KBDR: {
+    longitude: -73.12618,
+    latitude: 41.16348,
+  },
 };
 
 const params = {
