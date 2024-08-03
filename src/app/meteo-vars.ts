@@ -37,6 +37,14 @@ export const LOCATIONS: {
     longitude: -73.12618,
     latitude: 41.16348,
   },
+  "South Practice Area": {
+    longitude: -73.13705,
+    latitude: 40.62212,
+  },
+  "North Practice Area": {
+    longitude: -73.28619,
+    latitude: 40.95599,
+  },
 };
 
 const params = {
