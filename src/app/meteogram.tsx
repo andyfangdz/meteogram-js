@@ -52,7 +52,7 @@ export default function Meteogram({
   }).range([yMax, 0]);
 
   const cloudScale = scaleLinear<number>({
-    domain: [0, 50],
+    domain: [0, 75],
   }).range([0, 1]);
 
   return weatherData === null ? null : (
