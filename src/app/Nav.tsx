@@ -28,6 +28,8 @@ export default function Nav({
   setUseLocalTime,
   highlightCeilingCoverage,
   sethighlightCeilingCoverage,
+  clampCloudCoverageAt50Pct,
+  setclampCloudCoverageAt50Pct,
 }: {
   location: string;
   setLocation: Dispatch<SetStateAction<string>>;
