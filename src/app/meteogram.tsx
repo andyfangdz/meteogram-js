@@ -16,6 +16,7 @@ export type MeteogramProps = {
   useLocalTime?: boolean;
   weatherData: CloudData[];
   highlightCeilingCoverage?: boolean;
+  clampCloudCoverageAt50Pct?: boolean;
 };
 const black = "#000000";
 const background = "#87CEEB";
@@ -29,6 +30,7 @@ export default function Meteogram({
   margin = defaultMargin,
   useLocalTime = false,
   highlightCeilingCoverage = true,
+  clampCloudCoverageAt50Pct = true,
 }: MeteogramProps) {
   if (weatherData.length === 0) {
     return <LoadingSkeleton />;
@@ -52,7 +54,7 @@ export default function Meteogram({
   }).range([yMax, 0]);
 
   const cloudScale = scaleLinear<number>({
-    domain: [0, 75],
+    domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
   }).range([0, 1]);
 
   return weatherData === null ? null : (

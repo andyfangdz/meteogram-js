@@ -9,6 +9,8 @@ export default function Home() {
   let [useLocalTime, setUseLocalTime] = useState<boolean>(false);
   let [highlightCeilingCoverage, sethighlightCeilingCoverage] =
     useState<boolean>(true);
+  let [clampCloudCoverageAt50Pct, setclampCloudCoverageAt50Pct] =
+    useState<boolean>(true);
   let [weatherData, setWeatherData] = useState<CloudData[]>([]);
   let [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   let [location, setLocation] = useState<string>("KFRG");
@@ -48,6 +50,8 @@ export default function Home() {
         setUseLocalTime={setUseLocalTime}
         highlightCeilingCoverage={highlightCeilingCoverage}
         sethighlightCeilingCoverage={sethighlightCeilingCoverage}
+        clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
+        setclampCloudCoverageAt50Pct={setclampCloudCoverageAt50Pct}
       />
       <main className="items-center justify-between p-24">
         <div className="contents">
@@ -57,6 +61,7 @@ export default function Home() {
             useLocalTime={useLocalTime}
             weatherData={weatherData}
             highlightCeilingCoverage={highlightCeilingCoverage}
+            clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
           />
         </div>
       </main>

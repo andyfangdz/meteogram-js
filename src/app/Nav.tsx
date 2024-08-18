@@ -39,6 +39,8 @@ export default function Nav({
   setUseLocalTime: Dispatch<SetStateAction<boolean>>;
   highlightCeilingCoverage: boolean;
   sethighlightCeilingCoverage: Dispatch<SetStateAction<boolean>>;
+  clampCloudCoverageAt50Pct: boolean;
+  setclampCloudCoverageAt50Pct: Dispatch<SetStateAction<boolean>>;
 }) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -111,6 +113,14 @@ export default function Nav({
             onValueChange={sethighlightCeilingCoverage}
           >
             Highlight Ceiling Coverage
+          </Switch>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <Switch
+            isSelected={clampCloudCoverageAt50Pct}
+            onValueChange={setclampCloudCoverageAt50Pct}
+          >
+            Clamp Cloud Coverage at 50%
           </Switch>
         </NavbarMenuItem>
       </NavbarMenu>
