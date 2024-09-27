@@ -2,7 +2,7 @@
 import Meteogram from "./meteogram";
 import { NextUIProvider } from "@nextui-org/react";
 import { useEffect, useState, useRef } from "react";
-import fetchWeatherData, { CloudData } from "./meteo-vars";
+import fetchWeatherData, { CloudColumn } from "./meteo-vars";
 import Nav from "./Nav";
 
 export default function Home() {
@@ -11,7 +11,7 @@ export default function Home() {
     useState<boolean>(true);
   let [clampCloudCoverageAt50Pct, setclampCloudCoverageAt50Pct] =
     useState<boolean>(true);
-  let [weatherData, setWeatherData] = useState<CloudData[]>([]);
+  let [weatherData, setWeatherData] = useState<CloudColumn[]>([]);
   let [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   let [location, setLocation] = useState<string>("KFRG");
   let [model, setModel] = useState<string>("gfs_hrrr");
@@ -56,7 +56,7 @@ export default function Home() {
       <main className="items-center justify-between p-24">
         <div className="contents">
           <Meteogram
-            width={1200}
+            width={1600}
             height={800}
             useLocalTime={useLocalTime}
             weatherData={weatherData}

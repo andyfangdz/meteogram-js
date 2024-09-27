@@ -52,22 +52,23 @@ const params = {
 };
 
 const FEET_PER_METER = 3.28084;
+export interface CloudCell {
+  hpa: number;
+  mslFt: number;
+  cloudCoverage: number;
+  mslFtBottom: number;
+  mslFtTop: number;
+}
 
-export interface CloudData {
+export interface CloudColumn {
   date: Date;
-  cloud: {
-    hpa: number;
-    mslFt: number;
-    cloudCoverage: number;
-    mslFtBottom: number;
-    mslFtTop: number;
-  }[];
+  cloud: CloudCell[];
 }
 
 export default async function fetchWeatherData(
   model: string,
   location: string,
-): Promise<CloudData[]> {
+): Promise<CloudColumn[]> {
   const modelVarsKey = model === "gfs_hrrr" ? "minutely_15" : "hourly";
   const modelStepKey =
     model === "gfs_hrrr" ? "forecast_minutely_15" : "forecast_hourly";

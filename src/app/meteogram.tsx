@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Group } from "@visx/group";
 import { AxisBottom, AxisLeft } from "@visx/axis";
-import { scaleBand, scaleLinear } from "@visx/scale";
+import { scaleLinear, scaleTime } from "@visx/scale";
 import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
 
-import { CloudData } from "./meteo-vars";
+import { CloudColumn, CloudCell } from "./meteo-vars";
 import LoadingSkeleton from "./loading-skeleton";
 
 export type MeteogramProps = {
@@ -14,7 +14,7 @@ export type MeteogramProps = {
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
   useLocalTime?: boolean;
-  weatherData: CloudData[];
+  weatherData: CloudColumn[];
   highlightCeilingCoverage?: boolean;
   clampCloudCoverageAt50Pct?: boolean;
 };
@@ -32,6 +32,11 @@ export default function Meteogram({
   highlightCeilingCoverage = true,
   clampCloudCoverageAt50Pct = true,
 }: MeteogramProps) {
+  const [hoveredRect, setHoveredRect] = useState<{
+    date: Date;
+    cloudCell: CloudCell;
+  } | null>(null);
+
   if (weatherData.length === 0) {
     return <LoadingSkeleton />;
   }
@@ -42,12 +47,9 @@ export default function Meteogram({
 
   // update scale output dimensions
   // scales
-  const dateScale = scaleBand<Date>({
-    domain: weatherData.map((d) => d.date),
-    // padding: 0.2,
-  })
-    .range([0, xMax])
-    .align(0);
+  const dateScale = scaleTime({
+    domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
+  }).range([0, xMax]);
 
   const mslScale = scaleLinear<number>({
     domain: [0, 20_000],
@@ -56,6 +58,8 @@ export default function Meteogram({
   const cloudScale = scaleLinear<number>({
     domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
   }).range([0, 1]);
+
+  const barWidth = xMax / weatherData.length;
 
   return weatherData === null ? null : (
     <svg width={width} height={height}>
@@ -70,33 +74,83 @@ export default function Meteogram({
       <Group top={margin.top} left={margin.left}>
         {weatherData.map((d) => (
           <Group key={`date-group-${d.date}`} left={dateScale(d.date)}>
-            {d.cloud.map((cloud, i) => (
-              <rect
-                key={`cloud-group-${d.date}-${cloud.hpa}`}
-                x={0}
-                y={mslScale(cloud.mslFtTop)}
-                width={dateScale.bandwidth()}
-                height={mslScale(cloud.mslFtBottom) - mslScale(cloud.mslFtTop)}
-                fill={`rgba(255, 255, 255, ${cloudScale(cloud.cloudCoverage)})`}
-                {...(highlightCeilingCoverage
-                  ? {
-                      stroke: cloud.cloudCoverage > 50 ? black : "transparent",
-                      strokeWidth: cloud.cloudCoverage > 50 ? 1 : 0,
-                    }
-                  : {
-                      stroke: "transparent",
-                      strokeWidth: 0,
-                    })}
-              >
-                <title>
-                  {`Time: ${d.date.toLocaleDateString()} ${d.date.toLocaleTimeString()}\n` +
-                    `Cloud Cover: ${cloud.cloudCoverage.toFixed(2)}%\n` +
-                    `Geopotential Height: ${cloud.mslFt.toFixed(2)}ft MSL`}
-                </title>
-              </rect>
-            ))}
+            {d.cloud.map((cloud) => {
+              const isHovered =
+                hoveredRect?.date === d.date &&
+                hoveredRect?.cloudCell.hpa === cloud.hpa;
+              const fillColor =
+                cloud.cloudCoverage > 50 && highlightCeilingCoverage
+                  ? `rgba(200, 200, 200, ${cloudScale(cloud.cloudCoverage)})`
+                  : `rgba(255, 255, 255, ${cloudScale(cloud.cloudCoverage)})`;
+              return (
+                <rect
+                  key={`cloud-group-${d.date}-${cloud.hpa}`}
+                  x={0}
+                  y={mslScale(cloud.mslFtTop)}
+                  width={isHovered ? barWidth * 1.1 : barWidth}
+                  height={
+                    mslScale(cloud.mslFtBottom) - mslScale(cloud.mslFtTop)
+                  }
+                  fill={fillColor}
+                  stroke={isHovered ? black : "transparent"}
+                  strokeWidth={isHovered ? 1 : 0}
+                  onMouseEnter={() =>
+                    setHoveredRect({
+                      date: d.date,
+                      cloudCell: cloud,
+                    })
+                  }
+                  onMouseLeave={() => setHoveredRect(null)}
+                />
+              );
+            })}
           </Group>
         ))}
+        {hoveredRect && (
+          <>
+            <line
+              x1={dateScale(hoveredRect.date)}
+              x2={dateScale(hoveredRect.date)}
+              y1={0}
+              y2={yMax}
+              stroke={black}
+              strokeWidth={1}
+              pointerEvents="none"
+            />
+            <line
+              x1={0}
+              x2={xMax}
+              y1={mslScale(hoveredRect.cloudCell.mslFt)}
+              y2={mslScale(hoveredRect.cloudCell.mslFt)}
+              stroke={black}
+              strokeWidth={1}
+              pointerEvents="none"
+            />
+            <foreignObject
+              x={dateScale(hoveredRect.date) + 10}
+              y={mslScale(hoveredRect.cloudCell.mslFt) - 30}
+              width={200}
+              height={200}
+            >
+              <div
+                style={{
+                  backgroundColor: "white",
+                  border: "1px solid black",
+                  borderRadius: "4px",
+                  padding: "4px",
+                  fontSize: "10px",
+                  pointerEvents: "none",
+                }}
+              >
+                <div>{`Date: ${hoveredRect.date.toLocaleDateString()}`}</div>
+                <div>{`Time: ${hoveredRect.date.toLocaleTimeString()}`}</div>
+                <div>{`Altitude: ${hoveredRect.cloudCell.mslFt.toFixed(2)} ft`}</div>
+                <div>{`Cloud Cover: ${hoveredRect.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
+                <div>{`Geopotential Height: ${hoveredRect.cloudCell.mslFt.toFixed(2)}ft MSL`}</div>
+              </div>
+            </foreignObject>
+          </>
+        )}
       </Group>
       <AxisBottom
         left={margin.left}
