@@ -154,7 +154,13 @@ export default function Meteogram({
               pointerEvents="none"
             />
             <foreignObject
-              x={hoveredRect ? (dateScale(hoveredRect.date) as number) + 10 : 0}
+              x={
+                hoveredRect
+                  ? (dateScale(hoveredRect.date) as number) - 210 > 0
+                    ? (dateScale(hoveredRect.date) as number) - 210
+                    : (dateScale(hoveredRect.date) as number) + 10
+                  : 0
+              }
               y={hoveredRect ? mslScale(hoveredRect.cloudCell.mslFt) - 30 : 0}
               width={200}
               height={200}
