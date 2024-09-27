@@ -71,6 +71,33 @@ export default function Meteogram({
         fill={background}
         rx={14}
       />
+      <AxisBottom
+        left={margin.left}
+        top={yMax + margin.top}
+        tickFormat={useLocalTime ? timeFormat("%d%H") : utcFormat("%d%HZ")}
+        scale={dateScale}
+        stroke={black}
+        tickStroke={black}
+        // hideAxisLine
+        tickLabelProps={{
+          fill: black,
+          fontSize: 11,
+          textAnchor: "middle",
+        }}
+      />
+      <AxisLeft
+        left={margin.left}
+        top={margin.top}
+        scale={mslScale}
+        stroke={black}
+        tickStroke={black}
+        // hideAxisLine
+        tickLabelProps={{
+          fill: black,
+          fontSize: 11,
+          textAnchor: "end",
+        }}
+      />
       <Group top={margin.top} left={margin.left}>
         {weatherData.map((d) => (
           <Group key={`date-group-${d.date}`} left={dateScale(d.date)}>
@@ -131,6 +158,9 @@ export default function Meteogram({
               y={mslScale(hoveredRect.cloudCell.mslFt) - 30}
               width={200}
               height={200}
+              style={{
+                pointerEvents: "none",
+              }}
             >
               <div
                 style={{
@@ -152,33 +182,6 @@ export default function Meteogram({
           </>
         )}
       </Group>
-      <AxisBottom
-        left={margin.left}
-        top={yMax + margin.top}
-        tickFormat={useLocalTime ? timeFormat("%d%H") : utcFormat("%d%HZ")}
-        scale={dateScale}
-        stroke={black}
-        tickStroke={black}
-        // hideAxisLine
-        tickLabelProps={{
-          fill: black,
-          fontSize: 11,
-          textAnchor: "middle",
-        }}
-      />
-      <AxisLeft
-        left={margin.left}
-        top={margin.top}
-        scale={mslScale}
-        stroke={black}
-        tickStroke={black}
-        // hideAxisLine
-        tickLabelProps={{
-          fill: black,
-          fontSize: 11,
-          textAnchor: "end",
-        }}
-      />
     </svg>
   );
 }
