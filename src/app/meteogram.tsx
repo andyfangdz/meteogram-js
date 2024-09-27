@@ -47,7 +47,7 @@ export default function Meteogram({
 
   // update scale output dimensions
   // scales
-  const dateScale = scaleTime({
+  const dateScale = scaleTime<number>({
     domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
   }).range([0, xMax]);
 
@@ -154,8 +154,8 @@ export default function Meteogram({
               pointerEvents="none"
             />
             <foreignObject
-              x={dateScale(hoveredRect.date) + 10}
-              y={mslScale(hoveredRect.cloudCell.mslFt) - 30}
+              x={hoveredRect ? (dateScale(hoveredRect.date) as number) + 10 : 0}
+              y={hoveredRect ? mslScale(hoveredRect.cloudCell.mslFt) - 30 : 0}
               width={200}
               height={200}
               style={{

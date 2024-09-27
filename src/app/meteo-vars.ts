@@ -72,7 +72,7 @@ export default async function fetchWeatherData(
   const modelVarsKey = model === "gfs_hrrr" ? "minutely_15" : "hourly";
   const modelStepKey =
     model === "gfs_hrrr" ? "forecast_minutely_15" : "forecast_hourly";
-  const modelStepSize = model === "gfs_hrrr" ? 4 * 36 : 24 * 5;
+  const modelStepSize = model === "gfs_hrrr" ? 4 * 40 : 24 * 7;
   const responses = await fetchWeatherApi(url, {
     ...params,
     ...LOCATIONS[location],
