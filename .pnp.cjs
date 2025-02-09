@@ -43,7 +43,7 @@ const RAW_RUNTIME_STATE =
           ["@heroui/tooltip", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.2.8"],\
           ["@react-hook/resize-observer", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.0.2"],\
           ["@types/lodash", "npm:4.17.15"],\
-          ["@types/node", "npm:20.17.17"],\
+          ["@types/node", "npm:22.13.1"],\
           ["@types/react", "npm:19.0.8"],\
           ["@types/react-dom", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:19.0.3"],\
           ["@visx/axis", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.12.0"],\
@@ -8196,11 +8196,11 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["@types/node", [\
-      ["npm:20.17.17", {\
-        "packageLocation": "../../../../.yarn/berry/cache/@types-node-npm-20.17.17-bbcd13f536-10c0.zip/node_modules/@types/node/",\
+      ["npm:22.13.1", {\
+        "packageLocation": "../../../../.yarn/berry/cache/@types-node-npm-22.13.1-f9de886009-10c0.zip/node_modules/@types/node/",\
         "packageDependencies": [\
-          ["@types/node", "npm:20.17.17"],\
-          ["undici-types", "npm:6.19.8"]\
+          ["@types/node", "npm:22.13.1"],\
+          ["undici-types", "npm:6.20.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -11942,7 +11942,7 @@ const RAW_RUNTIME_STATE =
           ["@heroui/tooltip", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.2.8"],\
           ["@react-hook/resize-observer", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.0.2"],\
           ["@types/lodash", "npm:4.17.15"],\
-          ["@types/node", "npm:20.17.17"],\
+          ["@types/node", "npm:22.13.1"],\
           ["@types/react", "npm:19.0.8"],\
           ["@types/react-dom", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:19.0.3"],\
           ["@visx/axis", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.12.0"],\
@@ -14036,10 +14036,10 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["undici-types", [\
-      ["npm:6.19.8", {\
-        "packageLocation": "../../../../.yarn/berry/cache/undici-types-npm-6.19.8-9f12285b7a-10c0.zip/node_modules/undici-types/",\
+      ["npm:6.20.0", {\
+        "packageLocation": "../../../../.yarn/berry/cache/undici-types-npm-6.20.0-bd21e669af-10c0.zip/node_modules/undici-types/",\
         "packageDependencies": [\
-          ["undici-types", "npm:6.19.8"]\
+          ["undici-types", "npm:6.20.0"]\
         ],\
         "linkType": "HARD"\
       }]\
