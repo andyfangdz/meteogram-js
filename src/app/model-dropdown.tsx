@@ -5,7 +5,7 @@ import {
   DropdownMenu,
   DropdownItem,
   Button,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { MODEL_NAMES } from "./meteo-vars";
 
 export default function ModelDropdown({

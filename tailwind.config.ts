@@ -1,7 +1,7 @@
 import path from "path";
 import type { Config } from "tailwindcss";
-import { nextui } from "@nextui-org/react";
-const nexUiThemePath = path.dirname(require.resolve("@nextui-org/theme"));
+import { heroui } from "@heroui/react";
+const nexUiThemePath = path.dirname(require.resolve("@heroui/theme"));
 
 const config: Config = {
   content: [
@@ -20,6 +20,6 @@ const config: Config = {
     },
   },
   darkMode: "class",
-  plugins: [nextui()],
+  plugins: [heroui()],
 };
 export default config;

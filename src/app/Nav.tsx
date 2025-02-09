@@ -11,7 +11,7 @@ import {
   ButtonGroup,
   Chip,
   Switch,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
 import { timeFormat } from "@visx/vendor/d3-time-format";
@@ -86,7 +86,7 @@ export default function Nav({
       <NavbarContent justify="end">
         <NavbarItem>
           <ButtonGroup>
-            <Button color="primary" onClick={updateWeatherData}>
+            <Button color="primary" onPress={updateWeatherData}>
               Refresh
             </Button>
           </ButtonGroup>

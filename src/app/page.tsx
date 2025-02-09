@@ -1,6 +1,6 @@
 "use client";
 import Meteogram from "./meteogram";
-import { NextUIProvider } from "@nextui-org/react";
+import { HeroUIProvider } from "@heroui/react";
 import { useEffect, useState, useRef } from "react";
 import fetchWeatherData, { CloudColumn } from "./meteo-vars";
 import Nav from "./Nav";
@@ -38,7 +38,7 @@ export default function Home() {
     };
   }, []);
   return (
-    <NextUIProvider>
+    <HeroUIProvider>
       <Nav
         location={location}
         setLocation={setLocation}
@@ -65,6 +65,6 @@ export default function Home() {
           />
         </div>
       </main>
-    </NextUIProvider>
+    </HeroUIProvider>
   );
 }

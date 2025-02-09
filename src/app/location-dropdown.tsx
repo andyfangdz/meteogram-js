@@ -5,7 +5,7 @@ import {
   DropdownMenu,
   DropdownItem,
   Button,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LOCATIONS } from "./meteo-vars";
 
 export default function LocationDropdown({
