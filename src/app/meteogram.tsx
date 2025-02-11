@@ -182,19 +182,25 @@ export default function Meteogram({
                       setHoveredRect(null);
                     }
                   }}
-                  onClick={() => {
-                    if (frozenRect) {
-                      setFrozenRect(null);
-                      setHoveredRect({
-                        date: d.date,
-                        cloudCell: cloud,
-                      });
-                    } else {
-                      setFrozenRect({
-                        date: d.date,
-                        cloudCell: cloud,
-                      });
-                      setHoveredRect(null);
+                  onClick={(event: React.MouseEvent) => {
+                    // Only enable freeze for mouse events, not touch
+                    if (
+                      (event.nativeEvent as PointerEvent).pointerType ===
+                      "mouse"
+                    ) {
+                      if (frozenRect) {
+                        setFrozenRect(null);
+                        setHoveredRect({
+                          date: d.date,
+                          cloudCell: cloud,
+                        });
+                      } else {
+                        setFrozenRect({
+                          date: d.date,
+                          cloudCell: cloud,
+                        });
+                        setHoveredRect(null);
+                      }
                     }
                   }}
                   style={{ cursor: "default" }}
