@@ -36,6 +36,7 @@ export const VARIABLES = [
   ...CLOUD_COVER_HPA_VARS,
   ...GEOPOTENTIAL_HEIGHT_HPA_VARS,
   ...TEMPERATURE_HPA_VARS,
+  "temperature_2m", // Ground level temperature
 ];
 
 export const LOCATIONS: Locations = {

@@ -11,6 +11,7 @@ export interface CloudCell {
 export interface CloudColumn {
   date: Date;
   cloud: CloudCell[];
+  groundTemp: number; // Temperature in Celsius at 2m above ground
 }
 
 export interface Location {

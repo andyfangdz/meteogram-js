@@ -6,6 +6,7 @@ import { AxisBottom, AxisLeft } from "@visx/axis";
 import { scaleLinear, scaleTime } from "@visx/scale";
 import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
 import { CloudColumn, CloudCell } from "../types/weather";
+import { FEET_PER_METER } from "../config/weather";
 import LoadingSkeleton from "./loading-skeleton";
 
 const hPaToInHg = (hpa: number) => (hpa * 0.02953).toFixed(2);
@@ -34,31 +35,49 @@ const background = "#87CEEB";
 const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
 
 // Helper function to find freezing levels in a cloud column
-const findFreezingLevels = (cloudColumn: CloudCell[]): number[] => {
+const findFreezingLevels = (
+  cloudColumn: CloudCell[],
+  groundTemp: number,
+): number[] => {
   const freezingLevels: number[] = [];
 
-  // Check if surface level (1000hPa) is already below freezing
-  const surfaceLevel = cloudColumn.find((cell) => cell.hpa === 1000);
-  if (surfaceLevel && surfaceLevel.temperature <= 0) {
-    freezingLevels.push(surfaceLevel.mslFt);
+  // Sort the cloud column by pressure (height) from ground up
+  const sortedColumn = [...cloudColumn].sort((a, b) => b.hpa - a.hpa);
+
+  // Check if ground level is already below freezing
+  if (groundTemp <= 0) {
+    freezingLevels.push(0); // Start from ground level
+  }
+  // Check if there's a crossing point between ground and first pressure level
+  else if (groundTemp > 0 && sortedColumn[0].temperature <= 0) {
+    // Linear interpolation between ground (2m) and first pressure level
+    const t1 = groundTemp;
+    const t2 = sortedColumn[0].temperature;
+    const h1 = 2 * FEET_PER_METER; // 2 meters above ground
+    const h2 = sortedColumn[0].mslFt;
+    const freezingLevel = h1 + ((0 - t1) * (h2 - h1)) / (t2 - t1);
+    freezingLevels.push(freezingLevel);
   }
 
-  // Find crossing points
-  for (let i = 0; i < cloudColumn.length - 1; i++) {
+  // Find crossing points between pressure levels
+  for (let i = 0; i < sortedColumn.length - 1; i++) {
     if (
-      (cloudColumn[i].temperature > 0 && cloudColumn[i + 1].temperature <= 0) ||
-      (cloudColumn[i].temperature <= 0 && cloudColumn[i + 1].temperature > 0)
+      (sortedColumn[i].temperature > 0 &&
+        sortedColumn[i + 1].temperature <= 0) ||
+      (sortedColumn[i].temperature <= 0 && sortedColumn[i + 1].temperature > 0)
     ) {
       // Linear interpolation to find exact freezing level
-      const t1 = cloudColumn[i].temperature;
-      const t2 = cloudColumn[i + 1].temperature;
-      const h1 = cloudColumn[i].mslFt;
-      const h2 = cloudColumn[i + 1].mslFt;
+      const t1 = sortedColumn[i].temperature;
+      const t2 = sortedColumn[i + 1].temperature;
+      const h1 = sortedColumn[i].mslFt;
+      const h2 = sortedColumn[i + 1].mslFt;
       const freezingLevel = h1 + ((0 - t1) * (h2 - h1)) / (t2 - t1);
       freezingLevels.push(freezingLevel);
     }
   }
-  return freezingLevels;
+
+  // Sort freezing levels by height
+  return freezingLevels.sort((a, b) => a - b);
 };
 
 // Helper function to match freezing levels between columns
@@ -279,8 +298,11 @@ export default function Meteogram({
           weatherData.map((d, i) => {
             if (i === weatherData.length - 1) return null;
 
-            const currentLevels = findFreezingLevels(d.cloud);
-            const nextLevels = findFreezingLevels(weatherData[i + 1].cloud);
+            const currentLevels = findFreezingLevels(d.cloud, d.groundTemp);
+            const nextLevels = findFreezingLevels(
+              weatherData[i + 1].cloud,
+              weatherData[i + 1].groundTemp,
+            );
             const matches = matchFreezingLevels(currentLevels, nextLevels);
 
             return matches.map(([currentLevel, nextLevel], levelIndex) => (

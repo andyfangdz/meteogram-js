@@ -40,6 +40,9 @@ export function transformWeatherData(
         temperature,
       };
     }),
+    groundTemp: forecastData
+      .variables(3 * HPA_LEVELS.length)! // temperature_2m is after all HPA variables
+      .values(index)!,
   }));
 
   return cloudData.map((dateAndCloud) => ({
@@ -52,5 +55,6 @@ export function transformWeatherData(
           : (dateAndCloud.cloud[index - 1].mslFt + cloud.mslFt) / 2,
       mslFtTop: (cloud.mslFt + dateAndCloud.cloud[index + 1].mslFt) / 2,
     })),
+    groundTemp: dateAndCloud.groundTemp,
   }));
 }
