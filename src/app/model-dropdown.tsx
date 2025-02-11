@@ -6,7 +6,7 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
-import { MODEL_NAMES } from "./meteo-vars";
+import { MODEL_NAMES } from "../config/weather";
 
 export default function ModelDropdown({
   model,

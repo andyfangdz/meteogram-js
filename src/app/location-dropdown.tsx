@@ -6,7 +6,7 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
-import { LOCATIONS } from "./meteo-vars";
+import { LOCATIONS } from "../config/weather";
 
 export default function LocationDropdown({
   location,

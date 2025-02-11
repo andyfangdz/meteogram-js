@@ -1,42 +1,25 @@
 "use client";
-import Meteogram from "./meteogram";
+import { useState } from "react";
 import { HeroUIProvider } from "@heroui/react";
-import { useEffect, useState, useRef } from "react";
-import fetchWeatherData, { CloudColumn } from "./meteo-vars";
+import Meteogram from "./meteogram";
 import Nav from "./Nav";
+import { useWeatherData } from "../hooks/useWeatherData";
+import { WeatherModel } from "../types/weather";
 
 export default function Home() {
-  let [useLocalTime, setUseLocalTime] = useState<boolean>(false);
-  let [highlightCeilingCoverage, sethighlightCeilingCoverage] =
+  const [useLocalTime, setUseLocalTime] = useState<boolean>(false);
+  const [highlightCeilingCoverage, setHighlightCeilingCoverage] =
     useState<boolean>(true);
-  let [clampCloudCoverageAt50Pct, setclampCloudCoverageAt50Pct] =
+  const [clampCloudCoverageAt50Pct, setClampCloudCoverageAt50Pct] =
     useState<boolean>(true);
-  let [weatherData, setWeatherData] = useState<CloudColumn[]>([]);
-  let [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  let [location, setLocation] = useState<string>("KFRG");
-  let [model, setModel] = useState<string>("gfs_hrrr");
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [location, setLocation] = useState<string>("KFRG");
+  const [model, setModel] = useState<WeatherModel>("gfs_hrrr");
 
-  const updateWeatherData = () => {
-    fetchWeatherData(model, location).then((data) => {
-      setWeatherData(data);
-      setLastUpdate(new Date());
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-      timerRef.current = setTimeout(updateWeatherData, 60 * 1000);
-    });
-  };
-  useEffect(updateWeatherData, [model, location]);
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, []);
+  const { weatherData, lastUpdate, isLoading, error, refetch } = useWeatherData(
+    model,
+    location,
+  );
+
   return (
     <HeroUIProvider>
       <Nav
@@ -44,17 +27,22 @@ export default function Home() {
         setLocation={setLocation}
         model={model}
         setModel={setModel}
-        updateWeatherData={updateWeatherData}
+        updateWeatherData={refetch}
         lastUpdate={lastUpdate}
         useLocalTime={useLocalTime}
         setUseLocalTime={setUseLocalTime}
         highlightCeilingCoverage={highlightCeilingCoverage}
-        sethighlightCeilingCoverage={sethighlightCeilingCoverage}
+        sethighlightCeilingCoverage={setHighlightCeilingCoverage}
         clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
-        setclampCloudCoverageAt50Pct={setclampCloudCoverageAt50Pct}
+        setclampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
       />
       <main className="items-center justify-between p-24">
         <div className="contents">
+          {error && (
+            <div className="text-red-500 mb-4">
+              Error loading weather data: {error.message}
+            </div>
+          )}
           <Meteogram
             width={1600}
             height={800}
@@ -62,6 +50,7 @@ export default function Home() {
             weatherData={weatherData}
             highlightCeilingCoverage={highlightCeilingCoverage}
             clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
+            isLoading={isLoading}
           />
         </div>
       </main>

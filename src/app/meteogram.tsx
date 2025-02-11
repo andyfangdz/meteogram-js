@@ -5,8 +5,7 @@ import { Group } from "@visx/group";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { scaleLinear, scaleTime } from "@visx/scale";
 import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
-
-import { CloudColumn, CloudCell } from "./meteo-vars";
+import { CloudColumn, CloudCell } from "../types/weather";
 import LoadingSkeleton from "./loading-skeleton";
 
 export type MeteogramProps = {
@@ -17,10 +16,11 @@ export type MeteogramProps = {
   weatherData: CloudColumn[];
   highlightCeilingCoverage?: boolean;
   clampCloudCoverageAt50Pct?: boolean;
+  isLoading?: boolean;
 };
+
 const black = "#000000";
 const background = "#87CEEB";
-
 const defaultMargin = { top: 40, right: 20, bottom: 40, left: 60 };
 
 export default function Meteogram({
@@ -31,13 +31,14 @@ export default function Meteogram({
   useLocalTime = false,
   highlightCeilingCoverage = true,
   clampCloudCoverageAt50Pct = true,
+  isLoading = false,
 }: MeteogramProps) {
   const [hoveredRect, setHoveredRect] = useState<{
     date: Date;
     cloudCell: CloudCell;
   } | null>(null);
 
-  if (weatherData.length === 0) {
+  if (isLoading || weatherData.length === 0) {
     return <LoadingSkeleton />;
   }
 
@@ -45,7 +46,6 @@ export default function Meteogram({
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
 
-  // update scale output dimensions
   // scales
   const dateScale = scaleTime<number>({
     domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
@@ -61,7 +61,7 @@ export default function Meteogram({
 
   const barWidth = xMax / weatherData.length;
 
-  return weatherData === null ? null : (
+  return (
     <svg width={width} height={height}>
       <rect
         x={0}
@@ -78,7 +78,6 @@ export default function Meteogram({
         scale={dateScale}
         stroke={black}
         tickStroke={black}
-        // hideAxisLine
         tickLabelProps={{
           fill: black,
           fontSize: 11,
@@ -91,7 +90,6 @@ export default function Meteogram({
         scale={mslScale}
         stroke={black}
         tickStroke={black}
-        // hideAxisLine
         tickLabelProps={{
           fill: black,
           fontSize: 11,
