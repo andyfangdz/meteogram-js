@@ -47,6 +47,10 @@ export default function Meteogram({
     date: Date;
     cloudCell: CloudCell;
   } | null>(null);
+  const [frozenRect, setFrozenRect] = useState<{
+    date: Date;
+    cloudCell: CloudCell;
+  } | null>(null);
 
   if (isLoading || weatherData.length === 0) {
     return <LoadingSkeleton />;
@@ -145,8 +149,10 @@ export default function Meteogram({
           <Group key={`date-group-${d.date}`} left={dateScale(d.date)}>
             {d.cloud.map((cloud) => {
               const isHovered =
-                hoveredRect?.date === d.date &&
-                hoveredRect?.cloudCell.hpa === cloud.hpa;
+                (hoveredRect?.date === d.date &&
+                  hoveredRect?.cloudCell.hpa === cloud.hpa) ||
+                (frozenRect?.date === d.date &&
+                  frozenRect?.cloudCell.hpa === cloud.hpa);
               const fillColor =
                 cloud.cloudCoverage > 50 && highlightCeilingCoverage
                   ? `rgba(200, 200, 200, ${cloudScale(cloud.cloudCoverage)})`
@@ -163,13 +169,35 @@ export default function Meteogram({
                   fill={fillColor}
                   stroke={isHovered ? black : "transparent"}
                   strokeWidth={isHovered ? 1 : 0}
-                  onMouseEnter={() =>
-                    setHoveredRect({
-                      date: d.date,
-                      cloudCell: cloud,
-                    })
-                  }
-                  onMouseLeave={() => setHoveredRect(null)}
+                  onMouseEnter={() => {
+                    if (!frozenRect) {
+                      setHoveredRect({
+                        date: d.date,
+                        cloudCell: cloud,
+                      });
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (!frozenRect) {
+                      setHoveredRect(null);
+                    }
+                  }}
+                  onClick={() => {
+                    if (frozenRect) {
+                      setFrozenRect(null);
+                      setHoveredRect({
+                        date: d.date,
+                        cloudCell: cloud,
+                      });
+                    } else {
+                      setFrozenRect({
+                        date: d.date,
+                        cloudCell: cloud,
+                      });
+                      setHoveredRect(null);
+                    }
+                  }}
+                  style={{ cursor: "default" }}
                 />
               );
             })}
@@ -201,11 +229,11 @@ export default function Meteogram({
               />
             );
           })}
-        {hoveredRect && (
+        {(hoveredRect || frozenRect) && (
           <>
             <line
-              x1={dateScale(hoveredRect.date)}
-              x2={dateScale(hoveredRect.date)}
+              x1={dateScale((hoveredRect || frozenRect)!.date)}
+              x2={dateScale((hoveredRect || frozenRect)!.date)}
               y1={0}
               y2={yMax}
               stroke={black}
@@ -215,21 +243,40 @@ export default function Meteogram({
             <line
               x1={0}
               x2={xMax}
-              y1={mslScale(hoveredRect.cloudCell.mslFt)}
-              y2={mslScale(hoveredRect.cloudCell.mslFt)}
+              y1={mslScale((hoveredRect || frozenRect)!.cloudCell.mslFt)}
+              y2={mslScale((hoveredRect || frozenRect)!.cloudCell.mslFt)}
               stroke={black}
               strokeWidth={1}
               pointerEvents="none"
             />
             <foreignObject
               x={
-                hoveredRect
-                  ? (dateScale(hoveredRect.date) as number) - 210 > 0
-                    ? (dateScale(hoveredRect.date) as number) - 210
-                    : (dateScale(hoveredRect.date) as number) + 10
+                hoveredRect || frozenRect
+                  ? (() => {
+                      const cursorX = dateScale(
+                        (hoveredRect || frozenRect)!.date,
+                      ) as number;
+                      // If we're close to the left edge, show tooltip on the right side of the cursor
+                      if (cursorX - 210 < 0) {
+                        return Math.min(cursorX + 10, xMax - 200);
+                      }
+                      // Otherwise show it on the left side, but don't let it overflow right edge
+                      return Math.min(cursorX - 210, xMax - 200);
+                    })()
                   : 0
               }
-              y={hoveredRect ? mslScale(hoveredRect.cloudCell.mslFt) - 30 : 0}
+              y={
+                hoveredRect || frozenRect
+                  ? Math.min(
+                      Math.max(
+                        margin.top,
+                        mslScale((hoveredRect || frozenRect)!.cloudCell.mslFt) -
+                          30,
+                      ),
+                      yMax + margin.top - 100,
+                    )
+                  : 0
+              }
               width={200}
               height={200}
               style={{
@@ -239,21 +286,33 @@ export default function Meteogram({
               <div
                 style={{
                   backgroundColor: "white",
-                  border: "1px solid black",
+                  border: `1px solid ${frozenRect ? "#666" : black}`,
                   borderRadius: "4px",
                   padding: "4px",
                   fontSize: "10px",
                   pointerEvents: "none",
+                  boxShadow: frozenRect ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
                 }}
               >
-                <div>{`Date: ${hoveredRect.date.toLocaleDateString()}`}</div>
-                <div>{`Time: ${hoveredRect.date.toLocaleTimeString()}`}</div>
-                <div>{`MSL Height: ${hoveredRect.cloudCell.mslFt.toFixed(2)} ft`}</div>
-                <div>{`Geopotential Height: ${hoveredRect.cloudCell.geopotentialFt.toFixed(2)} ft`}</div>
+                <div>{`Date: ${(hoveredRect || frozenRect)!.date.toLocaleDateString()}`}</div>
+                <div>{`Time: ${(hoveredRect || frozenRect)!.date.toLocaleTimeString()}`}</div>
+                <div>{`MSL Height: ${(hoveredRect || frozenRect)!.cloudCell.mslFt.toFixed(2)} ft`}</div>
+                <div>{`Geopotential Height: ${(hoveredRect || frozenRect)!.cloudCell.geopotentialFt.toFixed(2)} ft`}</div>
                 {showPressureLines && (
-                  <div>{`Pressure: ${hoveredRect.cloudCell.hpa} hPa (${hPaToInHg(hoveredRect.cloudCell.hpa)} inHg)`}</div>
+                  <div>{`Pressure: ${(hoveredRect || frozenRect)!.cloudCell.hpa} hPa (${hPaToInHg((hoveredRect || frozenRect)!.cloudCell.hpa)} inHg)`}</div>
                 )}
-                <div>{`Cloud Cover: ${hoveredRect.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
+                <div>{`Cloud Cover: ${(hoveredRect || frozenRect)!.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
+                {frozenRect && (
+                  <div
+                    style={{
+                      marginTop: "4px",
+                      color: "#666",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    Click again to unfreeze
+                  </div>
+                )}
               </div>
             </foreignObject>
           </>
