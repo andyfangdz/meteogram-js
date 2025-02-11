@@ -4,6 +4,7 @@ import { MODEL_NAMES } from "@/config/weather";
 import { LOCATIONS } from "@/config/weather";
 import { WeatherModel } from "@/types/weather";
 import { notFound } from "next/navigation";
+import { getWeatherData } from "@/app/actions/weather";
 
 interface PageProps {
   params: Promise<{
@@ -33,12 +34,20 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
+  // Fetch initial data on the server
+  const initialData = await getWeatherData(
+    model as WeatherModel,
+    decodedLocation,
+  );
+
   return (
     <HeroUIProvider>
       <div className="min-h-screen flex flex-col">
         <ClientWrapper
           initialLocation={decodedLocation}
           initialModel={model as WeatherModel}
+          initialWeatherData={initialData.data}
+          initialTimestamp={initialData.timestamp}
         />
       </div>
     </HeroUIProvider>
