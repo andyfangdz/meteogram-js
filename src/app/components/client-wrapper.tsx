@@ -2,16 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import { WeatherModel, CloudColumn } from "../../types/weather";
-import NavWrapper from "./nav-wrapper";
-import MeteogramWrapper from "./meteogram-wrapper";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getWeatherData } from "../actions/weather";
+import VisualizationPreferences from "./visualization-preferences";
+import { DEFAULT_PREFERENCES } from "@/config/preferences";
+
+interface VisualizationPreferences {
+  useLocalTime: boolean;
+  highlightCeilingCoverage: boolean;
+  clampCloudCoverageAt50Pct: boolean;
+}
 
 interface ClientWrapperProps {
   initialLocation: string;
   initialModel: WeatherModel;
   initialWeatherData: CloudColumn[];
   initialTimestamp: string;
+  initialPreferences: VisualizationPreferences;
 }
 
 export default function ClientWrapper({
@@ -19,14 +26,10 @@ export default function ClientWrapper({
   initialModel,
   initialWeatherData,
   initialTimestamp,
+  initialPreferences,
 }: ClientWrapperProps) {
   const router = useRouter();
-  const [useLocalTime, setUseLocalTime] = useState<boolean>(false);
-  const [highlightCeilingCoverage, setHighlightCeilingCoverage] =
-    useState<boolean>(true);
-  const [clampCloudCoverageAt50Pct, setClampCloudCoverageAt50Pct] =
-    useState<boolean>(true);
-
+  const searchParams = useSearchParams();
   const [weatherData, setWeatherData] =
     useState<CloudColumn[]>(initialWeatherData);
   const [lastUpdate, setLastUpdate] = useState<Date>(
@@ -68,39 +71,90 @@ export default function ClientWrapper({
   }, [initialModel, initialLocation]);
 
   const handleLocationChange = (newLocation: string) => {
-    router.push(`/${encodeURIComponent(newLocation)}/${initialModel}`);
+    const params = new URLSearchParams(searchParams);
+    router.push(
+      `/${encodeURIComponent(newLocation)}/${initialModel}?${params.toString()}`,
+    );
   };
 
   const handleModelChange = (newModel: WeatherModel) => {
-    router.push(`/${encodeURIComponent(initialLocation)}/${newModel}`);
+    const params = new URLSearchParams(searchParams);
+    router.push(
+      `/${encodeURIComponent(initialLocation)}/${newModel}?${params.toString()}`,
+    );
+  };
+
+  const updatePreferences = (
+    newPreferences: Partial<VisualizationPreferences>,
+  ) => {
+    const params = new URLSearchParams(searchParams);
+
+    // Get current full preferences
+    const currentPreferences = {
+      useLocalTime:
+        params.get("useLocalTime") === "true" ||
+        DEFAULT_PREFERENCES.useLocalTime,
+      highlightCeilingCoverage:
+        params.get("highlightCeiling") === "false"
+          ? false
+          : DEFAULT_PREFERENCES.highlightCeilingCoverage,
+      clampCloudCoverageAt50Pct:
+        params.get("clampCoverage") === "false"
+          ? false
+          : DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct,
+      ...newPreferences,
+    };
+
+    // Only include non-default values in URL
+    if (currentPreferences.useLocalTime !== DEFAULT_PREFERENCES.useLocalTime) {
+      params.set("useLocalTime", currentPreferences.useLocalTime.toString());
+    } else {
+      params.delete("useLocalTime");
+    }
+
+    if (
+      currentPreferences.highlightCeilingCoverage !==
+      DEFAULT_PREFERENCES.highlightCeilingCoverage
+    ) {
+      params.set(
+        "highlightCeiling",
+        currentPreferences.highlightCeilingCoverage.toString(),
+      );
+    } else {
+      params.delete("highlightCeiling");
+    }
+
+    if (
+      currentPreferences.clampCloudCoverageAt50Pct !==
+      DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct
+    ) {
+      params.set(
+        "clampCoverage",
+        currentPreferences.clampCloudCoverageAt50Pct.toString(),
+      );
+    } else {
+      params.delete("clampCoverage");
+    }
+
+    const queryString = params.toString();
+    router.push(
+      `/${encodeURIComponent(initialLocation)}/${initialModel}${queryString ? "?" + queryString : ""}`,
+    );
   };
 
   return (
-    <>
-      <NavWrapper
-        model={initialModel}
-        setModel={handleModelChange}
-        location={initialLocation}
-        setLocation={handleLocationChange}
-        lastUpdate={lastUpdate}
-        refetch={refreshData}
-        useLocalTime={useLocalTime}
-        setUseLocalTime={setUseLocalTime}
-        highlightCeilingCoverage={highlightCeilingCoverage}
-        setHighlightCeilingCoverage={setHighlightCeilingCoverage}
-        clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
-        setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
-      />
-      <main className="items-center justify-between p-24">
-        <MeteogramWrapper
-          weatherData={weatherData}
-          useLocalTime={useLocalTime}
-          highlightCeilingCoverage={highlightCeilingCoverage}
-          clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
-          isLoading={isLoading}
-          error={error}
-        />
-      </main>
-    </>
+    <VisualizationPreferences
+      model={initialModel}
+      setModel={handleModelChange}
+      location={initialLocation}
+      setLocation={handleLocationChange}
+      lastUpdate={lastUpdate}
+      refetch={refreshData}
+      weatherData={weatherData}
+      isLoading={isLoading}
+      error={error}
+      preferences={initialPreferences}
+      updatePreferences={updatePreferences}
+    />
   );
 }
