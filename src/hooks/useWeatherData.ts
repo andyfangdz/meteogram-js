@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { CloudColumn, WeatherModel } from "../types/weather";
-import { fetchWeatherApiData } from "../services/weather";
-import { transformWeatherData } from "../utils/weather";
 
 interface UseWeatherDataReturn {
   weatherData: CloudColumn[];
@@ -26,10 +24,25 @@ export function useWeatherData(
     try {
       setIsLoading(true);
       setError(null);
-      const responses = await fetchWeatherApiData(model, location);
-      const transformedData = transformWeatherData(responses[0], model);
-      setWeatherData(transformedData);
-      setLastUpdate(new Date());
+
+      const response = await fetch(
+        `/api/weather?model=${model}&location=${location}`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch weather data");
+      }
+
+      const { data, timestamp } = await response.json();
+
+      // Convert date strings back to Date objects
+      const processedData = data.map((item: any) => ({
+        ...item,
+        date: new Date(item.date),
+      }));
+
+      setWeatherData(processedData);
+      setLastUpdate(new Date(timestamp));
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch weather data"),
