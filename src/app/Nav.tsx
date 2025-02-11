@@ -1,4 +1,9 @@
-import React, { Dispatch, SetStateAction } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  createContext,
+  useContext,
+} from "react";
 import {
   Navbar,
   NavbarBrand,
@@ -25,12 +30,38 @@ interface NavProps {
   useLocalTime: boolean;
   setUseLocalTime: (value: boolean) => void;
   highlightCeilingCoverage: boolean;
-  sethighlightCeilingCoverage: (value: boolean) => void;
+  setHighlightCeilingCoverage: (value: boolean) => void;
   clampCloudCoverageAt50Pct: boolean;
-  setclampCloudCoverageAt50Pct: (value: boolean) => void;
+  setClampCloudCoverageAt50Pct: (value: boolean) => void;
   showPressureLines: boolean;
   setShowPressureLines: (value: boolean) => void;
+  showFreezingLevels: boolean;
+  setShowFreezingLevels: (value: boolean) => void;
 }
+
+const NavContext = createContext<{
+  useLocalTime: boolean;
+  setUseLocalTime: (value: boolean) => void;
+  highlightCeilingCoverage: boolean;
+  setHighlightCeilingCoverage: (value: boolean) => void;
+  clampCloudCoverageAt50Pct: boolean;
+  setClampCloudCoverageAt50Pct: (value: boolean) => void;
+  showPressureLines: boolean;
+  setShowPressureLines: (value: boolean) => void;
+  showFreezingLevels: boolean;
+  setShowFreezingLevels: (value: boolean) => void;
+}>({
+  useLocalTime: false,
+  setUseLocalTime: () => {},
+  highlightCeilingCoverage: true,
+  setHighlightCeilingCoverage: () => {},
+  clampCloudCoverageAt50Pct: true,
+  setClampCloudCoverageAt50Pct: () => {},
+  showPressureLines: false,
+  setShowPressureLines: () => {},
+  showFreezingLevels: true,
+  setShowFreezingLevels: () => {},
+});
 
 export default function Nav({
   model,
@@ -42,11 +73,13 @@ export default function Nav({
   useLocalTime,
   setUseLocalTime,
   highlightCeilingCoverage,
-  sethighlightCeilingCoverage,
+  setHighlightCeilingCoverage,
   clampCloudCoverageAt50Pct,
-  setclampCloudCoverageAt50Pct,
+  setClampCloudCoverageAt50Pct,
   showPressureLines,
   setShowPressureLines,
+  showFreezingLevels,
+  setShowFreezingLevels,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -57,13 +90,13 @@ export default function Nav({
       </Switch>
       <Switch
         isSelected={highlightCeilingCoverage}
-        onValueChange={sethighlightCeilingCoverage}
+        onValueChange={setHighlightCeilingCoverage}
       >
         Highlight Ceiling Coverage
       </Switch>
       <Switch
         isSelected={clampCloudCoverageAt50Pct}
-        onValueChange={setclampCloudCoverageAt50Pct}
+        onValueChange={setClampCloudCoverageAt50Pct}
       >
         Clamp Cloud Coverage at 50%
       </Switch>
@@ -73,11 +106,30 @@ export default function Nav({
       >
         Show Pressure Lines
       </Switch>
+      <Switch
+        isSelected={showFreezingLevels}
+        onValueChange={setShowFreezingLevels}
+      >
+        Show Freezing Levels
+      </Switch>
     </div>
   );
 
   return (
-    <>
+    <NavContext.Provider
+      value={{
+        useLocalTime,
+        setUseLocalTime,
+        highlightCeilingCoverage,
+        setHighlightCeilingCoverage,
+        clampCloudCoverageAt50Pct,
+        setClampCloudCoverageAt50Pct,
+        showPressureLines,
+        setShowPressureLines,
+        showFreezingLevels,
+        setShowFreezingLevels,
+      }}
+    >
       <Navbar className="relative z-[51]">
         <NavbarContent>
           <NavbarBrand>
@@ -160,6 +212,6 @@ export default function Nav({
           <PreferencesPanel />
         </div>
       </div>
-    </>
+    </NavContext.Provider>
   );
 }

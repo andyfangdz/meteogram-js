@@ -9,6 +9,7 @@ interface MeteogramWrapperProps {
   highlightCeilingCoverage: boolean;
   clampCloudCoverageAt50Pct: boolean;
   showPressureLines: boolean;
+  showFreezingLevels: boolean;
   isLoading: boolean;
   error: Error | null;
 }
@@ -19,6 +20,7 @@ export default function MeteogramWrapper({
   highlightCeilingCoverage,
   clampCloudCoverageAt50Pct,
   showPressureLines,
+  showFreezingLevels,
   isLoading,
   error,
 }: MeteogramWrapperProps) {
@@ -37,6 +39,7 @@ export default function MeteogramWrapper({
         highlightCeilingCoverage={highlightCeilingCoverage}
         clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
         showPressureLines={showPressureLines}
+        showFreezingLevels={showFreezingLevels}
         isLoading={isLoading}
       />
     </div>

@@ -26,11 +26,76 @@ export type MeteogramProps = {
   clampCloudCoverageAt50Pct?: boolean;
   isLoading?: boolean;
   showPressureLines?: boolean;
+  showFreezingLevels?: boolean;
 };
 
 const black = "#000000";
 const background = "#87CEEB";
 const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
+
+// Helper function to find freezing levels in a cloud column
+const findFreezingLevels = (cloudColumn: CloudCell[]): number[] => {
+  const freezingLevels: number[] = [];
+
+  // Check if surface level (1000hPa) is already below freezing
+  const surfaceLevel = cloudColumn.find((cell) => cell.hpa === 1000);
+  if (surfaceLevel && surfaceLevel.temperature <= 0) {
+    freezingLevels.push(surfaceLevel.mslFt);
+  }
+
+  // Find crossing points
+  for (let i = 0; i < cloudColumn.length - 1; i++) {
+    if (
+      (cloudColumn[i].temperature > 0 && cloudColumn[i + 1].temperature <= 0) ||
+      (cloudColumn[i].temperature <= 0 && cloudColumn[i + 1].temperature > 0)
+    ) {
+      // Linear interpolation to find exact freezing level
+      const t1 = cloudColumn[i].temperature;
+      const t2 = cloudColumn[i + 1].temperature;
+      const h1 = cloudColumn[i].mslFt;
+      const h2 = cloudColumn[i + 1].mslFt;
+      const freezingLevel = h1 + ((0 - t1) * (h2 - h1)) / (t2 - t1);
+      freezingLevels.push(freezingLevel);
+    }
+  }
+  return freezingLevels;
+};
+
+// Helper function to match freezing levels between columns
+const matchFreezingLevels = (
+  levels1: number[],
+  levels2: number[],
+): [number, number][] => {
+  if (levels1.length === 0 || levels2.length === 0) return [];
+
+  const matches: [number, number][] = [];
+  const used2 = new Set<number>();
+
+  // For each level in the first column
+  for (let i = 0; i < levels1.length; i++) {
+    let bestMatch = -1;
+    let minDiff = Infinity;
+
+    // Find the closest unused level in the second column
+    for (let j = 0; j < levels2.length; j++) {
+      if (!used2.has(j)) {
+        const diff = Math.abs(levels1[i] - levels2[j]);
+        if (diff < minDiff) {
+          minDiff = diff;
+          bestMatch = j;
+        }
+      }
+    }
+
+    // If we found a match within a reasonable height difference (e.g., 5000 ft)
+    if (bestMatch !== -1 && minDiff < 5000) {
+      matches.push([levels1[i], levels2[bestMatch]]);
+      used2.add(bestMatch);
+    }
+  }
+
+  return matches;
+};
 
 export default function Meteogram({
   width,
@@ -42,6 +107,7 @@ export default function Meteogram({
   clampCloudCoverageAt50Pct = true,
   isLoading = false,
   showPressureLines = false,
+  showFreezingLevels = true,
 }: MeteogramProps) {
   const [hoveredRect, setHoveredRect] = useState<{
     date: Date;
@@ -209,6 +275,25 @@ export default function Meteogram({
             })}
           </Group>
         ))}
+        {showFreezingLevels &&
+          weatherData.map((d, i) => {
+            if (i === weatherData.length - 1) return null;
+
+            const currentLevels = findFreezingLevels(d.cloud);
+            const nextLevels = findFreezingLevels(weatherData[i + 1].cloud);
+            const matches = matchFreezingLevels(currentLevels, nextLevels);
+
+            return matches.map(([currentLevel, nextLevel], levelIndex) => (
+              <path
+                key={`freezing-level-${d.date}-${levelIndex}`}
+                d={`M ${dateScale(d.date)} ${mslScale(currentLevel)} L ${dateScale(weatherData[i + 1].date)} ${mslScale(nextLevel)}`}
+                stroke="#0066cc"
+                strokeWidth={2}
+                strokeDasharray="4,4"
+                fill="none"
+              />
+            ));
+          })}
         {showPressureLines &&
           weatherData[0].cloud.map((_, pressureIndex) => {
             // Create a path for each pressure level
@@ -273,18 +358,30 @@ export default function Meteogram({
               }
               y={
                 hoveredRect || frozenRect
-                  ? Math.min(
-                      Math.max(
-                        margin.top,
-                        mslScale((hoveredRect || frozenRect)!.cloudCell.mslFt) -
-                          30,
-                      ),
-                      yMax + margin.top - 100,
-                    )
+                  ? (() => {
+                      const tooltipHeight = 160; // Approximate height of tooltip
+                      const cursorY = mslScale(
+                        (hoveredRect || frozenRect)!.cloudCell.mslFt,
+                      );
+                      const spaceBelow = yMax - cursorY;
+
+                      // If there's less than 1/3 of the tooltip height space below, show above
+                      if (spaceBelow < tooltipHeight / 3) {
+                        return Math.max(
+                          margin.top,
+                          cursorY - tooltipHeight - 10,
+                        );
+                      }
+                      // Otherwise show below
+                      return Math.min(
+                        cursorY + 10,
+                        yMax + margin.top - tooltipHeight,
+                      );
+                    })()
                   : 0
               }
               width={200}
-              height={200}
+              height={160}
               style={{
                 pointerEvents: "none",
               }}
@@ -308,6 +405,7 @@ export default function Meteogram({
                   <div>{`Pressure: ${(hoveredRect || frozenRect)!.cloudCell.hpa} hPa (${hPaToInHg((hoveredRect || frozenRect)!.cloudCell.hpa)} inHg)`}</div>
                 )}
                 <div>{`Cloud Cover: ${(hoveredRect || frozenRect)!.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
+                <div>{`Temperature: ${(hoveredRect || frozenRect)!.cloudCell.temperature.toFixed(1)}°C`}</div>
                 {frozenRect && (
                   <div
                     style={{

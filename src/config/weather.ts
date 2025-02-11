@@ -28,10 +28,14 @@ export const CLOUD_COVER_HPA_VARS = HPA_LEVELS.map(
 export const GEOPOTENTIAL_HEIGHT_HPA_VARS = HPA_LEVELS.map(
   (hpa) => `geopotential_height_${hpa}hPa`,
 );
+export const TEMPERATURE_HPA_VARS = HPA_LEVELS.map(
+  (hpa) => `temperature_${hpa}hPa`,
+);
 
 export const VARIABLES = [
   ...CLOUD_COVER_HPA_VARS,
   ...GEOPOTENTIAL_HEIGHT_HPA_VARS,
+  ...TEMPERATURE_HPA_VARS,
 ];
 
 export const LOCATIONS: Locations = {

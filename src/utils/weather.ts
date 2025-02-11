@@ -29,11 +29,15 @@ export function transformWeatherData(
       const geopotentialMeters = forecastData
         .variables(hpaIndex + HPA_LEVELS.length)!
         .values(index)!;
+      const temperature = forecastData
+        .variables(hpaIndex + 2 * HPA_LEVELS.length)!
+        .values(index)!;
       return {
         hpa,
         geopotentialFt: geopotentialMeters * FEET_PER_METER,
         mslFt: geopotentialToMsl(geopotentialMeters) * FEET_PER_METER,
         cloudCoverage: forecastData.variables(hpaIndex)!.values(index)!,
+        temperature,
       };
     }),
   }));

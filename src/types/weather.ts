@@ -5,6 +5,7 @@ export interface CloudCell {
   cloudCoverage: number;
   mslFtBottom: number;
   mslFtTop: number;
+  temperature: number; // Temperature in Celsius
 }
 
 export interface CloudColumn {
