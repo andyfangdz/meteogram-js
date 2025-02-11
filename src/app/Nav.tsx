@@ -119,8 +119,8 @@ export default function Nav({
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 z-50 md:hidden transition-[right] duration-300 ease-in-out ${
-          isMenuOpen ? "right-0" : "right-[-100%]"
+        className={`fixed inset-0 z-50 md:hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen ? "visible opacity-100" : "invisible opacity-0"
         }`}
         onClick={(e) => {
           // Close menu when clicking outside
@@ -130,7 +130,9 @@ export default function Nav({
         }}
       >
         <div
-          className="fixed right-0 h-full w-full max-w-xs bg-background shadow-lg pt-16"
+          className={`fixed right-0 h-full w-full max-w-xs bg-background shadow-lg pt-16 transition-transform duration-300 ease-in-out ${
+            isMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           <div className="flex flex-col gap-4 p-4 overflow-y-auto h-full">
