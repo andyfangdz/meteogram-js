@@ -38,9 +38,12 @@ export default function ClientWrapper({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [preferences, setPreferences] =
+    useState<VisualizationPreferences>(initialPreferences);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const refreshData = async () => {
+  // Separate refresh functions for manual and background updates
+  const refreshDataWithLoading = async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -59,9 +62,23 @@ export default function ClientWrapper({
     }
   };
 
+  const refreshDataInBackground = async () => {
+    try {
+      const { data, timestamp } = await getWeatherData(
+        initialModel,
+        initialLocation,
+      );
+      setWeatherData(data);
+      setLastUpdate(new Date(timestamp));
+    } catch (err) {
+      // Silently handle background refresh errors
+      console.warn("Background refresh failed:", err);
+    }
+  };
+
   useEffect(() => {
     const refreshInterval = 60000; // 1 minute
-    timerRef.current = setInterval(refreshData, refreshInterval);
+    timerRef.current = setInterval(refreshDataInBackground, refreshInterval);
 
     return () => {
       if (timerRef.current) {
@@ -88,73 +105,60 @@ export default function ClientWrapper({
   const updatePreferences = (
     newPreferences: Partial<VisualizationPreferences>,
   ) => {
+    // Immediately update local state
+    const updatedPreferences = { ...preferences, ...newPreferences };
+    setPreferences(updatedPreferences);
+
     const params = new URLSearchParams(searchParams);
 
-    // Get current full preferences
-    const currentPreferences = {
-      useLocalTime:
-        params.get("useLocalTime") === "true" ||
-        DEFAULT_PREFERENCES.useLocalTime,
-      highlightCeilingCoverage:
-        params.get("highlightCeiling") === "false"
-          ? false
-          : DEFAULT_PREFERENCES.highlightCeilingCoverage,
-      clampCloudCoverageAt50Pct:
-        params.get("clampCoverage") === "false"
-          ? false
-          : DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct,
-      showPressureLines:
-        params.get("showPressureLines") === "true" ||
-        DEFAULT_PREFERENCES.showPressureLines,
-      ...newPreferences,
-    };
-
     // Only include non-default values in URL
-    if (currentPreferences.useLocalTime !== DEFAULT_PREFERENCES.useLocalTime) {
-      params.set("useLocalTime", currentPreferences.useLocalTime.toString());
+    if (updatedPreferences.useLocalTime !== DEFAULT_PREFERENCES.useLocalTime) {
+      params.set("useLocalTime", updatedPreferences.useLocalTime.toString());
     } else {
       params.delete("useLocalTime");
     }
 
     if (
-      currentPreferences.highlightCeilingCoverage !==
+      updatedPreferences.highlightCeilingCoverage !==
       DEFAULT_PREFERENCES.highlightCeilingCoverage
     ) {
       params.set(
         "highlightCeiling",
-        currentPreferences.highlightCeilingCoverage.toString(),
+        updatedPreferences.highlightCeilingCoverage.toString(),
       );
     } else {
       params.delete("highlightCeiling");
     }
 
     if (
-      currentPreferences.clampCloudCoverageAt50Pct !==
+      updatedPreferences.clampCloudCoverageAt50Pct !==
       DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct
     ) {
       params.set(
         "clampCoverage",
-        currentPreferences.clampCloudCoverageAt50Pct.toString(),
+        updatedPreferences.clampCloudCoverageAt50Pct.toString(),
       );
     } else {
       params.delete("clampCoverage");
     }
 
     if (
-      currentPreferences.showPressureLines !==
+      updatedPreferences.showPressureLines !==
       DEFAULT_PREFERENCES.showPressureLines
     ) {
       params.set(
         "showPressureLines",
-        currentPreferences.showPressureLines.toString(),
+        updatedPreferences.showPressureLines.toString(),
       );
     } else {
       params.delete("showPressureLines");
     }
 
     const queryString = params.toString();
-    router.push(
+    // Use shallow routing to prevent server request
+    router.replace(
       `/${encodeURIComponent(initialLocation)}/${initialModel}${queryString ? "?" + queryString : ""}`,
+      { scroll: false, shallow: true },
     );
   };
 
@@ -165,11 +169,11 @@ export default function ClientWrapper({
       location={initialLocation}
       setLocation={handleLocationChange}
       lastUpdate={lastUpdate}
-      refetch={refreshData}
+      refetch={refreshDataWithLoading}
       weatherData={weatherData}
       isLoading={isLoading}
       error={error}
-      preferences={initialPreferences}
+      preferences={preferences}
       updatePreferences={updatePreferences}
     />
   );

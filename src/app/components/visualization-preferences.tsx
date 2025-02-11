@@ -122,7 +122,7 @@ export default function VisualizationPreferences({
           updatePreferences({ showPressureLines: value });
         }}
       />
-      <main className="items-center justify-between p-24">
+      <main className="items-center justify-between p-4">
         <MeteogramWrapper
           weatherData={weatherData}
           useLocalTime={preferences.useLocalTime}
