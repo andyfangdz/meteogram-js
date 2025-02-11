@@ -119,12 +119,21 @@ export default function Nav({
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 z-50 md:hidden transform transition-transform duration-300 ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
+        className={`fixed inset-0 z-50 md:hidden transition-[right] duration-300 ease-in-out ${
+          isMenuOpen ? "right-0" : "right-[-100%]"
         }`}
+        onClick={(e) => {
+          // Close menu when clicking outside
+          if (e.target === e.currentTarget) {
+            setIsMenuOpen(false);
+          }
+        }}
       >
-        <div className="fixed right-0 h-full w-full max-w-xs bg-background shadow-lg pt-16">
-          <div className="flex flex-col gap-4 p-4">
+        <div
+          className="fixed right-0 h-full w-full max-w-xs bg-background shadow-lg pt-16"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <div className="flex flex-col gap-4 p-4 overflow-y-auto h-full">
             <LocationDropdown location={location} setLocation={setLocation} />
             <ModelDropdown model={model} setModel={setModel} />
             <Chip>
@@ -140,11 +149,14 @@ export default function Nav({
 
       {/* Desktop Side Panel */}
       <div
-        className={`hidden md:block fixed right-0 top-[64px] h-[calc(100vh-64px)] w-80 bg-background shadow-lg transform transition-transform duration-300 ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
+        className={`hidden md:block fixed right-0 top-[64px] h-[calc(100vh-64px)] w-80 bg-background shadow-lg transition-[right] duration-300 ease-in-out ${
+          isMenuOpen ? "right-0" : "right-[-100%]"
         }`}
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
-        <PreferencesPanel />
+        <div className="overflow-y-auto h-full">
+          <PreferencesPanel />
+        </div>
       </div>
     </>
   );
