@@ -16,6 +16,7 @@ interface PageProps {
     useLocalTime?: string;
     highlightCeiling?: string;
     clampCoverage?: string;
+    showPressureLines?: string;
   }>;
 }
 
@@ -57,6 +58,9 @@ export default async function Page({ params, searchParams }: PageProps) {
       searchParamsResolved.clampCoverage === "false"
         ? false
         : DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct,
+    showPressureLines:
+      searchParamsResolved.showPressureLines === "true" ||
+      DEFAULT_PREFERENCES.showPressureLines,
   };
 
   // Fetch initial data on the server

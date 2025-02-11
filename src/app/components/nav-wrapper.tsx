@@ -16,6 +16,8 @@ interface NavWrapperProps {
   setHighlightCeilingCoverage: (value: boolean) => void;
   clampCloudCoverageAt50Pct: boolean;
   setClampCloudCoverageAt50Pct: (value: boolean) => void;
+  showPressureLines: boolean;
+  setShowPressureLines: (value: boolean) => void;
 }
 
 export default function NavWrapper({
@@ -31,6 +33,8 @@ export default function NavWrapper({
   setHighlightCeilingCoverage,
   clampCloudCoverageAt50Pct,
   setClampCloudCoverageAt50Pct,
+  showPressureLines,
+  setShowPressureLines,
 }: NavWrapperProps) {
   return (
     <Nav
@@ -46,6 +50,8 @@ export default function NavWrapper({
       sethighlightCeilingCoverage={setHighlightCeilingCoverage}
       clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
       setclampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
+      showPressureLines={showPressureLines}
+      setShowPressureLines={setShowPressureLines}
     />
   );
 }

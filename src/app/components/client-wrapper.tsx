@@ -11,6 +11,7 @@ interface VisualizationPreferences {
   useLocalTime: boolean;
   highlightCeilingCoverage: boolean;
   clampCloudCoverageAt50Pct: boolean;
+  showPressureLines: boolean;
 }
 
 interface ClientWrapperProps {
@@ -102,6 +103,9 @@ export default function ClientWrapper({
         params.get("clampCoverage") === "false"
           ? false
           : DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct,
+      showPressureLines:
+        params.get("showPressureLines") === "true" ||
+        DEFAULT_PREFERENCES.showPressureLines,
       ...newPreferences,
     };
 
@@ -134,6 +138,18 @@ export default function ClientWrapper({
       );
     } else {
       params.delete("clampCoverage");
+    }
+
+    if (
+      currentPreferences.showPressureLines !==
+      DEFAULT_PREFERENCES.showPressureLines
+    ) {
+      params.set(
+        "showPressureLines",
+        currentPreferences.showPressureLines.toString(),
+      );
+    } else {
+      params.delete("showPressureLines");
     }
 
     const queryString = params.toString();

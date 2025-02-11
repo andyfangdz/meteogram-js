@@ -1,6 +1,7 @@
 export interface CloudCell {
   hpa: number;
   mslFt: number;
+  geopotentialFt: number;
   cloudCoverage: number;
   mslFtBottom: number;
   mslFtTop: number;

@@ -2,6 +2,15 @@ import range from "lodash/range";
 import { CloudColumn, WeatherModel } from "../types/weather";
 import { FEET_PER_METER, HPA_LEVELS, MODEL_CONFIGS } from "../config/weather";
 
+const EARTH_RADIUS_METERS = 6371000;
+
+function geopotentialToMsl(geopotentialMeters: number): number {
+  return (
+    (EARTH_RADIUS_METERS * geopotentialMeters) /
+    (EARTH_RADIUS_METERS - geopotentialMeters)
+  );
+}
+
 export function transformWeatherData(
   response: any,
   model: WeatherModel,
@@ -16,13 +25,17 @@ export function transformWeatherData(
     forecastData.interval(),
   ).map((time, index) => ({
     date: new Date((time + utcOffsetSeconds) * 1000),
-    cloud: HPA_LEVELS.map((hpa, hpaIndex) => ({
-      hpa,
-      mslFt:
-        forecastData.variables(hpaIndex + HPA_LEVELS.length)!.values(index)! *
-        FEET_PER_METER,
-      cloudCoverage: forecastData.variables(hpaIndex)!.values(index)!,
-    })),
+    cloud: HPA_LEVELS.map((hpa, hpaIndex) => {
+      const geopotentialMeters = forecastData
+        .variables(hpaIndex + HPA_LEVELS.length)!
+        .values(index)!;
+      return {
+        hpa,
+        geopotentialFt: geopotentialMeters * FEET_PER_METER,
+        mslFt: geopotentialToMsl(geopotentialMeters) * FEET_PER_METER,
+        cloudCoverage: forecastData.variables(hpaIndex)!.values(index)!,
+      };
+    }),
   }));
 
   return cloudData.map((dateAndCloud) => ({

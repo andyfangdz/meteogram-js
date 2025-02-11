@@ -17,33 +17,39 @@ import ModelDropdown from "./model-dropdown";
 import { timeFormat } from "@visx/vendor/d3-time-format";
 const lastUpdateFormat = timeFormat("%H:%M:%S");
 
+interface NavProps {
+  model: WeatherModel;
+  setModel: (model: WeatherModel) => void;
+  location: string;
+  setLocation: (location: string) => void;
+  lastUpdate: Date | null;
+  updateWeatherData: () => void;
+  useLocalTime: boolean;
+  setUseLocalTime: (value: boolean) => void;
+  highlightCeilingCoverage: boolean;
+  sethighlightCeilingCoverage: (value: boolean) => void;
+  clampCloudCoverageAt50Pct: boolean;
+  setclampCloudCoverageAt50Pct: (value: boolean) => void;
+  showPressureLines: boolean;
+  setShowPressureLines: (value: boolean) => void;
+}
+
 export default function Nav({
-  location,
-  setLocation,
   model,
   setModel,
-  updateWeatherData,
+  location,
+  setLocation,
   lastUpdate,
+  updateWeatherData,
   useLocalTime,
   setUseLocalTime,
   highlightCeilingCoverage,
   sethighlightCeilingCoverage,
   clampCloudCoverageAt50Pct,
   setclampCloudCoverageAt50Pct,
-}: {
-  location: string;
-  setLocation: Dispatch<SetStateAction<string>>;
-  model: string;
-  setModel: Dispatch<SetStateAction<string>>;
-  updateWeatherData: () => void;
-  lastUpdate: Date | null;
-  useLocalTime: boolean;
-  setUseLocalTime: Dispatch<SetStateAction<boolean>>;
-  highlightCeilingCoverage: boolean;
-  sethighlightCeilingCoverage: Dispatch<SetStateAction<boolean>>;
-  clampCloudCoverageAt50Pct: boolean;
-  setclampCloudCoverageAt50Pct: Dispatch<SetStateAction<boolean>>;
-}) {
+  showPressureLines,
+  setShowPressureLines,
+}: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const menuItems = [
@@ -123,6 +129,14 @@ export default function Nav({
             onValueChange={setclampCloudCoverageAt50Pct}
           >
             Clamp Cloud Coverage at 50%
+          </Switch>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <Switch
+            isSelected={showPressureLines}
+            onValueChange={setShowPressureLines}
+          >
+            Show Pressure Lines
           </Switch>
         </NavbarMenuItem>
       </NavbarMenu>

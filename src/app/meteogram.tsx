@@ -8,6 +8,14 @@ import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
 import { CloudColumn, CloudCell } from "../types/weather";
 import LoadingSkeleton from "./loading-skeleton";
 
+const hPaToInHg = (hpa: number) => (hpa * 0.02953).toFixed(2);
+
+// Add a helper to get y position for a pressure level
+const getYForPressure = (cloud: CloudCell[], hpa: number) => {
+  const level = cloud.find((c) => c.hpa === hpa);
+  return level?.geopotentialFt || 0;
+};
+
 export type MeteogramProps = {
   width: number;
   height: number;
@@ -17,11 +25,12 @@ export type MeteogramProps = {
   highlightCeilingCoverage?: boolean;
   clampCloudCoverageAt50Pct?: boolean;
   isLoading?: boolean;
+  showPressureLines?: boolean;
 };
 
 const black = "#000000";
 const background = "#87CEEB";
-const defaultMargin = { top: 40, right: 20, bottom: 40, left: 60 };
+const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
 
 export default function Meteogram({
   width,
@@ -32,6 +41,7 @@ export default function Meteogram({
   highlightCeilingCoverage = true,
   clampCloudCoverageAt50Pct = true,
   isLoading = false,
+  showPressureLines = false,
 }: MeteogramProps) {
   const [hoveredRect, setHoveredRect] = useState<{
     date: Date;
@@ -55,11 +65,18 @@ export default function Meteogram({
     domain: [0, 20_000],
   }).range([yMax, 0]);
 
+  const pressureScale = scaleLinear<number>({
+    domain: [250, 1000], // HPA_LEVELS range from config
+  }).range([0, yMax]);
+
   const cloudScale = scaleLinear<number>({
     domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
   }).range([0, 1]);
 
   const barWidth = xMax / weatherData.length;
+
+  // Get all pressure levels from the first column
+  const pressureLevels = weatherData[0].cloud.map((c) => c.hpa);
 
   return (
     <svg width={width} height={height}>
@@ -96,6 +113,33 @@ export default function Meteogram({
           textAnchor: "end",
         }}
       />
+      {showPressureLines && (
+        <AxisLeft
+          left={margin.left}
+          top={margin.top}
+          scale={mslScale}
+          stroke="none"
+          tickStroke={black}
+          tickValues={pressureLevels.map((hpa) =>
+            getYForPressure(weatherData[0].cloud, hpa),
+          )}
+          tickFormat={(value) => {
+            const cloud = weatherData[0].cloud.find(
+              (c) => c.geopotentialFt === value,
+            );
+            return cloud ? `${cloud.hpa}` : "";
+          }}
+          tickLength={6}
+          tickLabelProps={{
+            fill: black,
+            fontSize: 11,
+            textAnchor: "start",
+            dx: "0.5em",
+          }}
+          orientation="right"
+          label="hPa"
+        />
+      )}
       <Group top={margin.top} left={margin.left}>
         {weatherData.map((d) => (
           <Group key={`date-group-${d.date}`} left={dateScale(d.date)}>
@@ -131,6 +175,32 @@ export default function Meteogram({
             })}
           </Group>
         ))}
+        {showPressureLines &&
+          weatherData[0].cloud.map((_, pressureIndex) => {
+            // Create a path for each pressure level
+            const points = weatherData.map((d) => ({
+              x: dateScale(d.date),
+              y: mslScale(d.cloud[pressureIndex].geopotentialFt),
+            }));
+
+            // Create SVG path string
+            const pathD = points.reduce((path, point, i) => {
+              if (i === 0) return `M ${point.x} ${point.y}`;
+              return `${path} L ${point.x} ${point.y}`;
+            }, "");
+
+            return (
+              <path
+                key={`pressure-line-${pressureIndex}`}
+                d={pathD}
+                stroke="gray"
+                strokeWidth={1}
+                strokeDasharray="4,4"
+                opacity={0.5}
+                fill="none"
+              />
+            );
+          })}
         {hoveredRect && (
           <>
             <line
@@ -178,9 +248,12 @@ export default function Meteogram({
               >
                 <div>{`Date: ${hoveredRect.date.toLocaleDateString()}`}</div>
                 <div>{`Time: ${hoveredRect.date.toLocaleTimeString()}`}</div>
-                <div>{`Altitude: ${hoveredRect.cloudCell.mslFt.toFixed(2)} ft`}</div>
+                <div>{`MSL Height: ${hoveredRect.cloudCell.mslFt.toFixed(2)} ft`}</div>
+                <div>{`Geopotential Height: ${hoveredRect.cloudCell.geopotentialFt.toFixed(2)} ft`}</div>
+                {showPressureLines && (
+                  <div>{`Pressure: ${hoveredRect.cloudCell.hpa} hPa (${hPaToInHg(hoveredRect.cloudCell.hpa)} inHg)`}</div>
+                )}
                 <div>{`Cloud Cover: ${hoveredRect.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
-                <div>{`Geopotential Height: ${hoveredRect.cloudCell.mslFt.toFixed(2)}ft MSL`}</div>
               </div>
             </foreignObject>
           </>

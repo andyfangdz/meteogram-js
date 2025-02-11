@@ -20,12 +20,14 @@ interface VisualizationPreferencesProps {
     useLocalTime: boolean;
     highlightCeilingCoverage: boolean;
     clampCloudCoverageAt50Pct: boolean;
+    showPressureLines: boolean;
   };
   updatePreferences: (
     prefs: Partial<{
       useLocalTime: boolean;
       highlightCeilingCoverage: boolean;
       clampCloudCoverageAt50Pct: boolean;
+      showPressureLines: boolean;
     }>,
   ) => void;
 }
@@ -59,6 +61,11 @@ export default function VisualizationPreferences({
       "meteogram-clamp-coverage",
       preferences.clampCloudCoverageAt50Pct,
     );
+  const [storedShowPressureLines, setStoredShowPressureLines] =
+    usePersistedState<boolean>(
+      "meteogram-show-pressure-lines",
+      preferences.showPressureLines,
+    );
 
   // Sync localStorage with URL params
   useEffect(() => {
@@ -78,6 +85,12 @@ export default function VisualizationPreferences({
       updatePreferences({ clampCloudCoverageAt50Pct: storedClampCoverage });
     }
   }, [storedClampCoverage]);
+
+  useEffect(() => {
+    if (storedShowPressureLines !== preferences.showPressureLines) {
+      updatePreferences({ showPressureLines: storedShowPressureLines });
+    }
+  }, [storedShowPressureLines]);
 
   return (
     <>
@@ -103,6 +116,11 @@ export default function VisualizationPreferences({
           setStoredClampCoverage(value);
           updatePreferences({ clampCloudCoverageAt50Pct: value });
         }}
+        showPressureLines={preferences.showPressureLines}
+        setShowPressureLines={(value) => {
+          setStoredShowPressureLines(value);
+          updatePreferences({ showPressureLines: value });
+        }}
       />
       <main className="items-center justify-between p-24">
         <MeteogramWrapper
@@ -110,6 +128,7 @@ export default function VisualizationPreferences({
           useLocalTime={preferences.useLocalTime}
           highlightCeilingCoverage={preferences.highlightCeilingCoverage}
           clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
+          showPressureLines={preferences.showPressureLines}
           isLoading={isLoading}
           error={error}
         />

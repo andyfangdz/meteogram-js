@@ -8,6 +8,7 @@ interface MeteogramWrapperProps {
   useLocalTime: boolean;
   highlightCeilingCoverage: boolean;
   clampCloudCoverageAt50Pct: boolean;
+  showPressureLines: boolean;
   isLoading: boolean;
   error: Error | null;
 }
@@ -17,6 +18,7 @@ export default function MeteogramWrapper({
   useLocalTime,
   highlightCeilingCoverage,
   clampCloudCoverageAt50Pct,
+  showPressureLines,
   isLoading,
   error,
 }: MeteogramWrapperProps) {
@@ -34,6 +36,7 @@ export default function MeteogramWrapper({
         weatherData={weatherData}
         highlightCeilingCoverage={highlightCeilingCoverage}
         clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
+        showPressureLines={showPressureLines}
         isLoading={isLoading}
       />
     </div>
