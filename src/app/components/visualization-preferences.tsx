@@ -21,7 +21,6 @@ interface VisualizationPreferencesProps {
     highlightCeilingCoverage: boolean;
     clampCloudCoverageAt50Pct: boolean;
     showPressureLines: boolean;
-    showFreezingLevels: boolean;
   };
   updatePreferences: (
     prefs: Partial<{
@@ -29,7 +28,6 @@ interface VisualizationPreferencesProps {
       highlightCeilingCoverage: boolean;
       clampCloudCoverageAt50Pct: boolean;
       showPressureLines: boolean;
-      showFreezingLevels: boolean;
     }>,
   ) => void;
 }
@@ -68,11 +66,6 @@ export default function VisualizationPreferences({
       "meteogram-show-pressure-lines",
       preferences.showPressureLines,
     );
-  const [storedShowFreezingLevels, setStoredShowFreezingLevels] =
-    usePersistedState<boolean>(
-      "meteogram-show-freezing-levels",
-      preferences.showFreezingLevels,
-    );
 
   // Sync localStorage with URL params
   useEffect(() => {
@@ -98,12 +91,6 @@ export default function VisualizationPreferences({
       updatePreferences({ showPressureLines: storedShowPressureLines });
     }
   }, [storedShowPressureLines]);
-
-  useEffect(() => {
-    if (storedShowFreezingLevels !== preferences.showFreezingLevels) {
-      updatePreferences({ showFreezingLevels: storedShowFreezingLevels });
-    }
-  }, [storedShowFreezingLevels]);
 
   return (
     <>
@@ -134,11 +121,6 @@ export default function VisualizationPreferences({
           setStoredShowPressureLines(value);
           updatePreferences({ showPressureLines: value });
         }}
-        showFreezingLevels={preferences.showFreezingLevels}
-        setShowFreezingLevels={(value) => {
-          setStoredShowFreezingLevels(value);
-          updatePreferences({ showFreezingLevels: value });
-        }}
       />
       <main className="items-center justify-between p-4">
         <MeteogramWrapper
@@ -147,7 +129,6 @@ export default function VisualizationPreferences({
           highlightCeilingCoverage={preferences.highlightCeilingCoverage}
           clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
           showPressureLines={preferences.showPressureLines}
-          showFreezingLevels={preferences.showFreezingLevels}
           isLoading={isLoading}
           error={error}
         />

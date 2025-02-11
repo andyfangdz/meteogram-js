@@ -35,8 +35,6 @@ interface NavProps {
   setClampCloudCoverageAt50Pct: (value: boolean) => void;
   showPressureLines: boolean;
   setShowPressureLines: (value: boolean) => void;
-  showFreezingLevels: boolean;
-  setShowFreezingLevels: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
@@ -48,8 +46,6 @@ const NavContext = createContext<{
   setClampCloudCoverageAt50Pct: (value: boolean) => void;
   showPressureLines: boolean;
   setShowPressureLines: (value: boolean) => void;
-  showFreezingLevels: boolean;
-  setShowFreezingLevels: (value: boolean) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -59,8 +55,6 @@ const NavContext = createContext<{
   setClampCloudCoverageAt50Pct: () => {},
   showPressureLines: false,
   setShowPressureLines: () => {},
-  showFreezingLevels: true,
-  setShowFreezingLevels: () => {},
 });
 
 export default function Nav({
@@ -78,8 +72,6 @@ export default function Nav({
   setClampCloudCoverageAt50Pct,
   showPressureLines,
   setShowPressureLines,
-  showFreezingLevels,
-  setShowFreezingLevels,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -106,12 +98,6 @@ export default function Nav({
       >
         Show Pressure Lines
       </Switch>
-      <Switch
-        isSelected={showFreezingLevels}
-        onValueChange={setShowFreezingLevels}
-      >
-        Show Freezing Levels
-      </Switch>
     </div>
   );
 
@@ -126,8 +112,6 @@ export default function Nav({
         setClampCloudCoverageAt50Pct,
         showPressureLines,
         setShowPressureLines,
-        showFreezingLevels,
-        setShowFreezingLevels,
       }}
     >
       <Navbar className="relative z-[51]">

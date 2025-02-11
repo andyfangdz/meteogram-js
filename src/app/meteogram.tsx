@@ -27,7 +27,6 @@ export type MeteogramProps = {
   clampCloudCoverageAt50Pct?: boolean;
   isLoading?: boolean;
   showPressureLines?: boolean;
-  showFreezingLevels?: boolean;
 };
 
 const black = "#000000";
@@ -126,7 +125,6 @@ export default function Meteogram({
   clampCloudCoverageAt50Pct = true,
   isLoading = false,
   showPressureLines = false,
-  showFreezingLevels = true,
 }: MeteogramProps) {
   const [hoveredRect, setHoveredRect] = useState<{
     date: Date;
@@ -294,28 +292,27 @@ export default function Meteogram({
             })}
           </Group>
         ))}
-        {showFreezingLevels &&
-          weatherData.map((d, i) => {
-            if (i === weatherData.length - 1) return null;
+        {weatherData.map((d, i) => {
+          if (i === weatherData.length - 1) return null;
 
-            const currentLevels = findFreezingLevels(d.cloud, d.groundTemp);
-            const nextLevels = findFreezingLevels(
-              weatherData[i + 1].cloud,
-              weatherData[i + 1].groundTemp,
-            );
-            const matches = matchFreezingLevels(currentLevels, nextLevels);
+          const currentLevels = findFreezingLevels(d.cloud, d.groundTemp);
+          const nextLevels = findFreezingLevels(
+            weatherData[i + 1].cloud,
+            weatherData[i + 1].groundTemp,
+          );
+          const matches = matchFreezingLevels(currentLevels, nextLevels);
 
-            return matches.map(([currentLevel, nextLevel], levelIndex) => (
-              <path
-                key={`freezing-level-${d.date}-${levelIndex}`}
-                d={`M ${dateScale(d.date)} ${mslScale(currentLevel)} L ${dateScale(weatherData[i + 1].date)} ${mslScale(nextLevel)}`}
-                stroke="#0066cc"
-                strokeWidth={2}
-                strokeDasharray="4,4"
-                fill="none"
-              />
-            ));
-          })}
+          return matches.map(([currentLevel, nextLevel], levelIndex) => (
+            <path
+              key={`freezing-level-${d.date}-${levelIndex}`}
+              d={`M ${dateScale(d.date)} ${mslScale(currentLevel)} L ${dateScale(weatherData[i + 1].date)} ${mslScale(nextLevel)}`}
+              stroke="#0066cc"
+              strokeWidth={2}
+              strokeDasharray="4,4"
+              fill="none"
+            />
+          ));
+        })}
         {showPressureLines &&
           weatherData[0].cloud.map((_, pressureIndex) => {
             // Create a path for each pressure level
