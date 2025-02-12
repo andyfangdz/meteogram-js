@@ -3,6 +3,7 @@
 import { AxisBottom, AxisScale } from "@visx/axis";
 import { timeFormat, utcFormat } from "@visx/vendor/d3-time-format";
 import { scaleTime } from "@visx/scale";
+import { useState, useEffect } from "react";
 
 interface TimeAxisProps {
   left: number;
@@ -21,12 +22,21 @@ export default function TimeAxis({
   stroke,
   tickStroke,
 }: TimeAxisProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <AxisBottom
       left={left}
       top={top}
       scale={scale}
       tickFormat={(value) => {
+        if (!mounted) {
+          return ""; // Don't show any ticks until mounted
+        }
         if (value instanceof Date) {
           return useLocalTime
             ? timeFormat("%d%H")(value)

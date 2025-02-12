@@ -587,8 +587,8 @@ export default function Meteogram({
               boxShadow: frozenRect ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
             }}
           >
-            <div>{`Date: ${(hoveredRect || frozenRect)!.date.toUTCString().split(' ').slice(0, 4).join(' ')}`}</div>
-            <div>{`Time: ${(hoveredRect || frozenRect)!.date.toUTCString().split(' ')[4]}`}</div>
+            <div>{`Date: ${(hoveredRect || frozenRect)!.date.toUTCString().split(" ").slice(0, 4).join(" ")}`}</div>
+            <div>{`Time: ${(hoveredRect || frozenRect)!.date.toUTCString().split(" ")[4]}`}</div>
             <div>{`MSL Height: ${(hoveredRect || frozenRect)!.cloudCell.mslFt.toFixed(2)} ft`}</div>
             <div>{`Height Range: ${(hoveredRect || frozenRect)!.cloudCell.mslFtTop.toFixed(2)} - ${(hoveredRect || frozenRect)!.cloudCell.mslFtBottom.toFixed(2)} ft`}</div>
             {showPressureLines && (
