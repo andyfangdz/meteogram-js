@@ -1,9 +1,17 @@
 "use client";
 
-import { AxisBottom, AxisScale } from "@visx/axis";
+import dynamic from "next/dynamic";
+import type { AxisBottom as AxisBottomType, AxisScale } from "@visx/axis";
 import { timeFormat, utcFormat } from "@visx/vendor/d3-time-format";
 import { scaleTime } from "@visx/scale";
 import { useState, useEffect } from "react";
+
+const AxisBottom = dynamic<React.ComponentProps<typeof AxisBottomType>>(
+  () => import("@visx/axis").then((mod) => mod.AxisBottom),
+  {
+    ssr: false,
+  },
+);
 
 interface TimeAxisProps {
   left: number;
