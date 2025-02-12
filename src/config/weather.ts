@@ -52,9 +52,6 @@ export const VARIABLES = [
   "temperature_2m", // Ground level temperature
 ];
 
-// Debug log the variables order
-console.log("API Variables:", VARIABLES);
-
 export const LOCATIONS: Locations = {
   KFRG: {
     longitude: -73.41639,

@@ -220,6 +220,7 @@ export default function Meteogram({
   const renderCloudColumns = useMemo(() => {
     return (
       <>
+        {/* Base cloud rectangles */}
         {weatherData.map((d) => (
           <Group
             key={`date-group-${d.date}`}
@@ -252,8 +253,9 @@ export default function Meteogram({
                       scales.mslScale(cloud.mslFtTop),
                   )}
                   fill={fillColor}
-                  stroke={isHovered ? black : "transparent"}
-                  strokeWidth={isHovered ? 1 : 0}
+                  stroke="transparent"
+                  strokeWidth={0}
+                  style={{ cursor: "default" }}
                   onMouseEnter={() => {
                     if (!frozenRect) {
                       handleHover(d.date, cloud);
@@ -265,7 +267,6 @@ export default function Meteogram({
                     }
                   }}
                   onClick={(event: React.MouseEvent) => {
-                    // Only enable freeze for mouse events, not touch
                     if (
                       (event.nativeEvent as PointerEvent).pointerType ===
                       "mouse"
@@ -285,7 +286,6 @@ export default function Meteogram({
                       }
                     }
                   }}
-                  style={{ cursor: "default" }}
                 />
               );
             })}
@@ -365,6 +365,41 @@ export default function Meteogram({
                 )),
             )}
 
+        {/* Highlight borders - rendered last to appear on top */}
+        {weatherData.map((d) => (
+          <Group
+            key={`highlight-group-${d.date}`}
+            left={formatNumber(scales.dateScale(d.date))}
+          >
+            {d.cloud.map((cloud) => {
+              const isHovered =
+                (hoveredRect?.date === d.date &&
+                  hoveredRect?.cloudCell.hpa === cloud.hpa) ||
+                (frozenRect?.date === d.date &&
+                  frozenRect?.cloudCell.hpa === cloud.hpa);
+
+              if (!isHovered) return null;
+
+              return (
+                <rect
+                  key={`highlight-${cloud.hpa}`}
+                  x={formatNumber(0)}
+                  y={formatNumber(scales.mslScale(cloud.mslFtTop))}
+                  width={formatNumber(barWidth * 1.1)}
+                  height={formatNumber(
+                    scales.mslScale(cloud.mslFtBottom) -
+                      scales.mslScale(cloud.mslFtTop),
+                  )}
+                  fill="none"
+                  stroke={black}
+                  strokeWidth={1}
+                  pointerEvents="none"
+                />
+              );
+            })}
+          </Group>
+        ))}
+
         {/* Hover/Frozen Indicators */}
         {(hoveredRect || frozenRect) && (
           <>
@@ -398,88 +433,6 @@ export default function Meteogram({
               strokeWidth={1}
               pointerEvents="none"
             />
-            <foreignObject
-              x={
-                hoveredRect || frozenRect
-                  ? (() => {
-                      const cursorX = formatNumber(
-                        scales.dateScale((hoveredRect || frozenRect)!.date),
-                      );
-                      if (cursorX - 210 < 0) {
-                        return formatNumber(
-                          Math.min(cursorX + 10, bounds.xMax - 200),
-                        );
-                      }
-                      return formatNumber(
-                        Math.min(cursorX - 210, bounds.xMax - 200),
-                      );
-                    })()
-                  : 0
-              }
-              y={
-                hoveredRect || frozenRect
-                  ? (() => {
-                      const tooltipHeight = 160;
-                      const cursorY = formatNumber(
-                        scales.mslScale(
-                          (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
-                        ),
-                      );
-                      const spaceBelow = bounds.yMax - cursorY;
-
-                      if (spaceBelow < tooltipHeight / 3) {
-                        return formatNumber(
-                          Math.max(margin.top, cursorY - tooltipHeight - 10),
-                        );
-                      }
-                      return formatNumber(
-                        Math.min(
-                          cursorY + 10,
-                          bounds.yMax + margin.top - tooltipHeight,
-                        ),
-                      );
-                    })()
-                  : 0
-              }
-              width={200}
-              height={160}
-              style={{ pointerEvents: "none" }}
-            >
-              <div
-                style={{
-                  backgroundColor: "white",
-                  border: `1px solid ${frozenRect ? "#666" : black}`,
-                  borderRadius: "4px",
-                  padding: "4px",
-                  fontSize: "10px",
-                  pointerEvents: "none",
-                  boxShadow: frozenRect ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
-                }}
-              >
-                <div>{`Date: ${(hoveredRect || frozenRect)!.date.toLocaleDateString()}`}</div>
-                <div>{`Time: ${(hoveredRect || frozenRect)!.date.toLocaleTimeString()}`}</div>
-                <div>{`MSL Height: ${(hoveredRect || frozenRect)!.cloudCell.mslFt.toFixed(2)} ft`}</div>
-                <div>{`Height Range: ${(hoveredRect || frozenRect)!.cloudCell.mslFtTop.toFixed(2)} - ${(hoveredRect || frozenRect)!.cloudCell.mslFtBottom.toFixed(2)} ft`}</div>
-                {showPressureLines && (
-                  <div>{`Pressure: ${(hoveredRect || frozenRect)!.cloudCell.hpa} hPa (${hPaToInHg((hoveredRect || frozenRect)!.cloudCell.hpa)} inHg)`}</div>
-                )}
-                <div>{`Cloud Cover: ${(hoveredRect || frozenRect)!.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
-                <div>{`Temperature: ${(hoveredRect || frozenRect)!.cloudCell.temperature.toFixed(1)}°C`}</div>
-                <div>{`Wind Speed: ${kmhToKnots((hoveredRect || frozenRect)!.cloudCell.windSpeed)} kt`}</div>
-                <div>{`Wind Direction: ${(hoveredRect || frozenRect)!.cloudCell.windDirection.toFixed(0)}°`}</div>
-                {frozenRect && (
-                  <div
-                    style={{
-                      marginTop: "4px",
-                      color: "#666",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    Click again to unfreeze
-                  </div>
-                )}
-              </div>
-            </foreignObject>
           </>
         )}
       </>
@@ -508,74 +461,172 @@ export default function Meteogram({
         fill={background}
         rx={14}
       />
-      <AxisBottom
-        left={formatNumber(margin.left)}
-        top={formatNumber(bounds.yMax + margin.top)}
-        scale={scales.dateScale}
-        tickFormat={(value) => {
-          if (value instanceof Date) {
+      <Group top={formatNumber(margin.top)} left={formatNumber(margin.left)}>
+        {renderCloudColumns}
+      </Group>
+      {/* Add axes on top of cloud cells */}
+      <g style={{ zIndex: 10 }}>
+        <AxisBottom
+          left={formatNumber(margin.left)}
+          top={formatNumber(bounds.yMax + margin.top)}
+          scale={scales.dateScale}
+          tickFormat={(value) => {
+            if (value instanceof Date) {
+              return useLocalTime
+                ? timeFormat("%d%H")(value)
+                : utcFormat("%d%HZ")(value);
+            }
+            const date = new Date(Number(value));
             return useLocalTime
-              ? timeFormat("%d%H")(value)
-              : utcFormat("%d%HZ")(value);
-          }
-          const date = new Date(Number(value));
-          return useLocalTime
-            ? timeFormat("%d%H")(date)
-            : utcFormat("%d%HZ")(date);
-        }}
-        stroke={black}
-        tickStroke={black}
-        tickLabelProps={{
-          fill: black,
-          fontSize: 11,
-          textAnchor: "middle",
-        }}
-      />
-      <AxisLeft
-        left={formatNumber(margin.left)}
-        top={formatNumber(margin.top)}
-        scale={scales.mslScale}
-        numTicks={10}
-        tickFormat={(value) => formatNumber(Number(value)).toString()}
-        stroke={black}
-        tickStroke={black}
-        tickLabelProps={{
-          fill: black,
-          fontSize: 11,
-          textAnchor: "end",
-        }}
-      />
-      {showPressureLines && (
+              ? timeFormat("%d%H")(date)
+              : utcFormat("%d%HZ")(date);
+          }}
+          stroke={black}
+          tickStroke={black}
+          tickLabelProps={{
+            fill: black,
+            fontSize: 11,
+            textAnchor: "middle",
+          }}
+        />
         <AxisLeft
           left={formatNumber(margin.left)}
           top={formatNumber(margin.top)}
           scale={scales.mslScale}
-          stroke="none"
+          numTicks={10}
+          tickFormat={(value) => formatNumber(Number(value)).toString()}
+          stroke={black}
           tickStroke={black}
-          tickValues={pressureLevels.map((hpa) =>
-            formatNumber(getYForPressureMemo(weatherData[0].cloud, hpa)),
-          )}
-          tickFormat={(value) => {
-            const cloud = weatherData[0].cloud.find(
-              (c) =>
-                formatNumber(c.geopotentialFt) === formatNumber(Number(value)),
-            );
-            return cloud ? `${cloud.hpa}` : "";
-          }}
-          tickLength={6}
           tickLabelProps={{
             fill: black,
             fontSize: 11,
-            textAnchor: "start",
-            dx: "0.5em",
+            textAnchor: "end",
           }}
-          orientation="right"
-          label="hPa"
         />
+        {showPressureLines && (
+          <AxisLeft
+            left={formatNumber(margin.left)}
+            top={formatNumber(margin.top)}
+            scale={scales.mslScale}
+            stroke="none"
+            tickStroke={black}
+            tickValues={pressureLevels.map((hpa) =>
+              formatNumber(getYForPressureMemo(weatherData[0].cloud, hpa)),
+            )}
+            tickFormat={(value) => {
+              const cloud = weatherData[0].cloud.find(
+                (c) =>
+                  formatNumber(c.geopotentialFt) ===
+                  formatNumber(Number(value)),
+              );
+              return cloud ? `${cloud.hpa}` : "";
+            }}
+            tickLength={6}
+            tickLabelProps={{
+              fill: black,
+              fontSize: 11,
+              textAnchor: "start",
+              dx: "0.5em",
+            }}
+            orientation="right"
+            label="hPa"
+          />
+        )}
+      </g>
+      {/* Render tooltip last to ensure it's always on top */}
+      {(hoveredRect || frozenRect) && (
+        <foreignObject
+          x={
+            hoveredRect || frozenRect
+              ? (() => {
+                  const cursorX = formatNumber(
+                    scales.dateScale((hoveredRect || frozenRect)!.date),
+                  );
+                  if (cursorX - 210 < 0) {
+                    return formatNumber(
+                      Math.min(
+                        cursorX + margin.left + 10,
+                        bounds.xMax + margin.left - 200,
+                      ),
+                    );
+                  }
+                  return formatNumber(
+                    Math.min(
+                      cursorX + margin.left - 210,
+                      bounds.xMax + margin.left - 200,
+                    ),
+                  );
+                })()
+              : 0
+          }
+          y={
+            hoveredRect || frozenRect
+              ? (() => {
+                  const tooltipHeight = 160;
+                  const cursorY = formatNumber(
+                    scales.mslScale(
+                      (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+                    ),
+                  );
+                  const spaceBelow = bounds.yMax - cursorY;
+
+                  if (spaceBelow < tooltipHeight / 3) {
+                    return formatNumber(
+                      Math.max(
+                        margin.top,
+                        cursorY + margin.top - tooltipHeight - 10,
+                      ),
+                    );
+                  }
+                  return formatNumber(
+                    Math.min(
+                      cursorY + margin.top + 10,
+                      bounds.yMax + margin.top - tooltipHeight,
+                    ),
+                  );
+                })()
+              : 0
+          }
+          width={200}
+          height={160}
+          style={{ pointerEvents: "none" }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              border: `1px solid ${frozenRect ? "#666" : black}`,
+              borderRadius: "4px",
+              padding: "4px",
+              fontSize: "10px",
+              pointerEvents: "none",
+              boxShadow: frozenRect ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
+            }}
+          >
+            <div>{`Date: ${(hoveredRect || frozenRect)!.date.toLocaleDateString()}`}</div>
+            <div>{`Time: ${(hoveredRect || frozenRect)!.date.toLocaleTimeString()}`}</div>
+            <div>{`MSL Height: ${(hoveredRect || frozenRect)!.cloudCell.mslFt.toFixed(2)} ft`}</div>
+            <div>{`Height Range: ${(hoveredRect || frozenRect)!.cloudCell.mslFtTop.toFixed(2)} - ${(hoveredRect || frozenRect)!.cloudCell.mslFtBottom.toFixed(2)} ft`}</div>
+            {showPressureLines && (
+              <div>{`Pressure: ${(hoveredRect || frozenRect)!.cloudCell.hpa} hPa (${hPaToInHg((hoveredRect || frozenRect)!.cloudCell.hpa)} inHg)`}</div>
+            )}
+            <div>{`Cloud Cover: ${(hoveredRect || frozenRect)!.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
+            <div>{`Temperature: ${(hoveredRect || frozenRect)!.cloudCell.temperature.toFixed(1)}°C`}</div>
+            <div>{`Wind Speed: ${kmhToKnots((hoveredRect || frozenRect)!.cloudCell.windSpeed)} kt`}</div>
+            <div>{`Wind Direction: ${(hoveredRect || frozenRect)!.cloudCell.windDirection.toFixed(0)}°`}</div>
+            {frozenRect && (
+              <div
+                style={{
+                  marginTop: "4px",
+                  color: "#666",
+                  fontStyle: "italic",
+                }}
+              >
+                Click again to unfreeze
+              </div>
+            )}
+          </div>
+        </foreignObject>
       )}
-      <Group top={formatNumber(margin.top)} left={formatNumber(margin.left)}>
-        {renderCloudColumns}
-      </Group>
     </svg>
   );
 }
