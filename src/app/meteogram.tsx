@@ -72,7 +72,19 @@ const matchFreezingLevels = (
   const matches: [number, number][] = [];
   const used2 = new Set<number>();
 
-  // For each level in the first column
+  // First, always match the lowest freezing levels if they exist
+  if (levels1.length > 0 && levels2.length > 0) {
+    const lowestLevel1 = Math.min(...levels1);
+    const lowestLevel2 = Math.min(...levels2);
+    matches.push([lowestLevel1, lowestLevel2]);
+    used2.add(levels2.indexOf(lowestLevel2));
+
+    // Remove the lowest levels from consideration for other matches
+    levels1 = levels1.filter((l) => l !== lowestLevel1);
+    levels2 = levels2.filter((l) => l !== lowestLevel2);
+  }
+
+  // Then match remaining levels based on proximity
   for (let i = 0; i < levels1.length; i++) {
     let bestMatch = -1;
     let minDiff = Infinity;
@@ -95,7 +107,8 @@ const matchFreezingLevels = (
     }
   }
 
-  return matches;
+  // Sort matches by height to maintain visual order
+  return matches.sort((a, b) => a[0] - b[0]);
 };
 
 // Memoized WindBarb component
