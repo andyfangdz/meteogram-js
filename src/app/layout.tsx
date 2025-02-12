@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { HydrationOverlay } from "@builder.io/react-hydration-overlay";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,7 +21,9 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <HydrationOverlay>{children}</HydrationOverlay>
+      </body>
     </html>
   );
 }
