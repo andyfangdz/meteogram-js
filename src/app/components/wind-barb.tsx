@@ -1,5 +1,22 @@
 import React from "react";
 
+// Format numbers to ensure consistent precision
+const formatNumber = (num: number) => Number(num.toFixed(4));
+
+// Helper function to calculate point on circle
+const pointOnCircle = (
+  centerX: number,
+  centerY: number,
+  radius: number,
+  angleDegrees: number,
+) => {
+  const angleRadians = ((angleDegrees - 90) * Math.PI) / 180.0;
+  return {
+    x: formatNumber(centerX + radius * Math.cos(angleRadians)),
+    y: formatNumber(centerY + radius * Math.sin(angleRadians)),
+  };
+};
+
 interface WindBarbProps {
   x: number;
   y: number;
@@ -15,8 +32,8 @@ const kmhToKnots = (kmh: number) => kmh * 0.539957;
 const getEndpoint = (x: number, y: number, angle: number, length: number) => {
   const radians = (angle - 90) * (Math.PI / 180); // -90 to align with meteorological convention
   return {
-    x: x + length * Math.cos(radians),
-    y: y + length * Math.sin(radians),
+    x: formatNumber(x + length * Math.cos(radians)),
+    y: formatNumber(y + length * Math.sin(radians)),
   };
 };
 
@@ -36,7 +53,7 @@ export default function WindBarb({
   const staffEnd = getEndpoint(x, y, direction, size);
 
   // Generate the path for the wind barb
-  let path = `M ${x} ${y} L ${staffEnd.x} ${staffEnd.y}`;
+  let path = `M ${formatNumber(x)} ${formatNumber(y)} L ${formatNumber(staffEnd.x)} ${formatNumber(staffEnd.y)}`;
 
   // Starting point for barbs, from the end of the staff
   let currentPoint = { x: staffEnd.x, y: staffEnd.y };
@@ -51,20 +68,20 @@ export default function WindBarb({
       direction - 90,
       barbLength,
     );
-    const trianglePath = `
-      M ${currentPoint.x} ${currentPoint.y}
-      L ${flagStart.x} ${flagStart.y}
-      L ${getEndpoint(currentPoint.x, currentPoint.y, direction, -barbSpacing).x}
-      ${getEndpoint(currentPoint.x, currentPoint.y, direction, -barbSpacing).y}
-      Z
-    `;
-    path += trianglePath;
-    currentPoint = getEndpoint(
+    const flagEnd = getEndpoint(
       currentPoint.x,
       currentPoint.y,
       direction,
       -barbSpacing,
     );
+    const trianglePath = `
+      M ${formatNumber(currentPoint.x)} ${formatNumber(currentPoint.y)}
+      L ${formatNumber(flagStart.x)} ${formatNumber(flagStart.y)}
+      L ${formatNumber(flagEnd.x)} ${formatNumber(flagEnd.y)}
+      Z
+    `;
+    path += trianglePath;
+    currentPoint = flagEnd;
   }
 
   // Add long barbs (10 knots each)
@@ -75,7 +92,7 @@ export default function WindBarb({
       direction - 90,
       barbLength,
     );
-    path += ` M ${currentPoint.x} ${currentPoint.y} L ${barbEnd.x} ${barbEnd.y}`;
+    path += ` M ${formatNumber(currentPoint.x)} ${formatNumber(currentPoint.y)} L ${formatNumber(barbEnd.x)} ${formatNumber(barbEnd.y)}`;
     currentPoint = getEndpoint(
       currentPoint.x,
       currentPoint.y,
@@ -92,7 +109,7 @@ export default function WindBarb({
       direction - 90,
       barbLength / 2,
     );
-    path += ` M ${currentPoint.x} ${currentPoint.y} L ${barbEnd.x} ${barbEnd.y}`;
+    path += ` M ${formatNumber(currentPoint.x)} ${formatNumber(currentPoint.y)} L ${formatNumber(barbEnd.x)} ${formatNumber(barbEnd.y)}`;
   }
 
   return (

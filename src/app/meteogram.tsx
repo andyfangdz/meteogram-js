@@ -16,6 +16,9 @@ const hPaToInHg = (hpa: number) => (hpa * 0.02953).toFixed(2);
 // Convert km/h to knots
 const kmhToKnots = (kmh: number) => (kmh * 0.539957).toFixed(0);
 
+// Add this helper function at the top with other constants
+const formatNumber = (num: number) => Number(num.toFixed(4));
+
 // Helper function to find freezing levels in a cloud column
 const findFreezingLevels = (
   cloudColumn: CloudCell[],
@@ -179,11 +182,13 @@ export default function Meteogram({
 
     const mslScale = scaleLinear<number>({
       domain: [0, 20_000],
-    }).range([bounds.yMax, 0]);
+      range: [bounds.yMax, 0],
+    });
 
     const pressureScale = scaleLinear<number>({
       domain: [250, 1000],
-    }).range([0, bounds.yMax]);
+      range: [0, bounds.yMax],
+    });
 
     const cloudScale = scaleLinear<number>({
       domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
@@ -216,7 +221,10 @@ export default function Meteogram({
     return (
       <>
         {weatherData.map((d) => (
-          <Group key={`date-group-${d.date}`} left={scales.dateScale(d.date)}>
+          <Group
+            key={`date-group-${d.date}`}
+            left={formatNumber(scales.dateScale(d.date))}
+          >
             {d.cloud.map((cloud) => {
               const isHovered =
                 (hoveredRect?.date === d.date &&
@@ -230,19 +238,19 @@ export default function Meteogram({
 
               const fillColor =
                 cloud.cloudCoverage > 50 && highlightCeilingCoverage
-                  ? `rgba(200, 200, 200, ${scales.cloudScale(coverage)})`
-                  : `rgba(255, 255, 255, ${scales.cloudScale(coverage)})`;
+                  ? `rgba(200, 200, 200, ${formatNumber(scales.cloudScale(coverage))})`
+                  : `rgba(255, 255, 255, ${formatNumber(scales.cloudScale(coverage))})`;
 
               return (
                 <rect
                   key={`cloud-${cloud.hpa}`}
-                  x={0}
-                  y={scales.mslScale(cloud.mslFtTop)}
-                  width={isHovered ? barWidth * 1.1 : barWidth}
-                  height={
+                  x={formatNumber(0)}
+                  y={formatNumber(scales.mslScale(cloud.mslFtTop))}
+                  width={formatNumber(isHovered ? barWidth * 1.1 : barWidth)}
+                  height={formatNumber(
                     scales.mslScale(cloud.mslFtBottom) -
-                    scales.mslScale(cloud.mslFtTop)
-                  }
+                      scales.mslScale(cloud.mslFtTop),
+                  )}
                   fill={fillColor}
                   stroke={isHovered ? black : "transparent"}
                   strokeWidth={isHovered ? 1 : 0}
@@ -298,7 +306,7 @@ export default function Meteogram({
           return matches.map(([currentLevel, nextLevel], levelIndex) => (
             <path
               key={`freezing-level-${d.date}-${levelIndex}`}
-              d={`M ${scales.dateScale(d.date)} ${scales.mslScale(currentLevel)} L ${scales.dateScale(weatherData[i + 1].date)} ${scales.mslScale(nextLevel)}`}
+              d={`M ${formatNumber(scales.dateScale(d.date))} ${formatNumber(scales.mslScale(currentLevel))} L ${formatNumber(scales.dateScale(weatherData[i + 1].date))} ${formatNumber(scales.mslScale(nextLevel))}`}
               stroke="#0066cc"
               strokeWidth={2}
               strokeDasharray="4,4"
@@ -311,8 +319,10 @@ export default function Meteogram({
         {showPressureLines &&
           weatherData[0].cloud.map((_, pressureIndex) => {
             const points = weatherData.map((d) => ({
-              x: scales.dateScale(d.date),
-              y: scales.mslScale(d.cloud[pressureIndex].geopotentialFt),
+              x: formatNumber(scales.dateScale(d.date)),
+              y: formatNumber(
+                scales.mslScale(d.cloud[pressureIndex].geopotentialFt),
+              ),
             }));
 
             const pathD = points.reduce((path, point, i) => {
@@ -347,8 +357,8 @@ export default function Meteogram({
                 .map((cloud) => (
                   <MemoizedWindBarb
                     key={`wind-barb-${d.date}-${cloud.hpa}`}
-                    x={scales.dateScale(d.date) + barWidth / 2}
-                    y={scales.mslScale(cloud.geopotentialFt)}
+                    x={formatNumber(scales.dateScale(d.date) + barWidth / 2)}
+                    y={formatNumber(scales.mslScale(cloud.geopotentialFt))}
                     speed={parseFloat(kmhToKnots(cloud.windSpeed))}
                     direction={cloud.windDirection}
                   />
@@ -359,22 +369,30 @@ export default function Meteogram({
         {(hoveredRect || frozenRect) && (
           <>
             <line
-              x1={scales.dateScale((hoveredRect || frozenRect)!.date)}
-              x2={scales.dateScale((hoveredRect || frozenRect)!.date)}
+              x1={formatNumber(
+                scales.dateScale((hoveredRect || frozenRect)!.date),
+              )}
+              x2={formatNumber(
+                scales.dateScale((hoveredRect || frozenRect)!.date),
+              )}
               y1={0}
-              y2={bounds.yMax}
+              y2={formatNumber(bounds.yMax)}
               stroke={black}
               strokeWidth={1}
               pointerEvents="none"
             />
             <line
               x1={0}
-              x2={bounds.xMax}
-              y1={scales.mslScale(
-                (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+              x2={formatNumber(bounds.xMax)}
+              y1={formatNumber(
+                scales.mslScale(
+                  (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+                ),
               )}
-              y2={scales.mslScale(
-                (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+              y2={formatNumber(
+                scales.mslScale(
+                  (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+                ),
               )}
               stroke={black}
               strokeWidth={1}
@@ -384,13 +402,17 @@ export default function Meteogram({
               x={
                 hoveredRect || frozenRect
                   ? (() => {
-                      const cursorX = scales.dateScale(
-                        (hoveredRect || frozenRect)!.date,
+                      const cursorX = formatNumber(
+                        scales.dateScale((hoveredRect || frozenRect)!.date),
                       );
                       if (cursorX - 210 < 0) {
-                        return Math.min(cursorX + 10, bounds.xMax - 200);
+                        return formatNumber(
+                          Math.min(cursorX + 10, bounds.xMax - 200),
+                        );
                       }
-                      return Math.min(cursorX - 210, bounds.xMax - 200);
+                      return formatNumber(
+                        Math.min(cursorX - 210, bounds.xMax - 200),
+                      );
                     })()
                   : 0
               }
@@ -398,20 +420,23 @@ export default function Meteogram({
                 hoveredRect || frozenRect
                   ? (() => {
                       const tooltipHeight = 160;
-                      const cursorY = scales.mslScale(
-                        (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+                      const cursorY = formatNumber(
+                        scales.mslScale(
+                          (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+                        ),
                       );
                       const spaceBelow = bounds.yMax - cursorY;
 
                       if (spaceBelow < tooltipHeight / 3) {
-                        return Math.max(
-                          margin.top,
-                          cursorY - tooltipHeight - 10,
+                        return formatNumber(
+                          Math.max(margin.top, cursorY - tooltipHeight - 10),
                         );
                       }
-                      return Math.min(
-                        cursorY + 10,
-                        bounds.yMax + margin.top - tooltipHeight,
+                      return formatNumber(
+                        Math.min(
+                          cursorY + 10,
+                          bounds.yMax + margin.top - tooltipHeight,
+                        ),
                       );
                     })()
                   : 0
@@ -474,18 +499,18 @@ export default function Meteogram({
   ]);
 
   return (
-    <svg width={width} height={height}>
+    <svg width={formatNumber(width)} height={formatNumber(height)}>
       <rect
-        x={0}
-        y={0}
-        width={width}
-        height={height}
+        x={formatNumber(0)}
+        y={formatNumber(0)}
+        width={formatNumber(width)}
+        height={formatNumber(height)}
         fill={background}
         rx={14}
       />
       <AxisBottom
-        left={margin.left}
-        top={bounds.yMax + margin.top}
+        left={formatNumber(margin.left)}
+        top={formatNumber(bounds.yMax + margin.top)}
         scale={scales.dateScale}
         tickFormat={(value) => {
           if (value instanceof Date) {
@@ -507,9 +532,11 @@ export default function Meteogram({
         }}
       />
       <AxisLeft
-        left={margin.left}
-        top={margin.top}
+        left={formatNumber(margin.left)}
+        top={formatNumber(margin.top)}
         scale={scales.mslScale}
+        numTicks={10}
+        tickFormat={(value) => formatNumber(Number(value)).toString()}
         stroke={black}
         tickStroke={black}
         tickLabelProps={{
@@ -520,17 +547,18 @@ export default function Meteogram({
       />
       {showPressureLines && (
         <AxisLeft
-          left={margin.left}
-          top={margin.top}
+          left={formatNumber(margin.left)}
+          top={formatNumber(margin.top)}
           scale={scales.mslScale}
           stroke="none"
           tickStroke={black}
           tickValues={pressureLevels.map((hpa) =>
-            getYForPressureMemo(weatherData[0].cloud, hpa),
+            formatNumber(getYForPressureMemo(weatherData[0].cloud, hpa)),
           )}
           tickFormat={(value) => {
             const cloud = weatherData[0].cloud.find(
-              (c) => c.geopotentialFt === value,
+              (c) =>
+                formatNumber(c.geopotentialFt) === formatNumber(Number(value)),
             );
             return cloud ? `${cloud.hpa}` : "";
           }}
@@ -545,7 +573,7 @@ export default function Meteogram({
           label="hPa"
         />
       )}
-      <Group top={margin.top} left={margin.left}>
+      <Group top={formatNumber(margin.top)} left={formatNumber(margin.left)}>
         {renderCloudColumns}
       </Group>
     </svg>
