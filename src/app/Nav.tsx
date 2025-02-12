@@ -15,28 +15,28 @@ import {
   Chip,
   Switch,
 } from "@heroui/react";
+import { WeatherModel } from "../types/weather";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
-import { timeFormat } from "@visx/vendor/d3-time-format";
-const lastUpdateFormat = timeFormat("%H:%M:%S");
+import LastUpdateTime from "./components/last-update-time";
 
 interface NavProps {
   model: WeatherModel;
-  setModel: (model: WeatherModel) => void;
+  setModel: Dispatch<SetStateAction<WeatherModel>>;
   location: string;
-  setLocation: (location: string) => void;
+  setLocation: Dispatch<SetStateAction<string>>;
   lastUpdate: Date | null;
   updateWeatherData: () => void;
   useLocalTime: boolean;
-  setUseLocalTime: (value: boolean) => void;
+  setUseLocalTime: Dispatch<SetStateAction<boolean>>;
   highlightCeilingCoverage: boolean;
-  setHighlightCeilingCoverage: (value: boolean) => void;
+  setHighlightCeilingCoverage: Dispatch<SetStateAction<boolean>>;
   clampCloudCoverageAt50Pct: boolean;
-  setClampCloudCoverageAt50Pct: (value: boolean) => void;
+  setClampCloudCoverageAt50Pct: Dispatch<SetStateAction<boolean>>;
   showPressureLines: boolean;
-  setShowPressureLines: (value: boolean) => void;
+  setShowPressureLines: Dispatch<SetStateAction<boolean>>;
   showWindBarbs: boolean;
-  setShowWindBarbs: (value: boolean) => void;
+  setShowWindBarbs: Dispatch<SetStateAction<boolean>>;
 }
 
 const NavContext = createContext<{
@@ -137,7 +137,7 @@ export default function Nav({
           </NavbarItem>
           <NavbarItem>
             <Chip>
-              Last Update: {lastUpdate ? lastUpdateFormat(lastUpdate) : "Never"}
+              <LastUpdateTime lastUpdate={lastUpdate} />
             </Chip>
           </NavbarItem>
         </NavbarContent>
@@ -182,7 +182,7 @@ export default function Nav({
             <LocationDropdown location={location} setLocation={setLocation} />
             <ModelDropdown model={model} setModel={setModel} />
             <Chip>
-              Last Update: {lastUpdate ? lastUpdateFormat(lastUpdate) : "Never"}
+              <LastUpdateTime lastUpdate={lastUpdate} />
             </Chip>
             <Button color="primary" onPress={updateWeatherData}>
               Refresh

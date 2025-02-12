@@ -2,13 +2,13 @@
 
 import React, { useState, useMemo, useCallback } from "react";
 import { Group } from "@visx/group";
-import { AxisBottom, AxisLeft } from "@visx/axis";
+import { AxisLeft } from "@visx/axis";
 import { scaleLinear, scaleTime } from "@visx/scale";
-import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
 import { CloudColumn, CloudCell } from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
 import LoadingSkeleton from "./loading-skeleton";
 import WindBarb from "./components/wind-barb";
+import TimeAxis from "./components/time-axis";
 import { WIND_BARB_LEVELS, MODEL_CONFIGS } from "../config/weather";
 import { WeatherModel } from "../types/weather";
 
@@ -466,28 +466,13 @@ export default function Meteogram({
       </Group>
       {/* Add axes on top of cloud cells */}
       <g style={{ zIndex: 10 }}>
-        <AxisBottom
+        <TimeAxis
           left={formatNumber(margin.left)}
           top={formatNumber(bounds.yMax + margin.top)}
           scale={scales.dateScale}
-          tickFormat={(value) => {
-            if (value instanceof Date) {
-              return useLocalTime
-                ? timeFormat("%d%H")(value)
-                : utcFormat("%d%HZ")(value);
-            }
-            const date = new Date(Number(value));
-            return useLocalTime
-              ? timeFormat("%d%H")(date)
-              : utcFormat("%d%HZ")(date);
-          }}
+          useLocalTime={useLocalTime}
           stroke={black}
           tickStroke={black}
-          tickLabelProps={{
-            fill: black,
-            fontSize: 11,
-            textAnchor: "middle",
-          }}
         />
         <AxisLeft
           left={formatNumber(margin.left)}
@@ -602,8 +587,8 @@ export default function Meteogram({
               boxShadow: frozenRect ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
             }}
           >
-            <div>{`Date: ${(hoveredRect || frozenRect)!.date.toLocaleDateString()}`}</div>
-            <div>{`Time: ${(hoveredRect || frozenRect)!.date.toLocaleTimeString()}`}</div>
+            <div>{`Date: ${(hoveredRect || frozenRect)!.date.toUTCString().split(' ').slice(0, 4).join(' ')}`}</div>
+            <div>{`Time: ${(hoveredRect || frozenRect)!.date.toUTCString().split(' ')[4]}`}</div>
             <div>{`MSL Height: ${(hoveredRect || frozenRect)!.cloudCell.mslFt.toFixed(2)} ft`}</div>
             <div>{`Height Range: ${(hoveredRect || frozenRect)!.cloudCell.mslFtTop.toFixed(2)} - ${(hoveredRect || frozenRect)!.cloudCell.mslFtBottom.toFixed(2)} ft`}</div>
             {showPressureLines && (
