@@ -148,10 +148,12 @@ export default function Meteogram({
   showWindBarbs = true,
   model,
 }: MeteogramProps) {
+  // Call all hooks first, before any conditional logic
   const [hoveredRect, setHoveredRect] = useState<{
     date: Date;
     cloudCell: CloudCell;
   } | null>(null);
+
   const [frozenRect, setFrozenRect] = useState<{
     date: Date;
     cloudCell: CloudCell;
@@ -162,10 +164,6 @@ export default function Meteogram({
     setHoveredRect({ date, cloudCell });
   }, []);
 
-  if (isLoading || weatherData.length === 0) {
-    return <LoadingSkeleton />;
-  }
-
   // Memoize bounds calculations
   const bounds = useMemo(() => {
     const xMax = width - margin.left - margin.right;
@@ -173,30 +171,49 @@ export default function Meteogram({
     return { xMax, yMax };
   }, [width, height, margin]);
 
-  // Memoize scales
+  // Memoize scales with safe defaults when data is not available
   const scales = useMemo(() => {
-    const dateScale = scaleTime({
-      domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
-      range: [0, bounds.xMax],
-    });
+    if (weatherData.length === 0) {
+      return {
+        dateScale: scaleTime({
+          domain: [new Date(), new Date()],
+          range: [0, bounds.xMax],
+        }),
+        mslScale: scaleLinear<number>({
+          domain: [0, 20_000],
+          range: [bounds.yMax, 0],
+        }),
+        pressureScale: scaleLinear<number>({
+          domain: [250, 1000],
+          range: [0, bounds.yMax],
+        }),
+        cloudScale: scaleLinear<number>({
+          domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
+          range: [0, 1],
+          clamp: true,
+        }),
+      };
+    }
 
-    const mslScale = scaleLinear<number>({
-      domain: [0, 20_000],
-      range: [bounds.yMax, 0],
-    });
-
-    const pressureScale = scaleLinear<number>({
-      domain: [250, 1000],
-      range: [0, bounds.yMax],
-    });
-
-    const cloudScale = scaleLinear<number>({
-      domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
-      range: [0, 1],
-      clamp: true,
-    });
-
-    return { dateScale, mslScale, pressureScale, cloudScale };
+    return {
+      dateScale: scaleTime({
+        domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
+        range: [0, bounds.xMax],
+      }),
+      mslScale: scaleLinear<number>({
+        domain: [0, 20_000],
+        range: [bounds.yMax, 0],
+      }),
+      pressureScale: scaleLinear<number>({
+        domain: [250, 1000],
+        range: [0, bounds.yMax],
+      }),
+      cloudScale: scaleLinear<number>({
+        domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
+        range: [0, 1],
+        clamp: true,
+      }),
+    };
   }, [bounds, weatherData, clampCloudCoverageAt50Pct]);
 
   // Memoize helper functions
@@ -208,16 +225,22 @@ export default function Meteogram({
     [],
   );
 
-  // Memoize pressure levels
+  // Memoize pressure levels with safe default
   const pressureLevels = useMemo(
-    () => weatherData[0].cloud.map((c) => c.hpa),
+    () =>
+      weatherData.length > 0 ? weatherData[0].cloud.map((c) => c.hpa) : [],
     [weatherData],
   );
 
-  const barWidth = bounds.xMax / weatherData.length;
+  const barWidth = useMemo(
+    () => (weatherData.length > 0 ? bounds.xMax / weatherData.length : 0),
+    [bounds.xMax, weatherData.length],
+  );
 
-  // Memoize the main rendering components
+  // Memoize the main rendering components - moved before early return
   const renderCloudColumns = useMemo(() => {
+    if (weatherData.length === 0) return null;
+
     return (
       <>
         {/* Base cloud rectangles */}
@@ -450,6 +473,11 @@ export default function Meteogram({
     bounds,
     handleHover,
   ]);
+
+  // Early return after all hooks are called
+  if (isLoading || weatherData.length === 0) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <svg width={formatNumber(width)} height={formatNumber(height)}>

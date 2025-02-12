@@ -10,6 +10,7 @@ const AxisBottom = dynamic<React.ComponentProps<typeof AxisBottomType>>(
   () => import("@visx/axis").then((mod) => mod.AxisBottom),
   {
     ssr: false,
+    loading: () => null, // Render nothing while loading
   },
 );
 
@@ -36,12 +37,13 @@ export default function TimeAxis({
     setMounted(true);
   }, []);
 
+  // Always render the component, but conditionally render the tick labels
   return (
     <AxisBottom
       left={left}
       top={top}
       scale={scale}
-      tickFormat={(value) => {
+      tickFormat={(value: Date | number) => {
         if (!mounted) {
           return ""; // Don't show any ticks until mounted
         }
