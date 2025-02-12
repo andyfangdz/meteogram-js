@@ -34,6 +34,7 @@ const findFreezingLevels = (
     freezingLevels.push(0); // Start from ground level
   }
   // Check if there's a crossing point between ground and first pressure level
+  // Only if we're going from above freezing to below freezing
   else if (groundTemp > 0 && sortedColumn[0].temperature <= 0) {
     // Linear interpolation between ground (2m) and first pressure level
     const t1 = groundTemp;
@@ -45,11 +46,11 @@ const findFreezingLevels = (
   }
 
   // Find crossing points between pressure levels
+  // Only consider transitions from above freezing to below freezing
   for (let i = 0; i < sortedColumn.length - 1; i++) {
     if (
-      (sortedColumn[i].temperature > 0 &&
-        sortedColumn[i + 1].temperature <= 0) ||
-      (sortedColumn[i].temperature <= 0 && sortedColumn[i + 1].temperature > 0)
+      sortedColumn[i].temperature > 0 &&
+      sortedColumn[i + 1].temperature <= 0
     ) {
       // Linear interpolation to find exact freezing level
       const t1 = sortedColumn[i].temperature;
@@ -160,53 +161,52 @@ const getTemperatureColor = (temp: number): string => {
 // Helper function to find freezing level points
 const findFreezingPoints = (weatherData: CloudColumn[]) => {
   const freezingLines: { points: { x: number; y: number }[] }[] = [];
-  let currentLine: { x: number; y: number }[] = [];
+  const heightThreshold = 3000; // Feet - increased to be more lenient
 
   // Process each column in sequence
   weatherData.forEach((column, colIndex) => {
     const levels = findFreezingLevels(column.cloud, column.groundTemp);
 
     if (levels.length === 0) {
-      // Only end the current line if we have no freezing levels in this column
-      if (currentLine.length > 0) {
-        freezingLines.push({ points: [...currentLine] });
-        currentLine = [];
-      }
       return;
     }
 
     // Sort levels by height
     levels.sort((a, b) => a - b);
 
-    // If we have a current line, connect to the closest point
-    if (currentLine.length > 0) {
-      const lastHeight = currentLine[currentLine.length - 1].y;
-      let bestMatch = levels[0];
-      let minDiff = Math.abs(bestMatch - lastHeight);
+    // Try to continue existing lines or start new ones
+    levels.forEach((level) => {
+      // Try to find a line to continue
+      let foundLine = false;
 
-      // Find the closest level to our last point
-      for (const level of levels) {
-        const diff = Math.abs(level - lastHeight);
-        if (diff < minDiff) {
-          minDiff = diff;
-          bestMatch = level;
+      for (const line of freezingLines) {
+        if (line.points.length === 0) continue;
+
+        const lastPoint = line.points[line.points.length - 1];
+        // Only try to connect if this is the next column
+        if (lastPoint.x === colIndex - 1) {
+          const heightDiff = Math.abs(lastPoint.y - level);
+          if (heightDiff < heightThreshold) {
+            line.points.push({ x: colIndex, y: level });
+            foundLine = true;
+            break;
+          }
         }
       }
 
-      // Always connect to the best match, regardless of height difference
-      currentLine.push({ x: colIndex, y: bestMatch });
-    } else {
-      // Start a new line with the first point
-      currentLine = [{ x: colIndex, y: levels[0] }];
-    }
+      // If we couldn't continue any existing line, start a new one
+      if (!foundLine) {
+        freezingLines.push({
+          points: [{ x: colIndex, y: level }],
+        });
+      }
+    });
   });
 
-  // Add the last line if it exists
-  if (currentLine.length > 1) {
-    freezingLines.push({ points: [...currentLine] });
-  }
-
-  return freezingLines;
+  // Filter out very short lines (less than 3 points)
+  return freezingLines
+    .filter((line) => line.points.length > 2)
+    .sort((a, b) => a.points[0].y - b.points[0].y);
 };
 
 // Helper function to find points with similar temperatures
@@ -592,7 +592,7 @@ export default function Meteogram({
 
         {/* Isotherm Lines */}
         {showIsothermLines &&
-          findIsothermPoints(weatherData, 5, 500, model).map(
+          findIsothermPoints(weatherData, 1, 500, model).map(
             ({ temp, points }, lineIndex) => {
               const pathD = points.reduce((path, point, i) => {
                 const x = formatNumber(
