@@ -1,25 +1,26 @@
 "use client";
 
+import { Dispatch, SetStateAction } from "react";
 import { WeatherModel } from "../../types/weather";
 import Nav from "../Nav";
 
 interface NavWrapperProps {
   model: WeatherModel;
-  setModel: (model: WeatherModel) => void;
+  setModel: Dispatch<SetStateAction<WeatherModel>>;
   location: string;
-  setLocation: (location: string) => void;
+  setLocation: Dispatch<SetStateAction<string>>;
   lastUpdate: Date | null;
   refetch: () => void;
   useLocalTime: boolean;
-  setUseLocalTime: (value: boolean) => void;
+  setUseLocalTime: Dispatch<SetStateAction<boolean>>;
   highlightCeilingCoverage: boolean;
-  setHighlightCeilingCoverage: (value: boolean) => void;
+  setHighlightCeilingCoverage: Dispatch<SetStateAction<boolean>>;
   clampCloudCoverageAt50Pct: boolean;
-  setClampCloudCoverageAt50Pct: (value: boolean) => void;
+  setClampCloudCoverageAt50Pct: Dispatch<SetStateAction<boolean>>;
   showPressureLines: boolean;
-  setShowPressureLines: (value: boolean) => void;
+  setShowPressureLines: Dispatch<SetStateAction<boolean>>;
   showWindBarbs: boolean;
-  setShowWindBarbs: (value: boolean) => void;
+  setShowWindBarbs: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function NavWrapper({

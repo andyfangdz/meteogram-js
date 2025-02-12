@@ -7,13 +7,14 @@ import {
   Button,
 } from "@heroui/react";
 import { MODEL_NAMES } from "../config/weather";
+import { WeatherModel } from "../types/weather";
 
 export default function ModelDropdown({
   model,
   setModel,
 }: {
-  model: string;
-  setModel: Dispatch<SetStateAction<string>>;
+  model: WeatherModel;
+  setModel: Dispatch<SetStateAction<WeatherModel>>;
 }) {
   return (
     <Dropdown>
@@ -28,7 +29,7 @@ export default function ModelDropdown({
         disallowEmptySelection
         selectionMode="single"
         selectedKeys={[model]}
-        onAction={(model) => setModel(model as string)}
+        onAction={(model) => setModel(model as WeatherModel)}
       >
         {MODEL_NAMES.map((model) => (
           <DropdownItem key={model}>

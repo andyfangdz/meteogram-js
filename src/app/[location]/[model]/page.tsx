@@ -17,6 +17,7 @@ interface PageProps {
     highlightCeiling?: string;
     clampCoverage?: string;
     showPressureLines?: string;
+    showWindBarbs?: string;
   }>;
 }
 
@@ -61,6 +62,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     showPressureLines:
       searchParamsResolved.showPressureLines === "true" ||
       DEFAULT_PREFERENCES.showPressureLines,
+    showWindBarbs: searchParamsResolved.showWindBarbs === "true",
   };
 
   // Fetch initial data on the server

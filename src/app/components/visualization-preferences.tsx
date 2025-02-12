@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Dispatch, SetStateAction } from "react";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import NavWrapper from "./nav-wrapper";
 import MeteogramWrapper from "./meteogram-wrapper";
@@ -8,9 +8,9 @@ import { CloudColumn, WeatherModel } from "@/types/weather";
 
 interface VisualizationPreferencesProps {
   model: WeatherModel;
-  setModel: (model: WeatherModel) => void;
+  setModel: Dispatch<SetStateAction<WeatherModel>>;
   location: string;
-  setLocation: (location: string) => void;
+  setLocation: Dispatch<SetStateAction<string>>;
   lastUpdate: Date;
   refetch: () => void;
   weatherData: CloudColumn[];
@@ -79,66 +79,106 @@ export default function VisualizationPreferences({
     if (storedUseLocalTime !== preferences.useLocalTime) {
       updatePreferences({ useLocalTime: storedUseLocalTime });
     }
-  }, [storedUseLocalTime]);
+  }, [storedUseLocalTime, preferences.useLocalTime, updatePreferences]);
 
   useEffect(() => {
     if (storedHighlightCeiling !== preferences.highlightCeilingCoverage) {
       updatePreferences({ highlightCeilingCoverage: storedHighlightCeiling });
     }
-  }, [storedHighlightCeiling]);
+  }, [
+    storedHighlightCeiling,
+    preferences.highlightCeilingCoverage,
+    updatePreferences,
+  ]);
 
   useEffect(() => {
     if (storedClampCoverage !== preferences.clampCloudCoverageAt50Pct) {
       updatePreferences({ clampCloudCoverageAt50Pct: storedClampCoverage });
     }
-  }, [storedClampCoverage]);
+  }, [
+    storedClampCoverage,
+    preferences.clampCloudCoverageAt50Pct,
+    updatePreferences,
+  ]);
 
   useEffect(() => {
     if (storedShowPressureLines !== preferences.showPressureLines) {
       updatePreferences({ showPressureLines: storedShowPressureLines });
     }
-  }, [storedShowPressureLines]);
+  }, [
+    storedShowPressureLines,
+    preferences.showPressureLines,
+    updatePreferences,
+  ]);
 
   useEffect(() => {
     if (storedShowWindBarbs !== preferences.showWindBarbs) {
       updatePreferences({ showWindBarbs: storedShowWindBarbs });
     }
-  }, [storedShowWindBarbs]);
+  }, [storedShowWindBarbs, preferences.showWindBarbs, updatePreferences]);
+
+  const handleSetModel = (newModel: SetStateAction<WeatherModel>) => {
+    setModel(newModel);
+  };
+
+  const handleSetLocation = (newLocation: SetStateAction<string>) => {
+    setLocation(newLocation);
+  };
+
+  const handleSetUseLocalTime = (value: SetStateAction<boolean>) => {
+    if (typeof value === "boolean") {
+      setStoredUseLocalTime(value);
+      updatePreferences({ useLocalTime: value });
+    }
+  };
+
+  const handleSetHighlightCeiling = (value: SetStateAction<boolean>) => {
+    if (typeof value === "boolean") {
+      setStoredHighlightCeiling(value);
+      updatePreferences({ highlightCeilingCoverage: value });
+    }
+  };
+
+  const handleSetClampCoverage = (value: SetStateAction<boolean>) => {
+    if (typeof value === "boolean") {
+      setStoredClampCoverage(value);
+      updatePreferences({ clampCloudCoverageAt50Pct: value });
+    }
+  };
+
+  const handleSetShowPressureLines = (value: SetStateAction<boolean>) => {
+    if (typeof value === "boolean") {
+      setStoredShowPressureLines(value);
+      updatePreferences({ showPressureLines: value });
+    }
+  };
+
+  const handleSetShowWindBarbs = (value: SetStateAction<boolean>) => {
+    if (typeof value === "boolean") {
+      setStoredShowWindBarbs(value);
+      updatePreferences({ showWindBarbs: value });
+    }
+  };
 
   return (
     <>
       <NavWrapper
         model={model}
-        setModel={setModel}
+        setModel={handleSetModel}
         location={location}
-        setLocation={setLocation}
+        setLocation={handleSetLocation}
         lastUpdate={lastUpdate}
         refetch={refetch}
         useLocalTime={preferences.useLocalTime}
-        setUseLocalTime={(value) => {
-          setStoredUseLocalTime(value);
-          updatePreferences({ useLocalTime: value });
-        }}
+        setUseLocalTime={handleSetUseLocalTime}
         highlightCeilingCoverage={preferences.highlightCeilingCoverage}
-        setHighlightCeilingCoverage={(value) => {
-          setStoredHighlightCeiling(value);
-          updatePreferences({ highlightCeilingCoverage: value });
-        }}
+        setHighlightCeilingCoverage={handleSetHighlightCeiling}
         clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
-        setClampCloudCoverageAt50Pct={(value) => {
-          setStoredClampCoverage(value);
-          updatePreferences({ clampCloudCoverageAt50Pct: value });
-        }}
+        setClampCloudCoverageAt50Pct={handleSetClampCoverage}
         showPressureLines={preferences.showPressureLines}
-        setShowPressureLines={(value) => {
-          setStoredShowPressureLines(value);
-          updatePreferences({ showPressureLines: value });
-        }}
+        setShowPressureLines={handleSetShowPressureLines}
         showWindBarbs={preferences.showWindBarbs}
-        setShowWindBarbs={(value) => {
-          setStoredShowWindBarbs(value);
-          updatePreferences({ showWindBarbs: value });
-        }}
+        setShowWindBarbs={handleSetShowWindBarbs}
       />
       <main className="items-center justify-between p-4">
         <MeteogramWrapper

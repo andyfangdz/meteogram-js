@@ -472,6 +472,7 @@ export default function Meteogram({
     model,
     bounds,
     handleHover,
+    clampCloudCoverageAt50Pct,
   ]);
 
   // Early return after all hooks are called

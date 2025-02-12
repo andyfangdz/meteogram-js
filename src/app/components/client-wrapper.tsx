@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  SetStateAction,
+} from "react";
 import { WeatherModel, CloudColumn } from "../../types/weather";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getWeatherData } from "../actions/weather";
@@ -12,6 +18,7 @@ interface VisualizationPreferences {
   highlightCeilingCoverage: boolean;
   clampCloudCoverageAt50Pct: boolean;
   showPressureLines: boolean;
+  showWindBarbs: boolean;
 }
 
 interface ClientWrapperProps {
@@ -62,19 +69,18 @@ export default function ClientWrapper({
     }
   };
 
-  const refreshDataInBackground = async () => {
+  const refreshDataInBackground = useCallback(async () => {
     try {
-      const { data, timestamp } = await getWeatherData(
-        initialModel,
-        initialLocation,
+      const response = await fetch(
+        `/api/weather/${encodeURIComponent(initialLocation)}/${initialModel}`,
       );
-      setWeatherData(data);
-      setLastUpdate(new Date(timestamp));
-    } catch (err) {
-      // Silently handle background refresh errors
-      console.warn("Background refresh failed:", err);
+      const data = await response.json();
+      setWeatherData(data.weatherData);
+      setLastUpdate(new Date(data.timestamp));
+    } catch (error) {
+      console.error("Error refreshing data:", error);
     }
-  };
+  }, [initialLocation, initialModel]);
 
   useEffect(() => {
     const refreshInterval = 60000; // 1 minute
@@ -86,19 +92,25 @@ export default function ClientWrapper({
         timerRef.current = null;
       }
     };
-  }, [initialModel, initialLocation]);
+  }, [initialModel, initialLocation, refreshDataInBackground]);
 
-  const handleLocationChange = (newLocation: string) => {
+  const handleLocationChange = (newLocation: SetStateAction<string>) => {
     const params = new URLSearchParams(searchParams);
+    const resolvedLocation =
+      typeof newLocation === "function"
+        ? newLocation(initialLocation)
+        : newLocation;
     router.push(
-      `/${encodeURIComponent(newLocation)}/${initialModel}?${params.toString()}`,
+      `/${encodeURIComponent(resolvedLocation)}/${initialModel}?${params.toString()}`,
     );
   };
 
-  const handleModelChange = (newModel: WeatherModel) => {
+  const handleModelChange = (newModel: SetStateAction<WeatherModel>) => {
     const params = new URLSearchParams(searchParams);
+    const resolvedModel =
+      typeof newModel === "function" ? newModel(initialModel) : newModel;
     router.push(
-      `/${encodeURIComponent(initialLocation)}/${newModel}?${params.toString()}`,
+      `/${encodeURIComponent(initialLocation)}/${resolvedModel}?${params.toString()}`,
     );
   };
 
@@ -158,7 +170,7 @@ export default function ClientWrapper({
     // Use shallow routing to prevent server request
     router.replace(
       `/${encodeURIComponent(initialLocation)}/${initialModel}${queryString ? "?" + queryString : ""}`,
-      { scroll: false, shallow: true },
+      { scroll: false },
     );
   };
 
