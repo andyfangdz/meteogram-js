@@ -71,12 +71,12 @@ export default function ClientWrapper({
 
   const refreshDataInBackground = useCallback(async () => {
     try {
-      const response = await fetch(
-        `/api/weather/${encodeURIComponent(initialLocation)}/${initialModel}`,
+      const { data, timestamp } = await getWeatherData(
+        initialModel,
+        initialLocation,
       );
-      const data = await response.json();
-      setWeatherData(data.weatherData);
-      setLastUpdate(new Date(data.timestamp));
+      setWeatherData(data);
+      setLastUpdate(new Date(timestamp));
     } catch (error) {
       console.error("Error refreshing data:", error);
     }

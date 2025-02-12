@@ -382,7 +382,7 @@ export default function Meteogram({
                     key={`wind-barb-${d.date}-${cloud.hpa}`}
                     x={formatNumber(scales.dateScale(d.date) + barWidth / 2)}
                     y={formatNumber(scales.mslScale(cloud.geopotentialFt))}
-                    speed={parseFloat(kmhToKnots(cloud.windSpeed))}
+                    speed={cloud.windSpeed}
                     direction={cloud.windDirection}
                   />
                 )),
