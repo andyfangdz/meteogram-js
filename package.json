@@ -11,13 +11,11 @@
     "format:fix": "prettier --check --write ."
   },
   "dependencies": {
-    "@builder.io/react-hydration-overlay": "^0.3.0",
     "@heroui/react": "2.6.14",
     "@heroui/system": "2.4.7",
     "@heroui/theme": "2.4.6",
     "@react-hook/resize-observer": "^2.0.2",
     "@react-spring/web": "^9.7.5",
-    "@spotlightjs/spotlight": "^2.10.3",
     "@visx/axis": "^3.12.0",
     "@visx/group": "^3.12.0",
     "@visx/mock-data": "^3.12.0",
