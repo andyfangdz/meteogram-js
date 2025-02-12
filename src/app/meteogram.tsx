@@ -592,7 +592,7 @@ export default function Meteogram({
 
         {/* Isotherm Lines */}
         {showIsothermLines &&
-          findIsothermPoints(weatherData, 1, 500, model).map(
+          findIsothermPoints(weatherData, 2, 500, model).map(
             ({ temp, points }, lineIndex) => {
               const pathD = points.reduce((path, point, i) => {
                 const x = formatNumber(
