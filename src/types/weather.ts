@@ -33,6 +33,7 @@ export interface ModelConfig {
   stepSize: number;
   forecastDataKey: "minutely15" | "hourly";
   windBarbStep: number; // How many time steps between wind barbs
+  maxIsothermStepDistance: number; // Maximum number of forecast steps an isotherm can cross
 }
 
 export interface ModelConfigs {

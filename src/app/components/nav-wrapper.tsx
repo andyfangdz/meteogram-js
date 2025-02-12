@@ -21,6 +21,8 @@ interface NavWrapperProps {
   setShowPressureLines: Dispatch<SetStateAction<boolean>>;
   showWindBarbs: boolean;
   setShowWindBarbs: Dispatch<SetStateAction<boolean>>;
+  showIsothermLines: boolean;
+  setShowIsothermLines: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function NavWrapper({
@@ -40,6 +42,8 @@ export default function NavWrapper({
   setShowPressureLines,
   showWindBarbs,
   setShowWindBarbs,
+  showIsothermLines,
+  setShowIsothermLines,
 }: NavWrapperProps) {
   return (
     <Nav
@@ -59,6 +63,8 @@ export default function NavWrapper({
       setShowPressureLines={setShowPressureLines}
       showWindBarbs={showWindBarbs}
       setShowWindBarbs={setShowWindBarbs}
+      showIsothermLines={showIsothermLines}
+      setShowIsothermLines={setShowIsothermLines}
     />
   );
 }

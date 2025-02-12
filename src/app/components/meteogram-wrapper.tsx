@@ -10,6 +10,7 @@ interface MeteogramWrapperProps {
   clampCloudCoverageAt50Pct: boolean;
   showPressureLines: boolean;
   showWindBarbs: boolean;
+  showIsothermLines: boolean;
   isLoading: boolean;
   error: Error | null;
   model: WeatherModel;
@@ -22,6 +23,7 @@ export default function MeteogramWrapper({
   clampCloudCoverageAt50Pct,
   showPressureLines,
   showWindBarbs,
+  showIsothermLines,
   isLoading,
   error,
   model,
@@ -42,6 +44,7 @@ export default function MeteogramWrapper({
         clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
         showPressureLines={showPressureLines}
         showWindBarbs={showWindBarbs}
+        showIsothermLines={showIsothermLines}
         isLoading={isLoading}
         model={model}
       />

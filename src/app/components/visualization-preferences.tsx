@@ -22,6 +22,7 @@ interface VisualizationPreferencesProps {
     clampCloudCoverageAt50Pct: boolean;
     showPressureLines: boolean;
     showWindBarbs: boolean;
+    showIsothermLines: boolean;
   };
   updatePreferences: (
     prefs: Partial<{
@@ -30,6 +31,7 @@ interface VisualizationPreferencesProps {
       clampCloudCoverageAt50Pct: boolean;
       showPressureLines: boolean;
       showWindBarbs: boolean;
+      showIsothermLines: boolean;
     }>,
   ) => void;
 }
@@ -72,6 +74,11 @@ export default function VisualizationPreferences({
     usePersistedState<boolean>(
       "meteogram-show-wind-barbs",
       preferences.showWindBarbs,
+    );
+  const [storedShowIsothermLines, setStoredShowIsothermLines] =
+    usePersistedState<boolean>(
+      "meteogram-show-isotherm-lines",
+      preferences.showIsothermLines,
     );
 
   // Sync localStorage with URL params
@@ -117,6 +124,16 @@ export default function VisualizationPreferences({
     }
   }, [storedShowWindBarbs, preferences.showWindBarbs, updatePreferences]);
 
+  useEffect(() => {
+    if (storedShowIsothermLines !== preferences.showIsothermLines) {
+      updatePreferences({ showIsothermLines: storedShowIsothermLines });
+    }
+  }, [
+    storedShowIsothermLines,
+    preferences.showIsothermLines,
+    updatePreferences,
+  ]);
+
   const handleSetModel = (newModel: SetStateAction<WeatherModel>) => {
     setModel(newModel);
   };
@@ -160,6 +177,13 @@ export default function VisualizationPreferences({
     }
   };
 
+  const handleSetShowIsothermLines = (value: SetStateAction<boolean>) => {
+    if (typeof value === "boolean") {
+      setStoredShowIsothermLines(value);
+      updatePreferences({ showIsothermLines: value });
+    }
+  };
+
   return (
     <>
       <NavWrapper
@@ -179,6 +203,8 @@ export default function VisualizationPreferences({
         setShowPressureLines={handleSetShowPressureLines}
         showWindBarbs={preferences.showWindBarbs}
         setShowWindBarbs={handleSetShowWindBarbs}
+        showIsothermLines={preferences.showIsothermLines}
+        setShowIsothermLines={handleSetShowIsothermLines}
       />
       <main className="items-center justify-between p-4">
         <MeteogramWrapper
@@ -188,6 +214,7 @@ export default function VisualizationPreferences({
           clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
           showPressureLines={preferences.showPressureLines}
           showWindBarbs={preferences.showWindBarbs}
+          showIsothermLines={preferences.showIsothermLines}
           isLoading={isLoading}
           error={error}
           model={model}

@@ -19,6 +19,7 @@ interface VisualizationPreferences {
   clampCloudCoverageAt50Pct: boolean;
   showPressureLines: boolean;
   showWindBarbs: boolean;
+  showIsothermLines: boolean;
 }
 
 interface ClientWrapperProps {
@@ -164,6 +165,26 @@ export default function ClientWrapper({
       );
     } else {
       params.delete("showPressureLines");
+    }
+
+    if (
+      updatedPreferences.showWindBarbs !== DEFAULT_PREFERENCES.showWindBarbs
+    ) {
+      params.set("showWindBarbs", updatedPreferences.showWindBarbs.toString());
+    } else {
+      params.delete("showWindBarbs");
+    }
+
+    if (
+      updatedPreferences.showIsothermLines !==
+      DEFAULT_PREFERENCES.showIsothermLines
+    ) {
+      params.set(
+        "showIsothermLines",
+        updatedPreferences.showIsothermLines.toString(),
+      );
+    } else {
+      params.delete("showIsothermLines");
     }
 
     const queryString = params.toString();

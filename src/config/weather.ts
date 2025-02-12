@@ -14,6 +14,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     stepSize: 4 * 40, // 4 times per hour * 40 hours
     forecastDataKey: "minutely15",
     windBarbStep: 4, // Show wind barbs every hour (4 * 15min steps)
+    maxIsothermStepDistance: 8, // Allow isotherms to skip up to 2 hours worth of steps (8 * 15min)
   },
   gfs_seamless: {
     varsKey: "hourly",
@@ -21,6 +22,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     stepSize: 24 * 7, // 24 hours * 7 days
     forecastDataKey: "hourly",
     windBarbStep: 3, // Show wind barbs every 3 hours
+    maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
   },
 };
 

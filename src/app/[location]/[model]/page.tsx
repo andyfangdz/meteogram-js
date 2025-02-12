@@ -18,6 +18,7 @@ interface PageProps {
     clampCoverage?: string;
     showPressureLines?: string;
     showWindBarbs?: string;
+    showIsothermLines?: string;
   }>;
 }
 
@@ -62,7 +63,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     showPressureLines:
       searchParamsResolved.showPressureLines === "true" ||
       DEFAULT_PREFERENCES.showPressureLines,
-    showWindBarbs: searchParamsResolved.showWindBarbs === "true",
+    showWindBarbs:
+      searchParamsResolved.showWindBarbs === "true" ||
+      DEFAULT_PREFERENCES.showWindBarbs,
+    showIsothermLines:
+      searchParamsResolved.showIsothermLines === "true" ||
+      DEFAULT_PREFERENCES.showIsothermLines,
   };
 
   // Fetch initial data on the server

@@ -128,12 +128,265 @@ export type MeteogramProps = {
   isLoading?: boolean;
   showPressureLines?: boolean;
   showWindBarbs?: boolean;
+  showIsothermLines?: boolean;
   model: WeatherModel;
 };
 
 const black = "#000000";
 const background = "#87CEEB";
 const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
+
+// Helper function to get color for temperature
+const getTemperatureColor = (temp: number): string => {
+  if (temp <= -20) return "#800080"; // Very cold (purple)
+  if (temp <= 0) return "#0000FF"; // Freezing (blue)
+  if (temp >= 30) return "#FF0000"; // Very hot (red)
+
+  // For temperatures between 0 and 30, interpolate between blue and red
+  if (temp > 0 && temp < 30) {
+    const ratio = temp / 30;
+    const r = Math.round(ratio * 255);
+    const b = Math.round((1 - ratio) * 255);
+    return `rgb(${r},0,${b})`;
+  }
+
+  // For temperatures between -20 and 0, interpolate between purple and blue
+  const ratio = (temp + 20) / 20;
+  const r = Math.round((1 - ratio) * 128);
+  const b = 255;
+  return `rgb(${r},0,${b})`;
+};
+
+// Helper function to find freezing level points
+const findFreezingPoints = (weatherData: CloudColumn[]) => {
+  const freezingLines: { points: { x: number; y: number }[] }[] = [];
+  let currentLine: { x: number; y: number }[] = [];
+
+  // Process each column in sequence
+  weatherData.forEach((column, colIndex) => {
+    const levels = findFreezingLevels(column.cloud, column.groundTemp);
+
+    if (levels.length === 0) {
+      // Only end the current line if we have no freezing levels in this column
+      if (currentLine.length > 0) {
+        freezingLines.push({ points: [...currentLine] });
+        currentLine = [];
+      }
+      return;
+    }
+
+    // Sort levels by height
+    levels.sort((a, b) => a - b);
+
+    // If we have a current line, connect to the closest point
+    if (currentLine.length > 0) {
+      const lastHeight = currentLine[currentLine.length - 1].y;
+      let bestMatch = levels[0];
+      let minDiff = Math.abs(bestMatch - lastHeight);
+
+      // Find the closest level to our last point
+      for (const level of levels) {
+        const diff = Math.abs(level - lastHeight);
+        if (diff < minDiff) {
+          minDiff = diff;
+          bestMatch = level;
+        }
+      }
+
+      // Always connect to the best match, regardless of height difference
+      currentLine.push({ x: colIndex, y: bestMatch });
+    } else {
+      // Start a new line with the first point
+      currentLine = [{ x: colIndex, y: levels[0] }];
+    }
+  });
+
+  // Add the last line if it exists
+  if (currentLine.length > 1) {
+    freezingLines.push({ points: [...currentLine] });
+  }
+
+  return freezingLines;
+};
+
+// Helper function to find points with similar temperatures
+const findIsothermPoints = (
+  weatherData: CloudColumn[],
+  tempStep: number = 5,
+  heightThreshold: number = 1000, // Increased from 500 to 1000 ft
+  model: WeatherModel,
+) => {
+  const maxStepDistance = MODEL_CONFIGS[model]?.maxIsothermStepDistance || 1;
+  const isotherms: { temp: number; points: { x: number; y: number }[] }[] = [];
+
+  // Find min and max temperatures across all data
+  let minTemp = Infinity;
+  let maxTemp = -Infinity;
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      minTemp = Math.min(minTemp, cell.temperature);
+      maxTemp = Math.max(maxTemp, cell.temperature);
+    });
+  });
+
+  // Round to nearest tempStep
+  minTemp = Math.floor(minTemp / tempStep) * tempStep;
+  maxTemp = Math.ceil(maxTemp / tempStep) * tempStep;
+
+  // For each temperature step
+  for (let temp = minTemp; temp <= maxTemp; temp += tempStep) {
+    let activeLines: { points: { x: number; y: number }[] }[] = [];
+
+    // Process each column in sequence
+    weatherData.forEach((column, colIndex) => {
+      const heightsAtTemp: number[] = [];
+
+      // Find points where temperature crosses our target temperature
+      for (let i = 0; i < column.cloud.length - 1; i++) {
+        const cell1 = column.cloud[i];
+        const cell2 = column.cloud[i + 1];
+
+        if (
+          (cell1.temperature <= temp && cell2.temperature >= temp) ||
+          (cell1.temperature >= temp && cell2.temperature <= temp)
+        ) {
+          const ratio =
+            (temp - cell1.temperature) /
+            (cell2.temperature - cell1.temperature);
+          const height =
+            cell1.geopotentialFt +
+            ratio * (cell2.geopotentialFt - cell1.geopotentialFt);
+          heightsAtTemp.push(height);
+        }
+      }
+
+      if (heightsAtTemp.length === 0) {
+        // Check if we should end lines based on maxStepDistance
+        const linesToEnd: typeof activeLines = [];
+        const linesToKeep: typeof activeLines = [];
+
+        activeLines.forEach((line) => {
+          const lastColIndex = line.points[line.points.length - 1].x;
+          if (colIndex - lastColIndex >= maxStepDistance) {
+            if (line.points.length > 1) {
+              linesToEnd.push(line);
+            }
+          } else {
+            linesToKeep.push(line);
+          }
+        });
+
+        // End lines that exceed maxStepDistance
+        linesToEnd.forEach((line) => {
+          if (line.points.length > 1) {
+            isotherms.push({ temp, points: [...line.points] });
+          }
+        });
+
+        activeLines = linesToKeep;
+        return;
+      }
+
+      // Group close heights together
+      heightsAtTemp.sort((a, b) => a - b);
+      const groupedHeights: number[] = [];
+      let currentGroup: number[] = [heightsAtTemp[0]];
+
+      for (let i = 1; i < heightsAtTemp.length; i++) {
+        if (heightsAtTemp[i] - currentGroup[0] < heightThreshold) {
+          currentGroup.push(heightsAtTemp[i]);
+        } else {
+          // For each group, keep both the minimum and maximum heights if they're different enough
+          const minHeight = Math.min(...currentGroup);
+          const maxHeight = Math.max(...currentGroup);
+          if (maxHeight - minHeight > heightThreshold / 2) {
+            groupedHeights.push(minHeight, maxHeight);
+          } else {
+            // Use average for very close points
+            groupedHeights.push(
+              currentGroup.reduce((a, b) => a + b) / currentGroup.length,
+            );
+          }
+          currentGroup = [heightsAtTemp[i]];
+        }
+      }
+      // Add the last group
+      if (currentGroup.length > 0) {
+        const minHeight = Math.min(...currentGroup);
+        const maxHeight = Math.max(...currentGroup);
+        if (maxHeight - minHeight > heightThreshold / 2) {
+          groupedHeights.push(minHeight, maxHeight);
+        } else {
+          groupedHeights.push(
+            currentGroup.reduce((a, b) => a + b) / currentGroup.length,
+          );
+        }
+      }
+
+      // Try to continue each active line
+      const newActiveLines: typeof activeLines = [];
+      const usedHeights = new Set<number>();
+
+      // First, try to continue existing lines
+      activeLines.forEach((line) => {
+        const lastColIndex = line.points[line.points.length - 1].x;
+        if (colIndex - lastColIndex <= maxStepDistance) {
+          const lastHeight = line.points[line.points.length - 1].y;
+          let bestMatch = groupedHeights[0];
+          let minDiff = Math.abs(bestMatch - lastHeight);
+
+          // Find closest unused height
+          groupedHeights.forEach((height) => {
+            if (!usedHeights.has(height)) {
+              const diff = Math.abs(height - lastHeight);
+              if (diff < minDiff) {
+                minDiff = diff;
+                bestMatch = height;
+              }
+            }
+          });
+
+          // More lenient height difference threshold for continuing lines
+          if (minDiff < heightThreshold * 3) {
+            line.points.push({ x: colIndex, y: bestMatch });
+            usedHeights.add(bestMatch);
+            newActiveLines.push(line);
+          } else {
+            // End this line and start a new one
+            if (line.points.length > 1) {
+              isotherms.push({ temp, points: [...line.points] });
+            }
+          }
+        } else {
+          // End line if it exceeds maxStepDistance
+          if (line.points.length > 1) {
+            isotherms.push({ temp, points: [...line.points] });
+          }
+        }
+      });
+
+      // Start new lines for remaining unused heights
+      groupedHeights.forEach((height) => {
+        if (!usedHeights.has(height)) {
+          newActiveLines.push({
+            points: [{ x: colIndex, y: height }],
+          });
+        }
+      });
+
+      activeLines = newActiveLines;
+    });
+
+    // Add any remaining active lines
+    activeLines.forEach((line) => {
+      if (line.points.length > 1) {
+        isotherms.push({ temp, points: [...line.points] });
+      }
+    });
+  }
+
+  return isotherms;
+};
 
 export default function Meteogram({
   width,
@@ -146,6 +399,7 @@ export default function Meteogram({
   isLoading = false,
   showPressureLines = false,
   showWindBarbs = true,
+  showIsothermLines = false,
   model,
 }: MeteogramProps) {
   // Call all hooks first, before any conditional logic
@@ -316,27 +570,69 @@ export default function Meteogram({
         ))}
 
         {/* Freezing Levels */}
-        {weatherData.map((d, i) => {
-          if (i === weatherData.length - 1) return null;
+        {findFreezingPoints(weatherData).map(({ points }, lineIndex) => {
+          const pathD = points.reduce((path, point, i) => {
+            const x = formatNumber(scales.dateScale(weatherData[point.x].date));
+            const y = formatNumber(scales.mslScale(point.y));
+            if (i === 0) return `M ${x} ${y}`;
+            return `${path} L ${x} ${y}`;
+          }, "");
 
-          const currentLevels = findFreezingLevels(d.cloud, d.groundTemp);
-          const nextLevels = findFreezingLevels(
-            weatherData[i + 1].cloud,
-            weatherData[i + 1].groundTemp,
-          );
-          const matches = matchFreezingLevels(currentLevels, nextLevels);
-
-          return matches.map(([currentLevel, nextLevel], levelIndex) => (
+          return (
             <path
-              key={`freezing-level-${d.date}-${levelIndex}`}
-              d={`M ${formatNumber(scales.dateScale(d.date))} ${formatNumber(scales.mslScale(currentLevel))} L ${formatNumber(scales.dateScale(weatherData[i + 1].date))} ${formatNumber(scales.mslScale(nextLevel))}`}
+              key={`freezing-level-${lineIndex}`}
+              d={pathD}
               stroke="#0066cc"
               strokeWidth={2}
               strokeDasharray="4,4"
               fill="none"
             />
-          ));
+          );
         })}
+
+        {/* Isotherm Lines */}
+        {showIsothermLines &&
+          findIsothermPoints(weatherData, 5, 500, model).map(
+            ({ temp, points }, lineIndex) => {
+              const pathD = points.reduce((path, point, i) => {
+                const x = formatNumber(
+                  scales.dateScale(weatherData[point.x].date),
+                );
+                const y = formatNumber(scales.mslScale(point.y));
+                if (i === 0) return `M ${x} ${y}`;
+                return `${path} L ${x} ${y}`;
+              }, "");
+
+              // Create a unique key using temperature, starting height, and index
+              const uniqueKey = `isotherm-${temp}-${formatNumber(points[0].y)}-${lineIndex}`;
+
+              return (
+                <g key={uniqueKey}>
+                  <path
+                    d={pathD}
+                    stroke={getTemperatureColor(temp)}
+                    strokeWidth={1}
+                    strokeDasharray="4,4"
+                    opacity={0.7}
+                    fill="none"
+                  />
+                  {/* Add temperature label at the start of the line */}
+                  <text
+                    x={formatNumber(
+                      scales.dateScale(weatherData[points[0].x].date),
+                    )}
+                    y={formatNumber(scales.mslScale(points[0].y))}
+                    dx="-2.5em"
+                    dy="0.3em"
+                    fontSize="10"
+                    fill={getTemperatureColor(temp)}
+                  >
+                    {`${temp}°C`}
+                  </text>
+                </g>
+              );
+            },
+          )}
 
         {/* Pressure Lines */}
         {showPressureLines &&
@@ -469,6 +765,7 @@ export default function Meteogram({
     highlightCeilingCoverage,
     showWindBarbs,
     showPressureLines,
+    showIsothermLines,
     model,
     bounds,
     handleHover,
