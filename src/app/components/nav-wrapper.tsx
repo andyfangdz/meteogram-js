@@ -51,9 +51,9 @@ export default function NavWrapper({
       useLocalTime={useLocalTime}
       setUseLocalTime={setUseLocalTime}
       highlightCeilingCoverage={highlightCeilingCoverage}
-      sethighlightCeilingCoverage={setHighlightCeilingCoverage}
+      setHighlightCeilingCoverage={setHighlightCeilingCoverage}
       clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
-      setclampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
+      setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
       showPressureLines={showPressureLines}
       setShowPressureLines={setShowPressureLines}
       showWindBarbs={showWindBarbs}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Group } from "@visx/group";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { scaleLinear, scaleTime } from "@visx/scale";
@@ -15,30 +15,6 @@ import { WeatherModel } from "../types/weather";
 const hPaToInHg = (hpa: number) => (hpa * 0.02953).toFixed(2);
 // Convert km/h to knots
 const kmhToKnots = (kmh: number) => (kmh * 0.539957).toFixed(0);
-
-// Add a helper to get y position for a pressure level
-const getYForPressure = (cloud: CloudCell[], hpa: number) => {
-  const level = cloud.find((c) => c.hpa === hpa);
-  return level?.geopotentialFt || 0;
-};
-
-export type MeteogramProps = {
-  width: number;
-  height: number;
-  margin?: { top: number; right: number; bottom: number; left: number };
-  useLocalTime?: boolean;
-  weatherData: CloudColumn[];
-  highlightCeilingCoverage?: boolean;
-  clampCloudCoverageAt50Pct?: boolean;
-  isLoading?: boolean;
-  showPressureLines?: boolean;
-  showWindBarbs?: boolean;
-  model: WeatherModel;
-};
-
-const black = "#000000";
-const background = "#87CEEB";
-const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
 
 // Helper function to find freezing levels in a cloud column
 const findFreezingLevels = (
@@ -122,6 +98,27 @@ const matchFreezingLevels = (
   return matches;
 };
 
+// Memoized WindBarb component
+const MemoizedWindBarb = React.memo(WindBarb);
+
+export type MeteogramProps = {
+  width: number;
+  height: number;
+  margin?: { top: number; right: number; bottom: number; left: number };
+  useLocalTime?: boolean;
+  weatherData: CloudColumn[];
+  highlightCeilingCoverage?: boolean;
+  clampCloudCoverageAt50Pct?: boolean;
+  isLoading?: boolean;
+  showPressureLines?: boolean;
+  showWindBarbs?: boolean;
+  model: WeatherModel;
+};
+
+const black = "#000000";
+const background = "#87CEEB";
+const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
+
 export default function Meteogram({
   width,
   height,
@@ -144,129 +141,101 @@ export default function Meteogram({
     cloudCell: CloudCell;
   } | null>(null);
 
+  // Debounced hover handler
+  const handleHover = useCallback((date: Date, cloudCell: CloudCell) => {
+    setHoveredRect({ date, cloudCell });
+  }, []);
+
   if (isLoading || weatherData.length === 0) {
     return <LoadingSkeleton />;
   }
 
-  // bounds
-  const xMax = width - margin.left - margin.right;
-  const yMax = height - margin.top - margin.bottom;
+  // Memoize bounds calculations
+  const bounds = useMemo(() => {
+    const xMax = width - margin.left - margin.right;
+    const yMax = height - margin.top - margin.bottom;
+    return { xMax, yMax };
+  }, [width, height, margin]);
 
-  // scales
-  const dateScale = scaleTime<number>({
-    domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
-  }).range([0, xMax]);
+  // Memoize scales
+  const scales = useMemo(() => {
+    const dateScale = scaleTime({
+      domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
+      range: [0, bounds.xMax],
+    });
 
-  const mslScale = scaleLinear<number>({
-    domain: [0, 20_000],
-  }).range([yMax, 0]);
+    const mslScale = scaleLinear<number>({
+      domain: [0, 20_000],
+    }).range([bounds.yMax, 0]);
 
-  const pressureScale = scaleLinear<number>({
-    domain: [250, 1000], // HPA_LEVELS range from config
-  }).range([0, yMax]);
+    const pressureScale = scaleLinear<number>({
+      domain: [250, 1000],
+    }).range([0, bounds.yMax]);
 
-  const cloudScale = scaleLinear<number>({
-    domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
-  }).range([0, 1]);
+    const cloudScale = scaleLinear<number>({
+      domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
+      range: [0, 1],
+      clamp: true,
+    });
 
-  const barWidth = xMax / weatherData.length;
+    return { dateScale, mslScale, pressureScale, cloudScale };
+  }, [bounds, weatherData, clampCloudCoverageAt50Pct]);
 
-  // Get all pressure levels from the first column
-  const pressureLevels = weatherData[0].cloud.map((c) => c.hpa);
+  // Memoize helper functions
+  const getYForPressureMemo = useMemo(
+    () => (cloud: CloudCell[], hpa: number) => {
+      const level = cloud.find((c) => c.hpa === hpa);
+      return level?.geopotentialFt || 0;
+    },
+    [],
+  );
 
-  return (
-    <svg width={width} height={height}>
-      <rect
-        x={0}
-        y={0}
-        width={width}
-        height={height}
-        fill={background}
-        rx={14}
-      />
-      <AxisBottom
-        left={margin.left}
-        top={yMax + margin.top}
-        tickFormat={useLocalTime ? timeFormat("%d%H") : utcFormat("%d%HZ")}
-        scale={dateScale}
-        stroke={black}
-        tickStroke={black}
-        tickLabelProps={{
-          fill: black,
-          fontSize: 11,
-          textAnchor: "middle",
-        }}
-      />
-      <AxisLeft
-        left={margin.left}
-        top={margin.top}
-        scale={mslScale}
-        stroke={black}
-        tickStroke={black}
-        tickLabelProps={{
-          fill: black,
-          fontSize: 11,
-          textAnchor: "end",
-        }}
-      />
-      {showPressureLines && (
-        <AxisLeft
-          left={margin.left}
-          top={margin.top}
-          scale={mslScale}
-          stroke="none"
-          tickStroke={black}
-          tickValues={pressureLevels.map((hpa) =>
-            getYForPressure(weatherData[0].cloud, hpa),
-          )}
-          tickFormat={(value) => {
-            const cloud = weatherData[0].cloud.find(
-              (c) => c.geopotentialFt === value,
-            );
-            return cloud ? `${cloud.hpa}` : "";
-          }}
-          tickLength={6}
-          tickLabelProps={{
-            fill: black,
-            fontSize: 11,
-            textAnchor: "start",
-            dx: "0.5em",
-          }}
-          orientation="right"
-          label="hPa"
-        />
-      )}
-      <Group top={margin.top} left={margin.left}>
+  // Memoize pressure levels
+  const pressureLevels = useMemo(
+    () => weatherData[0].cloud.map((c) => c.hpa),
+    [weatherData],
+  );
+
+  const barWidth = bounds.xMax / weatherData.length;
+
+  // Memoize the main rendering components
+  const renderCloudColumns = useMemo(() => {
+    return (
+      <>
         {weatherData.map((d) => (
-          <Group key={`date-group-${d.date}`} left={dateScale(d.date)}>
+          <Group key={`date-group-${d.date}`} left={scales.dateScale(d.date)}>
             {d.cloud.map((cloud) => {
               const isHovered =
                 (hoveredRect?.date === d.date &&
                   hoveredRect?.cloudCell.hpa === cloud.hpa) ||
                 (frozenRect?.date === d.date &&
                   frozenRect?.cloudCell.hpa === cloud.hpa);
+
+              const coverage = clampCloudCoverageAt50Pct
+                ? Math.min(cloud.cloudCoverage, 50)
+                : cloud.cloudCoverage;
+
               const fillColor =
                 cloud.cloudCoverage > 50 && highlightCeilingCoverage
-                  ? `rgba(200, 200, 200, ${cloudScale(cloud.cloudCoverage)})`
-                  : `rgba(255, 255, 255, ${cloudScale(cloud.cloudCoverage)})`;
+                  ? `rgba(200, 200, 200, ${scales.cloudScale(coverage)})`
+                  : `rgba(255, 255, 255, ${scales.cloudScale(coverage)})`;
+
               return (
                 <rect
-                  key={`cloud-group-${d.date}-${cloud.hpa}`}
+                  key={`cloud-${cloud.hpa}`}
                   x={0}
-                  y={mslScale(cloud.mslFtTop)}
+                  y={scales.mslScale(cloud.mslFtTop)}
                   width={isHovered ? barWidth * 1.1 : barWidth}
                   height={
-                    mslScale(cloud.mslFtBottom) - mslScale(cloud.mslFtTop)
+                    scales.mslScale(cloud.mslFtBottom) -
+                    scales.mslScale(cloud.mslFtTop)
                   }
                   fill={fillColor}
                   stroke={isHovered ? black : "transparent"}
                   strokeWidth={isHovered ? 1 : 0}
                   onMouseEnter={() => {
                     if (!frozenRect) {
-                      setHoveredRect({
-                        date: d.date,
-                        cloudCell: cloud,
-                      });
+                      handleHover(d.date, cloud);
                     }
                   }}
                   onMouseLeave={() => {
@@ -301,6 +270,8 @@ export default function Meteogram({
             })}
           </Group>
         ))}
+
+        {/* Freezing Levels */}
         {weatherData.map((d, i) => {
           if (i === weatherData.length - 1) return null;
 
@@ -314,7 +285,7 @@ export default function Meteogram({
           return matches.map(([currentLevel, nextLevel], levelIndex) => (
             <path
               key={`freezing-level-${d.date}-${levelIndex}`}
-              d={`M ${dateScale(d.date)} ${mslScale(currentLevel)} L ${dateScale(weatherData[i + 1].date)} ${mslScale(nextLevel)}`}
+              d={`M ${scales.dateScale(d.date)} ${scales.mslScale(currentLevel)} L ${scales.dateScale(weatherData[i + 1].date)} ${scales.mslScale(nextLevel)}`}
               stroke="#0066cc"
               strokeWidth={2}
               strokeDasharray="4,4"
@@ -322,15 +293,15 @@ export default function Meteogram({
             />
           ));
         })}
+
+        {/* Pressure Lines */}
         {showPressureLines &&
           weatherData[0].cloud.map((_, pressureIndex) => {
-            // Create a path for each pressure level
             const points = weatherData.map((d) => ({
-              x: dateScale(d.date),
-              y: mslScale(d.cloud[pressureIndex].geopotentialFt),
+              x: scales.dateScale(d.date),
+              y: scales.mslScale(d.cloud[pressureIndex].geopotentialFt),
             }));
 
-            // Create SVG path string
             const pathD = points.reduce((path, point, i) => {
               if (i === 0) return `M ${point.x} ${point.y}`;
               return `${path} L ${point.x} ${point.y}`;
@@ -348,6 +319,8 @@ export default function Meteogram({
               />
             );
           })}
+
+        {/* Wind Barbs */}
         {showWindBarbs &&
           model &&
           MODEL_CONFIGS[model] &&
@@ -359,32 +332,37 @@ export default function Meteogram({
               d.cloud
                 .filter((cloud) => WIND_BARB_LEVELS.includes(cloud.hpa))
                 .map((cloud) => (
-                  <WindBarb
+                  <MemoizedWindBarb
                     key={`wind-barb-${d.date}-${cloud.hpa}`}
-                    x={dateScale(d.date) + barWidth / 2}
-                    y={mslScale(cloud.mslFt)}
-                    speed={cloud.windSpeed}
+                    x={scales.dateScale(d.date) + barWidth / 2}
+                    y={scales.mslScale(cloud.geopotentialFt)}
+                    speed={parseFloat(kmhToKnots(cloud.windSpeed))}
                     direction={cloud.windDirection}
-                    size={30}
                   />
                 )),
             )}
+
+        {/* Hover/Frozen Indicators */}
         {(hoveredRect || frozenRect) && (
           <>
             <line
-              x1={dateScale((hoveredRect || frozenRect)!.date)}
-              x2={dateScale((hoveredRect || frozenRect)!.date)}
+              x1={scales.dateScale((hoveredRect || frozenRect)!.date)}
+              x2={scales.dateScale((hoveredRect || frozenRect)!.date)}
               y1={0}
-              y2={yMax}
+              y2={bounds.yMax}
               stroke={black}
               strokeWidth={1}
               pointerEvents="none"
             />
             <line
               x1={0}
-              x2={xMax}
-              y1={mslScale((hoveredRect || frozenRect)!.cloudCell.mslFt)}
-              y2={mslScale((hoveredRect || frozenRect)!.cloudCell.mslFt)}
+              x2={bounds.xMax}
+              y1={scales.mslScale(
+                (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+              )}
+              y2={scales.mslScale(
+                (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
+              )}
               stroke={black}
               strokeWidth={1}
               pointerEvents="none"
@@ -393,47 +371,41 @@ export default function Meteogram({
               x={
                 hoveredRect || frozenRect
                   ? (() => {
-                      const cursorX = dateScale(
+                      const cursorX = scales.dateScale(
                         (hoveredRect || frozenRect)!.date,
-                      ) as number;
-                      // If we're close to the left edge, show tooltip on the right side of the cursor
+                      );
                       if (cursorX - 210 < 0) {
-                        return Math.min(cursorX + 10, xMax - 200);
+                        return Math.min(cursorX + 10, bounds.xMax - 200);
                       }
-                      // Otherwise show it on the left side, but don't let it overflow right edge
-                      return Math.min(cursorX - 210, xMax - 200);
+                      return Math.min(cursorX - 210, bounds.xMax - 200);
                     })()
                   : 0
               }
               y={
                 hoveredRect || frozenRect
                   ? (() => {
-                      const tooltipHeight = 160; // Approximate height of tooltip
-                      const cursorY = mslScale(
-                        (hoveredRect || frozenRect)!.cloudCell.mslFt,
+                      const tooltipHeight = 160;
+                      const cursorY = scales.mslScale(
+                        (hoveredRect || frozenRect)!.cloudCell.mslFtTop,
                       );
-                      const spaceBelow = yMax - cursorY;
+                      const spaceBelow = bounds.yMax - cursorY;
 
-                      // If there's less than 1/3 of the tooltip height space below, show above
                       if (spaceBelow < tooltipHeight / 3) {
                         return Math.max(
                           margin.top,
                           cursorY - tooltipHeight - 10,
                         );
                       }
-                      // Otherwise show below
                       return Math.min(
                         cursorY + 10,
-                        yMax + margin.top - tooltipHeight,
+                        bounds.yMax + margin.top - tooltipHeight,
                       );
                     })()
                   : 0
               }
               width={200}
               height={160}
-              style={{
-                pointerEvents: "none",
-              }}
+              style={{ pointerEvents: "none" }}
             >
               <div
                 style={{
@@ -449,7 +421,7 @@ export default function Meteogram({
                 <div>{`Date: ${(hoveredRect || frozenRect)!.date.toLocaleDateString()}`}</div>
                 <div>{`Time: ${(hoveredRect || frozenRect)!.date.toLocaleTimeString()}`}</div>
                 <div>{`MSL Height: ${(hoveredRect || frozenRect)!.cloudCell.mslFt.toFixed(2)} ft`}</div>
-                <div>{`Geopotential Height: ${(hoveredRect || frozenRect)!.cloudCell.geopotentialFt.toFixed(2)} ft`}</div>
+                <div>{`Height Range: ${(hoveredRect || frozenRect)!.cloudCell.mslFtTop.toFixed(2)} - ${(hoveredRect || frozenRect)!.cloudCell.mslFtBottom.toFixed(2)} ft`}</div>
                 {showPressureLines && (
                   <div>{`Pressure: ${(hoveredRect || frozenRect)!.cloudCell.hpa} hPa (${hPaToInHg((hoveredRect || frozenRect)!.cloudCell.hpa)} inHg)`}</div>
                 )}
@@ -472,6 +444,96 @@ export default function Meteogram({
             </foreignObject>
           </>
         )}
+      </>
+    );
+  }, [
+    weatherData,
+    scales,
+    barWidth,
+    hoveredRect,
+    frozenRect,
+    highlightCeilingCoverage,
+    showWindBarbs,
+    showPressureLines,
+    model,
+    bounds,
+    handleHover,
+  ]);
+
+  return (
+    <svg width={width} height={height}>
+      <rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        fill={background}
+        rx={14}
+      />
+      <AxisBottom
+        left={margin.left}
+        top={bounds.yMax + margin.top}
+        scale={scales.dateScale}
+        tickFormat={(value) => {
+          if (value instanceof Date) {
+            return useLocalTime
+              ? timeFormat("%d%H")(value)
+              : utcFormat("%d%HZ")(value);
+          }
+          const date = new Date(Number(value));
+          return useLocalTime
+            ? timeFormat("%d%H")(date)
+            : utcFormat("%d%HZ")(date);
+        }}
+        stroke={black}
+        tickStroke={black}
+        tickLabelProps={{
+          fill: black,
+          fontSize: 11,
+          textAnchor: "middle",
+        }}
+      />
+      <AxisLeft
+        left={margin.left}
+        top={margin.top}
+        scale={scales.mslScale}
+        stroke={black}
+        tickStroke={black}
+        tickLabelProps={{
+          fill: black,
+          fontSize: 11,
+          textAnchor: "end",
+        }}
+      />
+      {showPressureLines && (
+        <AxisLeft
+          left={margin.left}
+          top={margin.top}
+          scale={scales.mslScale}
+          stroke="none"
+          tickStroke={black}
+          tickValues={pressureLevels.map((hpa) =>
+            getYForPressureMemo(weatherData[0].cloud, hpa),
+          )}
+          tickFormat={(value) => {
+            const cloud = weatherData[0].cloud.find(
+              (c) => c.geopotentialFt === value,
+            );
+            return cloud ? `${cloud.hpa}` : "";
+          }}
+          tickLength={6}
+          tickLabelProps={{
+            fill: black,
+            fontSize: 11,
+            textAnchor: "start",
+            dx: "0.5em",
+          }}
+          orientation="right"
+          label="hPa"
+        />
+      )}
+      <Group top={margin.top} left={margin.left}>
+        {renderCloudColumns}
       </Group>
     </svg>
   );
