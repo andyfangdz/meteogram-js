@@ -8,8 +8,13 @@ import { utcFormat, timeFormat } from "@visx/vendor/d3-time-format";
 import { CloudColumn, CloudCell } from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
 import LoadingSkeleton from "./loading-skeleton";
+import WindBarb from "./components/wind-barb";
+import { WIND_BARB_LEVELS, MODEL_CONFIGS } from "../config/weather";
+import { WeatherModel } from "../types/weather";
 
 const hPaToInHg = (hpa: number) => (hpa * 0.02953).toFixed(2);
+// Convert km/h to knots
+const kmhToKnots = (kmh: number) => (kmh * 0.539957).toFixed(0);
 
 // Add a helper to get y position for a pressure level
 const getYForPressure = (cloud: CloudCell[], hpa: number) => {
@@ -27,6 +32,8 @@ export type MeteogramProps = {
   clampCloudCoverageAt50Pct?: boolean;
   isLoading?: boolean;
   showPressureLines?: boolean;
+  showWindBarbs?: boolean;
+  model: WeatherModel;
 };
 
 const black = "#000000";
@@ -125,6 +132,8 @@ export default function Meteogram({
   clampCloudCoverageAt50Pct = true,
   isLoading = false,
   showPressureLines = false,
+  showWindBarbs = true,
+  model,
 }: MeteogramProps) {
   const [hoveredRect, setHoveredRect] = useState<{
     date: Date;
@@ -339,6 +348,27 @@ export default function Meteogram({
               />
             );
           })}
+        {showWindBarbs &&
+          model &&
+          MODEL_CONFIGS[model] &&
+          weatherData
+            .filter(
+              (_, index) => index % MODEL_CONFIGS[model].windBarbStep === 0,
+            )
+            .map((d) =>
+              d.cloud
+                .filter((cloud) => WIND_BARB_LEVELS.includes(cloud.hpa))
+                .map((cloud) => (
+                  <WindBarb
+                    key={`wind-barb-${d.date}-${cloud.hpa}`}
+                    x={dateScale(d.date) + barWidth / 2}
+                    y={mslScale(cloud.mslFt)}
+                    speed={cloud.windSpeed}
+                    direction={cloud.windDirection}
+                    size={30}
+                  />
+                )),
+            )}
         {(hoveredRect || frozenRect) && (
           <>
             <line
@@ -425,6 +455,8 @@ export default function Meteogram({
                 )}
                 <div>{`Cloud Cover: ${(hoveredRect || frozenRect)!.cloudCell.cloudCoverage.toFixed(2)}%`}</div>
                 <div>{`Temperature: ${(hoveredRect || frozenRect)!.cloudCell.temperature.toFixed(1)}°C`}</div>
+                <div>{`Wind Speed: ${kmhToKnots((hoveredRect || frozenRect)!.cloudCell.windSpeed)} kt`}</div>
+                <div>{`Wind Direction: ${(hoveredRect || frozenRect)!.cloudCell.windDirection.toFixed(0)}°`}</div>
                 {frozenRect && (
                   <div
                     style={{

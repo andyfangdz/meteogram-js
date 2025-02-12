@@ -35,6 +35,8 @@ interface NavProps {
   setClampCloudCoverageAt50Pct: (value: boolean) => void;
   showPressureLines: boolean;
   setShowPressureLines: (value: boolean) => void;
+  showWindBarbs: boolean;
+  setShowWindBarbs: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
@@ -72,6 +74,8 @@ export default function Nav({
   setClampCloudCoverageAt50Pct,
   showPressureLines,
   setShowPressureLines,
+  showWindBarbs,
+  setShowWindBarbs,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -97,6 +101,9 @@ export default function Nav({
         onValueChange={setShowPressureLines}
       >
         Show Pressure Lines
+      </Switch>
+      <Switch isSelected={showWindBarbs} onValueChange={setShowWindBarbs}>
+        Show Wind Barbs
       </Switch>
     </div>
   );

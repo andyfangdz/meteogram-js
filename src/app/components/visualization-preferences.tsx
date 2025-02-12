@@ -21,6 +21,7 @@ interface VisualizationPreferencesProps {
     highlightCeilingCoverage: boolean;
     clampCloudCoverageAt50Pct: boolean;
     showPressureLines: boolean;
+    showWindBarbs: boolean;
   };
   updatePreferences: (
     prefs: Partial<{
@@ -28,6 +29,7 @@ interface VisualizationPreferencesProps {
       highlightCeilingCoverage: boolean;
       clampCloudCoverageAt50Pct: boolean;
       showPressureLines: boolean;
+      showWindBarbs: boolean;
     }>,
   ) => void;
 }
@@ -66,6 +68,11 @@ export default function VisualizationPreferences({
       "meteogram-show-pressure-lines",
       preferences.showPressureLines,
     );
+  const [storedShowWindBarbs, setStoredShowWindBarbs] =
+    usePersistedState<boolean>(
+      "meteogram-show-wind-barbs",
+      preferences.showWindBarbs,
+    );
 
   // Sync localStorage with URL params
   useEffect(() => {
@@ -91,6 +98,12 @@ export default function VisualizationPreferences({
       updatePreferences({ showPressureLines: storedShowPressureLines });
     }
   }, [storedShowPressureLines]);
+
+  useEffect(() => {
+    if (storedShowWindBarbs !== preferences.showWindBarbs) {
+      updatePreferences({ showWindBarbs: storedShowWindBarbs });
+    }
+  }, [storedShowWindBarbs]);
 
   return (
     <>
@@ -121,6 +134,11 @@ export default function VisualizationPreferences({
           setStoredShowPressureLines(value);
           updatePreferences({ showPressureLines: value });
         }}
+        showWindBarbs={preferences.showWindBarbs}
+        setShowWindBarbs={(value) => {
+          setStoredShowWindBarbs(value);
+          updatePreferences({ showWindBarbs: value });
+        }}
       />
       <main className="items-center justify-between p-4">
         <MeteogramWrapper
@@ -129,8 +147,10 @@ export default function VisualizationPreferences({
           highlightCeilingCoverage={preferences.highlightCeilingCoverage}
           clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
           showPressureLines={preferences.showPressureLines}
+          showWindBarbs={preferences.showWindBarbs}
           isLoading={isLoading}
           error={error}
+          model={model}
         />
       </main>
     </>

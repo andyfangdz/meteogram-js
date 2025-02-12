@@ -19,6 +19,14 @@ export function transformWeatherData(
   const modelConfig = MODEL_CONFIGS[model];
   const forecastData = response[modelConfig.forecastDataKey]()!;
 
+  // Calculate base indices for each variable type
+  const cloudCoverBaseIndex = 0;
+  const geopotentialBaseIndex = HPA_LEVELS.length;
+  const temperatureBaseIndex = 2 * HPA_LEVELS.length;
+  const windSpeedBaseIndex = 3 * HPA_LEVELS.length;
+  const windDirectionBaseIndex = 4 * HPA_LEVELS.length;
+  const groundTempIndex = 5 * HPA_LEVELS.length;
+
   const cloudData = range(
     Number(forecastData.time()),
     Number(forecastData.timeEnd()),
@@ -26,22 +34,34 @@ export function transformWeatherData(
   ).map((time, index) => ({
     date: new Date((time + utcOffsetSeconds) * 1000),
     cloud: HPA_LEVELS.map((hpa, hpaIndex) => {
+      const cloudCoverage = forecastData
+        .variables(cloudCoverBaseIndex + hpaIndex)!
+        .values(index)!;
       const geopotentialMeters = forecastData
-        .variables(hpaIndex + HPA_LEVELS.length)!
+        .variables(geopotentialBaseIndex + hpaIndex)!
         .values(index)!;
       const temperature = forecastData
-        .variables(hpaIndex + 2 * HPA_LEVELS.length)!
+        .variables(temperatureBaseIndex + hpaIndex)!
         .values(index)!;
+      const windSpeed = forecastData
+        .variables(windSpeedBaseIndex + hpaIndex)!
+        .values(index)!;
+      const windDirection = forecastData
+        .variables(windDirectionBaseIndex + hpaIndex)!
+        .values(index)!;
+
       return {
         hpa,
         geopotentialFt: geopotentialMeters * FEET_PER_METER,
         mslFt: geopotentialToMsl(geopotentialMeters) * FEET_PER_METER,
-        cloudCoverage: forecastData.variables(hpaIndex)!.values(index)!,
+        cloudCoverage,
         temperature,
+        windSpeed,
+        windDirection,
       };
     }),
     groundTemp: forecastData
-      .variables(3 * HPA_LEVELS.length)! // temperature_2m is after all HPA variables
+      .variables(groundTempIndex)! // temperature_2m is after all HPA variables
       .values(index)!,
   }));
 

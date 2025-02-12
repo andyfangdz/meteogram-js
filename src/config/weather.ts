@@ -13,14 +13,19 @@ export const MODEL_CONFIGS: ModelConfigs = {
     stepKey: "forecast_minutely_15",
     stepSize: 4 * 40, // 4 times per hour * 40 hours
     forecastDataKey: "minutely15",
+    windBarbStep: 4, // Show wind barbs every hour (4 * 15min steps)
   },
   gfs_seamless: {
     varsKey: "hourly",
     stepKey: "forecast_hourly",
     stepSize: 24 * 7, // 24 hours * 7 days
     forecastDataKey: "hourly",
+    windBarbStep: 3, // Show wind barbs every 3 hours
   },
 };
+
+// Standard pressure levels for wind barbs
+export const WIND_BARB_LEVELS = [1000, 900, 800, 700, 600, 500];
 
 export const CLOUD_COVER_HPA_VARS = HPA_LEVELS.map(
   (hpa) => `cloud_cover_${hpa}hPa`,
@@ -31,13 +36,24 @@ export const GEOPOTENTIAL_HEIGHT_HPA_VARS = HPA_LEVELS.map(
 export const TEMPERATURE_HPA_VARS = HPA_LEVELS.map(
   (hpa) => `temperature_${hpa}hPa`,
 );
+export const WIND_SPEED_HPA_VARS = HPA_LEVELS.map(
+  (hpa) => `wind_speed_${hpa}hPa`,
+);
+export const WIND_DIRECTION_HPA_VARS = HPA_LEVELS.map(
+  (hpa) => `wind_direction_${hpa}hPa`,
+);
 
 export const VARIABLES = [
   ...CLOUD_COVER_HPA_VARS,
   ...GEOPOTENTIAL_HEIGHT_HPA_VARS,
   ...TEMPERATURE_HPA_VARS,
+  ...WIND_SPEED_HPA_VARS,
+  ...WIND_DIRECTION_HPA_VARS,
   "temperature_2m", // Ground level temperature
 ];
+
+// Debug log the variables order
+console.log("API Variables:", VARIABLES);
 
 export const LOCATIONS: Locations = {
   KFRG: {

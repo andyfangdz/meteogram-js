@@ -3,4 +3,5 @@ export const DEFAULT_PREFERENCES = {
   highlightCeilingCoverage: true,
   clampCloudCoverageAt50Pct: true,
   showPressureLines: false,
+  showWindBarbs: true,
 } as const;

@@ -1,6 +1,6 @@
 "use client";
 
-import { CloudColumn } from "../../types/weather";
+import { CloudColumn, WeatherModel } from "../../types/weather";
 import Meteogram from "../meteogram";
 
 interface MeteogramWrapperProps {
@@ -9,8 +9,10 @@ interface MeteogramWrapperProps {
   highlightCeilingCoverage: boolean;
   clampCloudCoverageAt50Pct: boolean;
   showPressureLines: boolean;
+  showWindBarbs: boolean;
   isLoading: boolean;
   error: Error | null;
+  model: WeatherModel;
 }
 
 export default function MeteogramWrapper({
@@ -19,8 +21,10 @@ export default function MeteogramWrapper({
   highlightCeilingCoverage,
   clampCloudCoverageAt50Pct,
   showPressureLines,
+  showWindBarbs,
   isLoading,
   error,
+  model,
 }: MeteogramWrapperProps) {
   return (
     <div className="contents">
@@ -37,7 +41,9 @@ export default function MeteogramWrapper({
         highlightCeilingCoverage={highlightCeilingCoverage}
         clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
         showPressureLines={showPressureLines}
+        showWindBarbs={showWindBarbs}
         isLoading={isLoading}
+        model={model}
       />
     </div>
   );
