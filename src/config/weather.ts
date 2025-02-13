@@ -5,7 +5,22 @@ export const API_URL = "https://api.open-meteo.com/v1/forecast";
 
 export const HPA_LEVELS = range(1000, 250, -25);
 
-export const MODEL_NAMES: WeatherModel[] = ["gfs_seamless", "gfs_hrrr"];
+export const MODEL_NAMES: WeatherModel[] = [
+  "gfs_seamless",
+  "gfs_hrrr",
+  "ecmwf_ifs025",
+  "ecmwf_aifs025",
+];
+
+export interface ModelConfig {
+  varsKey: string;
+  stepKey: string;
+  stepSize: number;
+  forecastDataKey: "minutely15" | "hourly";
+  windBarbStep: number; // How many time steps between wind barbs
+  windBarbPressureLevelStep: number; // How many pressure levels to skip between wind barbs
+  maxIsothermStepDistance: number; // Maximum number of forecast steps an isotherm can cross
+}
 
 export const MODEL_CONFIGS: ModelConfigs = {
   gfs_hrrr: {
@@ -14,6 +29,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     stepSize: 4 * 40, // 4 times per hour * 40 hours
     forecastDataKey: "minutely15",
     windBarbStep: 4, // Show wind barbs every hour (4 * 15min steps)
+    windBarbPressureLevelStep: 4, // Show wind barbs every 4 pressure levels
     maxIsothermStepDistance: 8, // Allow isotherms to skip up to 2 hours worth of steps (8 * 15min)
   },
   gfs_seamless: {
@@ -22,6 +38,25 @@ export const MODEL_CONFIGS: ModelConfigs = {
     stepSize: 24 * 7, // 24 hours * 7 days
     forecastDataKey: "hourly",
     windBarbStep: 3, // Show wind barbs every 3 hours
+    windBarbPressureLevelStep: 4, // Show wind barbs every 4 pressure levels
+    maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
+  },
+  ecmwf_ifs025: {
+    varsKey: "hourly",
+    stepKey: "forecast_hourly",
+    stepSize: 24 * 7, // 24 hours * 7 days
+    forecastDataKey: "hourly",
+    windBarbStep: 3, // Show wind barbs every 3 hours
+    windBarbPressureLevelStep: 1, // Show wind barbs for every pressure level
+    maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
+  },
+  ecmwf_aifs025: {
+    varsKey: "hourly",
+    stepKey: "forecast_hourly",
+    stepSize: 24 * 7, // 24 hours * 7 days
+    forecastDataKey: "hourly",
+    windBarbStep: 3, // Show wind barbs every 3 hours
+    windBarbPressureLevelStep: 1, // Show wind barbs for every pressure level
     maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
   },
 };

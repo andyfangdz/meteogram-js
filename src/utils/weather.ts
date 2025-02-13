@@ -50,6 +50,22 @@ export function transformWeatherData(
         .variables(windDirectionBaseIndex + hpaIndex)!
         .values(index)!;
 
+      // Only return valid data
+      if (
+        cloudCoverage == null ||
+        geopotentialMeters == null ||
+        temperature == null ||
+        windSpeed == null ||
+        windDirection == null ||
+        !Number.isFinite(cloudCoverage) ||
+        !Number.isFinite(geopotentialMeters) ||
+        !Number.isFinite(temperature) ||
+        !Number.isFinite(windSpeed) ||
+        !Number.isFinite(windDirection)
+      ) {
+        return null;
+      }
+
       return {
         hpa,
         geopotentialFt: geopotentialMeters * FEET_PER_METER,
@@ -59,22 +75,41 @@ export function transformWeatherData(
         windSpeed,
         windDirection,
       };
-    }),
+    }).filter(Boolean), // Remove null entries
     groundTemp: forecastData
       .variables(groundTempIndex)! // temperature_2m is after all HPA variables
       .values(index)!,
   }));
 
-  return cloudData.map((dateAndCloud) => ({
-    date: dateAndCloud.date,
-    cloud: dateAndCloud.cloud.slice(0, -1).map((cloud, index) => ({
-      ...cloud,
-      mslFtBottom:
-        index === 0
-          ? 0
-          : (dateAndCloud.cloud[index - 1].mslFt + cloud.mslFt) / 2,
-      mslFtTop: (cloud.mslFt + dateAndCloud.cloud[index + 1].mslFt) / 2,
-    })),
-    groundTemp: dateAndCloud.groundTemp,
-  }));
+  return cloudData.map((dateAndCloud) => {
+    // Filter out null entries and sort by pressure (height)
+    const validClouds = dateAndCloud.cloud
+      .filter((cloud) => cloud != null)
+      .sort((a, b) => b!.hpa - a!.hpa);
+
+    return {
+      date: dateAndCloud.date,
+      cloud: validClouds.map((cloud, index) => {
+        const prevCloud = index > 0 ? validClouds[index - 1] : null;
+        const nextCloud =
+          index < validClouds.length - 1 ? validClouds[index + 1] : null;
+
+        // Calculate mslFtBottom and mslFtTop using available adjacent levels
+        const mslFtBottom = prevCloud
+          ? (prevCloud.mslFt + cloud!.mslFt) / 2
+          : cloud!.mslFt - 500; // If no lower level, go 500ft below
+
+        const mslFtTop = nextCloud
+          ? (cloud!.mslFt + nextCloud.mslFt) / 2
+          : cloud!.mslFt + 500; // If no upper level, go 500ft above
+
+        return {
+          ...cloud!,
+          mslFtBottom,
+          mslFtTop,
+        };
+      }),
+      groundTemp: dateAndCloud.groundTemp,
+    };
+  });
 }
