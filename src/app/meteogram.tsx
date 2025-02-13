@@ -1000,6 +1000,11 @@ export default function Meteogram({
               zIndex: 100,
             }}
           >
+            <div>{`Time: ${
+              useLocalTime
+                ? (hoveredRect || frozenRect)!.date.toLocaleTimeString()
+                : (hoveredRect || frozenRect)!.date.toUTCString().split(" ")[4]
+            } ${useLocalTime ? "Local" : "UTC"}`}</div>
             {(hoveredRect || frozenRect)!.cloudCell.hpa != null && (
               <div>{`Pressure: ${hPaToInHg((hoveredRect || frozenRect)!.cloudCell.hpa)} inHg (${
                 (hoveredRect || frozenRect)!.cloudCell.hpa
