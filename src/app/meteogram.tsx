@@ -651,9 +651,7 @@ export default function Meteogram({
                         }
                       }
                     }}
-                  >
-                    <title>{`Cloud Cell: ${cloud.hpa}hPa, Coverage: ${cloud.cloudCoverage}%, Height: ${formatNumber(cloud.mslFtTop)}-${formatNumber(cloud.mslFtBottom)}ft`}</title>
-                  </rect>
+                  ></rect>
                 );
               })}
             </Group>
@@ -678,9 +676,7 @@ export default function Meteogram({
               strokeWidth={2}
               strokeDasharray="4,4"
               fill="none"
-            >
-              <title>{`Freezing Level Line ${lineIndex + 1}`}</title>
-            </path>
+            ></path>
           );
         })}
 
@@ -710,9 +706,7 @@ export default function Meteogram({
                     strokeDasharray="4,4"
                     opacity={0.7}
                     fill="none"
-                  >
-                    <title>{`Isotherm Line: ${temp}°C`}</title>
-                  </path>
+                  ></path>
                   <text
                     className="isotherm-label"
                     x={formatNumber(
@@ -725,7 +719,6 @@ export default function Meteogram({
                     fill={getTemperatureColor(temp)}
                     pointerEvents="none"
                   >
-                    <title>{`Isotherm Label: ${temp}°C`}</title>
                     {`${temp}°C`}
                   </text>
                 </g>
@@ -759,9 +752,7 @@ export default function Meteogram({
                 strokeDasharray="4,4"
                 opacity={0.5}
                 fill="none"
-              >
-                <title>{`Pressure Line: ${hpa}hPa`}</title>
-              </path>
+              ></path>
             );
           })}
 
@@ -831,9 +822,7 @@ export default function Meteogram({
                   stroke={black}
                   strokeWidth={1}
                   pointerEvents="none"
-                >
-                  <title>{`Highlight Border: ${cloud.hpa}hPa`}</title>
-                </rect>
+                ></rect>
               );
             })}
           </Group>
@@ -855,9 +844,7 @@ export default function Meteogram({
               stroke={black}
               strokeWidth={1}
               pointerEvents="none"
-            >
-              <title>Vertical Hover Line</title>
-            </line>
+            ></line>
             <line
               className="hover-line hover-line-horizontal"
               x1={0}
@@ -875,9 +862,7 @@ export default function Meteogram({
               stroke={black}
               strokeWidth={1}
               pointerEvents="none"
-            >
-              <title>Horizontal Hover Line</title>
-            </line>
+            ></line>
           </>
         )}
       </>
