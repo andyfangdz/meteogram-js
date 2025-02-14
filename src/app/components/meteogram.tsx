@@ -115,9 +115,16 @@ export default function Meteogram({
   }, [weatherData]);
 
   // Handlers
-  const handleHover = useCallback((date: Date, cloudCell: CloudCell) => {
-    setHoveredRect({ date, cloudCell });
-  }, []);
+  const handleHover = useCallback(
+    (date: Date | null, cloudCell: CloudCell | null) => {
+      if (date && cloudCell) {
+        setHoveredRect({ date, cloudCell });
+      } else {
+        setHoveredRect(null);
+      }
+    },
+    [],
+  );
 
   const handleFreezeChange = useCallback(
     (rect: { date: Date; cloudCell: CloudCell } | null) => {
@@ -136,6 +143,11 @@ export default function Meteogram({
       width={formatNumber(width)}
       height={formatNumber(height)}
       className="meteogram"
+      onMouseLeave={() => {
+        if (!frozenRect) {
+          setHoveredRect(null);
+        }
+      }}
     >
       <rect
         className="meteogram-background"

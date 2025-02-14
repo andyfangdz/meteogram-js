@@ -21,7 +21,7 @@ interface CloudColumnsProps {
   model: WeatherModel;
   hoveredRect: { date: Date; cloudCell: CloudCell } | null;
   frozenRect: { date: Date; cloudCell: CloudCell } | null;
-  onHover: (date: Date, cloudCell: CloudCell) => void;
+  onHover: (date: Date | null, cloudCell: CloudCell | null) => void;
   onFreezeChange: (rect: { date: Date; cloudCell: CloudCell } | null) => void;
 }
 
@@ -90,7 +90,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                   }}
                   onMouseLeave={() => {
                     if (!frozenRect) {
-                      onHover(d.date, cloud);
+                      onHover(null, null);
                     }
                   }}
                   onClick={(event: React.MouseEvent) => {
