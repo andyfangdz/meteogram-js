@@ -8,6 +8,7 @@ interface MeteogramTooltipProps {
   x: number;
   y: number;
   useLocalTime: boolean;
+  frozen?: boolean;
 }
 
 const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
@@ -16,16 +17,26 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   x,
   y,
   useLocalTime,
+  frozen = false,
 }) => {
   return (
-    <foreignObject x={x} y={y} width="200" height="200">
+    <foreignObject
+      x={x}
+      y={y}
+      width="200"
+      height="200"
+      style={{
+        pointerEvents: frozen ? "auto" : "none",
+      }}
+    >
       <div
         style={{
           backgroundColor: "rgba(255,255,255,0.9)",
           padding: "8px",
           borderRadius: "4px",
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-          pointerEvents: "none",
+          pointerEvents: frozen ? "auto" : "none",
+          userSelect: frozen ? "text" : "none",
           fontSize: "12px",
           zIndex: 100,
         }}
