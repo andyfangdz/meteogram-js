@@ -84,8 +84,14 @@ export const findFreezingLevels = (
   return freezingLevels.sort((a, b) => a - b);
 };
 
+interface IsothermPoint {
+  x: number;
+  y: number;
+  temp?: number;
+}
+
 interface IsothermPath {
-  points: { x: number; y: number }[];
+  points: IsothermPoint[];
   minHeight: number;
   maxHeight: number;
 }
@@ -229,7 +235,7 @@ const predictNextPoint = (
   path: IsothermPath,
   inversions: { bottom: number; top: number; increasing: boolean }[],
   heightThreshold: number,
-): { x: number; y: number } | null => {
+): IsothermPoint | null => {
   const lastPoint = path.points[path.points.length - 1];
   if (path.points.length < 2) return null;
 
@@ -255,13 +261,13 @@ const predictNextPoint = (
       return {
         x: lastPoint.x + 1,
         y: lastPoint.y + verticalRate * 2,
-      };
+      } as IsothermPoint;
     } else {
       // Near the edges, be more conservative
       return {
         x: lastPoint.x + 1,
         y: lastPoint.y + verticalRate * 0.5,
-      };
+      } as IsothermPoint;
     }
   }
 
@@ -269,7 +275,7 @@ const predictNextPoint = (
   return {
     x: lastPoint.x + 1,
     y: lastPoint.y + verticalRate * 0.75,
-  };
+  } as IsothermPoint;
 };
 
 // Helper function to find isotherm points
@@ -307,12 +313,12 @@ export const findIsothermPoints = (
   // For each temperature, find all possible isotherm paths
   for (let temp = minTemp; temp <= maxTemp; temp += tempStep) {
     // First pass: Find all points where temperature equals our target
-    const allPoints: { x: number; y: number; temp: number }[][] = [];
+    const allPoints: IsothermPoint[][] = [];
 
     weatherData.forEach((column, colIndex) => {
       if (!column.cloud?.length) return;
 
-      const columnPoints: { x: number; y: number; temp: number }[] = [];
+      const columnPoints: IsothermPoint[] = [];
       const sortedLevels = [...column.cloud]
         .filter(
           (cell) => cell.geopotentialFt != null && cell.temperature != null,
@@ -464,13 +470,14 @@ export const findIsothermPoints = (
         }
 
         // Find closest point within threshold, preferring points that follow the trend
-        let bestMatch: {
-          point: (typeof columnPoints)[0];
-          index: number;
-        } | null = null;
         let minCost = heightThreshold * 2;
+        type MatchType = {
+          point: IsothermPoint;
+          index: number;
+        };
+        let bestMatch: MatchType | null = null;
 
-        columnPoints.forEach((point, i) => {
+        columnPoints.forEach((point: IsothermPoint, i: number) => {
           if (usedPoints.has(i)) return;
 
           const verticalDist = Math.abs(point.y - lastPoint.y);
@@ -492,6 +499,7 @@ export const findIsothermPoints = (
         });
 
         if (bestMatch) {
+          bestMatch = bestMatch as MatchType;
           usedPoints.add(bestMatch.index);
           // If there's a gap, add interpolated points
           if (colIndex - lastX > 1) {
