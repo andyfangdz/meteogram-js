@@ -1,7 +1,7 @@
 "use client";
 
 import { CloudColumn, WeatherModel } from "../../types/weather";
-import Meteogram from "../meteogram";
+import Meteogram from "./meteogram";
 
 interface MeteogramWrapperProps {
   weatherData: CloudColumn[];

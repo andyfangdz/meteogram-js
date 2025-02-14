@@ -6,20 +6,21 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
-import { LOCATIONS } from "../config/weather";
+import { MODEL_NAMES } from "../../config/weather";
+import { WeatherModel } from "../../types/weather";
 
-export default function LocationDropdown({
-  location,
-  setLocation,
+export default function ModelDropdown({
+  model,
+  setModel,
 }: {
-  location: string;
-  setLocation: Dispatch<SetStateAction<string>>;
+  model: WeatherModel;
+  setModel: Dispatch<SetStateAction<WeatherModel>>;
 }) {
   return (
     <Dropdown>
       <DropdownTrigger>
         <Button variant="bordered" className="capitalize">
-          <code>{location}</code>
+          Model: <code>{model}</code>
         </Button>
       </DropdownTrigger>
       <DropdownMenu
@@ -27,12 +28,12 @@ export default function LocationDropdown({
         variant="flat"
         disallowEmptySelection
         selectionMode="single"
-        selectedKeys={[location]}
-        onAction={(location) => setLocation(location as string)}
+        selectedKeys={[model]}
+        onAction={(model) => setModel(model as WeatherModel)}
       >
-        {Object.keys(LOCATIONS).map((location) => (
-          <DropdownItem key={location}>
-            <code>{location}</code>
+        {MODEL_NAMES.map((model) => (
+          <DropdownItem key={model}>
+            <code>{model}</code>
           </DropdownItem>
         ))}
       </DropdownMenu>

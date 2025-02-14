@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import type { AxisBottom as AxisBottomType, AxisScale } from "@visx/axis";
 import { timeFormat, utcFormat } from "@visx/vendor/d3-time-format";
-import { scaleTime } from "@visx/scale";
 import { useState, useEffect } from "react";
 
 const AxisBottom = dynamic<React.ComponentProps<typeof AxisBottomType>>(

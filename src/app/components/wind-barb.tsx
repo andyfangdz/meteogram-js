@@ -6,20 +6,6 @@ const formatNumber = (num: number) => {
   return Number.isFinite(formatted) ? formatted : 0;
 };
 
-// Helper function to calculate point on circle
-const pointOnCircle = (
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angleDegrees: number,
-) => {
-  const angleRadians = ((angleDegrees - 90) * Math.PI) / 180.0;
-  return {
-    x: formatNumber(centerX + radius * Math.cos(angleRadians)),
-    y: formatNumber(centerY + radius * Math.sin(angleRadians)),
-  };
-};
-
 interface WindBarbProps {
   x: number;
   y: number;

@@ -2,7 +2,7 @@
 
 import { Dispatch, SetStateAction } from "react";
 import { WeatherModel } from "../../types/weather";
-import Nav from "../Nav";
+import Nav from "./nav";
 
 interface NavWrapperProps {
   model: WeatherModel;

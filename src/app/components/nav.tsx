@@ -18,10 +18,10 @@ import {
   Chip,
   Switch,
 } from "@heroui/react";
-import { WeatherModel } from "../types/weather";
+import { WeatherModel } from "../../types/weather";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
-import LastUpdateTime from "./components/last-update-time";
+import LastUpdateTime from "./last-update-time";
 
 interface NavProps {
   model: WeatherModel;
