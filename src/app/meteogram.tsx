@@ -182,7 +182,7 @@ const getTemperatureColor = (temp: number): string => {
 // Helper function to find freezing level points
 const findFreezingPoints = (weatherData: CloudColumn[]) => {
   const freezingLines: { points: { x: number; y: number }[] }[] = [];
-  const heightThreshold = 3000; // Feet - increased to be more lenient
+  // const heightThreshold = 3000; // Feet - increased to be more lenient
 
   // Process each column in sequence
   weatherData.forEach((column, colIndex) => {
@@ -207,7 +207,7 @@ const findFreezingPoints = (weatherData: CloudColumn[]) => {
         // Only try to connect if this is the next column
         if (lastPoint.x === colIndex - 1) {
           const heightDiff = Math.abs(lastPoint.y - level);
-          if (heightDiff < heightThreshold) {
+          if (heightDiff < 3000) {
             line.points.push({ x: colIndex, y: level });
             foundLine = true;
             break;
@@ -395,8 +395,9 @@ const findIsothermPoints = (
             }
           });
 
-          // More lenient height difference threshold for continuing lines
-          if (minDiff < heightThreshold * 3) {
+          // Adjust the logic for continuing lines
+          if (minDiff < heightThreshold * 4) {
+            // More lenient height difference threshold
             line.points.push({ x: colIndex, y: bestMatch });
             usedHeights.add(bestMatch);
             newActiveLines.push(line);

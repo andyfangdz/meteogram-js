@@ -3,6 +3,7 @@ import React, {
   SetStateAction,
   createContext,
   useContext,
+  useCallback,
 } from "react";
 import {
   Navbar,
@@ -10,6 +11,8 @@ import {
   NavbarContent,
   NavbarItem,
   NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
   Button,
   ButtonGroup,
   Chip,
@@ -87,6 +90,10 @@ export default function Nav({
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
+  const handleMenuToggle = useCallback(() => {
+    setIsMenuOpen((prev) => !prev);
+  }, []);
+
   const PreferencesPanel = () => (
     <div className="flex flex-col gap-4 p-4">
       <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
@@ -137,8 +144,16 @@ export default function Nav({
         setShowIsothermLines,
       }}
     >
-      <Navbar className="relative z-[51]">
+      <Navbar
+        className="relative z-[1000]"
+        shouldHideOnScroll={false}
+        disableScrollHandler={true}
+      >
         <NavbarContent>
+          <NavbarMenuToggle
+            className="md:hidden"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          />
           <NavbarBrand>
             <p className="font-bold text-inherit">Meteogram</p>
           </NavbarBrand>
@@ -166,35 +181,41 @@ export default function Nav({
               </Button>
             </ButtonGroup>
           </NavbarItem>
-          <NavbarItem>
-            <NavbarMenuToggle
-              className="md:ml-4 p-2 cursor-pointer hover:bg-default-100 rounded-lg"
+          <NavbarItem className="hidden md:flex">
+            <button
+              className="p-4 cursor-pointer hover:bg-default-100 rounded-lg"
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            />
+              onClick={handleMenuToggle}
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {isMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
           </NavbarItem>
         </NavbarContent>
-      </Navbar>
 
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`fixed inset-0 z-50 md:hidden transition-all duration-300 ease-in-out ${
-          isMenuOpen ? "visible opacity-100" : "invisible opacity-0"
-        }`}
-        onClick={(e) => {
-          // Close menu when clicking outside
-          if (e.target === e.currentTarget) {
-            setIsMenuOpen(false);
-          }
-        }}
-      >
-        <div
-          className={`fixed right-0 h-full w-full max-w-xs bg-background shadow-lg pt-16 transition-transform duration-300 ease-in-out ${
-            isMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          <div className="flex flex-col gap-4 p-4 overflow-y-auto h-full">
+        {/* Mobile Menu */}
+        <NavbarMenu>
+          <div className="flex flex-col gap-4 mt-4">
             <LocationDropdown location={location} setLocation={setLocation} />
             <ModelDropdown model={model} setModel={setModel} />
             <Chip>
@@ -205,12 +226,12 @@ export default function Nav({
             </Button>
             <PreferencesPanel />
           </div>
-        </div>
-      </div>
+        </NavbarMenu>
+      </Navbar>
 
       {/* Desktop Side Panel */}
       <div
-        className={`hidden md:block fixed right-0 top-[64px] h-[calc(100vh-64px)] w-80 bg-background shadow-lg transition-[right] duration-300 ease-in-out ${
+        className={`hidden md:block fixed right-0 top-[64px] h-[calc(100vh-64px)] w-80 bg-background shadow-lg z-[999] transition-[right] duration-300 ease-in-out ${
           isMenuOpen ? "right-0" : "right-[-100%]"
         }`}
         style={{ WebkitOverflowScrolling: "touch" }}
