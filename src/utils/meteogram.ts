@@ -184,8 +184,9 @@ const gridToWeatherCoords = (
 
 // Helper function to find the valid altitude range at a given time index
 const findValidAltitudeRange = (
-  column: CloudColumn,
+  column: CloudColumn | null,
 ): { min: number; max: number } | null => {
+  if (!column) return null;
   const validCells = column.cloud.filter(
     (cell) => cell.mslFt != null && cell.temperature != null,
   );
@@ -370,7 +371,7 @@ export const findFreezingLevels = (
   if (!weatherData?.length) return [];
 
   const resolution = 100; // Increase for more precision
-  const tempGrid = createInterpolatedTempGrid(weatherData, resolution, true); // Include ground temperature
+  const tempGrid = createInterpolatedTempGrid(weatherData, resolution, false); // Include ground temperature
 
   if (tempGrid.length === 0) return [];
 
