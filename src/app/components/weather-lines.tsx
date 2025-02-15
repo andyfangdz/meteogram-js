@@ -75,6 +75,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
             strokeWidth={2}
             strokeDasharray="4,4"
             fill="none"
+            pointerEvents="none"
           />
         );
       })}
@@ -104,6 +105,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
               <g
                 key={`isotherm-${temp}-${formatNumber(points[0].y)}-${lineIndex}`}
                 className={`isotherm-group isotherm-${temp}`}
+                pointerEvents="none"
               >
                 <path
                   className="isotherm-line"

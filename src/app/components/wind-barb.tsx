@@ -138,6 +138,7 @@ export default function WindBarb({
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
+      pointerEvents="none"
     />
   );
 }

@@ -32,7 +32,7 @@ export const useMeteogramScales = (
         }),
         pressureScale: scaleLinear<number>({
           domain: [250, 1000],
-          range: [0, bounds.yMax],
+          range: [bounds.yMax, 0],
         }),
         cloudScale: scaleLinear<number>({
           domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],
@@ -53,7 +53,7 @@ export const useMeteogramScales = (
       }),
       pressureScale: scaleLinear<number>({
         domain: [250, 1000],
-        range: [0, bounds.yMax],
+        range: [bounds.yMax, 0],
       }),
       cloudScale: scaleLinear<number>({
         domain: [0, clampCloudCoverageAt50Pct ? 50 : 75],

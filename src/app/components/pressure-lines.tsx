@@ -33,16 +33,37 @@ const PressureLines: React.FC<PressureLinesProps> = ({
         }, "");
 
         return (
-          <path
-            className={`pressure-line pressure-line-${hpa}`}
-            key={`pressure-line-${hpa}`}
-            d={pathD}
-            stroke="gray"
-            strokeWidth={1}
-            strokeDasharray="4,4"
-            opacity={0.5}
-            fill="none"
-          />
+          <g key={`pressure-${hpa}`} pointerEvents="none">
+            <path
+              className={`pressure-line pressure-line-${hpa}`}
+              d={pathD}
+              stroke="gray"
+              strokeWidth={1}
+              strokeDasharray="4,4"
+              opacity={0.5}
+              fill="none"
+            />
+            {points.length > 0 && (
+              <g className="pressure-tick">
+                <line
+                  x1={0}
+                  x2={6}
+                  y1={points[0].y}
+                  y2={points[0].y}
+                  stroke="black"
+                />
+                <text
+                  x={9}
+                  y={points[0].y}
+                  fontSize={11}
+                  fill="black"
+                  dominantBaseline="middle"
+                >
+                  {hpa}
+                </text>
+              </g>
+            )}
+          </g>
         );
       })}
     </>

@@ -34,7 +34,6 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   clampCloudCoverageAt50Pct,
   showWindBarbs,
   model,
-  hoveredRect,
   frozenRect,
   onHover,
   onFreezeChange,
@@ -53,12 +52,6 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             className="cloud-column"
           >
             {filteredClouds?.map((cloud) => {
-              const isHovered =
-                (hoveredRect?.date === d.date &&
-                  hoveredRect?.cloudCell.hpa === cloud.hpa) ||
-                (frozenRect?.date === d.date &&
-                  frozenRect?.cloudCell.hpa === cloud.hpa);
-
               const coverage = clampCloudCoverageAt50Pct
                 ? Math.min(cloud.cloudCoverage, 50)
                 : cloud.cloudCoverage;
@@ -74,7 +67,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                   key={`cloud-${cloud.hpa}`}
                   x={formatNumber(0)}
                   y={formatNumber(scales.mslScale(cloud.mslFtTop))}
-                  width={formatNumber(isHovered ? barWidth * 1.1 : barWidth)}
+                  width={formatNumber(barWidth)}
                   height={formatNumber(
                     scales.mslScale(cloud.mslFtBottom) -
                       scales.mslScale(cloud.mslFtTop),

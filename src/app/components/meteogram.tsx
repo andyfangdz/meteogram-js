@@ -172,7 +172,6 @@ export default function Meteogram({
           clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
           showWindBarbs={showWindBarbs}
           model={model}
-          hoveredRect={hoveredRect}
           frozenRect={frozenRect}
           onHover={handleHover}
           onFreezeChange={handleFreezeChange}
@@ -224,6 +223,33 @@ export default function Meteogram({
             textAnchor: "end",
           }}
         />
+        <g className="axis-units">
+          <line
+            x1={formatNumber(margin.left)}
+            x2={formatNumber(margin.left)}
+            y1={formatNumber(bounds.yMax + margin.top)}
+            y2={formatNumber(bounds.yMax + margin.top + 25)}
+            stroke={black}
+          />
+          <text
+            x={formatNumber(margin.left - 5)}
+            y={formatNumber(bounds.yMax + margin.top + 30)}
+            fontSize={11}
+            fill={black}
+            textAnchor="end"
+          >
+            ft MSL
+          </text>
+          <text
+            x={formatNumber(margin.left + 5)}
+            y={formatNumber(bounds.yMax + margin.top + 30)}
+            fontSize={11}
+            fill={black}
+            textAnchor="start"
+          >
+            hPa
+          </text>
+        </g>
       </g>
       {/* Render tooltip */}
       {(hoveredRect || frozenRect) && (
