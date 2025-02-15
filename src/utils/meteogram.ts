@@ -1,5 +1,6 @@
 import { CloudCell, CloudColumn } from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
+import { isoLines } from "marching-squares";
 
 export const formatNumber = (num: number | undefined): number =>
   num ? Number(num.toFixed(4)) : 0;
@@ -30,252 +31,236 @@ export const getTemperatureColor = (temp: number): string => {
   return `rgb(${r},0,${b})`;
 };
 
-// Helper function to find freezing levels in a cloud column
-export const findFreezingLevels = (
-  cloudColumn: CloudCell[],
-  groundTemp: number | null,
-): number[] => {
-  const freezingLevels: number[] = [];
-
-  if (!cloudColumn?.length) {
-    return freezingLevels;
-  }
-
-  const sortedColumn = [...cloudColumn]
-    .filter(
-      (cell) =>
-        cell.temperature != null && cell.mslFt != null && cell.hpa != null,
-    )
-    .sort((a, b) => b.hpa - a.hpa);
-
-  if (sortedColumn.length === 0) {
-    return freezingLevels;
-  }
-
-  if (groundTemp != null && groundTemp <= 0) {
-    freezingLevels.push(0);
-  } else if (
-    groundTemp != null &&
-    groundTemp > 0 &&
-    sortedColumn[0].temperature <= 0
-  ) {
-    const t1 = groundTemp;
-    const t2 = sortedColumn[0].temperature;
-    const h1 = 2 * FEET_PER_METER;
-    const h2 = sortedColumn[0].mslFt;
-    const freezingLevel = h1 + ((0 - t1) * (h2 - h1)) / (t2 - t1);
-    freezingLevels.push(freezingLevel);
-  }
-
-  for (let i = 0; i < sortedColumn.length - 1; i++) {
-    if (
-      sortedColumn[i].temperature > 0 &&
-      sortedColumn[i + 1].temperature <= 0
-    ) {
-      const t1 = sortedColumn[i].temperature;
-      const t2 = sortedColumn[i + 1].temperature;
-      const h1 = sortedColumn[i].mslFt;
-      const h2 = sortedColumn[i + 1].mslFt;
-      const freezingLevel = h1 + ((0 - t1) * (h2 - h1)) / (t2 - t1);
-      freezingLevels.push(freezingLevel);
-    }
-  }
-
-  return freezingLevels.sort((a, b) => a - b);
+// Helper function to interpolate altitude for a given temperature between two points
+const interpolateAltitude = (
+  temp: number,
+  point1: { temp: number; altitude: number },
+  point2: { temp: number; altitude: number },
+): number => {
+  const ratio = (temp - point1.temp) / (point2.temp - point1.temp);
+  return point1.altitude + ratio * (point2.altitude - point1.altitude);
 };
 
-interface IsothermPoint {
-  x: number;
-  y: number;
-  temp?: number;
-}
+// Convert weather data to a high-resolution temperature grid
+const createInterpolatedTempGrid = (
+  weatherData: CloudColumn[],
+  resolution: number = 100,
+  includeGround: boolean = false,
+): number[][] => {
+  if (!weatherData.length || !weatherData[0].cloud.length) return [];
 
-interface IsothermPath {
-  points: IsothermPoint[];
-  minHeight: number;
-  maxHeight: number;
-}
+  // Find altitude range
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.mslFt != null) {
+        minAlt = Math.min(minAlt, cell.mslFt);
+        maxAlt = Math.max(maxAlt, cell.mslFt);
+      }
+    });
+  });
 
-// Helper function to check if paths are similar
-const arePathsSimilar = (
-  path1: IsothermPath,
-  path2: IsothermPath,
-  heightThreshold: number,
-): boolean => {
-  // Check if paths overlap in height range
-  const heightOverlap = !(
-    path1.maxHeight < path2.minHeight - heightThreshold ||
-    path1.minHeight > path2.maxHeight + heightThreshold
-  );
+  if (minAlt === Infinity || maxAlt === -Infinity) return [];
 
-  if (!heightOverlap) return false;
+  // Add some padding to the altitude range to avoid edge effects
+  const altPadding = (maxAlt - minAlt) * 0.1;
+  minAlt -= altPadding;
+  maxAlt += altPadding;
 
-  // Check if paths share similar points
-  let similarPoints = 0;
-  let totalPoints = 0;
+  // Create a high-resolution grid
+  const grid: number[][] = [];
+  const altStep = (maxAlt - minAlt) / (resolution - 1);
 
-  // Compare points at same x coordinates
-  const points1ByX = new Map(path1.points.map((p) => [p.x, p.y]));
-  const points2ByX = new Map(path2.points.map((p) => [p.x, p.y]));
+  // For each altitude level
+  for (let i = 0; i < resolution; i++) {
+    const altitude = minAlt + i * altStep;
+    const row: number[] = [];
 
-  points1ByX.forEach((y1, x) => {
-    const y2 = points2ByX.get(x);
-    if (y2 !== undefined) {
-      totalPoints++;
-      if (Math.abs(y1 - y2) < heightThreshold) {
-        similarPoints++;
+    // For each time step
+    for (let timeIndex = 0; timeIndex < weatherData.length; timeIndex++) {
+      const column = weatherData[timeIndex];
+      const sortedCells = [...column.cloud]
+        .filter((cell) => cell.mslFt != null && cell.temperature != null)
+        .sort((a, b) => a.mslFt - b.mslFt);
+
+      if (sortedCells.length < 2) {
+        row.push(NaN);
+        continue;
+      }
+
+      // Handle points below the lowest measurement
+      if (altitude <= sortedCells[0].mslFt) {
+        if (includeGround && column.groundTemp != null) {
+          // Interpolate between ground temperature and lowest measurement
+          const ratio = (altitude - column.groundMslFt) / (sortedCells[0].mslFt - column.groundMslFt);
+          row.push(column.groundTemp + ratio * (sortedCells[0].temperature! - column.groundTemp));
+        } else {
+          row.push(sortedCells[0].temperature!);
+        }
+        continue;
+      }
+
+      // Handle points above the highest measurement
+      if (altitude >= sortedCells[sortedCells.length - 1].mslFt) {
+        row.push(sortedCells[sortedCells.length - 1].temperature!);
+        continue;
+      }
+
+      // Find cells that bracket this altitude
+      let found = false;
+      for (let j = 0; j < sortedCells.length - 1; j++) {
+        const cell1 = sortedCells[j];
+        const cell2 = sortedCells[j + 1];
+
+        if (cell1.mslFt <= altitude && cell2.mslFt >= altitude) {
+          // Interpolate temperature at this altitude
+          const ratio = (altitude - cell1.mslFt) / (cell2.mslFt - cell1.mslFt);
+          row.push(
+            cell1.temperature! +
+              ratio * (cell2.temperature! - cell1.temperature!),
+          );
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        row.push(NaN);
       }
     }
-  });
+    grid.push(row);
+  }
 
-  // Paths are similar if they share enough similar points
-  return totalPoints > 0 && similarPoints / totalPoints > 0.5;
-};
+  // Fill any remaining NaN values using nearest neighbor
+  for (let i = 0; i < grid.length; i++) {
+    for (let j = 0; j < grid[i].length; j++) {
+      if (isNaN(grid[i][j])) {
+        // Look for nearest non-NaN value vertically
+        let above = i - 1;
+        let below = i + 1;
+        while (above >= 0 && isNaN(grid[above][j])) above--;
+        while (below < grid.length && isNaN(grid[below][j])) below++;
 
-// Helper function to analyze temperature profile in a column
-const analyzeTemperatureProfile = (
-  levels: CloudCell[],
-  targetTemp: number,
-  heightThreshold: number,
-): {
-  validCrossings: { height: number; temp: number }[];
-  inversions: { bottom: number; top: number; increasing: boolean }[];
-} => {
-  if (levels.length < 2) return { validCrossings: [], inversions: [] };
-
-  const sortedLevels = [...levels]
-    .filter((cell) => cell.geopotentialFt != null && cell.temperature != null)
-    .sort((a, b) => a.geopotentialFt! - b.geopotentialFt!);
-
-  const validCrossings: { height: number; temp: number }[] = [];
-  const inversions: { bottom: number; top: number; increasing: boolean }[] = [];
-
-  // First pass: Find all potential crossings
-  for (let i = 0; i < sortedLevels.length - 1; i++) {
-    const cell1 = sortedLevels[i];
-    const cell2 = sortedLevels[i + 1];
-
-    // Check for exact matches
-    if (Math.abs(cell1.temperature! - targetTemp) < 0.01) {
-      validCrossings.push({
-        height: cell1.geopotentialFt!,
-        temp: cell1.temperature!,
-      });
-    }
-
-    // Check for crossings between levels
-    if (
-      (cell1.temperature! <= targetTemp && cell2.temperature! >= targetTemp) ||
-      (cell1.temperature! >= targetTemp && cell2.temperature! <= targetTemp)
-    ) {
-      const ratio =
-        (targetTemp - cell1.temperature!) /
-        (cell2.temperature! - cell1.temperature!);
-      const height =
-        cell1.geopotentialFt! +
-        ratio * (cell2.geopotentialFt! - cell1.geopotentialFt!);
-      validCrossings.push({ height, temp: targetTemp });
+        if (above >= 0 && below < grid.length) {
+          // Interpolate between above and below
+          const ratio = (i - above) / (below - above);
+          grid[i][j] =
+            grid[above][j] + ratio * (grid[below][j] - grid[above][j]);
+        } else if (above >= 0) {
+          grid[i][j] = grid[above][j];
+        } else if (below < grid.length) {
+          grid[i][j] = grid[below][j];
+        }
+      }
     }
   }
 
-  // Second pass: Identify inversions
-  let currentTrend = 0; // -1 decreasing, 0 unknown, 1 increasing
-  let trendStart = 0;
-
-  for (let i = 1; i < sortedLevels.length; i++) {
-    const prev = sortedLevels[i - 1];
-    const curr = sortedLevels[i];
-    const lapseRate =
-      (curr.temperature! - prev.temperature!) /
-      (curr.geopotentialFt! - prev.geopotentialFt!);
-
-    const newTrend = lapseRate > 0 ? 1 : -1;
-
-    if (currentTrend !== 0 && newTrend !== currentTrend) {
-      // We found an inversion
-      inversions.push({
-        bottom: sortedLevels[trendStart].geopotentialFt!,
-        top: curr.geopotentialFt!,
-        increasing: currentTrend > 0,
-      });
-      trendStart = i;
-    }
-
-    if (currentTrend === 0) {
-      currentTrend = newTrend;
-      trendStart = i - 1;
-    }
-  }
-
-  // Third pass: Filter out duplicates and validate crossings
-  validCrossings.sort((a, b) => a.height - b.height);
-  const filteredCrossings = validCrossings.filter((crossing, i) => {
-    // Always keep the first crossing
-    if (i === 0) return true;
-
-    const prevCrossing = validCrossings[i - 1];
-    const heightDiff = Math.abs(crossing.height - prevCrossing.height);
-
-    // If points are close together, only keep if in an inversion
-    if (heightDiff < heightThreshold) {
-      const inInversion = inversions.some(
-        (inv) => crossing.height >= inv.bottom && crossing.height <= inv.top,
-      );
-      return inInversion;
-    }
-
-    return true;
-  });
-
-  return { validCrossings: filteredCrossings, inversions };
+  return grid;
 };
 
-// Helper function to predict next point in an inversion
-const predictNextPoint = (
-  path: IsothermPath,
-  inversions: { bottom: number; top: number; increasing: boolean }[],
-  heightThreshold: number,
-): IsothermPoint | null => {
-  const lastPoint = path.points[path.points.length - 1];
-  if (path.points.length < 2) return null;
-
-  const prevPoint = path.points[path.points.length - 2];
-  const verticalRate =
-    (lastPoint.y - prevPoint.y) / (lastPoint.x - prevPoint.x);
-
-  // Check if we're in an inversion
-  const matchingInversion = inversions.find(
-    (inv) =>
-      lastPoint.y >= inv.bottom - heightThreshold &&
-      lastPoint.y <= inv.top + heightThreshold,
+// Helper function to convert grid coordinates back to weather data coordinates
+const gridToWeatherCoords = (
+  x: number,
+  y: number,
+  weatherData: CloudColumn[],
+  minAlt: number,
+  maxAlt: number,
+  resolution: number,
+): { x: number; y: number } => {
+  const timeIndex = Math.min(
+    Math.max(Math.round(x), 0),
+    weatherData.length - 1,
   );
+  const altitude = minAlt + (y / (resolution - 1)) * (maxAlt - minAlt);
+  return {
+    x: timeIndex,
+    y: altitude,
+  };
+};
 
-  if (matchingInversion) {
-    // Follow the inversion pattern
-    const inMiddleOfInversion =
-      lastPoint.y > matchingInversion.bottom + heightThreshold &&
-      lastPoint.y < matchingInversion.top - heightThreshold;
+// Helper function to find the valid altitude range at a given time index
+const findValidAltitudeRange = (
+  column: CloudColumn,
+): { min: number; max: number } | null => {
+  const validCells = column.cloud.filter(
+    (cell) => cell.mslFt != null && cell.temperature != null,
+  );
+  if (validCells.length === 0) return null;
 
-    if (inMiddleOfInversion) {
-      // Continue current trend more aggressively
-      return {
-        x: lastPoint.x + 1,
-        y: lastPoint.y + verticalRate * 2,
-      } as IsothermPoint;
+  return {
+    min: Math.min(...validCells.map((cell) => cell.mslFt!)),
+    max: Math.max(...validCells.map((cell) => cell.mslFt!)),
+  };
+};
+
+// Helper function to clip a line to valid altitude ranges
+const clipLineToValidRanges = (
+  points: { x: number; y: number }[],
+  weatherData: CloudColumn[],
+  clipToMinAltitude: boolean = true,
+  groundAltitude?: number,
+): { x: number; y: number }[] => {
+  if (points.length < 2) return points;
+
+  const clippedPoints: { x: number; y: number }[] = [];
+  let currentSegment: { x: number; y: number }[] = [];
+
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    const timeIndex = Math.round(point.x);
+
+    if (timeIndex < 0 || timeIndex >= weatherData.length) {
+      if (currentSegment.length > 1) {
+        clippedPoints.push(...currentSegment);
+        currentSegment = [];
+      }
+      continue;
+    }
+
+    const validRange = findValidAltitudeRange(weatherData[timeIndex]);
+    if (!validRange) {
+      if (currentSegment.length > 1) {
+        clippedPoints.push(...currentSegment);
+        currentSegment = [];
+      }
+      continue;
+    }
+
+    // Get the minimum altitude to clip to
+    const minAltitude = clipToMinAltitude 
+      ? validRange.min 
+      : (groundAltitude ?? validRange.min);
+
+    // Clip point to valid range
+    const clippedPoint = {
+      x: point.x,
+      y: Math.min(Math.max(point.y, minAltitude), validRange.max),
+    };
+
+    // If this is the first point or if it connects to the previous segment
+    if (
+      currentSegment.length === 0 ||
+      Math.abs(
+        timeIndex - Math.round(currentSegment[currentSegment.length - 1].x),
+      ) <= 1
+    ) {
+      currentSegment.push(clippedPoint);
     } else {
-      // Near the edges, be more conservative
-      return {
-        x: lastPoint.x + 1,
-        y: lastPoint.y + verticalRate * 0.5,
-      } as IsothermPoint;
+      // Start a new segment if there's a gap
+      if (currentSegment.length > 1) {
+        clippedPoints.push(...currentSegment);
+      }
+      currentSegment = [clippedPoint];
     }
   }
 
-  // Outside inversions, follow normal trend
-  return {
-    x: lastPoint.x + 1,
-    y: lastPoint.y + verticalRate * 0.75,
-  } as IsothermPoint;
+  // Add the last segment if it exists
+  if (currentSegment.length > 1) {
+    clippedPoints.push(...currentSegment);
+  }
+
+  return clippedPoints;
 };
 
 // Helper function to find isotherm points
@@ -289,17 +274,16 @@ export const findIsothermPoints = (
     return [];
   }
 
-  const isotherms: { temp: number; points: { x: number; y: number }[] }[] = [];
+  // Find temperature range
   let minTemp = Infinity;
   let maxTemp = -Infinity;
 
-  // Find temperature range
   weatherData.forEach((column) => {
-    if (!column.cloud?.length) return;
     column.cloud.forEach((cell) => {
-      if (cell.temperature == null) return;
-      minTemp = Math.min(minTemp, cell.temperature);
-      maxTemp = Math.max(maxTemp, cell.temperature);
+      if (cell.temperature != null) {
+        minTemp = Math.min(minTemp, cell.temperature);
+        maxTemp = Math.max(maxTemp, cell.temperature);
+      }
     });
   });
 
@@ -307,264 +291,133 @@ export const findIsothermPoints = (
     return [];
   }
 
+  // Round to nearest tempStep
   minTemp = Math.floor(minTemp / tempStep) * tempStep;
   maxTemp = Math.ceil(maxTemp / tempStep) * tempStep;
 
-  // For each temperature, find all possible isotherm paths
+  // Generate thresholds
+  const thresholds = [];
   for (let temp = minTemp; temp <= maxTemp; temp += tempStep) {
-    // First pass: Find all points where temperature equals our target
-    const allPoints: IsothermPoint[][] = [];
-
-    weatherData.forEach((column, colIndex) => {
-      if (!column.cloud?.length) return;
-
-      const columnPoints: IsothermPoint[] = [];
-      const sortedLevels = [...column.cloud]
-        .filter(
-          (cell) => cell.geopotentialFt != null && cell.temperature != null,
-        )
-        .sort((a, b) => a.geopotentialFt! - b.geopotentialFt!);
-
-      if (sortedLevels.length < 2) return;
-
-      // Check each pair of adjacent levels for crossings
-      for (let i = 0; i < sortedLevels.length - 1; i++) {
-        const cell1 = sortedLevels[i];
-        const cell2 = sortedLevels[i + 1];
-
-        // Check for exact matches at pressure levels
-        if (Math.abs(cell1.temperature! - temp) < tempStep / 4) {
-          columnPoints.push({
-            x: colIndex,
-            y: cell1.geopotentialFt!,
-            temp: cell1.temperature!,
-          });
-        }
-
-        // Check for crossings between levels
-        if (
-          (cell1.temperature! <= temp && cell2.temperature! >= temp) ||
-          (cell1.temperature! >= temp && cell2.temperature! <= temp)
-        ) {
-          const ratio =
-            (temp - cell1.temperature!) /
-            (cell2.temperature! - cell1.temperature!);
-          const height =
-            cell1.geopotentialFt! +
-            ratio * (cell2.geopotentialFt! - cell1.geopotentialFt!);
-          columnPoints.push({
-            x: colIndex,
-            y: height,
-            temp: temp,
-          });
-        }
-      }
-
-      // Check last level for exact match
-      const lastCell = sortedLevels[sortedLevels.length - 1];
-      if (Math.abs(lastCell.temperature! - temp) < tempStep / 4) {
-        columnPoints.push({
-          x: colIndex,
-          y: lastCell.geopotentialFt!,
-          temp: lastCell.temperature!,
-        });
-      }
-
-      if (columnPoints.length > 0) {
-        // Analyze temperature profile and get valid crossings
-        const { validCrossings, inversions } = analyzeTemperatureProfile(
-          sortedLevels,
-          temp,
-          heightThreshold,
-        );
-
-        // Convert valid crossings to points
-        const uniquePoints = validCrossings.map((crossing) => ({
-          x: colIndex,
-          y: crossing.height,
-          temp: crossing.temp,
-        }));
-
-        if (uniquePoints.length > 0) {
-          allPoints[colIndex] = uniquePoints;
-        }
-      }
-    });
-
-    // Second pass: Connect points into lines
-    const activePaths: IsothermPath[] = [];
-
-    // Process each column
-    for (let colIndex = 0; colIndex < weatherData.length; colIndex++) {
-      const columnPoints = allPoints[colIndex] || [];
-
-      if (columnPoints.length === 0) {
-        // End paths that can't be continued
-        activePaths.forEach((path) => {
-          const lastX = path.points[path.points.length - 1].x;
-          if (colIndex - lastX >= maxStepDistance && path.points.length > 1) {
-            isotherms.push({ temp, points: [...path.points] });
-          }
-        });
-        continue;
-      }
-
-      if (activePaths.length === 0) {
-        // Start new paths
-        columnPoints.forEach((point) => {
-          activePaths.push({
-            points: [{ x: point.x, y: point.y }],
-            minHeight: point.y,
-            maxHeight: point.y,
-          });
-        });
-        continue;
-      }
-
-      // Try to continue each active path
-      const newPaths: IsothermPath[] = [];
-      const usedPoints = new Set<number>();
-
-      // First, try to continue existing paths
-      activePaths.forEach((path) => {
-        const lastPoint = path.points[path.points.length - 1];
-        const lastX = lastPoint.x;
-
-        if (colIndex - lastX > maxStepDistance) {
-          // Try to predict where the path should go
-          const prediction = predictNextPoint(
-            path,
-            analyzeTemperatureProfile(
-              weatherData[lastX].cloud!,
-              temp,
-              heightThreshold,
-            ).inversions,
-            heightThreshold,
-          );
-
-          let foundContinuation = false;
-          if (prediction) {
-            // Look for points near the predicted location
-            const futurePoints = allPoints[colIndex] || [];
-            const bestMatch = futurePoints.find(
-              (p) => Math.abs(p.y - prediction.y) < heightThreshold * 1.5,
-            );
-
-            if (bestMatch) {
-              // Bridge the gap with interpolated points
-              for (let bridgeX = lastX + 1; bridgeX < colIndex; bridgeX++) {
-                const ratio = (bridgeX - lastX) / (colIndex - lastX);
-                const bridgeY =
-                  lastPoint.y + (bestMatch.y - lastPoint.y) * ratio;
-                path.points.push({ x: bridgeX, y: bridgeY });
-              }
-              path.points.push({ x: bestMatch.x, y: bestMatch.y });
-              foundContinuation = true;
-            }
-          }
-
-          if (!foundContinuation && path.points.length > 1) {
-            isotherms.push({ temp, points: [...path.points] });
-          }
-          return;
-        }
-
-        // Find closest point within threshold, preferring points that follow the trend
-        let minCost = heightThreshold * 2;
-        type MatchType = {
-          point: IsothermPoint;
-          index: number;
-        };
-        let bestMatch: MatchType | null = null;
-
-        columnPoints.forEach((point: IsothermPoint, i: number) => {
-          if (usedPoints.has(i)) return;
-
-          const verticalDist = Math.abs(point.y - lastPoint.y);
-          let cost = verticalDist;
-
-          // Add cost if point deviates from expected trend
-          if (path.points.length > 1) {
-            const prevPoint = path.points[path.points.length - 2];
-            const expectedY =
-              lastPoint.y +
-              (lastPoint.y - prevPoint.y) / (lastPoint.x - prevPoint.x);
-            cost += Math.abs(point.y - expectedY) * 0.5;
-          }
-
-          if (cost < minCost) {
-            minCost = cost;
-            bestMatch = { point, index: i };
-          }
-        });
-
-        if (bestMatch) {
-          bestMatch = bestMatch as MatchType;
-          usedPoints.add(bestMatch.index);
-          // If there's a gap, add interpolated points
-          if (colIndex - lastX > 1) {
-            for (let bridgeX = lastX + 1; bridgeX < colIndex; bridgeX++) {
-              const ratio = (bridgeX - lastX) / (colIndex - lastX);
-              const bridgeY =
-                lastPoint.y + (bestMatch.point.y - lastPoint.y) * ratio;
-              path.points.push({ x: bridgeX, y: bridgeY });
-            }
-          }
-          const newPath = {
-            points: [
-              ...path.points,
-              { x: bestMatch.point.x, y: bestMatch.point.y },
-            ],
-            minHeight: Math.min(path.minHeight, bestMatch.point.y),
-            maxHeight: Math.max(path.maxHeight, bestMatch.point.y),
-          };
-
-          if (
-            !newPaths.some((p) => arePathsSimilar(p, newPath, heightThreshold))
-          ) {
-            newPaths.push(newPath);
-          }
-        } else if (path.points.length > 1) {
-          isotherms.push({ temp, points: [...path.points] });
-        }
-      });
-
-      // Start new paths from unused points, but only if they're not similar to existing paths
-      columnPoints.forEach((point, i) => {
-        if (!usedPoints.has(i)) {
-          const newPath = {
-            points: [{ x: point.x, y: point.y }],
-            minHeight: point.y,
-            maxHeight: point.y,
-          };
-
-          if (
-            !newPaths.some((p) => arePathsSimilar(p, newPath, heightThreshold))
-          ) {
-            newPaths.push(newPath);
-          }
-        }
-      });
-
-      activePaths.splice(0, activePaths.length, ...newPaths);
-    }
-
-    // Filter similar paths before adding to isotherms
-    const uniquePaths = activePaths.reduce((acc: IsothermPath[], path) => {
-      if (
-        path.points.length > 1 &&
-        !acc.some((p) => arePathsSimilar(p, path, heightThreshold))
-      ) {
-        acc.push(path);
-      }
-      return acc;
-    }, []);
-
-    // Add remaining unique paths
-    uniquePaths.forEach((path) => {
-      isotherms.push({ temp, points: [...path.points] });
-    });
+    thresholds.push(temp);
   }
 
-  return isotherms;
+  // Create high-resolution temperature grid
+  const resolution = 100; // Increase for more precision
+  const tempGrid = createInterpolatedTempGrid(weatherData, resolution);
+
+  if (tempGrid.length === 0) return [];
+
+  // Find altitude range for coordinate conversion
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.mslFt != null) {
+        minAlt = Math.min(minAlt, cell.mslFt);
+        maxAlt = Math.max(maxAlt, cell.mslFt);
+      }
+    });
+  });
+
+  if (minAlt === Infinity || maxAlt === -Infinity) return [];
+
+  // Add padding to altitude range
+  const altPadding = (maxAlt - minAlt) * 0.1;
+  minAlt -= altPadding;
+  maxAlt += altPadding;
+
+  try {
+    // Use marching-squares to find isotherms
+    const lines = isoLines(tempGrid, thresholds, { noFrame: true });
+
+    if (!lines) return [];
+
+    // Convert the lines to our format, keeping separate paths for each temperature
+    const result: { temp: number; points: { x: number; y: number }[] }[] = [];
+
+    thresholds.forEach((temp, i) => {
+      const tempLines = lines[i] || [];
+      tempLines
+        .filter((line) => line.length > 2)
+        .forEach((line) => {
+          // Convert each line to weather coordinates
+          const points = line.map(([x, y]) =>
+            gridToWeatherCoords(x, y, weatherData, minAlt, maxAlt, resolution),
+          );
+
+          // Clip the line to valid ranges and filter out short segments
+          const clippedPoints = clipLineToValidRanges(points, weatherData);
+          if (clippedPoints.length > 2) {
+            result.push({ temp, points: clippedPoints });
+          }
+        });
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error computing isotherms:", error);
+    return [];
+  }
+};
+
+// Helper function to find freezing levels in a cloud column
+export const findFreezingLevels = (
+  weatherData: CloudColumn[],
+): { points: { x: number; y: number }[] }[] => {
+  if (!weatherData?.length) return [];
+
+  const resolution = 100; // Increase for more precision
+  const tempGrid = createInterpolatedTempGrid(weatherData, resolution, true); // Include ground temperature
+
+  if (tempGrid.length === 0) return [];
+
+  // Find altitude range for coordinate conversion
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  let groundAlt = Infinity;
+  weatherData.forEach((column) => {
+    // Include ground level in altitude range
+    if (column.groundMslFt != null) {
+      minAlt = Math.min(minAlt, column.groundMslFt);
+      groundAlt = Math.min(groundAlt, column.groundMslFt);
+    }
+    column.cloud.forEach((cell) => {
+      if (cell.mslFt != null) {
+        minAlt = Math.min(minAlt, cell.mslFt);
+        maxAlt = Math.max(maxAlt, cell.mslFt);
+      }
+    });
+  });
+
+  if (minAlt === Infinity || maxAlt === -Infinity) return [];
+  if (groundAlt === Infinity) groundAlt = minAlt;
+
+  // Add padding to altitude range
+  const altPadding = (maxAlt - minAlt) * 0.1;
+  minAlt -= altPadding;
+  maxAlt += altPadding;
+
+  try {
+    // Use marching-squares to find the freezing level (0°C isoline)
+    const lines = isoLines(tempGrid, [0], { noFrame: true });
+
+    if (!lines?.[0]) return [];
+
+    // Convert the lines to our format
+    return lines[0]
+      .filter((line) => line.length > 2)
+      .map((line) => {
+        const points = line.map(([x, y]) =>
+          gridToWeatherCoords(x, y, weatherData, minAlt, maxAlt, resolution),
+        );
+
+        // Clip the line to valid ranges, using ground altitude as the minimum
+        const clippedPoints = clipLineToValidRanges(points, weatherData, false, 0);
+        return { points: clippedPoints };
+      })
+      .filter((line) => line.points.length > 2);
+  } catch (error) {
+    console.error("Error computing freezing levels:", error);
+    return [];
+  }
 };

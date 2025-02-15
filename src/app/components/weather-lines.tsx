@@ -40,29 +40,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
 }) => {
   // Convert the utility function results into the format we need
   const freezingPoints = React.useMemo(() => {
-    const allPoints: FreezingLine[] = [];
-    weatherData.forEach((column, colIndex) => {
-      const levels = findFreezingLevels(column.cloud, column.groundTemp);
-      levels.forEach((level: number) => {
-        // Try to add to an existing line or start a new one
-        let foundLine = false;
-        for (const line of allPoints) {
-          const lastPoint = line.points[line.points.length - 1];
-          if (lastPoint && Math.abs(lastPoint.x - colIndex) <= 1) {
-            if (Math.abs(lastPoint.y - level) < 3000) {
-              // Height threshold
-              line.points.push({ x: colIndex, y: level });
-              foundLine = true;
-              break;
-            }
-          }
-        }
-        if (!foundLine) {
-          allPoints.push({ points: [{ x: colIndex, y: level }] });
-        }
-      });
-    });
-    return allPoints.filter((line) => line.points.length > 2);
+    return findFreezingLevels(weatherData);
   }, [weatherData]);
 
   const isothermPoints = React.useMemo(() => {
@@ -79,6 +57,8 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
     <>
       {/* Freezing Levels */}
       {freezingPoints.map(({ points }, lineIndex: number) => {
+        if (!points.length) return null;
+
         const pathD = points.reduce((path: string, point: Point, i: number) => {
           const x = formatNumber(scales.dateScale(weatherData[point.x].date));
           const y = formatNumber(scales.mslScale(point.y));
@@ -103,6 +83,8 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
       {showIsothermLines &&
         isothermPoints.map(
           ({ temp, points }: IsothermLine, lineIndex: number) => {
+            if (!points.length) return null;
+
             const pathD = points.reduce(
               (path: string, point: Point, i: number) => {
                 const x = formatNumber(
@@ -114,6 +96,9 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
               },
               "",
             );
+
+            // Only render if we have valid points and a valid path
+            if (!pathD) return null;
 
             return (
               <g

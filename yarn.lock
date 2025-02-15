@@ -7252,6 +7252,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"marching-squares@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "marching-squares@npm:1.0.0"
+  dependencies:
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/a1f1b5f7d892a2e75d3bba6afe0093d175d60637b9c5466b04943bb4d8471d1deef09020ca12d7ff342b4545244d88c4338841bdadcd5b505801a66e932a71e3
+  languageName: node
+  linkType: hard
+
 "math-expression-evaluator@npm:^1.2.14":
   version: 1.4.0
   resolution: "math-expression-evaluator@npm:1.4.0"
@@ -7299,6 +7308,7 @@ __metadata:
     eslint-plugin-unused-imports: "npm:^4.1.4"
     framer-motion: "npm:^12.4.2"
     lodash: "npm:^4.17.21"
+    marching-squares: "npm:^1.0.0"
     next: "npm:^15.1.7"
     openmeteo: "npm:^1.1.4"
     postcss: "npm:^8.5.2"
@@ -9037,7 +9047,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.8.0":
+"tslib@npm:^2.8.0, tslib@npm:^2.8.1":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
