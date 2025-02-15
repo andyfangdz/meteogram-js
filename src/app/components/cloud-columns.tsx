@@ -19,7 +19,6 @@ interface CloudColumnsProps {
   clampCloudCoverageAt50Pct: boolean;
   showWindBarbs: boolean;
   model: WeatherModel;
-  hoveredRect: { date: Date; cloudCell: CloudCell } | null;
   frozenRect: { date: Date; cloudCell: CloudCell } | null;
   onHover: (date: Date | null, cloudCell: CloudCell | null) => void;
   onFreezeChange: (rect: { date: Date; cloudCell: CloudCell } | null) => void;
