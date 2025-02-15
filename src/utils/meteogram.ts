@@ -93,8 +93,11 @@ const createInterpolatedTempGrid = (
       if (altitude <= sortedCells[0].mslFt) {
         if (includeGround && column.groundTemp != null) {
           // Interpolate between ground temperature and lowest measurement
-          const ratio = (altitude - column.groundMslFt) / (sortedCells[0].mslFt - column.groundMslFt);
-          row.push(column.groundTemp + ratio * (sortedCells[0].temperature! - column.groundTemp));
+          const ratio = altitude / sortedCells[0].mslFt;
+          row.push(
+            column.groundTemp +
+              ratio * (sortedCells[0].temperature! - column.groundTemp),
+          );
         } else {
           row.push(sortedCells[0].temperature!);
         }
@@ -228,8 +231,8 @@ const clipLineToValidRanges = (
     }
 
     // Get the minimum altitude to clip to
-    const minAltitude = clipToMinAltitude 
-      ? validRange.min 
+    const minAltitude = clipToMinAltitude
+      ? validRange.min
       : (groundAltitude ?? validRange.min);
 
     // Clip point to valid range
@@ -374,13 +377,7 @@ export const findFreezingLevels = (
   // Find altitude range for coordinate conversion
   let minAlt = Infinity;
   let maxAlt = -Infinity;
-  let groundAlt = Infinity;
   weatherData.forEach((column) => {
-    // Include ground level in altitude range
-    if (column.groundMslFt != null) {
-      minAlt = Math.min(minAlt, column.groundMslFt);
-      groundAlt = Math.min(groundAlt, column.groundMslFt);
-    }
     column.cloud.forEach((cell) => {
       if (cell.mslFt != null) {
         minAlt = Math.min(minAlt, cell.mslFt);
@@ -390,7 +387,6 @@ export const findFreezingLevels = (
   });
 
   if (minAlt === Infinity || maxAlt === -Infinity) return [];
-  if (groundAlt === Infinity) groundAlt = minAlt;
 
   // Add padding to altitude range
   const altPadding = (maxAlt - minAlt) * 0.1;
@@ -412,7 +408,12 @@ export const findFreezingLevels = (
         );
 
         // Clip the line to valid ranges, using ground altitude as the minimum
-        const clippedPoints = clipLineToValidRanges(points, weatherData, false, 0);
+        const clippedPoints = clipLineToValidRanges(
+          points,
+          weatherData,
+          false,
+          0,
+        );
         return { points: clippedPoints };
       })
       .filter((line) => line.points.length > 2);
