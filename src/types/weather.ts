@@ -26,6 +26,7 @@ export interface Locations {
 }
 
 export type WeatherModel =
+  | "best_match"
   | "gfs_seamless"
   | "gfs_hrrr"
   | "ecmwf_ifs025"

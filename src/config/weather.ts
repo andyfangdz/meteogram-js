@@ -1,5 +1,5 @@
 import range from "lodash/range";
-import { Locations, WeatherModel, ModelConfigs } from "../types/weather";
+import { Locations, WeatherModel } from "../types/weather";
 
 export const API_URL = "https://api.open-meteo.com/v1/forecast";
 
@@ -11,6 +11,7 @@ export const GEM_HPA_LEVELS = [
 export const DEFAULT_HPA_LEVELS = range(1000, 250, -25);
 
 export const MODEL_NAMES: WeatherModel[] = [
+  "best_match",
   "gfs_seamless",
   "gfs_hrrr",
   "ecmwf_ifs025",
@@ -18,6 +19,10 @@ export const MODEL_NAMES: WeatherModel[] = [
   "gem_seamless",
   "gem_hrdps_continental",
 ];
+
+export type ModelConfigs = {
+  [key in WeatherModel]: ModelConfig;
+};
 
 export class ModelConfig {
   constructor({
@@ -91,6 +96,16 @@ export class ModelConfig {
 }
 
 export const MODEL_CONFIGS: ModelConfigs = {
+  best_match: new ModelConfig({
+    varsKey: "minutely_15",
+    stepKey: "forecast_minutely_15",
+    stepSize: 4 * 80, // 4 times per hour * 40 hours
+    forecastDataKey: "minutely15",
+    windBarbStep: 4, // Show wind barbs every hour (4 * 15min steps)
+    windBarbPressureLevelStep: 4, // Show wind barbs every 4 pressure levels
+    maxIsothermStepDistance: 8, // Allow isotherms to skip up to 2 hours worth of steps (8 * 15min)
+    hpaLevels: DEFAULT_HPA_LEVELS,
+  }),
   gfs_hrrr: new ModelConfig({
     varsKey: "minutely_15",
     stepKey: "forecast_minutely_15",
