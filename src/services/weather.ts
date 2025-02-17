@@ -4,7 +4,6 @@ import {
   API_URL,
   DEFAULT_PARAMS,
   LOCATIONS,
-  VARIABLES,
   MODEL_CONFIGS,
 } from "../config/weather";
 
@@ -18,9 +17,8 @@ export async function fetchWeatherApiData(
     ...DEFAULT_PARAMS,
     ...LOCATIONS[location],
     models: model,
-    [modelConfig.varsKey]: VARIABLES.join(","),
+    [modelConfig.varsKey]: modelConfig.getAllVariables().join(","),
     [modelConfig.stepKey]: modelConfig.stepSize,
   };
-
   return fetchWeatherApi(API_URL, params);
 }

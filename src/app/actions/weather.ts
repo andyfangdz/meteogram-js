@@ -20,6 +20,6 @@ export async function getWeatherData(
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    throw new Error("Failed to fetch weather data");
+    throw new Error("Failed to fetch weather data", { cause: error });
   }
 }
