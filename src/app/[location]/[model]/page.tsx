@@ -22,6 +22,7 @@ interface PageProps {
   }>;
 }
 
+// Only generate static params for predefined locations
 export async function generateStaticParams() {
   return MODEL_NAMES.flatMap((model) =>
     Object.keys(LOCATIONS).map((location) => ({
@@ -31,6 +32,9 @@ export async function generateStaticParams() {
   );
 }
 
+// Disable static generation for dynamic routes
+export const dynamic = "force-dynamic";
+
 export default async function Page({ params, searchParams }: PageProps) {
   const [{ location, model }, searchParamsResolved] = await Promise.all([
     params,
@@ -39,11 +43,8 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const decodedLocation = decodeURIComponent(location);
 
-  // Validate parameters
-  if (
-    !Object.keys(LOCATIONS).includes(decodedLocation) ||
-    !MODEL_NAMES.includes(model as WeatherModel)
-  ) {
+  // Only validate model, allow any location
+  if (!MODEL_NAMES.includes(model as WeatherModel)) {
     notFound();
   }
 

@@ -13,6 +13,10 @@ export async function getWeatherData(
 }> {
   try {
     const responses = await fetchWeatherApiData(model, location);
+    if (!responses || !responses[0]) {
+      throw new Error("No weather data received");
+    }
+
     const transformedData = transformWeatherData(responses[0], model);
 
     return {

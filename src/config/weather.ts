@@ -174,20 +174,12 @@ export const LOCATIONS: Locations = {
     latitude: 40.73443,
   },
   KNYC: {
-    longitude: -73.9666699,
+    longitude: -73.96667,
     latitude: 40.78333,
   },
-  KHWV: {
-    longitude: -72.8688899,
-    latitude: 40.82167,
-  },
-  KISP: {
-    longitude: -73.10167,
-    latitude: 40.79389,
-  },
-  KBDR: {
-    longitude: -73.12618,
-    latitude: 41.16348,
+  KCDW: {
+    longitude: -74.283767,
+    latitude: 40.872665,
   },
   "South Practice Area": {
     longitude: -73.13705,
