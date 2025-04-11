@@ -1,4 +1,10 @@
-import React, { Dispatch, SetStateAction, useState, useCallback } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useState,
+  useCallback,
+  Fragment,
+} from "react";
 import {
   Dropdown,
   DropdownTrigger,
@@ -82,18 +88,18 @@ export default function LocationDropdown({
             {isLoading && <Spinner size="sm" />}
           </div>
         </DropdownItem>
-        {/* Show custom locations first */}
-        {Object.entries(customLocations).map(([loc, _]) => (
-          <DropdownItem key={loc}>
-            <code>{loc}</code>
-          </DropdownItem>
-        ))}
-        {/* Show predefined locations after */}
-        {Object.entries(LOCATIONS).map(([loc, _]) => (
-          <DropdownItem key={loc}>
-            <code>{loc}</code>
-          </DropdownItem>
-        ))}
+        <Fragment>
+          {Object.entries(customLocations).map(([loc, _]) => (
+            <DropdownItem key={loc}>
+              <code>{loc}</code>
+            </DropdownItem>
+          ))}
+          {Object.entries(LOCATIONS).map(([loc, _]) => (
+            <DropdownItem key={loc}>
+              <code>{loc}</code>
+            </DropdownItem>
+          ))}
+        </Fragment>
       </DropdownMenu>
     </Dropdown>
   );
