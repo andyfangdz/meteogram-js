@@ -4,6 +4,7 @@ import React, {
   useState,
   useCallback,
   Fragment,
+  useRef,
 } from "react";
 import {
   Dropdown,
@@ -15,7 +16,7 @@ import {
   Spinner,
 } from "@heroui/react";
 import { LOCATIONS } from "../../config/weather";
-import { geocodeLocation, debounce } from "../../services/geocoding";
+import { debouncedGeocodeLocation } from "../../services/geocoding";
 import { useRouter } from "next/navigation";
 
 export default function LocationDropdown({
@@ -29,21 +30,25 @@ export default function LocationDropdown({
   const [searchQuery, setSearchQuery] = useState("");
   const [customLocations, setCustomLocations] = useState<typeof LOCATIONS>({});
   const [isLoading, setIsLoading] = useState(false);
+  const lastSearchRef = useRef<string>("");
 
   // Extract the display name from the location string (removing @coords if present)
   const displayName = location.split("@")[0];
 
-  const handleSearch = useCallback(
-    debounce(async (query: string) => {
-      if (!query) return;
+  const handleSearch = useCallback((query: string) => {
+    if (!query) return;
 
-      setIsLoading(true);
-      const result = await geocodeLocation(query);
-      setCustomLocations(result);
-      setIsLoading(false);
-    }, 500),
-    [],
-  );
+    lastSearchRef.current = query;
+    setIsLoading(true);
+
+    debouncedGeocodeLocation(query).then((result) => {
+      // Only update if this is still the latest search
+      if (lastSearchRef.current === query) {
+        setCustomLocations(result);
+        setIsLoading(false);
+      }
+    });
+  }, []);
 
   const handleLocationSelect = (loc: string) => {
     if (loc in LOCATIONS) {

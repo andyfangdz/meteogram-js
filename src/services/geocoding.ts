@@ -44,13 +44,18 @@ export async function geocodeLocation(query: string): Promise<Locations> {
 }
 
 // Debounce function to limit API calls
-export function debounce<T extends (...args: any[]) => any>(
+function debounce<T extends (...args: any[]) => Promise<any>>(
   func: T,
   wait: number,
-): (...args: Parameters<T>) => void {
+): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>>> {
   let timeout: NodeJS.Timeout;
   return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    return new Promise((resolve) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => resolve(func(...args)), wait);
+    });
   };
 }
+
+// Create a debounced version of geocodeLocation
+export const debouncedGeocodeLocation = debounce(geocodeLocation, 100);
