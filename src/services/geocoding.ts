@@ -1,4 +1,8 @@
-import { Locations } from "../types/weather";
+import {
+  Locations,
+  LocationWithDescription,
+  LocationsWithDescription,
+} from "../types/weather";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 
@@ -13,7 +17,9 @@ function formatCoordinate(coord: number): number {
   return Number(coord.toFixed(6));
 }
 
-export async function geocodeLocation(query: string): Promise<Locations> {
+export async function geocodeLocation(
+  query: string,
+): Promise<LocationsWithDescription> {
   // If it's an ICAO code (starts with K and 4 characters), search specifically for airports
   const isICAO = /^K[A-Z]{3}$/.test(query);
   const searchQuery = isICAO ? `${query} airport` : query;
@@ -21,7 +27,7 @@ export async function geocodeLocation(query: string): Promise<Locations> {
   const params = new URLSearchParams({
     q: searchQuery,
     format: "json",
-    limit: "1",
+    limit: "5", // Get more results to offer more choices
   });
 
   try {
@@ -29,12 +35,20 @@ export async function geocodeLocation(query: string): Promise<Locations> {
     const results: NominatimResult[] = await response.json();
 
     if (results.length > 0) {
-      return {
-        [query]: {
-          latitude: formatCoordinate(parseFloat(results[0].lat)),
-          longitude: formatCoordinate(parseFloat(results[0].lon)),
-        },
-      };
+      const locations: LocationsWithDescription = {};
+
+      results.forEach((result, index) => {
+        // Create a unique key if needed
+        const locationKey = index === 0 ? query : `${query} (${index})`;
+
+        locations[locationKey] = {
+          latitude: formatCoordinate(parseFloat(result.lat)),
+          longitude: formatCoordinate(parseFloat(result.lon)),
+          description: result.display_name,
+        };
+      });
+
+      return locations;
     }
     return {};
   } catch (error) {

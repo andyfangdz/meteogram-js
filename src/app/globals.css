@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile input field handling to prevent zooming */
+@layer base {
+  /* Set minimum font size to 16px to prevent zooming on iOS */
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
+
+  /* On mobile devices, set a fixed height and handle scrolling properly */
+  @media (max-width: 768px) {
+    /* Alternative approach for fixed height on mobile */
+    html {
+      height: -webkit-fill-available;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
+
 /* :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
@@ -39,4 +65,67 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+}
+
+/* Mobile input specific styles */
+.mobile-input {
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100%;
+  transform: scale(1);
+}
+
+.no-zoom-wrapper {
+  transform: scale(1);
+}
+
+/* Apply different styles on mobile */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Prevent focus zoom */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    font-size: 16px !important;
+    transform: scale(1);
+  }
+}
+
+/* Modal adjustments for mobile keyboards */
+@media (max-width: 768px) {
+  /* Enhanced handling for modals with keyboards */
+  .modal-mobile-ready {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 50vh !important;
+  }
+
+  /* Ensure input is visible when keyboard is open */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS specific */
+    .modal-input-container {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: white;
+    }
+  }
+
+  /* Adjust content area height when keyboard is visible */
+  @media (max-height: 400px) {
+    /* Keyboard is likely visible */
+    .modal-content-mobile {
+      max-height: 80vh !important;
+    }
+
+    .modal-scrollable-section {
+      max-height: 20vh !important;
+    }
+  }
 }

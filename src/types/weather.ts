@@ -21,8 +21,16 @@ export interface Location {
   latitude: number;
 }
 
+export interface LocationWithDescription extends Location {
+  description: string;
+}
+
 export interface Locations {
   [key: string]: Location;
+}
+
+export interface LocationsWithDescription {
+  [key: string]: LocationWithDescription;
 }
 
 export type WeatherModel =
