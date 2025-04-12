@@ -27,6 +27,83 @@ import { debouncedGeocodeLocation } from "../../services/geocoding";
 import { useRouter } from "next/navigation";
 import { LocationsWithDescription } from "../../types/weather";
 
+// Shared components to use in both mobile and desktop views
+const LocationButton = ({
+  locationName,
+  description,
+  onClick,
+}: {
+  locationName: string;
+  description?: string;
+  onClick: () => void;
+}) => (
+  <Button
+    className="w-full justify-start mb-2 h-auto py-2 text-left flex flex-col items-start"
+    variant="flat"
+    onPress={onClick}
+  >
+    <code className="font-medium">{locationName}</code>
+    {description && (
+      <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
+        {description}
+      </span>
+    )}
+  </Button>
+);
+
+const SearchInput = ({
+  value,
+  onChange,
+  onSearch,
+  isLoading,
+  isMobile = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onSearch: (value: string) => void;
+  isLoading: boolean;
+  isMobile?: boolean;
+}) => (
+  <div
+    className={`relative ${isMobile ? "sticky top-0 z-10 pb-2 bg-white modal-input-container" : ""}`}
+  >
+    <Input
+      placeholder="Search location or ICAO code..."
+      value={value}
+      onChange={(e) => {
+        const query = e.target.value;
+        onChange(query);
+        onSearch(query);
+      }}
+      className="w-full"
+      style={isMobile ? { fontSize: "16px" } : undefined}
+      classNames={{
+        input: isMobile ? "mobile-input" : "",
+        inputWrapper: isMobile ? "no-zoom-wrapper" : "",
+      }}
+      startContent={<span className="text-default-400">🔍</span>}
+      onKeyDown={(e) => {
+        if (e.key === " ") {
+          e.stopPropagation();
+        }
+      }}
+    />
+    {isLoading && (
+      <Spinner
+        className={
+          isMobile ? "absolute right-10 top-3" : "absolute right-2 top-2"
+        }
+        size="sm"
+      />
+    )}
+  </div>
+);
+
+// Helper to process descriptions for better display
+const truncateDescription = (desc: string, maxLength = 100) => {
+  return desc.length > maxLength ? `${desc.substring(0, maxLength)}...` : desc;
+};
+
 export default function LocationDropdown({
   location,
   setLocation,
@@ -88,12 +165,44 @@ export default function LocationDropdown({
     }
   };
 
-  // Truncate description to a reasonable length
-  const truncateDescription = (desc: string, maxLength = 60) => {
-    return desc.length > maxLength
-      ? `${desc.substring(0, maxLength)}...`
-      : desc;
-  };
+  // Render location sections for mobile modal
+  const renderMobileLocationSections = () => (
+    <>
+      {Object.entries(customLocations).length > 0 && (
+        <div className="mb-4">
+          <p className="text-sm font-semibold mb-2">Search Results</p>
+          {Object.entries(customLocations).map(([loc, data]) => (
+            <LocationButton
+              key={loc}
+              locationName={loc}
+              description={
+                data.description
+                  ? truncateDescription(data.description)
+                  : undefined
+              }
+              onClick={() => {
+                handleLocationSelect(loc);
+                onClose();
+              }}
+            />
+          ))}
+        </div>
+      )}
+      <div>
+        <p className="text-sm font-semibold mb-2">Saved Locations</p>
+        {Object.entries(LOCATIONS).map(([loc, _]) => (
+          <LocationButton
+            key={loc}
+            locationName={loc}
+            onClick={() => {
+              handleLocationSelect(loc);
+              onClose();
+            }}
+          />
+        ))}
+      </div>
+    </>
+  );
 
   // Use Modal on mobile, Dropdown on desktop
   if (isMobile) {
@@ -123,68 +232,16 @@ export default function LocationDropdown({
               className="overflow-y-auto"
               style={{ maxHeight: "30vh" }}
             >
-              <div className="sticky top-0 z-10 pb-2 bg-white modal-input-container">
-                <Input
-                  placeholder="Search location or ICAO code..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    const query = e.target.value;
-                    setSearchQuery(query);
-                    handleSearch(query);
-                  }}
-                  className="w-full"
-                  style={{ fontSize: "16px" }}
-                  classNames={{
-                    input: "mobile-input",
-                    inputWrapper: "no-zoom-wrapper",
-                  }}
-                  startContent={<span className="text-default-400">🔍</span>}
-                />
-                {isLoading && (
-                  <Spinner className="absolute right-10 top-3" size="sm" />
-                )}
-              </div>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onSearch={handleSearch}
+                isLoading={isLoading}
+                isMobile={true}
+              />
 
               <div className="mt-3 modal-scrollable-section">
-                {Object.entries(customLocations).length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-sm font-semibold mb-2">Search Results</p>
-                    {Object.entries(customLocations).map(([loc, data]) => (
-                      <Button
-                        key={loc}
-                        className="w-full justify-start mb-2 h-auto py-2 text-left flex flex-col items-start"
-                        variant="flat"
-                        onPress={() => {
-                          handleLocationSelect(loc);
-                          onClose();
-                        }}
-                      >
-                        <code className="font-medium">{loc}</code>
-                        {data.description && (
-                          <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
-                            {truncateDescription(data.description, 100)}
-                          </span>
-                        )}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm font-semibold mb-2">Saved Locations</p>
-                  {Object.entries(LOCATIONS).map(([loc, _]) => (
-                    <Button
-                      key={loc}
-                      className="w-full justify-start mb-2 h-auto py-2 text-left"
-                      variant="flat"
-                      onPress={() => {
-                        handleLocationSelect(loc);
-                        onClose();
-                      }}
-                    >
-                      <code>{loc}</code>
-                    </Button>
-                  ))}
-                </div>
+                {renderMobileLocationSections()}
               </div>
             </ModalBody>
             <ModalFooter>
@@ -198,11 +255,78 @@ export default function LocationDropdown({
     );
   }
 
+  // Build dropdown items list
+  const dropdownItems = [];
+
+  // Search input
+  dropdownItems.push(
+    <DropdownItem key="search" isReadOnly>
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onSearch={handleSearch}
+        isLoading={isLoading}
+      />
+    </DropdownItem>,
+  );
+
+  // Add search results if available
+  if (Object.entries(customLocations).length > 0) {
+    // Add header
+    dropdownItems.push(
+      <DropdownItem key="search-results-header" isReadOnly>
+        <p className="text-sm font-semibold my-1">Search Results</p>
+      </DropdownItem>,
+    );
+
+    // Add search results
+    Object.entries(customLocations).forEach(([loc, data]) => {
+      dropdownItems.push(
+        <DropdownItem key={loc} textValue={loc}>
+          <div className="flex flex-col">
+            <code className="font-medium">{loc}</code>
+            {data.description && (
+              <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
+                {truncateDescription(data.description)}
+              </span>
+            )}
+          </div>
+        </DropdownItem>,
+      );
+    });
+  }
+
+  // Add saved locations header
+  if (Object.entries(LOCATIONS).length > 0) {
+    dropdownItems.push(
+      <DropdownItem key="saved-locations-header" isReadOnly>
+        <p className="text-sm font-semibold my-1 mt-2">Saved Locations</p>
+      </DropdownItem>,
+    );
+
+    // Add saved locations
+    Object.entries(LOCATIONS).forEach(([loc, _]) => {
+      dropdownItems.push(
+        <DropdownItem key={loc}>
+          <code className="font-medium">{loc}</code>
+        </DropdownItem>,
+      );
+    });
+  }
+
   // Desktop view with dropdown
   return (
     <Dropdown>
       <DropdownTrigger>
-        <Button variant="bordered" className="capitalize">
+        <Button
+          variant="bordered"
+          className="capitalize"
+          onKeyDown={(e) => {
+            if (e.key === " ") {
+              e.stopPropagation();
+            }
+          }}
+        >
           <code>{displayName}</code>
         </Button>
       </DropdownTrigger>
@@ -213,41 +337,9 @@ export default function LocationDropdown({
         selectionMode="single"
         selectedKeys={[displayName]}
         onAction={(loc) => handleLocationSelect(loc as string)}
+        className="p-2 min-w-[320px]"
       >
-        <DropdownItem key="search" isReadOnly>
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Search location or ICAO code..."
-              value={searchQuery}
-              onChange={(e) => {
-                const query = e.target.value;
-                setSearchQuery(query);
-                handleSearch(query);
-              }}
-              className="w-full"
-            />
-            {isLoading && <Spinner size="sm" />}
-          </div>
-        </DropdownItem>
-        <Fragment>
-          {Object.entries(customLocations).map(([loc, data]) => (
-            <DropdownItem key={loc} textValue={loc}>
-              <div className="flex flex-col">
-                <code className="font-medium">{loc}</code>
-                {data.description && (
-                  <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
-                    {truncateDescription(data.description, 100)}
-                  </span>
-                )}
-              </div>
-            </DropdownItem>
-          ))}
-          {Object.entries(LOCATIONS).map(([loc, _]) => (
-            <DropdownItem key={loc}>
-              <code>{loc}</code>
-            </DropdownItem>
-          ))}
-        </Fragment>
+        {dropdownItems}
       </DropdownMenu>
     </Dropdown>
   );

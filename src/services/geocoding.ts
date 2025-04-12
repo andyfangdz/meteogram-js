@@ -72,4 +72,4 @@ function debounce<T extends (...args: any[]) => Promise<any>>(
 }
 
 // Create a debounced version of geocodeLocation
-export const debouncedGeocodeLocation = debounce(geocodeLocation, 100);
+export const debouncedGeocodeLocation = debounce(geocodeLocation, 300);
