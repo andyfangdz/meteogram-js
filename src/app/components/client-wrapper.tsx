@@ -8,19 +8,14 @@ import {
   SetStateAction,
 } from "react";
 import { WeatherModel, CloudColumn } from "../../types/weather";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getWeatherData } from "../actions/weather";
-import VisualizationPreferences from "./visualization-preferences";
-import { DEFAULT_PREFERENCES } from "@/config/preferences";
-
-interface VisualizationPreferences {
-  useLocalTime: boolean;
-  highlightCeilingCoverage: boolean;
-  clampCloudCoverageAt50Pct: boolean;
-  showPressureLines: boolean;
-  showWindBarbs: boolean;
-  showIsothermLines: boolean;
-}
+import VisualizationPreferencesComponent from "./visualization-preferences";
+import {
+  PreferencesProvider,
+  usePreferences,
+} from "@/context/PreferencesContext";
+import { serializeVisualizationPreferences } from "@/utils/params";
 
 interface ClientWrapperProps {
   initialLocation: string;
@@ -28,19 +23,17 @@ interface ClientWrapperProps {
   initialWeatherData: CloudColumn[];
   initialTimestamp: string;
   initialElevationFt: number | null;
-  initialPreferences: VisualizationPreferences;
 }
 
-export default function ClientWrapper({
+function ClientWrapperInternal({
   initialLocation,
   initialModel,
   initialWeatherData,
   initialTimestamp,
   initialElevationFt,
-  initialPreferences,
-}: ClientWrapperProps) {
+}: Omit<ClientWrapperProps, "initialPreferences">) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { preferences } = usePreferences();
   const [model, setModel] = useState<WeatherModel>(initialModel);
   const [weatherData, setWeatherData] =
     useState<CloudColumn[]>(initialWeatherData);
@@ -48,8 +41,6 @@ export default function ClientWrapper({
   const [elevationFt, setElevationFt] = useState<number | null>(
     initialElevationFt,
   );
-  const [preferences, setPreferences] =
-    useState<VisualizationPreferences>(initialPreferences);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -104,107 +95,25 @@ export default function ClientWrapper({
   }, [initialModel, initialLocation, refreshDataInBackground]);
 
   const handleLocationChange = (newLocation: SetStateAction<string>) => {
-    const params = new URLSearchParams(searchParams);
     const resolvedLocation =
       typeof newLocation === "function"
         ? newLocation(initialLocation)
         : newLocation;
     router.push(
-      `/${encodeURIComponent(resolvedLocation)}/${model}?${params.toString()}`,
+      `/${encodeURIComponent(resolvedLocation)}/${model}?${serializeVisualizationPreferences(preferences).toString()}`,
     );
   };
 
   const handleModelChange = (newModel: SetStateAction<WeatherModel>) => {
-    const params = new URLSearchParams(searchParams);
     const resolvedModel =
       typeof newModel === "function" ? newModel(initialModel) : newModel;
     router.push(
-      `/${encodeURIComponent(initialLocation)}/${resolvedModel}?${params.toString()}`,
-    );
-  };
-
-  const updatePreferences = (
-    newPreferences: Partial<VisualizationPreferences>,
-  ) => {
-    // Immediately update local state
-    const updatedPreferences = { ...preferences, ...newPreferences };
-    setPreferences(updatedPreferences);
-
-    const params = new URLSearchParams(searchParams);
-
-    // Only include non-default values in URL
-    if (updatedPreferences.useLocalTime !== DEFAULT_PREFERENCES.useLocalTime) {
-      params.set("useLocalTime", updatedPreferences.useLocalTime.toString());
-    } else {
-      params.delete("useLocalTime");
-    }
-
-    if (
-      updatedPreferences.highlightCeilingCoverage !==
-      DEFAULT_PREFERENCES.highlightCeilingCoverage
-    ) {
-      params.set(
-        "highlightCeiling",
-        updatedPreferences.highlightCeilingCoverage.toString(),
-      );
-    } else {
-      params.delete("highlightCeiling");
-    }
-
-    if (
-      updatedPreferences.clampCloudCoverageAt50Pct !==
-      DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct
-    ) {
-      params.set(
-        "clampCoverage",
-        updatedPreferences.clampCloudCoverageAt50Pct.toString(),
-      );
-    } else {
-      params.delete("clampCoverage");
-    }
-
-    if (
-      updatedPreferences.showPressureLines !==
-      DEFAULT_PREFERENCES.showPressureLines
-    ) {
-      params.set(
-        "showPressureLines",
-        updatedPreferences.showPressureLines.toString(),
-      );
-    } else {
-      params.delete("showPressureLines");
-    }
-
-    if (
-      updatedPreferences.showWindBarbs !== DEFAULT_PREFERENCES.showWindBarbs
-    ) {
-      params.set("showWindBarbs", updatedPreferences.showWindBarbs.toString());
-    } else {
-      params.delete("showWindBarbs");
-    }
-
-    if (
-      updatedPreferences.showIsothermLines !==
-      DEFAULT_PREFERENCES.showIsothermLines
-    ) {
-      params.set(
-        "showIsothermLines",
-        updatedPreferences.showIsothermLines.toString(),
-      );
-    } else {
-      params.delete("showIsothermLines");
-    }
-
-    const queryString = params.toString();
-    // Use shallow routing to prevent server request
-    router.replace(
-      `/${encodeURIComponent(initialLocation)}/${model}${queryString ? "?" + queryString : ""}`,
-      { scroll: false },
+      `/${encodeURIComponent(initialLocation)}/${resolvedModel}?${serializeVisualizationPreferences(preferences).toString()}`,
     );
   };
 
   return (
-    <VisualizationPreferences
+    <VisualizationPreferencesComponent
       model={model}
       setModel={handleModelChange}
       location={initialLocation}
@@ -214,9 +123,17 @@ export default function ClientWrapper({
       weatherData={weatherData}
       isLoading={isLoading}
       error={error}
-      preferences={preferences}
-      updatePreferences={updatePreferences}
       elevationFt={elevationFt}
     />
+  );
+}
+
+export default function ClientWrapper(
+  props: Omit<ClientWrapperProps, "initialPreferences">,
+) {
+  return (
+    <PreferencesProvider>
+      <ClientWrapperInternal {...props} />
+    </PreferencesProvider>
   );
 }

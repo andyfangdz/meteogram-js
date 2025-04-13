@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 
 export function usePersistedState<T>(
   key: string,
   defaultValue: T,
-): [T, (value: T) => void] {
+): [T, Dispatch<SetStateAction<T>>] {
   // Initialize state with defaultValue
   const [state, setState] = useState<T>(() => {
     // Check if we're in the browser

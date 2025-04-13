@@ -3,6 +3,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { WeatherModel } from "../../types/weather";
 import Nav from "./nav";
+import { usePreferences } from "@/context/PreferencesContext";
 
 interface NavWrapperProps {
   model: WeatherModel;
@@ -11,18 +12,6 @@ interface NavWrapperProps {
   setLocation: Dispatch<SetStateAction<string>>;
   lastUpdate: Date | null;
   refetch: () => void;
-  useLocalTime: boolean;
-  setUseLocalTime: Dispatch<SetStateAction<boolean>>;
-  highlightCeilingCoverage: boolean;
-  setHighlightCeilingCoverage: Dispatch<SetStateAction<boolean>>;
-  clampCloudCoverageAt50Pct: boolean;
-  setClampCloudCoverageAt50Pct: Dispatch<SetStateAction<boolean>>;
-  showPressureLines: boolean;
-  setShowPressureLines: Dispatch<SetStateAction<boolean>>;
-  showWindBarbs: boolean;
-  setShowWindBarbs: Dispatch<SetStateAction<boolean>>;
-  showIsothermLines: boolean;
-  setShowIsothermLines: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function NavWrapper({
@@ -32,19 +21,9 @@ export default function NavWrapper({
   setLocation,
   lastUpdate,
   refetch,
-  useLocalTime,
-  setUseLocalTime,
-  highlightCeilingCoverage,
-  setHighlightCeilingCoverage,
-  clampCloudCoverageAt50Pct,
-  setClampCloudCoverageAt50Pct,
-  showPressureLines,
-  setShowPressureLines,
-  showWindBarbs,
-  setShowWindBarbs,
-  showIsothermLines,
-  setShowIsothermLines,
 }: NavWrapperProps) {
+  const { preferences, setPreference } = usePreferences();
+
   return (
     <Nav
       location={location}
@@ -53,18 +32,26 @@ export default function NavWrapper({
       setModel={setModel}
       updateWeatherData={refetch}
       lastUpdate={lastUpdate}
-      useLocalTime={useLocalTime}
-      setUseLocalTime={setUseLocalTime}
-      highlightCeilingCoverage={highlightCeilingCoverage}
-      setHighlightCeilingCoverage={setHighlightCeilingCoverage}
-      clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
-      setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
-      showPressureLines={showPressureLines}
-      setShowPressureLines={setShowPressureLines}
-      showWindBarbs={showWindBarbs}
-      setShowWindBarbs={setShowWindBarbs}
-      showIsothermLines={showIsothermLines}
-      setShowIsothermLines={setShowIsothermLines}
+      useLocalTime={preferences.useLocalTime}
+      setUseLocalTime={(val: boolean) => setPreference("useLocalTime", val)}
+      highlightCeilingCoverage={preferences.highlightCeilingCoverage}
+      setHighlightCeilingCoverage={(val: boolean) =>
+        setPreference("highlightCeilingCoverage", val)
+      }
+      clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
+      setClampCloudCoverageAt50Pct={(val: boolean) =>
+        setPreference("clampCloudCoverageAt50Pct", val)
+      }
+      showPressureLines={preferences.showPressureLines}
+      setShowPressureLines={(val: boolean) =>
+        setPreference("showPressureLines", val)
+      }
+      showWindBarbs={preferences.showWindBarbs}
+      setShowWindBarbs={(val: boolean) => setPreference("showWindBarbs", val)}
+      showIsothermLines={preferences.showIsothermLines}
+      setShowIsothermLines={(val: boolean) =>
+        setPreference("showIsothermLines", val)
+      }
     />
   );
 }

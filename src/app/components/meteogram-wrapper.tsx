@@ -2,15 +2,10 @@
 
 import { CloudColumn, WeatherModel } from "../../types/weather";
 import Meteogram from "./meteogram";
+import { usePreferences } from "@/context/PreferencesContext";
 
 interface MeteogramWrapperProps {
   weatherData: CloudColumn[];
-  useLocalTime: boolean;
-  highlightCeilingCoverage: boolean;
-  clampCloudCoverageAt50Pct: boolean;
-  showPressureLines: boolean;
-  showWindBarbs: boolean;
-  showIsothermLines: boolean;
   isLoading: boolean;
   error: Error | null;
   model: WeatherModel;
@@ -19,17 +14,13 @@ interface MeteogramWrapperProps {
 
 export default function MeteogramWrapper({
   weatherData,
-  useLocalTime,
-  highlightCeilingCoverage,
-  clampCloudCoverageAt50Pct,
-  showPressureLines,
-  showWindBarbs,
-  showIsothermLines,
   isLoading,
   error,
   model,
   elevationFt,
 }: MeteogramWrapperProps) {
+  const { preferences } = usePreferences();
+
   return (
     <div className="contents">
       {error && (
@@ -40,13 +31,13 @@ export default function MeteogramWrapper({
       <Meteogram
         width={1600}
         height={800}
-        useLocalTime={useLocalTime}
+        useLocalTime={preferences.useLocalTime}
         weatherData={weatherData}
-        highlightCeilingCoverage={highlightCeilingCoverage}
-        clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
-        showPressureLines={showPressureLines}
-        showWindBarbs={showWindBarbs}
-        showIsothermLines={showIsothermLines}
+        highlightCeilingCoverage={preferences.highlightCeilingCoverage}
+        clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
+        showPressureLines={preferences.showPressureLines}
+        showWindBarbs={preferences.showWindBarbs}
+        showIsothermLines={preferences.showIsothermLines}
         isLoading={isLoading}
         model={model}
         elevationFt={elevationFt}

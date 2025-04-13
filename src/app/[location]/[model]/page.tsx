@@ -5,7 +5,7 @@ import { LOCATIONS } from "@/config/weather";
 import { WeatherModel } from "@/types/weather";
 import { notFound } from "next/navigation";
 import { getWeatherData } from "@/app/actions/weather";
-import { DEFAULT_PREFERENCES } from "@/config/preferences";
+import { parseVisualizationPreferences } from "@/utils/params";
 
 interface PageProps {
   params: Promise<{
@@ -48,30 +48,6 @@ export default async function Page({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  // Parse visualization preferences with defaults
-  const preferences = {
-    useLocalTime:
-      searchParamsResolved.useLocalTime === "true" ||
-      DEFAULT_PREFERENCES.useLocalTime,
-    highlightCeilingCoverage:
-      searchParamsResolved.highlightCeiling === "false"
-        ? false
-        : DEFAULT_PREFERENCES.highlightCeilingCoverage,
-    clampCloudCoverageAt50Pct:
-      searchParamsResolved.clampCoverage === "false"
-        ? false
-        : DEFAULT_PREFERENCES.clampCloudCoverageAt50Pct,
-    showPressureLines:
-      searchParamsResolved.showPressureLines === "true" ||
-      DEFAULT_PREFERENCES.showPressureLines,
-    showWindBarbs:
-      searchParamsResolved.showWindBarbs === "true" ||
-      DEFAULT_PREFERENCES.showWindBarbs,
-    showIsothermLines:
-      searchParamsResolved.showIsothermLines === "true" ||
-      DEFAULT_PREFERENCES.showIsothermLines,
-  };
-
   // Fetch initial data on the server
   const initialData = await getWeatherData(
     model as WeatherModel,
@@ -87,7 +63,6 @@ export default async function Page({ params, searchParams }: PageProps) {
           initialWeatherData={initialData.data}
           initialTimestamp={initialData.timestamp}
           initialElevationFt={initialData.elevationFt}
-          initialPreferences={preferences}
         />
       </div>
     </HeroUIProvider>

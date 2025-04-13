@@ -49,3 +49,12 @@ export interface WeatherApiParams {
   models: string;
   [key: string]: any;
 }
+
+export interface VisualizationPreferences {
+  useLocalTime: boolean;
+  highlightCeilingCoverage: boolean;
+  clampCloudCoverageAt50Pct: boolean;
+  showPressureLines: boolean;
+  showWindBarbs: boolean;
+  showIsothermLines: boolean;
+}

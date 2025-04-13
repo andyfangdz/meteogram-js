@@ -102,7 +102,7 @@ export async function geocodeLocation(
 
     // Check direct match with airport code
     if (airportsCache[normalizedQuery]) {
-      locations[query] = airportsCache[normalizedQuery];
+      locations[normalizedQuery] = airportsCache[normalizedQuery];
       return locations;
     }
 
@@ -110,7 +110,7 @@ export async function geocodeLocation(
     if (normalizedQuery.length === 3) {
       const withK = "K" + normalizedQuery;
       if (airportsCache[withK]) {
-        locations[query] = airportsCache[withK];
+        locations[withK] = airportsCache[withK];
         return locations;
       }
     }

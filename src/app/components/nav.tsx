@@ -31,17 +31,17 @@ interface NavProps {
   lastUpdate: Date | null;
   updateWeatherData: () => void;
   useLocalTime: boolean;
-  setUseLocalTime: Dispatch<SetStateAction<boolean>>;
+  setUseLocalTime: (value: boolean) => void;
   highlightCeilingCoverage: boolean;
-  setHighlightCeilingCoverage: Dispatch<SetStateAction<boolean>>;
+  setHighlightCeilingCoverage: (value: boolean) => void;
   clampCloudCoverageAt50Pct: boolean;
-  setClampCloudCoverageAt50Pct: Dispatch<SetStateAction<boolean>>;
+  setClampCloudCoverageAt50Pct: (value: boolean) => void;
   showPressureLines: boolean;
-  setShowPressureLines: Dispatch<SetStateAction<boolean>>;
+  setShowPressureLines: (value: boolean) => void;
   showWindBarbs: boolean;
-  setShowWindBarbs: Dispatch<SetStateAction<boolean>>;
+  setShowWindBarbs: (value: boolean) => void;
   showIsothermLines: boolean;
-  setShowIsothermLines: Dispatch<SetStateAction<boolean>>;
+  setShowIsothermLines: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
