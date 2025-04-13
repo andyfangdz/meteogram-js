@@ -86,6 +86,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           initialModel={model as WeatherModel}
           initialWeatherData={initialData.data}
           initialTimestamp={initialData.timestamp}
+          initialElevationFt={initialData.elevationFt}
           initialPreferences={preferences}
         />
       </div>

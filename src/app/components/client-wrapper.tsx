@@ -27,6 +27,7 @@ interface ClientWrapperProps {
   initialModel: WeatherModel;
   initialWeatherData: CloudColumn[];
   initialTimestamp: string;
+  initialElevationFt: number | null;
   initialPreferences: VisualizationPreferences;
 }
 
@@ -35,19 +36,22 @@ export default function ClientWrapper({
   initialModel,
   initialWeatherData,
   initialTimestamp,
+  initialElevationFt,
   initialPreferences,
 }: ClientWrapperProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [model, setModel] = useState<WeatherModel>(initialModel);
   const [weatherData, setWeatherData] =
     useState<CloudColumn[]>(initialWeatherData);
-  const [lastUpdate, setLastUpdate] = useState<Date>(
-    new Date(initialTimestamp),
+  const [timestamp, setTimestamp] = useState<string>(initialTimestamp);
+  const [elevationFt, setElevationFt] = useState<number | null>(
+    initialElevationFt,
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
   const [preferences, setPreferences] =
     useState<VisualizationPreferences>(initialPreferences);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Separate refresh functions for manual and background updates
@@ -55,12 +59,14 @@ export default function ClientWrapper({
     try {
       setIsLoading(true);
       setError(null);
-      const { data, timestamp } = await getWeatherData(
-        initialModel,
-        initialLocation,
-      );
+      const {
+        data,
+        timestamp: newTimestamp,
+        elevationFt: newElevationFt,
+      } = await getWeatherData(model, initialLocation);
       setWeatherData(data);
-      setLastUpdate(new Date(timestamp));
+      setTimestamp(newTimestamp);
+      setElevationFt(newElevationFt);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch weather data"),
@@ -72,16 +78,18 @@ export default function ClientWrapper({
 
   const refreshDataInBackground = useCallback(async () => {
     try {
-      const { data, timestamp } = await getWeatherData(
-        initialModel,
-        initialLocation,
-      );
+      const {
+        data,
+        timestamp: newTimestamp,
+        elevationFt: newElevationFt,
+      } = await getWeatherData(model, initialLocation);
       setWeatherData(data);
-      setLastUpdate(new Date(timestamp));
+      setTimestamp(newTimestamp);
+      setElevationFt(newElevationFt);
     } catch (error) {
       console.error("Error refreshing data:", error);
     }
-  }, [initialLocation, initialModel]);
+  }, [initialLocation, model]);
 
   useEffect(() => {
     const refreshInterval = 60000; // 1 minute
@@ -102,7 +110,7 @@ export default function ClientWrapper({
         ? newLocation(initialLocation)
         : newLocation;
     router.push(
-      `/${encodeURIComponent(resolvedLocation)}/${initialModel}?${params.toString()}`,
+      `/${encodeURIComponent(resolvedLocation)}/${model}?${params.toString()}`,
     );
   };
 
@@ -190,24 +198,25 @@ export default function ClientWrapper({
     const queryString = params.toString();
     // Use shallow routing to prevent server request
     router.replace(
-      `/${encodeURIComponent(initialLocation)}/${initialModel}${queryString ? "?" + queryString : ""}`,
+      `/${encodeURIComponent(initialLocation)}/${model}${queryString ? "?" + queryString : ""}`,
       { scroll: false },
     );
   };
 
   return (
     <VisualizationPreferences
-      model={initialModel}
+      model={model}
       setModel={handleModelChange}
       location={initialLocation}
       setLocation={handleLocationChange}
-      lastUpdate={lastUpdate}
+      lastUpdate={new Date(timestamp)}
       refetch={refreshDataWithLoading}
       weatherData={weatherData}
       isLoading={isLoading}
       error={error}
       preferences={preferences}
       updatePreferences={updatePreferences}
+      elevationFt={elevationFt}
     />
   );
 }

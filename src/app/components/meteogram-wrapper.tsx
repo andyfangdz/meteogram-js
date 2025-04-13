@@ -14,6 +14,7 @@ interface MeteogramWrapperProps {
   isLoading: boolean;
   error: Error | null;
   model: WeatherModel;
+  elevationFt: number | null;
 }
 
 export default function MeteogramWrapper({
@@ -27,6 +28,7 @@ export default function MeteogramWrapper({
   isLoading,
   error,
   model,
+  elevationFt,
 }: MeteogramWrapperProps) {
   return (
     <div className="contents">
@@ -47,6 +49,7 @@ export default function MeteogramWrapper({
         showIsothermLines={showIsothermLines}
         isLoading={isLoading}
         model={model}
+        elevationFt={elevationFt}
       />
     </div>
   );

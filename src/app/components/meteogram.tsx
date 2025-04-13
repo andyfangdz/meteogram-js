@@ -28,6 +28,7 @@ export type MeteogramProps = {
   showWindBarbs?: boolean;
   showIsothermLines?: boolean;
   model: WeatherModel;
+  elevationFt: number | null;
 };
 
 const black = "#000000";
@@ -47,6 +48,7 @@ export default function Meteogram({
   showWindBarbs = true,
   showIsothermLines = false,
   model,
+  elevationFt,
 }: MeteogramProps) {
   // State
   const [hoveredRect, setHoveredRect] = useState<{
@@ -163,6 +165,20 @@ export default function Meteogram({
         left={formatNumber(margin.left)}
         className="meteogram-content"
       >
+        {/* Ground Elevation */}
+        {elevationFt !== null && (
+          <rect
+            className="ground-elevation"
+            x={0}
+            y={formatNumber(scales.mslScale(elevationFt))}
+            width={formatNumber(bounds.xMax)}
+            height={formatNumber(bounds.yMax - scales.mslScale(elevationFt))}
+            fill="#8B4513" // Brown color
+            opacity={0.5} // Make it semi-transparent
+            pointerEvents="none" // Don't block mouse events
+          />
+        )}
+
         <CloudColumns
           weatherData={weatherData}
           scales={scales}

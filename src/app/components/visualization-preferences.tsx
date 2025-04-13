@@ -34,6 +34,7 @@ interface VisualizationPreferencesProps {
       showIsothermLines: boolean;
     }>,
   ) => void;
+  elevationFt: number | null;
 }
 
 export default function VisualizationPreferences({
@@ -48,6 +49,7 @@ export default function VisualizationPreferences({
   error,
   preferences,
   updatePreferences,
+  elevationFt,
 }: VisualizationPreferencesProps) {
   // Use persisted state for visualization preferences
   const [storedUseLocalTime, setStoredUseLocalTime] =
@@ -218,6 +220,7 @@ export default function VisualizationPreferences({
           isLoading={isLoading}
           error={error}
           model={model}
+          elevationFt={elevationFt}
         />
       </main>
     </>

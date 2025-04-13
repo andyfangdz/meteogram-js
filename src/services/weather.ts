@@ -5,7 +5,31 @@ import {
   DEFAULT_PARAMS,
   MODEL_CONFIGS,
   LOCATIONS,
+  FEET_PER_METER,
 } from "../config/weather";
+
+export async function fetchElevationData(
+  latitude: number,
+  longitude: number,
+): Promise<number | null> {
+  const elevationUrl = `https://api.open-meteo.com/v1/elevation?latitude=${latitude}&longitude=${longitude}`;
+  try {
+    const response = await fetch(elevationUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    // API returns an array, we only need the first value
+    if (data?.elevation?.length > 0) {
+      // Convert meters to feet
+      return data.elevation[0] * FEET_PER_METER;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch elevation data:", error);
+    return null; // Return null or handle error as appropriate
+  }
+}
 
 export async function fetchWeatherApiData(
   model: WeatherModel,
