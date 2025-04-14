@@ -1,6 +1,7 @@
 "use server";
 
 import { LocationsWithDescription } from "../../types/weather"; // Assuming types are moved or redefined
+import Fuse from "fuse.js";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const AIRPORTS_API_URL =
@@ -9,9 +10,15 @@ const AIRPORTS_API_URL =
 // In-memory cache for airports data (server-side)
 let airportsCache: Record<
   string,
-  { latitude: number; longitude: number; description: string }
+  { latitude: number; longitude: number; description: string; id: string }
 > = {};
 let isCacheInitialized = false;
+let airportsFuseIndex: Fuse<{
+  latitude: number;
+  longitude: number;
+  description: string;
+  id: string;
+}>;
 
 interface NominatimResult {
   display_name: string;
@@ -88,6 +95,7 @@ async function initAirportsCache() {
             latitude: formatCoordinate(lat),
             longitude: formatCoordinate(lon),
             description: `${airport.name || "Unknown Name"} Airport (${id})`, // Add fallback for name
+            id: id,
           };
         } else {
           console.warn(
@@ -97,6 +105,20 @@ async function initAirportsCache() {
       }
     }
     airportsCache = newCache; // Atomically update cache
+
+    // Create Fuse index
+    const fuseOptions = {
+      keys: [
+        { name: "id", weight: 0.7 }, // Prioritize matching ID
+        { name: "description", weight: 0.3 }, // Then description
+      ],
+      includeScore: true, // Optional: might be useful for sorting/filtering later
+      threshold: 0.3, // Adjust threshold for fuzziness (0=exact, 1=match anything)
+      minMatchCharLength: 2, // Minimum characters to match
+    };
+    // Fuse expects an array, not an object
+    airportsFuseIndex = new Fuse(Object.values(airportsCache), fuseOptions);
+
     isCacheInitialized = true; // Mark as initialized
     console.log(
       `Loaded ${Object.keys(airportsCache).length} airports into server cache`,
@@ -116,24 +138,36 @@ export async function geocodeLocationAction(
   const locations: LocationsWithDescription = {};
   const normalizedQuery = query.trim().toUpperCase();
 
-  // 1. Check Airport Cache
-  if (normalizedQuery) {
-    // Direct match
-    if (airportsCache[normalizedQuery]) {
-      locations[normalizedQuery] = airportsCache[normalizedQuery];
-      return locations; // Return immediately if direct airport match found
-    }
-    // US 3-letter with K prefix
-    if (normalizedQuery.length === 3 && /^[A-Z0-9]+$/.test(normalizedQuery)) {
-      const withK = "K" + normalizedQuery;
-      if (airportsCache[withK]) {
-        locations[withK] = airportsCache[withK];
-        return locations; // Return immediately if K-prefix match found
+  // 1. Search Airport Cache using Fuse
+  if (normalizedQuery && isCacheInitialized) {
+    // Adjust query for potential K prefix if it's a 3-letter code
+    const searchQuery =
+      normalizedQuery.length === 3 && /^[A-Z0-9]+$/.test(normalizedQuery)
+        ? "K" + normalizedQuery + " " + normalizedQuery // Search "KJFK JFK"
+        : normalizedQuery;
+
+    const results = airportsFuseIndex.search(searchQuery).slice(0, 5); // Limit results
+
+    results.forEach((result) => {
+      // Fuse returns matches in result.item
+      const airport = result.item;
+      if (airport && airport.id && !locations[airport.id]) {
+        // Avoid duplicates
+        locations[airport.id] = {
+          latitude: airport.latitude,
+          longitude: airport.longitude,
+          description: airport.description,
+        };
       }
+    });
+
+    // If any airport matches were found in the cache return them now
+    if (Object.keys(locations).length > 0) {
+      return locations;
     }
   }
 
-  // 2. If no airport match, query Nominatim
+  // 2. If no airport match in cache, query Nominatim
   if (query) {
     // Use original query for Nominatim
     const isICAO = /^[A-Z]{4}$/.test(normalizedQuery);

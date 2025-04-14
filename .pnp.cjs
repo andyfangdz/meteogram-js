@@ -48,6 +48,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-config-prettier", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:10.1.2"],\
           ["eslint-plugin-unused-imports", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:4.1.4"],\
           ["framer-motion", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:12.6.3"],\
+          ["fuse.js", "npm:7.1.0"],\
           ["lodash", "npm:4.17.21"],\
           ["marching-squares", "npm:1.0.0"],\
           ["next", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:15.3.0"],\
@@ -9497,6 +9498,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["fuse.js", [\
+      ["npm:7.1.0", {\
+        "packageLocation": "../../../../.yarn/berry/cache/fuse.js-npm-7.1.0-5dcae892a6-10c0.zip/node_modules/fuse.js/",\
+        "packageDependencies": [\
+          ["fuse.js", "npm:7.1.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["get-intrinsic", [\
       ["npm:1.2.4", {\
         "packageLocation": "../../../../.yarn/berry/cache/get-intrinsic-npm-1.2.4-1dad3427b2-10c0.zip/node_modules/get-intrinsic/",\
@@ -10651,6 +10661,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-config-prettier", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:10.1.2"],\
           ["eslint-plugin-unused-imports", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:4.1.4"],\
           ["framer-motion", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:12.6.3"],\
+          ["fuse.js", "npm:7.1.0"],\
           ["lodash", "npm:4.17.21"],\
           ["marching-squares", "npm:1.0.0"],\
           ["next", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:15.3.0"],\
