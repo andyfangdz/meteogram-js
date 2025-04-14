@@ -1,5 +1,3 @@
-"use client";
-
 import { Dispatch, SetStateAction } from "react";
 import { WeatherModel } from "../../types/weather";
 import Nav from "./nav";
@@ -7,9 +5,9 @@ import { usePreferences } from "@/context/PreferencesContext";
 
 interface NavWrapperProps {
   model: WeatherModel;
-  setModel: Dispatch<SetStateAction<WeatherModel>>;
+  setModel: (newModel: WeatherModel) => void;
   location: string;
-  setLocation: Dispatch<SetStateAction<string>>;
+  setLocation: (newLocation: string) => void;
   lastUpdate: Date | null;
   refetch: () => void;
 }

@@ -9,13 +9,12 @@ import {
 import { MODEL_NAMES } from "../../config/weather";
 import { WeatherModel } from "../../types/weather";
 
-export default function ModelDropdown({
-  model,
-  setModel,
-}: {
+interface ModelDropdownProps {
   model: WeatherModel;
-  setModel: Dispatch<SetStateAction<WeatherModel>>;
-}) {
+  setModel: (newModel: WeatherModel) => void;
+}
+
+export default function ModelDropdown({ model, setModel }: ModelDropdownProps) {
   return (
     <Dropdown>
       <DropdownTrigger>

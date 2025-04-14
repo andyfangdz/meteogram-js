@@ -58,6 +58,7 @@ const RAW_RUNTIME_STATE =
           ["react-dom", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:19.1.0"],\
           ["tailwindcss", "npm:3.4.17"],\
           ["typescript", "patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>::version=5.8.3&hash=5786d5"],\
+          ["use-debounce", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:10.0.4"],\
           ["usehooks-ts", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.1.1"]\
         ],\
         "linkType": "SOFT"\
@@ -10660,6 +10661,7 @@ const RAW_RUNTIME_STATE =
           ["react-dom", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:19.1.0"],\
           ["tailwindcss", "npm:3.4.17"],\
           ["typescript", "patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>::version=5.8.3&hash=5786d5"],\
+          ["use-debounce", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:10.0.4"],\
           ["usehooks-ts", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:3.1.1"]\
         ],\
         "linkType": "SOFT"\
@@ -12778,6 +12780,28 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./.yarn/__virtual__/use-composed-ref-virtual-891931dd38/5/.yarn/berry/cache/use-composed-ref-npm-1.3.0-20ed37af5c-10c0.zip/node_modules/use-composed-ref/",\
         "packageDependencies": [\
           ["use-composed-ref", "virtual:ca3df4fd79d6a2c505bbf7cdb2e1efdbe2bb1052cd2a74f9cb43241b0d74f7cc683b17f92dda9b5c1f14bf48b7c99647ca50bd09d41ede35248af5730792cf51#npm:1.3.0"],\
+          ["@types/react", "npm:19.1.0"],\
+          ["react", "npm:19.1.0"]\
+        ],\
+        "packagePeers": [\
+          "@types/react",\
+          "react"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["use-debounce", [\
+      ["npm:10.0.4", {\
+        "packageLocation": "../../../../.yarn/berry/cache/use-debounce-npm-10.0.4-e6f111fd89-10c0.zip/node_modules/use-debounce/",\
+        "packageDependencies": [\
+          ["use-debounce", "npm:10.0.4"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:10.0.4", {\
+        "packageLocation": "./.yarn/__virtual__/use-debounce-virtual-798c5d6ef9/5/.yarn/berry/cache/use-debounce-npm-10.0.4-e6f111fd89-10c0.zip/node_modules/use-debounce/",\
+        "packageDependencies": [\
+          ["use-debounce", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:10.0.4"],\
           ["@types/react", "npm:19.1.0"],\
           ["react", "npm:19.1.0"]\
         ],\

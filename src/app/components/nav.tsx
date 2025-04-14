@@ -25,9 +25,9 @@ import LastUpdateTime from "./last-update-time";
 
 interface NavProps {
   model: WeatherModel;
-  setModel: Dispatch<SetStateAction<WeatherModel>>;
+  setModel: (newModel: WeatherModel) => void;
   location: string;
-  setLocation: Dispatch<SetStateAction<string>>;
+  setLocation: (newLocation: string) => void;
   lastUpdate: Date | null;
   updateWeatherData: () => void;
   useLocalTime: boolean;

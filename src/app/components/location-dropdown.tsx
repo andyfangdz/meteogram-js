@@ -23,9 +23,10 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { LOCATIONS } from "../../config/weather";
-import { debouncedGeocodeLocation } from "../../services/geocoding";
+import { geocodeLocationAction } from "@/app/actions/geocoding";
 import { useRouter } from "next/navigation";
 import { LocationsWithDescription } from "../../types/weather";
+import { useDebouncedCallback } from "use-debounce";
 
 // Shared components to use in both mobile and desktop views
 const LocationButton = ({
@@ -104,19 +105,20 @@ const truncateDescription = (desc: string, maxLength = 100) => {
   return desc.length > maxLength ? `${desc.substring(0, maxLength)}...` : desc;
 };
 
+interface LocationDropdownProps {
+  location: string;
+  setLocation: (newLocation: string) => void;
+}
+
 export default function LocationDropdown({
   location,
   setLocation,
-}: {
-  location: string;
-  setLocation: Dispatch<SetStateAction<string>>;
-}) {
+}: LocationDropdownProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [customLocations, setCustomLocations] =
     useState<LocationsWithDescription>({});
   const [isLoading, setIsLoading] = useState(false);
-  const lastSearchRef = useRef<string>("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -137,20 +139,31 @@ export default function LocationDropdown({
   // Extract the display name from the location string (removing @coords if present)
   const displayName = location.split("@")[0];
 
-  const handleSearch = useCallback((query: string) => {
-    if (!query) return;
-
-    lastSearchRef.current = query;
+  // Debounced server action call
+  const debouncedSearch = useDebouncedCallback(async (query: string) => {
+    if (!query) {
+      setCustomLocations({});
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
+    try {
+      const result = await geocodeLocationAction(query);
+      // No need to check lastSearchRef, use-debounce handles concurrency
+      setCustomLocations(result);
+    } catch (error) {
+      console.error("Error calling geocode action:", error);
+      setCustomLocations({}); // Clear results on error
+    } finally {
+      setIsLoading(false);
+    }
+  }, 300); // 300ms debounce delay
 
-    debouncedGeocodeLocation(query).then((result) => {
-      // Only update if this is still the latest search
-      if (lastSearchRef.current === query) {
-        setCustomLocations(result);
-        setIsLoading(false);
-      }
-    });
-  }, []);
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    // Call the debounced function
+    debouncedSearch(query);
+  };
 
   const handleLocationSelect = (loc: string) => {
     if (loc in LOCATIONS) {
@@ -234,8 +247,8 @@ export default function LocationDropdown({
             >
               <SearchInput
                 value={searchQuery}
-                onChange={setSearchQuery}
-                onSearch={handleSearch}
+                onChange={handleSearchChange}
+                onSearch={handleSearchChange}
                 isLoading={isLoading}
                 isMobile={true}
               />
@@ -263,8 +276,8 @@ export default function LocationDropdown({
     <DropdownItem key="search" isReadOnly>
       <SearchInput
         value={searchQuery}
-        onChange={setSearchQuery}
-        onSearch={handleSearch}
+        onChange={handleSearchChange}
+        onSearch={handleSearchChange}
         isLoading={isLoading}
       />
     </DropdownItem>,

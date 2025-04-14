@@ -12,9 +12,9 @@ import { usePreferences } from "@/context/PreferencesContext";
 
 interface VisualizationPreferencesProps {
   model: WeatherModel;
-  setModel: Dispatch<SetStateAction<WeatherModel>>;
+  setModel: (newModel: WeatherModel) => void;
   location: string;
-  setLocation: Dispatch<SetStateAction<string>>;
+  setLocation: (newLocation: string) => void;
   lastUpdate: Date;
   refetch: () => void;
   weatherData: CloudColumn[];
