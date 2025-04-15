@@ -5,7 +5,7 @@ import { LOCATIONS } from "@/config/weather";
 import { WeatherModel } from "@/types/weather";
 import { notFound } from "next/navigation";
 import { getWeatherData } from "@/app/actions/weather";
-import { parseVisualizationPreferences } from "@/utils/params";
+import { getInitialPreferences } from "@/utils/serverPreferences";
 
 interface PageProps {
   params: Promise<{
@@ -19,6 +19,7 @@ interface PageProps {
     showPressureLines?: string;
     showWindBarbs?: string;
     showIsothermLines?: string;
+    [key: string]: string | undefined;
   }>;
 }
 
@@ -49,10 +50,10 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   // Fetch initial data on the server
-  const initialData = await getWeatherData(
-    model as WeatherModel,
-    decodedLocation,
-  );
+  const [initialData, preferencesResult] = await Promise.all([
+    getWeatherData(model as WeatherModel, decodedLocation),
+    getInitialPreferences(searchParamsResolved),
+  ]);
 
   return (
     <HeroUIProvider>
@@ -63,6 +64,8 @@ export default async function Page({ params, searchParams }: PageProps) {
           initialWeatherData={initialData.data}
           initialTimestamp={initialData.timestamp}
           initialElevationFt={initialData.elevationFt}
+          initialPreferences={preferencesResult.preferences}
+          cookieReadSuccess={preferencesResult.cookieReadSuccess}
         />
       </div>
     </HeroUIProvider>

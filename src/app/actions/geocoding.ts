@@ -138,21 +138,28 @@ export async function geocodeLocationAction(
   const locations: LocationsWithDescription = {};
   const normalizedQuery = query.trim().toUpperCase();
 
-  // 1. Search Airport Cache using Fuse
+  // 1. Check Airport Cache (Exact ID Matches First)
   if (normalizedQuery && isCacheInitialized) {
-    // Adjust query for potential K prefix if it's a 3-letter code
-    const searchQuery =
-      normalizedQuery.length === 3 && /^[A-Z0-9]+$/.test(normalizedQuery)
-        ? "K" + normalizedQuery + " " + normalizedQuery // Search "KJFK JFK"
-        : normalizedQuery;
+    // Check direct ID match
+    if (airportsCache[normalizedQuery]) {
+      locations[normalizedQuery] = airportsCache[normalizedQuery];
+    }
+    // Check US 3-letter with K prefix
+    if (normalizedQuery.length === 3 && /^[A-Z0-9]+$/.test(normalizedQuery)) {
+      const withK = "K" + normalizedQuery;
+      if (airportsCache[withK] && !locations[withK]) {
+        // Avoid adding if already matched directly
+        locations[withK] = airportsCache[withK];
+      }
+    }
 
-    const results = airportsFuseIndex.search(searchQuery).slice(0, 5); // Limit results
+    // Now, perform fuzzy search for additional/alternative matches
+    const fuseResults = airportsFuseIndex.search(normalizedQuery).slice(0, 5); // Limit results
 
-    results.forEach((result) => {
-      // Fuse returns matches in result.item
+    fuseResults.forEach((result) => {
       const airport = result.item;
+      // Add if it's a valid airport and not already added via exact match
       if (airport && airport.id && !locations[airport.id]) {
-        // Avoid duplicates
         locations[airport.id] = {
           latitude: airport.latitude,
           longitude: airport.longitude,
@@ -161,7 +168,7 @@ export async function geocodeLocationAction(
       }
     });
 
-    // If any airport matches were found in the cache return them now
+    // If any airport matches were found (exact or fuzzy), return them now
     if (Object.keys(locations).length > 0) {
       return locations;
     }

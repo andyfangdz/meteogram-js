@@ -31,6 +31,7 @@ const RAW_RUNTIME_STATE =
           ["@heroui/system", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.4.13"],\
           ["@heroui/theme", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.4.13"],\
           ["@react-hook/resize-observer", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.0.2"],\
+          ["@types/js-cookie", "npm:3.0.6"],\
           ["@types/lodash", "npm:4.17.16"],\
           ["@types/node", "npm:22.14.0"],\
           ["@types/react", "npm:19.1.0"],\
@@ -49,6 +50,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-plugin-unused-imports", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:4.1.4"],\
           ["framer-motion", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:12.6.3"],\
           ["fuse.js", "npm:7.1.0"],\
+          ["js-cookie", "npm:3.0.5"],\
           ["lodash", "npm:4.17.21"],\
           ["marching-squares", "npm:1.0.0"],\
           ["next", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:15.3.0"],\
@@ -6845,6 +6847,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["@types/js-cookie", [\
+      ["npm:3.0.6", {\
+        "packageLocation": "../../../../.yarn/berry/cache/@types-js-cookie-npm-3.0.6-c9126e5b48-10c0.zip/node_modules/@types/js-cookie/",\
+        "packageDependencies": [\
+          ["@types/js-cookie", "npm:3.0.6"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["@types/json-schema", [\
       ["npm:7.0.15", {\
         "packageLocation": "../../../../.yarn/berry/cache/@types-json-schema-npm-7.0.15-fd16381786-10c0.zip/node_modules/@types/json-schema/",\
@@ -10378,6 +10389,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["js-cookie", [\
+      ["npm:3.0.5", {\
+        "packageLocation": "../../../../.yarn/berry/cache/js-cookie-npm-3.0.5-8fc8fcc9b4-10c0.zip/node_modules/js-cookie/",\
+        "packageDependencies": [\
+          ["js-cookie", "npm:3.0.5"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["js-tokens", [\
       ["npm:4.0.0", {\
         "packageLocation": "../../../../.yarn/berry/cache/js-tokens-npm-4.0.0-0ac852e9e2-10c0.zip/node_modules/js-tokens/",\
@@ -10644,6 +10664,7 @@ const RAW_RUNTIME_STATE =
           ["@heroui/system", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.4.13"],\
           ["@heroui/theme", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.4.13"],\
           ["@react-hook/resize-observer", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:2.0.2"],\
+          ["@types/js-cookie", "npm:3.0.6"],\
           ["@types/lodash", "npm:4.17.16"],\
           ["@types/node", "npm:22.14.0"],\
           ["@types/react", "npm:19.1.0"],\
@@ -10662,6 +10683,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-plugin-unused-imports", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:4.1.4"],\
           ["framer-motion", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:12.6.3"],\
           ["fuse.js", "npm:7.1.0"],\
+          ["js-cookie", "npm:3.0.5"],\
           ["lodash", "npm:4.17.21"],\
           ["marching-squares", "npm:1.0.0"],\
           ["next", "virtual:972e3a7ed37978b48d4c020d36248dd6e0b0181b0ca7b86073f73ff5a6383a6f53efe1a518994db5e55065e58137753c7de1d70fd556cd3cbaa77b70b47c98e8#npm:15.3.0"],\

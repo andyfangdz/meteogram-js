@@ -67,6 +67,8 @@ const SearchInput = ({
 }) => (
   <div
     className={`relative ${isMobile ? "sticky top-0 z-10 pb-2 bg-white modal-input-container" : ""}`}
+    onClick={(e) => e.stopPropagation()}
+    onTouchStart={(e) => e.stopPropagation()}
   >
     <Input
       placeholder="Search location or ICAO code..."
@@ -83,11 +85,8 @@ const SearchInput = ({
         inputWrapper: isMobile ? "no-zoom-wrapper" : "",
       }}
       startContent={<span className="text-default-400">🔍</span>}
-      onKeyDown={(e) => {
-        if (e.key === " ") {
-          e.stopPropagation();
-        }
-      }}
+      onClick={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     />
     {isLoading && (
       <Spinner
@@ -273,7 +272,7 @@ export default function LocationDropdown({
 
   // Search input
   dropdownItems.push(
-    <DropdownItem key="search" isReadOnly>
+    <DropdownItem key="search" isReadOnly onClick={(e) => e.stopPropagation()}>
       <SearchInput
         value={searchQuery}
         onChange={handleSearchChange}

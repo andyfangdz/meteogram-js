@@ -7,16 +7,15 @@ import React, {
   useEffect,
   useCallback,
   ReactNode,
-  SetStateAction,
+  useRef,
 } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { usePersistedState } from "@/hooks/usePersistedState";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import { VisualizationPreferences } from "@/types/weather";
 import { DEFAULT_PREFERENCES } from "@/config/preferences";
-import {
-  parseVisualizationPreferences,
-  serializeVisualizationPreferences,
-} from "@/utils/params";
+import { serializeVisualizationPreferences } from "@/utils/params";
+
+const PREFERENCES_COOKIE_NAME = "meteogram-preferences";
 
 interface PreferencesContextType {
   preferences: VisualizationPreferences;
@@ -33,104 +32,155 @@ const PreferencesContext = createContext<PreferencesContextType | undefined>(
 
 interface PreferencesProviderProps {
   children: ReactNode;
+  initialPreferences?: VisualizationPreferences;
+  cookieReadSuccess?: boolean;
 }
 
-// Helper to get search params as an object
-const getSearchParamsObject = (
-  searchParams: URLSearchParams,
-): Record<string, string> => {
-  const obj: Record<string, string> = {};
-  searchParams.forEach((value, key) => {
-    obj[key] = value;
-  });
-  return obj;
-};
+/**
+ * Simple function to retrieve preferences from client cookie
+ */
+function getCookiePreferences(): VisualizationPreferences | null {
+  try {
+    const cookieValue = Cookies.get(PREFERENCES_COOKIE_NAME);
+    if (!cookieValue) return null;
+
+    const parsed = JSON.parse(cookieValue);
+    if (typeof parsed !== "object" || parsed === null) return null;
+
+    return { ...DEFAULT_PREFERENCES, ...parsed };
+  } catch (error) {
+    console.error("Failed to parse client cookie:", error);
+    return null;
+  }
+}
 
 export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({
   children,
+  initialPreferences = DEFAULT_PREFERENCES,
+  cookieReadSuccess = true, // Default to true if not provided
 }) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // Initial state from URL, falling back to defaults
-  const initialPreferencesFromUrl = parseVisualizationPreferences(
-    getSearchParamsObject(searchParams),
-  );
-
-  // Use persisted state, initializing with URL/default values
-  const [preferences, setStoredPreferences] =
-    usePersistedState<VisualizationPreferences>(
-      "meteogram-preferences", // Single key for the whole object
-      initialPreferencesFromUrl,
-    );
-
-  // State to track if initial sync with URL is done
-  const [isSyncedWithUrl, setIsSyncedWithUrl] = useState(false);
-
-  // Sync URL params -> persisted state (on initial load/direct navigation)
+  // Debug log the initial preferences and cookieReadSuccess
+  const mountedRef = useRef(false);
   useEffect(() => {
-    const prefsFromUrl = parseVisualizationPreferences(
-      getSearchParamsObject(searchParams),
-    );
-    // Only update if persisted state differs AND we haven't synced yet
-    // This prevents overwriting user's stored prefs if they navigate without params
-    if (
-      !isSyncedWithUrl &&
-      JSON.stringify(prefsFromUrl) !== JSON.stringify(preferences)
-    ) {
-      console.log("Syncing URL to State:", prefsFromUrl);
-      setStoredPreferences(prefsFromUrl);
-    }
-    setIsSyncedWithUrl(true); // Mark sync as done
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]); // Only run when URL params change
-
-  // Sync persisted state -> URL params (when state changes)
-  useEffect(() => {
-    // Only update URL if the state is synced and actually changed
-    if (isSyncedWithUrl) {
-      const currentPath = window.location.pathname; // Simple way to get current path
-      const newParams = serializeVisualizationPreferences(preferences);
-      const queryString = newParams.toString();
-      const newUrl = `${currentPath}${queryString ? "?" + queryString : ""}`;
-
-      // Check if URL needs updating to avoid unnecessary history entries
-      if (window.location.search !== (queryString ? "?" + queryString : "")) {
-        console.log("Syncing State to URL:", newUrl);
-        router.replace(newUrl, { scroll: false });
-      }
-    }
-  }, [preferences, router, isSyncedWithUrl]);
-
-  const updatePreferences = useCallback(
-    (newPrefs: Partial<VisualizationPreferences>) => {
-      const updater: SetStateAction<VisualizationPreferences> = (prev) => ({
-        ...prev,
-        ...newPrefs,
+    if (!mountedRef.current) {
+      console.log("Client: Initial state from server:", {
+        preferences: initialPreferences,
+        cookieReadSuccess: cookieReadSuccess,
       });
-      setStoredPreferences(updater);
+      mountedRef.current = true;
+    }
+  }, [initialPreferences, cookieReadSuccess]);
+
+  // Use state with the initialPreferences (from server)
+  const [preferences, setPreferencesState] = useState<VisualizationPreferences>(
+    () => {
+      // Check if server successfully read cookies
+      if (cookieReadSuccess === false) {
+        // Server couldn't read cookies, try on client side
+        console.log(
+          "Client: Server reported cookie read failure, trying client-side",
+        );
+        try {
+          const cookie = Cookies.get(PREFERENCES_COOKIE_NAME);
+          if (cookie) {
+            console.log("Client: Found cookie:", cookie);
+            try {
+              const cookiePrefs = JSON.parse(cookie);
+              console.log(
+                "Client: Successfully parsed cookie into:",
+                cookiePrefs,
+              );
+              return { ...DEFAULT_PREFERENCES, ...cookiePrefs };
+            } catch (e) {
+              console.error("Client: Failed to parse cookie JSON:", e);
+            }
+          } else {
+            console.log("Client: No cookie found");
+          }
+        } catch (e) {
+          console.error("Client: Error reading cookie:", e);
+        }
+      } else {
+        console.log(
+          "Client: Using server-provided preferences (cookieReadSuccess=true)",
+        );
+      }
+
+      // Otherwise use server preferences (which could be from URL params or server cookies)
+      return initialPreferences;
     },
-    [setStoredPreferences],
   );
 
+  // Save to cookie whenever state changes (and sync to URL)
+  useEffect(() => {
+    if (!mountedRef.current) return; // Skip initial mount render
+
+    // Save to cookie
+    try {
+      console.log("Client: Saving preferences to cookie:", preferences);
+      Cookies.set(PREFERENCES_COOKIE_NAME, JSON.stringify(preferences), {
+        expires: 365,
+        path: "/",
+        sameSite: "lax",
+      });
+    } catch (error) {
+      console.error("Failed to save preferences cookie:", error);
+    }
+
+    // Sync to URL
+    const currentPath = window.location.pathname;
+    const newParams = serializeVisualizationPreferences(preferences);
+    const queryString = newParams.toString();
+    const newUrl = `${currentPath}${queryString ? "?" + queryString : ""}`;
+
+    // Only update if needed to avoid unnecessary history entries
+    if (window.location.search !== (queryString ? "?" + queryString : "")) {
+      console.log("Client: Updating URL with preferences");
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [preferences, router]);
+
+  // Update preferences (partial)
+  const updatePreferences = useCallback(
+    (newPartialPrefs: Partial<VisualizationPreferences>) => {
+      console.log("Client: Updating partial preferences:", newPartialPrefs);
+      setPreferencesState((prev) => ({
+        ...prev,
+        ...newPartialPrefs,
+      }));
+    },
+    [],
+  );
+
+  // Update a single preference
   const setPreference = useCallback(
     <K extends keyof VisualizationPreferences>(
       key: K,
       value: VisualizationPreferences[K],
     ) => {
-      const updater: SetStateAction<VisualizationPreferences> = (prev) => ({
+      console.log(`Client: Setting preference ${String(key)} =`, value);
+      setPreferencesState((prev) => ({
         ...prev,
         [key]: value,
-      });
-      setStoredPreferences(updater);
+      }));
     },
-    [setStoredPreferences],
+    [],
+  );
+
+  // Use a memoized context value to prevent unnecessary re-renders
+  const contextValue = React.useMemo(
+    () => ({
+      preferences,
+      setPreference,
+      setPreferences: updatePreferences,
+    }),
+    [preferences, setPreference, updatePreferences],
   );
 
   return (
-    <PreferencesContext.Provider
-      value={{ preferences, setPreference, setPreferences: updatePreferences }}
-    >
+    <PreferencesContext.Provider value={contextValue}>
       {children}
     </PreferencesContext.Provider>
   );

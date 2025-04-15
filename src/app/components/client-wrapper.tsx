@@ -7,7 +7,11 @@ import {
   useCallback,
   SetStateAction,
 } from "react";
-import { WeatherModel, CloudColumn } from "../../types/weather";
+import {
+  WeatherModel,
+  CloudColumn,
+  VisualizationPreferences,
+} from "../../types/weather";
 import { useRouter } from "next/navigation";
 import { getWeatherData } from "../actions/weather";
 import VisualizationPreferencesComponent from "./visualization-preferences";
@@ -23,6 +27,8 @@ interface ClientWrapperProps {
   initialWeatherData: CloudColumn[];
   initialTimestamp: string;
   initialElevationFt: number | null;
+  initialPreferences: VisualizationPreferences;
+  cookieReadSuccess?: boolean;
 }
 
 function ClientWrapperInternal({
@@ -128,12 +134,19 @@ function ClientWrapperInternal({
   );
 }
 
-export default function ClientWrapper(
-  props: Omit<ClientWrapperProps, "initialPreferences">,
-) {
+export default function ClientWrapper(props: ClientWrapperProps) {
   return (
-    <PreferencesProvider>
-      <ClientWrapperInternal {...props} />
+    <PreferencesProvider
+      initialPreferences={props.initialPreferences}
+      cookieReadSuccess={props.cookieReadSuccess}
+    >
+      <ClientWrapperInternal
+        initialLocation={props.initialLocation}
+        initialModel={props.initialModel}
+        initialWeatherData={props.initialWeatherData}
+        initialTimestamp={props.initialTimestamp}
+        initialElevationFt={props.initialElevationFt}
+      />
     </PreferencesProvider>
   );
 }
