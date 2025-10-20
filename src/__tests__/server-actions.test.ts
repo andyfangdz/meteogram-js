@@ -6,7 +6,10 @@ import { createFakeOpenMeteoResponse } from "./__helpers__/fakeOpenMeteo";
 const model: WeatherModel = "gfs_seamless";
 const forecastKey = MODEL_CONFIGS[model].forecastDataKey;
 
-const mockFetchWeatherApi = vi.fn(async () => {
+// Type the mock as a function taking (url, params) and returning Promise<any[]>
+const mockFetchWeatherApi = vi.fn<
+  (url: string, params: Record<string, unknown>) => Promise<any[]>
+>(async (_url, _params) => {
   const fakeResponse = createFakeOpenMeteoResponse(
     forecastKey,
     MODEL_CONFIGS[model].hpaLevels,
@@ -37,7 +40,11 @@ describe("server actions", () => {
     expect(Array.isArray(responses)).toBe(true);
     expect(mockFetchWeatherApi).toHaveBeenCalledTimes(1);
 
-    const [apiUrl, params] = mockFetchWeatherApi.mock.calls[0];
+    // Assert called and safely read first call
+    expect(mockFetchWeatherApi.mock.calls.length).toBeGreaterThan(0);
+    const firstCall = mockFetchWeatherApi.mock.calls[0]!;
+    const apiUrl = firstCall[0] as string;
+    const params = firstCall[1] as Record<string, unknown>;
     expect(apiUrl).toBe(API_URL);
     const modelConfig = MODEL_CONFIGS[model];
 
