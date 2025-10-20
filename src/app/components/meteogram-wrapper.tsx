@@ -38,6 +38,7 @@ export default function MeteogramWrapper({
         showPressureLines={preferences.showPressureLines}
         showWindBarbs={preferences.showWindBarbs}
         showIsothermLines={preferences.showIsothermLines}
+        showIsotachLines={preferences.showIsotachLines}
         isLoading={isLoading}
         model={model}
         elevationFt={elevationFt}

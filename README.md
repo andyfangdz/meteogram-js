@@ -5,6 +5,7 @@ An interactive aviation/weather meteogram viewer built with Next.js 15 and React
 Key tech: HeroUI for UI, Visx for charts, server actions for data fetch/transform, and App Router dynamic routes.
 
 ### Features
+
 - **Multiple weather models**: `best_match`, `gfs_seamless`, `gfs_hrrr`, `ecmwf_ifs025`, `ecmwf_aifs025`, `gem_seamless`, `gem_hrdps_continental` (see `src/config/weather.ts`).
 - **Flexible locations**: use predefined ICAO sites (e.g., `KFRG`, `KNYC`, `KCDW`) or custom coordinates as `Name@lat,long`.
 - **Rich visualization**: cloud columns, temperature lines/isotherms, pressure lines, wind barbs, hover tooltip, and time axis.
@@ -12,6 +13,7 @@ Key tech: HeroUI for UI, Visx for charts, server actions for data fetch/transfor
 - **Server‑side data orchestration**: Open‑Meteo forecast + elevation lookup combined and transformed server‑side for fast client hydration.
 
 ### Quick start
+
 - **Requirements**: Node 20+ (LTS recommended), Yarn.
 
 ```bash
@@ -36,6 +38,7 @@ yarn format:fix
 ```
 
 ### Using the app
+
 - The root route redirects to a default view based on `src/app/page.tsx` (e.g., `/KCDW/gfs_hrrr`).
 - Navigate by URL pattern: `/<location>/<model>`
   - **Predefined locations** (uppercase keys) live in `src/config/weather.ts` under `LOCATIONS`.
@@ -50,6 +53,7 @@ yarn format:fix
 - Use the top navigation to select location/model and toggle visualization preferences. The URL and a cookie reflect your choices for easy sharing and persistence.
 
 ### Architecture overview
+
 - **App Router**: dynamic route at `src/app/[location]/[model]/page.tsx` resolves `params`/`searchParams` (Promises in Next.js 15), validates `model`, fetches data server‑side, and hydrates the client UI wrapped by `ClientWrapper`.
 - **Data fetch path**: `getWeatherData` in `src/app/actions/weather.ts` orchestrates:
   - `fetchWeatherDataAction` (Open‑Meteo forecast; injects per‑model variable lists from `ModelConfig.getAllVariables()`)
@@ -60,6 +64,7 @@ yarn format:fix
 - **Preferences**: `PreferencesContext` merges defaults → cookies → URL. `VisualizationPreferencesComponent` wires toggles that write directly back to context.
 
 ### Weather models & configuration
+
 - Models and their cadence/levels are defined in `MODEL_CONFIGS` within `src/config/weather.ts`. Each `ModelConfig` sets:
   - `forecastDataKey`, `stepKey`, `stepSize` (minutely/hourly cadence and extent)
   - `hpaLevels` (vertical structure), `windBarbStep`, `windBarbPressureLevelStep`
@@ -68,27 +73,34 @@ yarn format:fix
 To add or tune a model, extend `MODEL_CONFIGS` and keep variable lists aligned with `transformWeatherData` indexing.
 
 ### Locations
+
 - Predefined sites live in `LOCATIONS` in `src/config/weather.ts`.
 - Use uppercase keys for airports and readable names for practice areas.
 - Routes for names with spaces must be URL‑encoded (e.g., `South%20Practice%20Area`).
 - Custom coordinates are accepted via `Name@lat,long`.
 
 ### Extending preferences
+
 When adding a new visualization preference, update all of the following to keep cookie/URL parity and UI toggles in sync:
+
 - `src/config/preferences.ts`
 - `src/context/PreferencesContext.tsx` (serializer/parser)
 - Any query‑string helpers (e.g., `src/utils/params.ts`)
 - The nav toggles in `src/app/components/visualization-preferences.tsx`
 
 ### Units & conventions
+
 - Heights are in feet above mean sea level (MSL). Pressure levels are in hPa. Wind barbs and other conversions reuse helpers in `src/utils/meteogram.ts` (e.g., `kmhToKnots`, `hPaToInHg`).
 - The meteogram expects the data sorted by descending hPa.
 
 ### Deployment
+
 - Optimized for Vercel. See `vercel.json` for build/dev/install commands. This app uses standard Node APIs only (no filesystem writes) to remain edge‑compatible with server actions.
 
 ### Acknowledgments
+
 - Forecast data provided by [Open‑Meteo](https://open-meteo.com/). Elevation data via Open‑Meteo Elevation API.
 
 ### License
+
 No license file is included. Add one if you plan to distribute.

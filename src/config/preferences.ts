@@ -5,4 +5,5 @@ export const DEFAULT_PREFERENCES = {
   showPressureLines: false,
   showWindBarbs: true,
   showIsothermLines: false,
+  showIsotachLines: false,
 } as const;

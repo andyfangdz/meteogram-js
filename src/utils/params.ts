@@ -8,6 +8,7 @@ type SearchParams = {
   showPressureLines?: string;
   showWindBarbs?: string;
   showIsothermLines?: string;
+  showIsotachLines?: string;
 };
 
 /**
@@ -51,6 +52,10 @@ export function parseVisualizationPreferences(
       searchParams.showIsothermLines,
       DEFAULT_PREFERENCES.showIsothermLines,
     ),
+    showIsotachLines: getBoolParam(
+      searchParams.showIsotachLines,
+      DEFAULT_PREFERENCES.showIsotachLines,
+    ),
   };
 }
 
@@ -80,6 +85,7 @@ export function serializeVisualizationPreferences(
   setParamIfDifferent("showPressureLines", "showPressureLines");
   setParamIfDifferent("showWindBarbs", "showWindBarbs");
   setParamIfDifferent("showIsothermLines", "showIsothermLines");
+  setParamIfDifferent("showIsotachLines", "showIsotachLines");
 
   return params;
 }

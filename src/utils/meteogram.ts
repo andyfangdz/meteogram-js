@@ -31,6 +31,18 @@ export const getTemperatureColor = (temp: number): string => {
   return `rgb(${r},0,${b})`;
 };
 
+export const getWindSpeedColor = (speed: number): string => {
+  // Convert m/s to knots for color mapping
+  const knots = speed * 1.94384;
+
+  if (knots <= 10) return "#00FF00"; // Light winds (green)
+  if (knots <= 20) return "#FFFF00"; // Moderate winds (yellow)
+  if (knots <= 30) return "#FFA500"; // Fresh winds (orange)
+  if (knots <= 40) return "#FF4500"; // Strong winds (red-orange)
+  if (knots <= 50) return "#FF0000"; // Very strong winds (red)
+  return "#8B0000"; // Extreme winds (dark red)
+};
+
 // Helper function to interpolate altitude for a given temperature between two points
 const interpolateAltitude = (
   temp: number,
@@ -39,6 +51,116 @@ const interpolateAltitude = (
 ): number => {
   const ratio = (temp - point1.temp) / (point2.temp - point1.temp);
   return point1.altitude + ratio * (point2.altitude - point1.altitude);
+};
+
+// Convert weather data to a high-resolution wind speed grid
+const createInterpolatedWindSpeedGrid = (
+  weatherData: CloudColumn[],
+  resolution: number = 100,
+): number[][] => {
+  if (!weatherData.length || !weatherData[0].cloud.length) return [];
+
+  // Find altitude range
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.mslFt != null) {
+        minAlt = Math.min(minAlt, cell.mslFt);
+        maxAlt = Math.max(maxAlt, cell.mslFt);
+      }
+    });
+  });
+
+  if (minAlt === Infinity || maxAlt === -Infinity) return [];
+
+  // Add some padding to the altitude range to avoid edge effects
+  const altPadding = (maxAlt - minAlt) * 0.1;
+  minAlt -= altPadding;
+  maxAlt += altPadding;
+
+  // Create a high-resolution grid
+  const grid: number[][] = [];
+  const altStep = (maxAlt - minAlt) / (resolution - 1);
+
+  // For each altitude level
+  for (let i = 0; i < resolution; i++) {
+    const altitude = minAlt + i * altStep;
+    const row: number[] = [];
+
+    // For each time step
+    for (let timeIndex = 0; timeIndex < weatherData.length; timeIndex++) {
+      const column = weatherData[timeIndex];
+      const sortedCells = [...column.cloud]
+        .filter((cell) => cell.mslFt != null && cell.windSpeed != null)
+        .sort((a, b) => a.mslFt - b.mslFt);
+
+      if (sortedCells.length < 2) {
+        row.push(NaN);
+        continue;
+      }
+
+      // Handle points below the lowest measurement
+      if (altitude <= sortedCells[0].mslFt) {
+        row.push(sortedCells[0].windSpeed!);
+        continue;
+      }
+
+      // Handle points above the highest measurement
+      if (altitude >= sortedCells[sortedCells.length - 1].mslFt) {
+        row.push(sortedCells[sortedCells.length - 1].windSpeed!);
+        continue;
+      }
+
+      // Find cells that bracket this altitude
+      let found = false;
+      for (let j = 0; j < sortedCells.length - 1; j++) {
+        const cell1 = sortedCells[j];
+        const cell2 = sortedCells[j + 1];
+
+        if (cell1.mslFt <= altitude && cell2.mslFt >= altitude) {
+          // Interpolate wind speed at this altitude
+          const ratio = (altitude - cell1.mslFt) / (cell2.mslFt - cell1.mslFt);
+          row.push(
+            cell1.windSpeed! + ratio * (cell2.windSpeed! - cell1.windSpeed!),
+          );
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        row.push(NaN);
+      }
+    }
+    grid.push(row);
+  }
+
+  // Fill any remaining NaN values using nearest neighbor
+  for (let i = 0; i < grid.length; i++) {
+    for (let j = 0; j < grid[i].length; j++) {
+      if (isNaN(grid[i][j])) {
+        // Look for nearest non-NaN value vertically
+        let above = i - 1;
+        let below = i + 1;
+        while (above >= 0 && isNaN(grid[above][j])) above--;
+        while (below < grid.length && isNaN(grid[below][j])) below++;
+
+        if (above >= 0 && below < grid.length) {
+          // Interpolate between above and below
+          const ratio = (i - above) / (below - above);
+          grid[i][j] =
+            grid[above][j] + ratio * (grid[below][j] - grid[above][j]);
+        } else if (above >= 0) {
+          grid[i][j] = grid[above][j];
+        } else if (below < grid.length) {
+          grid[i][j] = grid[below][j];
+        }
+      }
+    }
+  }
+
+  return grid;
 };
 
 // Convert weather data to a high-resolution temperature grid
@@ -420,6 +542,106 @@ export const findFreezingLevels = (
       .filter((line) => line.points.length > 2);
   } catch (error) {
     console.error("Error computing freezing levels:", error);
+    return [];
+  }
+};
+
+// Helper function to find isotach points
+export const findIsotachPoints = (
+  weatherData: CloudColumn[],
+  speedStep: number = 10, // Wind speed step in m/s
+  heightThreshold: number = 1000,
+  maxStepDistance: number = 1,
+) => {
+  if (!weatherData?.length) {
+    return [];
+  }
+
+  // Find wind speed range
+  let minSpeed = Infinity;
+  let maxSpeed = -Infinity;
+
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.windSpeed != null) {
+        minSpeed = Math.min(minSpeed, cell.windSpeed);
+        maxSpeed = Math.max(maxSpeed, cell.windSpeed);
+      }
+    });
+  });
+
+  if (minSpeed === Infinity || maxSpeed === -Infinity) {
+    return [];
+  }
+
+  // Round to nearest speedStep
+  minSpeed = Math.floor(minSpeed / speedStep) * speedStep;
+  maxSpeed = Math.ceil(maxSpeed / speedStep) * speedStep;
+
+  // Generate thresholds
+  const thresholds = [];
+  for (let speed = minSpeed; speed <= maxSpeed; speed += speedStep) {
+    thresholds.push(speed);
+  }
+
+  // Create high-resolution wind speed grid
+  const resolution = 100; // Increase for more precision
+  const windSpeedGrid = createInterpolatedWindSpeedGrid(
+    weatherData,
+    resolution,
+  );
+
+  if (windSpeedGrid.length === 0) return [];
+
+  // Find altitude range for coordinate conversion
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.mslFt != null) {
+        minAlt = Math.min(minAlt, cell.mslFt);
+        maxAlt = Math.max(maxAlt, cell.mslFt);
+      }
+    });
+  });
+
+  if (minAlt === Infinity || maxAlt === -Infinity) return [];
+
+  // Add padding to altitude range
+  const altPadding = (maxAlt - minAlt) * 0.1;
+  minAlt -= altPadding;
+  maxAlt += altPadding;
+
+  try {
+    // Use marching-squares to find isotachs
+    const lines = isoLines(windSpeedGrid, thresholds, { noFrame: true });
+
+    if (!lines) return [];
+
+    // Convert the lines to our format, keeping separate paths for each wind speed
+    const result: { speed: number; points: { x: number; y: number }[] }[] = [];
+
+    thresholds.forEach((speed, i) => {
+      const speedLines = lines[i] || [];
+      speedLines
+        .filter((line) => line.length > 2)
+        .forEach((line) => {
+          // Convert each line to weather coordinates
+          const points = line.map(([x, y]) =>
+            gridToWeatherCoords(x, y, weatherData, minAlt, maxAlt, resolution),
+          );
+
+          // Clip the line to valid ranges and filter out short segments
+          const clippedPoints = clipLineToValidRanges(points, weatherData);
+          if (clippedPoints.length > 2) {
+            result.push({ speed, points: clippedPoints });
+          }
+        });
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error computing isotachs:", error);
     return [];
   }
 };
