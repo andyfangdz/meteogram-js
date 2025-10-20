@@ -6,7 +6,7 @@ export interface CloudCell {
   mslFtBottom: number;
   mslFtTop: number;
   temperature: number; // Temperature in Celsius
-  windSpeed: number; // Wind speed in meters per second
+  windSpeed: number; // Wind speed in kilometers per hour
   windDirection: number; // Wind direction in degrees (0-360)
 }
 

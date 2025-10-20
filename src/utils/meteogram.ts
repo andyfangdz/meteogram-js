@@ -555,14 +555,14 @@ export const findIsotachPoints = (
     return [];
   }
 
-  // Find wind speed range (convert from m/s to knots)
+  // Find wind speed range (convert from km/h to knots)
   let minSpeed = Infinity;
   let maxSpeed = -Infinity;
 
   weatherData.forEach((column) => {
     column.cloud.forEach((cell) => {
       if (cell.windSpeed != null) {
-        const speedKnots = cell.windSpeed * 1.94384; // m/s to knots
+        const speedKnots = cell.windSpeed * 0.539957; // km/h to knots
         minSpeed = Math.min(minSpeed, speedKnots);
         maxSpeed = Math.max(maxSpeed, speedKnots);
       }
@@ -586,7 +586,7 @@ export const findIsotachPoints = (
     }
   }
 
-  // Create high-resolution wind speed grid (in m/s)
+  // Create high-resolution wind speed grid (in km/h)
   const resolution = 100;
   const windSpeedGrid = createInterpolatedWindSpeedGrid(
     weatherData,
@@ -595,9 +595,9 @@ export const findIsotachPoints = (
 
   if (windSpeedGrid.length === 0) return [];
 
-  // Convert grid from m/s to knots for marching squares
+  // Convert grid from km/h to knots for marching squares
   const windSpeedGridKnots = windSpeedGrid.map((row) =>
-    row.map((speed) => speed * 1.94384),
+    row.map((speed) => speed * 0.539957),
   );
 
   // Find altitude range for coordinate conversion
