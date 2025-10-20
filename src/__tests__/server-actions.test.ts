@@ -37,7 +37,8 @@ describe("server actions", () => {
     expect(Array.isArray(responses)).toBe(true);
     expect(mockFetchWeatherApi).toHaveBeenCalledTimes(1);
 
-    const [, params] = mockFetchWeatherApi.mock.calls[0];
+    const [apiUrl, params] = mockFetchWeatherApi.mock.calls[0];
+    expect(apiUrl).toBe(API_URL);
     const modelConfig = MODEL_CONFIGS[model];
 
     expect(params.latitude).toBeDefined();
