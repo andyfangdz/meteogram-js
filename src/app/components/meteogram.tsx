@@ -27,6 +27,7 @@ export type MeteogramProps = {
   showPressureLines?: boolean;
   showWindBarbs?: boolean;
   showIsothermLines?: boolean;
+  showIsotachLines?: boolean;
   model: WeatherModel;
   elevationFt: number | null;
 };
@@ -47,6 +48,7 @@ export default function Meteogram({
   showPressureLines = false,
   showWindBarbs = true,
   showIsothermLines = false,
+  showIsotachLines = false,
   model,
   elevationFt,
 }: MeteogramProps) {
@@ -196,6 +198,7 @@ export default function Meteogram({
           weatherData={weatherData}
           scales={scales}
           showIsothermLines={showIsothermLines}
+          showIsotachLines={showIsotachLines}
           model={model}
         />
         {showPressureLines && (

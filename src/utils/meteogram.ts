@@ -31,6 +31,15 @@ export const getTemperatureColor = (temp: number): string => {
   return `rgb(${r},0,${b})`;
 };
 
+export const getWindSpeedColor = (speedKnots: number): string => {
+  // Color scheme for wind speed in knots - bold, saturated colors for visibility
+  if (speedKnots <= 10) return "#00AA00"; // Dark green (was light green)
+  if (speedKnots <= 20) return "#FFD700"; // Gold
+  if (speedKnots <= 30) return "#FF8C00"; // Dark orange (was light orange)
+  if (speedKnots <= 40) return "#FF4500"; // Orange red (was tomato)
+  return "#CC0000"; // Dark red (was red)
+};
+
 // Helper function to interpolate altitude for a given temperature between two points
 const interpolateAltitude = (
   temp: number,
@@ -41,11 +50,14 @@ const interpolateAltitude = (
   return point1.altitude + ratio * (point2.altitude - point1.altitude);
 };
 
-// Convert weather data to a high-resolution temperature grid
-const createInterpolatedTempGrid = (
+// Generic function to create a high-resolution interpolated grid for any cell property
+const createInterpolatedGrid = (
   weatherData: CloudColumn[],
   resolution: number = 100,
-  includeGround: boolean = false,
+  options: {
+    valueExtractor: (cell: CloudCell) => number | undefined;
+    groundValueExtractor?: (column: CloudColumn) => number | undefined;
+  },
 ): number[][] => {
   if (!weatherData.length || !weatherData[0].cloud.length) return [];
 
@@ -81,7 +93,10 @@ const createInterpolatedTempGrid = (
     for (let timeIndex = 0; timeIndex < weatherData.length; timeIndex++) {
       const column = weatherData[timeIndex];
       const sortedCells = [...column.cloud]
-        .filter((cell) => cell.mslFt != null && cell.temperature != null)
+        .filter(
+          (cell) =>
+            cell.mslFt != null && options.valueExtractor(cell) != null,
+        )
         .sort((a, b) => a.mslFt - b.mslFt);
 
       if (sortedCells.length < 2) {
@@ -91,22 +106,24 @@ const createInterpolatedTempGrid = (
 
       // Handle points below the lowest measurement
       if (altitude <= sortedCells[0].mslFt) {
-        if (includeGround && column.groundTemp != null) {
-          // Interpolate between ground temperature and lowest measurement
+        const groundValue =
+          options.groundValueExtractor?.(column);
+        if (groundValue != null) {
+          // Interpolate between ground value and lowest measurement
           const ratio = altitude / sortedCells[0].mslFt;
-          row.push(
-            column.groundTemp +
-              ratio * (sortedCells[0].temperature! - column.groundTemp),
-          );
+          const cellValue = options.valueExtractor(sortedCells[0])!;
+          row.push(groundValue + ratio * (cellValue - groundValue));
         } else {
-          row.push(sortedCells[0].temperature!);
+          row.push(options.valueExtractor(sortedCells[0])!);
         }
         continue;
       }
 
       // Handle points above the highest measurement
       if (altitude >= sortedCells[sortedCells.length - 1].mslFt) {
-        row.push(sortedCells[sortedCells.length - 1].temperature!);
+        row.push(
+          options.valueExtractor(sortedCells[sortedCells.length - 1])!,
+        );
         continue;
       }
 
@@ -117,12 +134,11 @@ const createInterpolatedTempGrid = (
         const cell2 = sortedCells[j + 1];
 
         if (cell1.mslFt <= altitude && cell2.mslFt >= altitude) {
-          // Interpolate temperature at this altitude
+          // Interpolate value at this altitude
           const ratio = (altitude - cell1.mslFt) / (cell2.mslFt - cell1.mslFt);
-          row.push(
-            cell1.temperature! +
-              ratio * (cell2.temperature! - cell1.temperature!),
-          );
+          const value1 = options.valueExtractor(cell1)!;
+          const value2 = options.valueExtractor(cell2)!;
+          row.push(value1 + ratio * (value2 - value1));
           found = true;
           break;
         }
@@ -160,6 +176,30 @@ const createInterpolatedTempGrid = (
   }
 
   return grid;
+};
+
+// Convert weather data to a high-resolution temperature grid
+const createInterpolatedTempGrid = (
+  weatherData: CloudColumn[],
+  resolution: number = 100,
+  includeGround: boolean = false,
+): number[][] => {
+  return createInterpolatedGrid(weatherData, resolution, {
+    valueExtractor: (cell) => cell.temperature,
+    groundValueExtractor: includeGround
+      ? (column) => column.groundTemp
+      : undefined,
+  });
+};
+
+// Convert weather data to a high-resolution wind speed grid
+const createInterpolatedWindSpeedGrid = (
+  weatherData: CloudColumn[],
+  resolution: number = 100,
+): number[][] => {
+  return createInterpolatedGrid(weatherData, resolution, {
+    valueExtractor: (cell) => cell.windSpeed,
+  });
 };
 
 // Helper function to convert grid coordinates back to weather data coordinates
@@ -420,6 +460,120 @@ export const findFreezingLevels = (
       .filter((line) => line.points.length > 2);
   } catch (error) {
     console.error("Error computing freezing levels:", error);
+    return [];
+  }
+};
+
+// Helper function to find isotach points (constant wind speed lines)
+export const findIsotachPoints = (
+  weatherData: CloudColumn[],
+  speedStepKnots: number = 10,
+  heightThreshold: number = 1000,
+  maxStepDistance: number = 1,
+) => {
+  if (!weatherData?.length) {
+    return [];
+  }
+
+  // Find wind speed range (convert from km/h to knots)
+  let minSpeed = Infinity;
+  let maxSpeed = -Infinity;
+
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.windSpeed != null) {
+        const speedKnots = cell.windSpeed * 0.539957; // km/h to knots
+        minSpeed = Math.min(minSpeed, speedKnots);
+        maxSpeed = Math.max(maxSpeed, speedKnots);
+      }
+    });
+  });
+
+  if (minSpeed === Infinity || maxSpeed === -Infinity) {
+    return [];
+  }
+
+  // Round to nearest speedStepKnots
+  minSpeed = Math.floor(minSpeed / speedStepKnots) * speedStepKnots;
+  maxSpeed = Math.ceil(maxSpeed / speedStepKnots) * speedStepKnots;
+
+  // Generate thresholds in knots
+  const thresholdsKnots = [];
+  for (let speed = minSpeed; speed <= maxSpeed; speed += speedStepKnots) {
+    if (speed > 0) {
+      // Skip 0 knots
+      thresholdsKnots.push(speed);
+    }
+  }
+
+  // Create high-resolution wind speed grid (in km/h)
+  const resolution = 100;
+  const windSpeedGrid = createInterpolatedWindSpeedGrid(
+    weatherData,
+    resolution,
+  );
+
+  if (windSpeedGrid.length === 0) return [];
+
+  // Convert grid from km/h to knots for marching squares
+  const windSpeedGridKnots = windSpeedGrid.map((row) =>
+    row.map((speed) => speed * 0.539957),
+  );
+
+  // Find altitude range for coordinate conversion
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.mslFt != null) {
+        minAlt = Math.min(minAlt, cell.mslFt);
+        maxAlt = Math.max(maxAlt, cell.mslFt);
+      }
+    });
+  });
+
+  if (minAlt === Infinity || maxAlt === -Infinity) return [];
+
+  // Add padding to altitude range
+  const altPadding = (maxAlt - minAlt) * 0.1;
+  minAlt -= altPadding;
+  maxAlt += altPadding;
+
+  try {
+    // Use marching-squares to find isotachs
+    const lines = isoLines(windSpeedGridKnots, thresholdsKnots, {
+      noFrame: true,
+    });
+
+    if (!lines) return [];
+
+    // Convert the lines to our format, keeping separate paths for each wind speed
+    const result: {
+      speedKnots: number;
+      points: { x: number; y: number }[];
+    }[] = [];
+
+    thresholdsKnots.forEach((speedKnots, i) => {
+      const speedLines = lines[i] || [];
+      speedLines
+        .filter((line) => line.length > 2)
+        .forEach((line) => {
+          // Convert each line to weather coordinates
+          const points = line.map(([x, y]) =>
+            gridToWeatherCoords(x, y, weatherData, minAlt, maxAlt, resolution),
+          );
+
+          // Clip the line to valid ranges and filter out short segments
+          const clippedPoints = clipLineToValidRanges(points, weatherData);
+          if (clippedPoints.length > 2) {
+            result.push({ speedKnots, points: clippedPoints });
+          }
+        });
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error computing isotachs:", error);
     return [];
   }
 };

@@ -6,7 +6,7 @@ export interface CloudCell {
   mslFtBottom: number;
   mslFtTop: number;
   temperature: number; // Temperature in Celsius
-  windSpeed: number; // Wind speed in meters per second
+  windSpeed: number; // Wind speed in km/h
   windDirection: number; // Wind direction in degrees (0-360)
 }
 
@@ -57,4 +57,5 @@ export interface VisualizationPreferences {
   showPressureLines: boolean;
   showWindBarbs: boolean;
   showIsothermLines: boolean;
+  showIsotachLines: boolean;
 }
