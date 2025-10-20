@@ -175,6 +175,8 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
             // Only render if we have valid points and a valid path
             if (!pathD) return null;
 
+            const color = getWindSpeedColor(speedKnots);
+
             return (
               <g
                 key={`isotach-${speedKnots}-${formatNumber(points[0].y)}-${lineIndex}`}
@@ -184,10 +186,10 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
                 <path
                   className="isotach-line"
                   d={pathD}
-                  stroke={getWindSpeedColor(speedKnots)}
-                  strokeWidth={1}
-                  strokeDasharray="2,2"
-                  opacity={0.7}
+                  stroke={color}
+                  strokeWidth={2}
+                  strokeDasharray="4,2"
+                  opacity={1}
                   fill="none"
                 />
                 <text
@@ -198,8 +200,12 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
                   y={formatNumber(scales.mslScale(points[0].y))}
                   dx="-2.5em"
                   dy="0.3em"
-                  fontSize="10"
-                  fill={getWindSpeedColor(speedKnots)}
+                  fontSize="12"
+                  fontWeight="bold"
+                  fill={color}
+                  stroke="white"
+                  strokeWidth="3"
+                  paintOrder="stroke"
                   pointerEvents="none"
                 >
                   {`${speedKnots.toFixed(0)}kt`}

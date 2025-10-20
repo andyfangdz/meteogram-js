@@ -32,13 +32,12 @@ export const getTemperatureColor = (temp: number): string => {
 };
 
 export const getWindSpeedColor = (speedKnots: number): string => {
-  // Color scheme for wind speed in knots
-  // 0-10: light green, 10-20: yellow, 20-30: orange, 30+: red
-  if (speedKnots <= 10) return "#90EE90"; // Light green
+  // Color scheme for wind speed in knots - bold, saturated colors for visibility
+  if (speedKnots <= 10) return "#00AA00"; // Dark green (was light green)
   if (speedKnots <= 20) return "#FFD700"; // Gold
-  if (speedKnots <= 30) return "#FFA500"; // Orange
-  if (speedKnots <= 40) return "#FF6347"; // Tomato
-  return "#FF0000"; // Red
+  if (speedKnots <= 30) return "#FF8C00"; // Dark orange (was light orange)
+  if (speedKnots <= 40) return "#FF4500"; // Orange red (was tomato)
+  return "#CC0000"; // Dark red (was red)
 };
 
 // Helper function to interpolate altitude for a given temperature between two points
