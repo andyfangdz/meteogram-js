@@ -50,6 +50,10 @@ export default function NavWrapper({
       setShowIsothermLines={(val: boolean) =>
         setPreference("showIsothermLines", val)
       }
+      showIsotachLines={preferences.showIsotachLines}
+      setShowIsotachLines={(val: boolean) =>
+        setPreference("showIsotachLines", val)
+      }
     />
   );
 }

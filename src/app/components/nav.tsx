@@ -42,6 +42,8 @@ interface NavProps {
   setShowWindBarbs: (value: boolean) => void;
   showIsothermLines: boolean;
   setShowIsothermLines: (value: boolean) => void;
+  showIsotachLines: boolean;
+  setShowIsotachLines: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
@@ -55,6 +57,8 @@ const NavContext = createContext<{
   setShowPressureLines: (value: boolean) => void;
   showIsothermLines: boolean;
   setShowIsothermLines: (value: boolean) => void;
+  showIsotachLines: boolean;
+  setShowIsotachLines: (value: boolean) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -66,6 +70,8 @@ const NavContext = createContext<{
   setShowPressureLines: () => {},
   showIsothermLines: false,
   setShowIsothermLines: () => {},
+  showIsotachLines: false,
+  setShowIsotachLines: () => {},
 });
 
 export default function Nav({
@@ -87,6 +93,8 @@ export default function Nav({
   setShowWindBarbs,
   showIsothermLines,
   setShowIsothermLines,
+  showIsotachLines,
+  setShowIsotachLines,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -126,6 +134,12 @@ export default function Nav({
       >
         Show Isotherm Lines
       </Switch>
+      <Switch
+        isSelected={showIsotachLines}
+        onValueChange={setShowIsotachLines}
+      >
+        Show Isotach Lines
+      </Switch>
     </div>
   );
 
@@ -142,6 +156,8 @@ export default function Nav({
         setShowPressureLines,
         showIsothermLines,
         setShowIsothermLines,
+        showIsotachLines,
+        setShowIsotachLines,
       }}
     >
       <Navbar

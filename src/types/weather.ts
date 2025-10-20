@@ -57,4 +57,5 @@ export interface VisualizationPreferences {
   showPressureLines: boolean;
   showWindBarbs: boolean;
   showIsothermLines: boolean;
+  showIsotachLines: boolean;
 }

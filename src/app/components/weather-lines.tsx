@@ -3,8 +3,10 @@ import { CloudColumn, WeatherModel } from "../../types/weather";
 import {
   formatNumber,
   getTemperatureColor,
+  getWindSpeedColor,
   findFreezingLevels,
   findIsothermPoints,
+  findIsotachPoints,
 } from "../../utils/meteogram";
 import { MODEL_CONFIGS } from "../../config/weather";
 
@@ -22,6 +24,11 @@ interface IsothermLine {
   points: Point[];
 }
 
+interface IsotachLine {
+  speedKnots: number;
+  points: Point[];
+}
+
 interface WeatherLinesProps {
   weatherData: CloudColumn[];
   scales: {
@@ -29,6 +36,7 @@ interface WeatherLinesProps {
     mslScale: any;
   };
   showIsothermLines: boolean;
+  showIsotachLines: boolean;
   model: WeatherModel;
 }
 
@@ -36,6 +44,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
   weatherData,
   scales,
   showIsothermLines,
+  showIsotachLines,
   model,
 }) => {
   // Convert the utility function results into the format we need
@@ -52,6 +61,16 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
       MODEL_CONFIGS[model].maxIsothermStepDistance,
     );
   }, [weatherData, showIsothermLines, model]);
+
+  const isotachPoints = React.useMemo(() => {
+    if (!showIsotachLines) return [];
+    return findIsotachPoints(
+      weatherData,
+      10,
+      500,
+      MODEL_CONFIGS[model].maxIsothermStepDistance,
+    );
+  }, [weatherData, showIsotachLines, model]);
 
   return (
     <>
@@ -129,6 +148,61 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
                   pointerEvents="none"
                 >
                   {`${temp}°C`}
+                </text>
+              </g>
+            );
+          },
+        )}
+
+      {/* Isotach Lines */}
+      {showIsotachLines &&
+        isotachPoints.map(
+          ({ speedKnots, points }: IsotachLine, lineIndex: number) => {
+            if (!points.length) return null;
+
+            const pathD = points.reduce(
+              (path: string, point: Point, i: number) => {
+                const x = formatNumber(
+                  scales.dateScale(weatherData[point.x].date),
+                );
+                const y = formatNumber(scales.mslScale(point.y));
+                if (i === 0) return `M ${x} ${y}`;
+                return `${path} L ${x} ${y}`;
+              },
+              "",
+            );
+
+            // Only render if we have valid points and a valid path
+            if (!pathD) return null;
+
+            return (
+              <g
+                key={`isotach-${speedKnots}-${formatNumber(points[0].y)}-${lineIndex}`}
+                className={`isotach-group isotach-${speedKnots}`}
+                pointerEvents="none"
+              >
+                <path
+                  className="isotach-line"
+                  d={pathD}
+                  stroke={getWindSpeedColor(speedKnots)}
+                  strokeWidth={1}
+                  strokeDasharray="2,2"
+                  opacity={0.7}
+                  fill="none"
+                />
+                <text
+                  className="isotach-label"
+                  x={formatNumber(
+                    scales.dateScale(weatherData[points[0].x].date),
+                  )}
+                  y={formatNumber(scales.mslScale(points[0].y))}
+                  dx="-2.5em"
+                  dy="0.3em"
+                  fontSize="10"
+                  fill={getWindSpeedColor(speedKnots)}
+                  pointerEvents="none"
+                >
+                  {`${speedKnots.toFixed(0)}kt`}
                 </text>
               </g>
             );
