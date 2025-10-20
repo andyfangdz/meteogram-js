@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MODEL_CONFIGS, API_URL, FEET_PER_METER } from "@/config/weather";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { MODEL_CONFIGS, API_URL, FEET_PER_METER, LOCATIONS } from "@/config/weather";
 import type { WeatherModel } from "@/types/weather";
 import { createFakeOpenMeteoResponse } from "./__helpers__/fakeOpenMeteo";
 
-const model: WeatherModel = "gfs_seamless";
+const model: WeatherModel = (Object.keys(MODEL_CONFIGS)[0] as WeatherModel) || "gfs_seamless";
+const locationIcao: string = Object.keys(LOCATIONS)[0] || "KFRG";
 const forecastKey = MODEL_CONFIGS[model].forecastDataKey;
 
 // Type the mock as a function taking (url, params) and returning Promise<any[]>
@@ -25,18 +26,24 @@ vi.mock("openmeteo", () => ({
 describe("server actions", () => {
   beforeEach(() => {
     mockFetchWeatherApi.mockClear();
-    // Mock global fetch for elevation API
-    // @ts-expect-error Node fetch typing
-    globalThis.fetch = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ elevation: [100] }),
-    }));
+    // Mock global fetch for elevation API with proper typing
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ elevation: [100] }),
+      })) as unknown as typeof fetch,
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("fetchWeatherDataAction passes correct params to OpenMeteo", async () => {
     const { fetchWeatherDataAction } = await import("@/app/actions/weather");
 
-    const responses = await fetchWeatherDataAction(model, "KFRG");
+    const responses = await fetchWeatherDataAction(model, locationIcao);
     expect(Array.isArray(responses)).toBe(true);
     expect(mockFetchWeatherApi).toHaveBeenCalledTimes(1);
 
@@ -65,7 +72,10 @@ describe("server actions", () => {
   it("getWeatherData integrates forecast + elevation and transforms data", async () => {
     const { getWeatherData } = await import("@/app/actions/weather");
 
-    const { data, elevationFt, timestamp } = await getWeatherData(model, "KFRG");
+    const { data, elevationFt, timestamp } = await getWeatherData(
+      model,
+      locationIcao,
+    );
 
     expect(typeof timestamp).toBe("string");
     expect(elevationFt).toBeCloseTo(100 * FEET_PER_METER, 3);
