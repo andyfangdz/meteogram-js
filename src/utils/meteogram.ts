@@ -50,11 +50,14 @@ const interpolateAltitude = (
   return point1.altitude + ratio * (point2.altitude - point1.altitude);
 };
 
-// Convert weather data to a high-resolution temperature grid
-const createInterpolatedTempGrid = (
+// Generic function to create a high-resolution interpolated grid for any cell property
+const createInterpolatedGrid = (
   weatherData: CloudColumn[],
   resolution: number = 100,
-  includeGround: boolean = false,
+  options: {
+    valueExtractor: (cell: CloudCell) => number | undefined;
+    groundValueExtractor?: (column: CloudColumn) => number | undefined;
+  },
 ): number[][] => {
   if (!weatherData.length || !weatherData[0].cloud.length) return [];
 
@@ -90,7 +93,10 @@ const createInterpolatedTempGrid = (
     for (let timeIndex = 0; timeIndex < weatherData.length; timeIndex++) {
       const column = weatherData[timeIndex];
       const sortedCells = [...column.cloud]
-        .filter((cell) => cell.mslFt != null && cell.temperature != null)
+        .filter(
+          (cell) =>
+            cell.mslFt != null && options.valueExtractor(cell) != null,
+        )
         .sort((a, b) => a.mslFt - b.mslFt);
 
       if (sortedCells.length < 2) {
@@ -100,22 +106,24 @@ const createInterpolatedTempGrid = (
 
       // Handle points below the lowest measurement
       if (altitude <= sortedCells[0].mslFt) {
-        if (includeGround && column.groundTemp != null) {
-          // Interpolate between ground temperature and lowest measurement
+        const groundValue =
+          options.groundValueExtractor?.(column);
+        if (groundValue != null) {
+          // Interpolate between ground value and lowest measurement
           const ratio = altitude / sortedCells[0].mslFt;
-          row.push(
-            column.groundTemp +
-              ratio * (sortedCells[0].temperature! - column.groundTemp),
-          );
+          const cellValue = options.valueExtractor(sortedCells[0])!;
+          row.push(groundValue + ratio * (cellValue - groundValue));
         } else {
-          row.push(sortedCells[0].temperature!);
+          row.push(options.valueExtractor(sortedCells[0])!);
         }
         continue;
       }
 
       // Handle points above the highest measurement
       if (altitude >= sortedCells[sortedCells.length - 1].mslFt) {
-        row.push(sortedCells[sortedCells.length - 1].temperature!);
+        row.push(
+          options.valueExtractor(sortedCells[sortedCells.length - 1])!,
+        );
         continue;
       }
 
@@ -126,12 +134,11 @@ const createInterpolatedTempGrid = (
         const cell2 = sortedCells[j + 1];
 
         if (cell1.mslFt <= altitude && cell2.mslFt >= altitude) {
-          // Interpolate temperature at this altitude
+          // Interpolate value at this altitude
           const ratio = (altitude - cell1.mslFt) / (cell2.mslFt - cell1.mslFt);
-          row.push(
-            cell1.temperature! +
-              ratio * (cell2.temperature! - cell1.temperature!),
-          );
+          const value1 = options.valueExtractor(cell1)!;
+          const value2 = options.valueExtractor(cell2)!;
+          row.push(value1 + ratio * (value2 - value1));
           found = true;
           break;
         }
@@ -171,114 +178,28 @@ const createInterpolatedTempGrid = (
   return grid;
 };
 
+// Convert weather data to a high-resolution temperature grid
+const createInterpolatedTempGrid = (
+  weatherData: CloudColumn[],
+  resolution: number = 100,
+  includeGround: boolean = false,
+): number[][] => {
+  return createInterpolatedGrid(weatherData, resolution, {
+    valueExtractor: (cell) => cell.temperature,
+    groundValueExtractor: includeGround
+      ? (column) => column.groundTemp
+      : undefined,
+  });
+};
+
 // Convert weather data to a high-resolution wind speed grid
 const createInterpolatedWindSpeedGrid = (
   weatherData: CloudColumn[],
   resolution: number = 100,
 ): number[][] => {
-  if (!weatherData.length || !weatherData[0].cloud.length) return [];
-
-  // Find altitude range
-  let minAlt = Infinity;
-  let maxAlt = -Infinity;
-  weatherData.forEach((column) => {
-    column.cloud.forEach((cell) => {
-      if (cell.mslFt != null) {
-        minAlt = Math.min(minAlt, cell.mslFt);
-        maxAlt = Math.max(maxAlt, cell.mslFt);
-      }
-    });
+  return createInterpolatedGrid(weatherData, resolution, {
+    valueExtractor: (cell) => cell.windSpeed,
   });
-
-  if (minAlt === Infinity || maxAlt === -Infinity) return [];
-
-  // Add some padding to the altitude range to avoid edge effects
-  const altPadding = (maxAlt - minAlt) * 0.1;
-  minAlt -= altPadding;
-  maxAlt += altPadding;
-
-  // Create a high-resolution grid
-  const grid: number[][] = [];
-  const altStep = (maxAlt - minAlt) / (resolution - 1);
-
-  // For each altitude level
-  for (let i = 0; i < resolution; i++) {
-    const altitude = minAlt + i * altStep;
-    const row: number[] = [];
-
-    // For each time step
-    for (let timeIndex = 0; timeIndex < weatherData.length; timeIndex++) {
-      const column = weatherData[timeIndex];
-      const sortedCells = [...column.cloud]
-        .filter((cell) => cell.mslFt != null && cell.windSpeed != null)
-        .sort((a, b) => a.mslFt - b.mslFt);
-
-      if (sortedCells.length < 2) {
-        row.push(NaN);
-        continue;
-      }
-
-      // Handle points below the lowest measurement
-      if (altitude <= sortedCells[0].mslFt) {
-        row.push(sortedCells[0].windSpeed!);
-        continue;
-      }
-
-      // Handle points above the highest measurement
-      if (altitude >= sortedCells[sortedCells.length - 1].mslFt) {
-        row.push(sortedCells[sortedCells.length - 1].windSpeed!);
-        continue;
-      }
-
-      // Find cells that bracket this altitude
-      let found = false;
-      for (let j = 0; j < sortedCells.length - 1; j++) {
-        const cell1 = sortedCells[j];
-        const cell2 = sortedCells[j + 1];
-
-        if (cell1.mslFt <= altitude && cell2.mslFt >= altitude) {
-          // Interpolate wind speed at this altitude
-          const ratio = (altitude - cell1.mslFt) / (cell2.mslFt - cell1.mslFt);
-          row.push(
-            cell1.windSpeed! + ratio * (cell2.windSpeed! - cell1.windSpeed!),
-          );
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        row.push(NaN);
-      }
-    }
-    grid.push(row);
-  }
-
-  // Fill any remaining NaN values using nearest neighbor
-  for (let i = 0; i < grid.length; i++) {
-    for (let j = 0; j < grid[i].length; j++) {
-      if (isNaN(grid[i][j])) {
-        // Look for nearest non-NaN value vertically
-        let above = i - 1;
-        let below = i + 1;
-        while (above >= 0 && isNaN(grid[above][j])) above--;
-        while (below < grid.length && isNaN(grid[below][j])) below++;
-
-        if (above >= 0 && below < grid.length) {
-          // Interpolate between above and below
-          const ratio = (i - above) / (below - above);
-          grid[i][j] =
-            grid[above][j] + ratio * (grid[below][j] - grid[above][j]);
-        } else if (above >= 0) {
-          grid[i][j] = grid[above][j];
-        } else if (below < grid.length) {
-          grid[i][j] = grid[below][j];
-        }
-      }
-    }
-  }
-
-  return grid;
 };
 
 // Helper function to convert grid coordinates back to weather data coordinates
