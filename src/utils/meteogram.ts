@@ -588,7 +588,10 @@ export const findIsotachPoints = (
 
   // Create high-resolution wind speed grid (in m/s)
   const resolution = 100;
-  const windSpeedGrid = createInterpolatedWindSpeedGrid(weatherData, resolution);
+  const windSpeedGrid = createInterpolatedWindSpeedGrid(
+    weatherData,
+    resolution,
+  );
 
   if (windSpeedGrid.length === 0) return [];
 

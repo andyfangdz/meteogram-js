@@ -134,10 +134,7 @@ export default function Nav({
       >
         Show Isotherm Lines
       </Switch>
-      <Switch
-        isSelected={showIsotachLines}
-        onValueChange={setShowIsotachLines}
-      >
+      <Switch isSelected={showIsotachLines} onValueChange={setShowIsotachLines}>
         Show Isotach Lines
       </Switch>
     </div>
