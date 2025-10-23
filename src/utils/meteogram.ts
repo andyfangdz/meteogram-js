@@ -2,8 +2,9 @@ import { CloudCell, CloudColumn } from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
 import { isoLines } from "marching-squares";
 
+// Faster numeric rounding to 4 decimals without string conversion
 export const formatNumber = (num: number | undefined): number =>
-  num ? Number(num.toFixed(4)) : 0;
+  Number.isFinite(num) ? Math.round((num as number) * 1e4) / 1e4 : 0;
 
 export const hPaToInHg = (hpa: number | undefined): string =>
   hpa ? (hpa * 0.02953).toFixed(2) : "N/A";
@@ -61,18 +62,27 @@ const createInterpolatedGrid = (
 ): number[][] => {
   if (!weatherData.length || !weatherData[0].cloud.length) return [];
 
-  // Find altitude range
-  let minAlt = Infinity;
-  let maxAlt = -Infinity;
-  weatherData.forEach((column) => {
-    column.cloud.forEach((cell) => {
-      if (cell.mslFt != null) {
-        minAlt = Math.min(minAlt, cell.mslFt);
-        maxAlt = Math.max(maxAlt, cell.mslFt);
-      }
-    });
+  // Precompute per-timestep sorted levels, values, and ground values
+  const perColumn = weatherData.map((column) => {
+    const filtered = column.cloud
+      .filter((cell) => cell.mslFt != null && options.valueExtractor(cell) != null)
+      .sort((a, b) => a.mslFt - b.mslFt);
+
+    const levels = filtered.map((c) => c.mslFt!);
+    const values = filtered.map((c) => options.valueExtractor(c)!);
+    const groundValue = options.groundValueExtractor?.(column);
+    return { levels, values, groundValue };
   });
 
+  // Find altitude range from precomputed levels
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  for (const { levels } of perColumn) {
+    if (levels.length) {
+      minAlt = Math.min(minAlt, levels[0]);
+      maxAlt = Math.max(maxAlt, levels[levels.length - 1]);
+    }
+  }
   if (minAlt === Infinity || maxAlt === -Infinity) return [];
 
   // Add some padding to the altitude range to avoid edge effects
@@ -81,95 +91,87 @@ const createInterpolatedGrid = (
   maxAlt += altPadding;
 
   // Create a high-resolution grid
-  const grid: number[][] = [];
+  const grid: number[][] = new Array(resolution);
   const altStep = (maxAlt - minAlt) / (resolution - 1);
 
   // For each altitude level
   for (let i = 0; i < resolution; i++) {
     const altitude = minAlt + i * altStep;
-    const row: number[] = [];
+    const row: number[] = new Array(perColumn.length);
 
     // For each time step
-    for (let timeIndex = 0; timeIndex < weatherData.length; timeIndex++) {
-      const column = weatherData[timeIndex];
-      const sortedCells = [...column.cloud]
-        .filter(
-          (cell) =>
-            cell.mslFt != null && options.valueExtractor(cell) != null,
-        )
-        .sort((a, b) => a.mslFt - b.mslFt);
-
-      if (sortedCells.length < 2) {
-        row.push(NaN);
+    for (let timeIndex = 0; timeIndex < perColumn.length; timeIndex++) {
+      const { levels, values, groundValue } = perColumn[timeIndex];
+      if (levels.length < 2) {
+        row[timeIndex] = NaN;
         continue;
       }
 
-      // Handle points below the lowest measurement
-      if (altitude <= sortedCells[0].mslFt) {
-        const groundValue =
-          options.groundValueExtractor?.(column);
+      // Below lowest measurement
+      if (altitude <= levels[0]) {
         if (groundValue != null) {
-          // Interpolate between ground value and lowest measurement
-          const ratio = altitude / sortedCells[0].mslFt;
-          const cellValue = options.valueExtractor(sortedCells[0])!;
-          row.push(groundValue + ratio * (cellValue - groundValue));
+          const ratio = altitude / levels[0];
+          row[timeIndex] = groundValue + ratio * (values[0] - groundValue);
         } else {
-          row.push(options.valueExtractor(sortedCells[0])!);
+          row[timeIndex] = values[0];
         }
         continue;
       }
 
-      // Handle points above the highest measurement
-      if (altitude >= sortedCells[sortedCells.length - 1].mslFt) {
-        row.push(
-          options.valueExtractor(sortedCells[sortedCells.length - 1])!,
-        );
+      // Above highest measurement
+      const lastIdx = levels.length - 1;
+      if (altitude >= levels[lastIdx]) {
+        row[timeIndex] = values[lastIdx];
         continue;
       }
 
-      // Find cells that bracket this altitude
-      let found = false;
-      for (let j = 0; j < sortedCells.length - 1; j++) {
-        const cell1 = sortedCells[j];
-        const cell2 = sortedCells[j + 1];
-
-        if (cell1.mslFt <= altitude && cell2.mslFt >= altitude) {
-          // Interpolate value at this altitude
-          const ratio = (altitude - cell1.mslFt) / (cell2.mslFt - cell1.mslFt);
-          const value1 = options.valueExtractor(cell1)!;
-          const value2 = options.valueExtractor(cell2)!;
-          row.push(value1 + ratio * (value2 - value1));
-          found = true;
+      // Binary search for bracketing indices
+      let lo = 0;
+      let hi = lastIdx;
+      while (lo + 1 < hi) {
+        const mid = (lo + hi) >> 1;
+        if (levels[mid] === altitude) {
+          lo = mid;
+          hi = mid + 1;
           break;
         }
+        if (levels[mid] < altitude) lo = mid; else hi = mid;
       }
-
-      if (!found) {
-        row.push(NaN);
-      }
+      const lowerIdx = lo;
+      const upperIdx = hi;
+      const lowerAlt = levels[lowerIdx];
+      const upperAlt = levels[upperIdx];
+      const ratio = (altitude - lowerAlt) / (upperAlt - lowerAlt);
+      row[timeIndex] = values[lowerIdx] + ratio * (values[upperIdx] - values[lowerIdx]);
     }
-    grid.push(row);
+    grid[i] = row;
   }
 
-  // Fill any remaining NaN values using nearest neighbor
-  for (let i = 0; i < grid.length; i++) {
-    for (let j = 0; j < grid[i].length; j++) {
-      if (isNaN(grid[i][j])) {
-        // Look for nearest non-NaN value vertically
-        let above = i - 1;
-        let below = i + 1;
-        while (above >= 0 && isNaN(grid[above][j])) above--;
-        while (below < grid.length && isNaN(grid[below][j])) below++;
-
-        if (above >= 0 && below < grid.length) {
-          // Interpolate between above and below
-          const ratio = (i - above) / (below - above);
-          grid[i][j] =
-            grid[above][j] + ratio * (grid[below][j] - grid[above][j]);
-        } else if (above >= 0) {
-          grid[i][j] = grid[above][j];
-        } else if (below < grid.length) {
-          grid[i][j] = grid[below][j];
+  // Fill any remaining NaN values using nearest neighbor (vertical)
+  for (let j = 0; j < perColumn.length; j++) {
+    // Precompute nearest non-NaN above
+    let lastValid = NaN;
+    for (let i = 0; i < resolution; i++) {
+      if (!Number.isNaN(grid[i][j])) {
+        lastValid = grid[i][j];
+      } else if (!Number.isNaN(lastValid)) {
+        grid[i][j] = lastValid;
+      }
+    }
+    // Precompute nearest non-NaN below and interpolate if needed
+    lastValid = NaN;
+    for (let i = resolution - 1; i >= 0; i--) {
+      if (!Number.isNaN(grid[i][j])) {
+        lastValid = grid[i][j];
+      } else if (!Number.isNaN(lastValid)) {
+        // If there was also an above value, average them; else use below
+        // Find above value by scanning up until a non-NaN or start
+        let k = i - 1;
+        while (k >= 0 && Number.isNaN(grid[k][j])) k--;
+        if (k >= 0) {
+          grid[i][j] = (grid[k][j] + lastValid) / 2;
+        } else {
+          grid[i][j] = lastValid;
         }
       }
     }
@@ -179,17 +181,33 @@ const createInterpolatedGrid = (
 };
 
 // Convert weather data to a high-resolution temperature grid
+// Caches to avoid recomputing grids for the same weatherData
+const tempGridCache: WeakMap<object, Map<string, number[][]>> = new WeakMap();
+const windGridCache: WeakMap<object, Map<string, number[][]>> = new WeakMap();
+
 const createInterpolatedTempGrid = (
   weatherData: CloudColumn[],
   resolution: number = 100,
   includeGround: boolean = false,
 ): number[][] => {
-  return createInterpolatedGrid(weatherData, resolution, {
+  const key = `${resolution}|${includeGround ? 1 : 0}`;
+  let byOptions = tempGridCache.get(weatherData as unknown as object);
+  if (!byOptions) {
+    byOptions = new Map();
+    tempGridCache.set(weatherData as unknown as object, byOptions);
+  }
+  const cached = byOptions.get(key);
+  if (cached) return cached;
+
+  const grid = createInterpolatedGrid(weatherData, resolution, {
     valueExtractor: (cell) => cell.temperature,
     groundValueExtractor: includeGround
       ? (column) => column.groundTemp
       : undefined,
   });
+
+  byOptions.set(key, grid);
+  return grid;
 };
 
 // Convert weather data to a high-resolution wind speed grid
@@ -197,9 +215,20 @@ const createInterpolatedWindSpeedGrid = (
   weatherData: CloudColumn[],
   resolution: number = 100,
 ): number[][] => {
-  return createInterpolatedGrid(weatherData, resolution, {
+  const key = `${resolution}`;
+  let byOptions = windGridCache.get(weatherData as unknown as object);
+  if (!byOptions) {
+    byOptions = new Map();
+    windGridCache.set(weatherData as unknown as object, byOptions);
+  }
+  const cached = byOptions.get(key);
+  if (cached) return cached;
+
+  const grid = createInterpolatedGrid(weatherData, resolution, {
     valueExtractor: (cell) => cell.windSpeed,
   });
+  byOptions.set(key, grid);
+  return grid;
 };
 
 // Helper function to convert grid coordinates back to weather data coordinates
@@ -249,6 +278,7 @@ const clipLineToValidRanges = (
 
   const clippedPoints: { x: number; y: number }[] = [];
   let currentSegment: { x: number; y: number }[] = [];
+  const validRangeCache = new Map<number, { min: number; max: number } | null>();
 
   for (let i = 0; i < points.length; i++) {
     const point = points[i];
@@ -262,7 +292,11 @@ const clipLineToValidRanges = (
       continue;
     }
 
-    const validRange = findValidAltitudeRange(weatherData[timeIndex]);
+    let validRange = validRangeCache.get(timeIndex);
+    if (validRange === undefined) {
+      validRange = findValidAltitudeRange(weatherData[timeIndex]);
+      validRangeCache.set(timeIndex, validRange);
+    }
     if (!validRange) {
       if (currentSegment.length > 1) {
         clippedPoints.push(...currentSegment);
