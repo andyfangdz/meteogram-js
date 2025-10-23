@@ -84,6 +84,16 @@ const createInterpolatedGrid = (
   const grid: number[][] = [];
   const altStep = (maxAlt - minAlt) / (resolution - 1);
 
+  // Pre-compute sorted cells for each time step to avoid repeated sorting
+  const sortedCellsCache = weatherData.map((column) =>
+    [...column.cloud]
+      .filter(
+        (cell) =>
+          cell.mslFt != null && options.valueExtractor(cell) != null,
+      )
+      .sort((a, b) => a.mslFt - b.mslFt)
+  );
+
   // For each altitude level
   for (let i = 0; i < resolution; i++) {
     const altitude = minAlt + i * altStep;
@@ -92,12 +102,7 @@ const createInterpolatedGrid = (
     // For each time step
     for (let timeIndex = 0; timeIndex < weatherData.length; timeIndex++) {
       const column = weatherData[timeIndex];
-      const sortedCells = [...column.cloud]
-        .filter(
-          (cell) =>
-            cell.mslFt != null && options.valueExtractor(cell) != null,
-        )
-        .sort((a, b) => a.mslFt - b.mslFt);
+      const sortedCells = sortedCellsCache[timeIndex];
 
       if (sortedCells.length < 2) {
         row.push(NaN);
@@ -152,24 +157,36 @@ const createInterpolatedGrid = (
   }
 
   // Fill any remaining NaN values using nearest neighbor
-  for (let i = 0; i < grid.length; i++) {
-    for (let j = 0; j < grid[i].length; j++) {
+  // Pre-check if we have any NaN values to avoid unnecessary iterations
+  let hasNaN = false;
+  for (let i = 0; i < grid.length && !hasNaN; i++) {
+    for (let j = 0; j < grid[i].length && !hasNaN; j++) {
       if (isNaN(grid[i][j])) {
-        // Look for nearest non-NaN value vertically
-        let above = i - 1;
-        let below = i + 1;
-        while (above >= 0 && isNaN(grid[above][j])) above--;
-        while (below < grid.length && isNaN(grid[below][j])) below++;
+        hasNaN = true;
+      }
+    }
+  }
 
-        if (above >= 0 && below < grid.length) {
-          // Interpolate between above and below
-          const ratio = (i - above) / (below - above);
-          grid[i][j] =
-            grid[above][j] + ratio * (grid[below][j] - grid[above][j]);
-        } else if (above >= 0) {
-          grid[i][j] = grid[above][j];
-        } else if (below < grid.length) {
-          grid[i][j] = grid[below][j];
+  if (hasNaN) {
+    for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < grid[i].length; j++) {
+        if (isNaN(grid[i][j])) {
+          // Look for nearest non-NaN value vertically
+          let above = i - 1;
+          let below = i + 1;
+          while (above >= 0 && isNaN(grid[above][j])) above--;
+          while (below < grid.length && isNaN(grid[below][j])) below++;
+
+          if (above >= 0 && below < grid.length) {
+            // Interpolate between above and below
+            const ratio = (i - above) / (below - above);
+            grid[i][j] =
+              grid[above][j] + ratio * (grid[below][j] - grid[above][j]);
+          } else if (above >= 0) {
+            grid[i][j] = grid[above][j];
+          } else if (below < grid.length) {
+            grid[i][j] = grid[below][j];
+          }
         }
       }
     }

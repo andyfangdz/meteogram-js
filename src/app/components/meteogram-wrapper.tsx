@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { CloudColumn, WeatherModel } from "../../types/weather";
 import Meteogram from "./meteogram";
 import { usePreferences } from "@/context/PreferencesContext";
@@ -12,7 +13,9 @@ interface MeteogramWrapperProps {
   elevationFt: number | null;
 }
 
-export default function MeteogramWrapper({
+// Memoized to prevent re-renders when parent updates without prop changes.
+// Preferences come from context, so this primarily helps with parent re-renders unrelated to props.
+const MeteogramWrapper = React.memo(function MeteogramWrapper({
   weatherData,
   isLoading,
   error,
@@ -45,4 +48,6 @@ export default function MeteogramWrapper({
       />
     </div>
   );
-}
+});
+
+export default MeteogramWrapper;

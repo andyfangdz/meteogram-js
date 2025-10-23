@@ -37,11 +37,14 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   onHover,
   onFreezeChange,
 }) => {
+  // Use Set for O(1) pressure level lookups (Set creation is cheaper than useMemo overhead)
+  const pressureLevelsSet = new Set(pressureLevels);
+  
   return (
     <>
       {weatherData.map((d) => {
         const filteredClouds = d.cloud?.filter(
-          (cloud) => cloud.hpa != null && pressureLevels.includes(cloud.hpa),
+          (cloud) => cloud.hpa != null && pressureLevelsSet.has(cloud.hpa),
         );
 
         return (
@@ -116,7 +119,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             d.cloud
               ?.filter(
                 (cloud, levelIndex) =>
-                  pressureLevels.includes(cloud.hpa) &&
+                  pressureLevelsSet.has(cloud.hpa) &&
                   levelIndex %
                     MODEL_CONFIGS[model].windBarbPressureLevelStep ===
                     0 &&

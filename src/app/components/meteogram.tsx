@@ -36,7 +36,9 @@ const black = "#000000";
 const background = "#87CEEB";
 const defaultMargin = { top: 40, right: 60, bottom: 40, left: 60 };
 
-export default function Meteogram({
+// Memoized to prevent re-renders when parent updates without prop changes.
+// Note: weatherData reference changes only when new data is fetched, which correctly triggers re-render.
+const Meteogram = React.memo(function Meteogram({
   width,
   height,
   weatherData,
@@ -297,4 +299,6 @@ export default function Meteogram({
       )}
     </svg>
   );
-}
+});
+
+export default Meteogram;
