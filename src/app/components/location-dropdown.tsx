@@ -181,8 +181,10 @@ export default function LocationDropdown({
     }
   }, [customLocations, setLocation]);
 
-  // Render location sections for mobile modal - memoized
-  const renderMobileLocationSections = React.useCallback(() => (
+  // Render location sections for mobile modal
+  // Note: Not using useCallback here as this function is only called once per render
+  // and returns JSX that React needs to reconcile anyway (minimal benefit from memoization)
+  const renderMobileLocationSections = () => (
     <>
       {Object.entries(customLocations).length > 0 && (
         <div className="mb-4">
@@ -218,7 +220,7 @@ export default function LocationDropdown({
         ))}
       </div>
     </>
-  ), [customLocations, handleLocationSelect, onClose]);
+  );
 
   // Build dropdown items list - memoized to avoid rebuilding on every render
   // IMPORTANT: Must be called before any conditional returns (Rules of Hooks)

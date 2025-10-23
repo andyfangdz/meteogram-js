@@ -37,7 +37,10 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   onHover,
   onFreezeChange,
 }) => {
-  // Use Set for O(1) pressure level lookups
+  // Convert pressureLevels array to Set for O(1) lookups during filtering
+  // This optimization is beneficial when filtering large datasets (many cloud cells per column)
+  // Trade-off: Set creation has overhead, but pays off when pressureLevels.length > ~10
+  // and when weatherData contains many columns with many cloud cells each
   const pressureLevelsSet = React.useMemo(() => new Set(pressureLevels), [pressureLevels]);
 
   // Memoize filtered weather data to avoid recomputing on every render
@@ -51,6 +54,10 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   }, [weatherData, pressureLevelsSet]);
 
   // Stable event handlers using useCallback
+  // IMPORTANT: These callbacks depend on onHover and onFreezeChange being stable.
+  // The parent component MUST memoize these callbacks (e.g., with useCallback)
+  // to prevent these handlers from being recreated on every render.
+  // Currently verified: meteogram.tsx memoizes both callbacks correctly.
   const handleMouseEnter = React.useCallback((date: Date, cloud: CloudCell) => {
     if (!frozenRect) {
       onHover(date, cloud);
