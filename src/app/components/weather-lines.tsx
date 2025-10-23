@@ -72,18 +72,62 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
     );
   }, [weatherData, showIsotachLines, model]);
 
+  // Memoize freezing level paths to avoid rebuilding on every render
+  const freezingPaths = React.useMemo(() => {
+    return freezingPoints.map(({ points }) => {
+      if (!points.length) return null;
+      return points.reduce((path: string, point: Point, i: number) => {
+        const x = formatNumber(scales.dateScale(weatherData[point.x].date));
+        const y = formatNumber(scales.mslScale(point.y));
+        if (i === 0) return `M ${x} ${y}`;
+        return `${path} L ${x} ${y}`;
+      }, "");
+    });
+  }, [freezingPoints, scales, weatherData]);
+
+  // Memoize isotherm paths with colors to avoid rebuilding on every render
+  const isothermPaths = React.useMemo(() => {
+    return isothermPoints.map(({ temp, points }) => {
+      if (!points.length) return null;
+      const pathD = points.reduce((path: string, point: Point, i: number) => {
+        const x = formatNumber(scales.dateScale(weatherData[point.x].date));
+        const y = formatNumber(scales.mslScale(point.y));
+        if (i === 0) return `M ${x} ${y}`;
+        return `${path} L ${x} ${y}`;
+      }, "");
+      return {
+        temp,
+        pathD,
+        color: getTemperatureColor(temp),
+        firstPoint: points[0],
+      };
+    });
+  }, [isothermPoints, scales, weatherData]);
+
+  // Memoize isotach paths with colors to avoid rebuilding on every render
+  const isotachPaths = React.useMemo(() => {
+    return isotachPoints.map(({ speedKnots, points }) => {
+      if (!points.length) return null;
+      const pathD = points.reduce((path: string, point: Point, i: number) => {
+        const x = formatNumber(scales.dateScale(weatherData[point.x].date));
+        const y = formatNumber(scales.mslScale(point.y));
+        if (i === 0) return `M ${x} ${y}`;
+        return `${path} L ${x} ${y}`;
+      }, "");
+      return {
+        speedKnots,
+        pathD,
+        color: getWindSpeedColor(speedKnots),
+        firstPoint: points[0],
+      };
+    });
+  }, [isotachPoints, scales, weatherData]);
+
   return (
     <>
       {/* Freezing Levels */}
-      {freezingPoints.map(({ points }, lineIndex: number) => {
-        if (!points.length) return null;
-
-        const pathD = points.reduce((path: string, point: Point, i: number) => {
-          const x = formatNumber(scales.dateScale(weatherData[point.x].date));
-          const y = formatNumber(scales.mslScale(point.y));
-          if (i === 0) return `M ${x} ${y}`;
-          return `${path} L ${x} ${y}`;
-        }, "");
+      {freezingPaths.map((pathD, lineIndex: number) => {
+        if (!pathD) return null;
 
         return (
           <path
@@ -101,119 +145,87 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
 
       {/* Isotherm Lines */}
       {showIsothermLines &&
-        isothermPoints.map(
-          ({ temp, points }: IsothermLine, lineIndex: number) => {
-            if (!points.length) return null;
+        isothermPaths.map((data, lineIndex: number) => {
+          if (!data || !data.pathD) return null;
 
-            const pathD = points.reduce(
-              (path: string, point: Point, i: number) => {
-                const x = formatNumber(
-                  scales.dateScale(weatherData[point.x].date),
-                );
-                const y = formatNumber(scales.mslScale(point.y));
-                if (i === 0) return `M ${x} ${y}`;
-                return `${path} L ${x} ${y}`;
-              },
-              "",
-            );
+          const { temp, pathD, color, firstPoint } = data;
 
-            // Only render if we have valid points and a valid path
-            if (!pathD) return null;
-
-            return (
-              <g
-                key={`isotherm-${temp}-${formatNumber(points[0].y)}-${lineIndex}`}
-                className={`isotherm-group isotherm-${temp}`}
+          return (
+            <g
+              key={`isotherm-${temp}-${formatNumber(firstPoint.y)}-${lineIndex}`}
+              className={`isotherm-group isotherm-${temp}`}
+              pointerEvents="none"
+            >
+              <path
+                className="isotherm-line"
+                d={pathD}
+                stroke={color}
+                strokeWidth={1}
+                strokeDasharray="4,4"
+                opacity={0.7}
+                fill="none"
+              />
+              <text
+                className="isotherm-label"
+                x={formatNumber(
+                  scales.dateScale(weatherData[firstPoint.x].date),
+                )}
+                y={formatNumber(scales.mslScale(firstPoint.y))}
+                dx="-2.5em"
+                dy="0.3em"
+                fontSize="10"
+                fill={color}
                 pointerEvents="none"
               >
-                <path
-                  className="isotherm-line"
-                  d={pathD}
-                  stroke={getTemperatureColor(temp)}
-                  strokeWidth={1}
-                  strokeDasharray="4,4"
-                  opacity={0.7}
-                  fill="none"
-                />
-                <text
-                  className="isotherm-label"
-                  x={formatNumber(
-                    scales.dateScale(weatherData[points[0].x].date),
-                  )}
-                  y={formatNumber(scales.mslScale(points[0].y))}
-                  dx="-2.5em"
-                  dy="0.3em"
-                  fontSize="10"
-                  fill={getTemperatureColor(temp)}
-                  pointerEvents="none"
-                >
-                  {`${temp}°C`}
-                </text>
-              </g>
-            );
-          },
-        )}
+                {`${temp}°C`}
+              </text>
+            </g>
+          );
+        })}
 
       {/* Isotach Lines */}
       {showIsotachLines &&
-        isotachPoints.map(
-          ({ speedKnots, points }: IsotachLine, lineIndex: number) => {
-            if (!points.length) return null;
+        isotachPaths.map((data, lineIndex: number) => {
+          if (!data || !data.pathD) return null;
 
-            const pathD = points.reduce(
-              (path: string, point: Point, i: number) => {
-                const x = formatNumber(
-                  scales.dateScale(weatherData[point.x].date),
-                );
-                const y = formatNumber(scales.mslScale(point.y));
-                if (i === 0) return `M ${x} ${y}`;
-                return `${path} L ${x} ${y}`;
-              },
-              "",
-            );
+          const { speedKnots, pathD, color, firstPoint } = data;
 
-            // Only render if we have valid points and a valid path
-            if (!pathD) return null;
-
-            const color = getWindSpeedColor(speedKnots);
-
-            return (
-              <g
-                key={`isotach-${speedKnots}-${formatNumber(points[0].y)}-${lineIndex}`}
-                className={`isotach-group isotach-${speedKnots}`}
+          return (
+            <g
+              key={`isotach-${speedKnots}-${formatNumber(firstPoint.y)}-${lineIndex}`}
+              className={`isotach-group isotach-${speedKnots}`}
+              pointerEvents="none"
+            >
+              <path
+                className="isotach-line"
+                d={pathD}
+                stroke={color}
+                strokeWidth={2}
+                strokeDasharray="4,2"
+                opacity={1}
+                fill="none"
+              />
+              <text
+                className="isotach-label"
+                x={formatNumber(
+                  scales.dateScale(weatherData[firstPoint.x].date),
+                )}
+                y={formatNumber(scales.mslScale(firstPoint.y))}
+                dx="-2.5em"
+                dy="0.3em"
+                fontSize="12"
+                fontWeight="bold"
+                fill={color}
+                stroke="white"
+                strokeWidth="3"
+                paintOrder="stroke"
                 pointerEvents="none"
               >
-                <path
-                  className="isotach-line"
-                  d={pathD}
-                  stroke={color}
-                  strokeWidth={2}
-                  strokeDasharray="4,2"
-                  opacity={1}
-                  fill="none"
-                />
-                <text
-                  className="isotach-label"
-                  x={formatNumber(
-                    scales.dateScale(weatherData[points[0].x].date),
-                  )}
-                  y={formatNumber(scales.mslScale(points[0].y))}
-                  dx="-2.5em"
-                  dy="0.3em"
-                  fontSize="12"
-                  fontWeight="bold"
-                  fill={color}
-                  stroke="white"
-                  strokeWidth="3"
-                  paintOrder="stroke"
-                  pointerEvents="none"
-                >
-                  {`${speedKnots.toFixed(0)}kt`}
-                </text>
-              </g>
-            );
-          },
-        )}
+                {`${speedKnots.toFixed(0)}kt`}
+              </text>
+            </g>
+          );
+        })}
     </>
   );
 };

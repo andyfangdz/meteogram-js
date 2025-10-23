@@ -83,41 +83,44 @@ const Meteogram = React.memo(function Meteogram({
     [bounds.xMax, weatherData.length],
   );
 
-  // Memoize pressure levels
+  // Memoize pressure levels with optimized O(n) algorithm
   const pressureLevels = useMemo(() => {
     if (weatherData.length === 0) return [];
 
-    const firstColumnLevels = weatherData[0].cloud
-      .filter(
-        (cloud) =>
+    // Count how many columns have each valid hpa level
+    const hpaCount = new Map<number, number>();
+
+    for (const column of weatherData) {
+      const validHpasInColumn = new Set<number>();
+
+      for (const cloud of column.cloud) {
+        // Check if this cloud cell has valid data
+        if (
           cloud.hpa != null &&
           cloud.mslFtTop != null &&
           cloud.mslFtBottom != null &&
           cloud.cloudCoverage != null &&
           Number.isFinite(cloud.mslFtTop) &&
           Number.isFinite(cloud.mslFtBottom) &&
-          Number.isFinite(cloud.cloudCoverage),
-      )
-      .map((cloud) => cloud.hpa);
+          Number.isFinite(cloud.cloudCoverage)
+        ) {
+          validHpasInColumn.add(cloud.hpa);
+        }
+      }
 
-    const validLevels = new Set(firstColumnLevels);
+      // Increment count for each valid hpa in this column
+      for (const hpa of validHpasInColumn) {
+        hpaCount.set(hpa, (hpaCount.get(hpa) || 0) + 1);
+      }
+    }
 
-    return Array.from(validLevels)
-      .filter((hpa) =>
-        weatherData.every((column) => {
-          const cloud = column.cloud.find((c) => c.hpa === hpa);
-          const isValid =
-            cloud &&
-            cloud.mslFtTop != null &&
-            cloud.mslFtBottom != null &&
-            cloud.cloudCoverage != null &&
-            Number.isFinite(cloud.mslFtTop) &&
-            Number.isFinite(cloud.mslFtBottom) &&
-            Number.isFinite(cloud.cloudCoverage);
-          return isValid;
-        }),
-      )
+    // Only keep hpa levels that appear in ALL columns
+    const validLevels = Array.from(hpaCount.entries())
+      .filter(([_, count]) => count === weatherData.length)
+      .map(([hpa, _]) => hpa)
       .sort((a, b) => b - a);
+
+    return validLevels;
   }, [weatherData]);
 
   // Handlers

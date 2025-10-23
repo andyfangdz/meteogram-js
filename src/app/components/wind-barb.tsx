@@ -34,7 +34,7 @@ const getEndpoint = (x: number, y: number, angle: number, length: number) => {
   };
 };
 
-export default function WindBarb({
+const WindBarb = React.memo(function WindBarb({
   x,
   y,
   speed,
@@ -141,4 +141,6 @@ export default function WindBarb({
       pointerEvents="none"
     />
   );
-}
+});
+
+export default WindBarb;
