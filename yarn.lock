@@ -6399,7 +6399,7 @@ object.values@^1.1.6, object.values@^1.2.1:
     define-properties "^1.2.1"
     es-object-atoms "^1.0.0"
 
-openmeteo@^1.2.0:
+openmeteo@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/openmeteo/-/openmeteo-1.2.1.tgz#3944e96d4c63dd0692a959214d45f9c392afc24b"
   integrity sha512-BNps/RuJo0tIWhBiEvThO28Df3pU6q7m77wBhuS74FkvYYmrub9+KqzBiMd6XNPhWL4tPfG0iE3tXREy+pkwiQ==

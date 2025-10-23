@@ -14,7 +14,7 @@ export const MODEL_NAMES: WeatherModel[] = [
   "best_match",
   "gfs_seamless",
   "gfs_hrrr",
-  "ecmwf_ifs",
+  // "ecmwf_ifs", // Disabled: ECMWF IFS doesn't provide pressure-level data needed for meteogram visualization
   "ecmwf_aifs025_single",
   "gem_seamless",
   "gem_hrdps_continental",
@@ -126,16 +126,19 @@ export const MODEL_CONFIGS: ModelConfigs = {
     maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
-  ecmwf_ifs: new ModelConfig({
-    varsKey: "hourly",
-    stepKey: "forecast_hourly",
-    stepSize: 24 * 7, // 24 hours * 7 days
-    forecastDataKey: "hourly",
-    windBarbStep: 3, // Show wind barbs every 3 hours
-    windBarbPressureLevelStep: 1, // Show wind barbs for every pressure level
-    maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
-    hpaLevels: DEFAULT_HPA_LEVELS,
-  }),
+  // ecmwf_ifs: new ModelConfig({
+  //   varsKey: "hourly",
+  //   stepKey: "forecast_hourly",
+  //   stepSize: 24 * 7, // 24 hours * 7 days
+  //   forecastDataKey: "hourly",
+  //   windBarbStep: 3, // Show wind barbs every 3 hours
+  //   windBarbPressureLevelStep: 1, // Show wind barbs for every pressure level
+  //   maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
+  //   hpaLevels: DEFAULT_HPA_LEVELS,
+  // }),
+  // DISABLED: ECMWF IFS doesn't provide pressure-level variables (cloud_cover_1000hPa, 
+  // geopotential_height_1000hPa, temperature_1000hPa, etc.) needed for meteogram visualization.
+  // It only provides surface variables and basic cloud_cover_low/mid/high levels.
   ecmwf_aifs025_single: new ModelConfig({
     varsKey: "hourly",
     stepKey: "forecast_hourly",
