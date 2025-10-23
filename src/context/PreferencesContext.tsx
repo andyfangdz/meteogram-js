@@ -36,24 +36,6 @@ interface PreferencesProviderProps {
   cookieReadSuccess?: boolean;
 }
 
-/**
- * Simple function to retrieve preferences from client cookie
- */
-function getCookiePreferences(): VisualizationPreferences | null {
-  try {
-    const cookieValue = Cookies.get(PREFERENCES_COOKIE_NAME);
-    if (!cookieValue) return null;
-
-    const parsed = JSON.parse(cookieValue);
-    if (typeof parsed !== "object" || parsed === null) return null;
-
-    return { ...DEFAULT_PREFERENCES, ...parsed };
-  } catch (error) {
-    console.error("Failed to parse client cookie:", error);
-    return null;
-  }
-}
-
 export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({
   children,
   initialPreferences = DEFAULT_PREFERENCES,
