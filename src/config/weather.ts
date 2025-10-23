@@ -14,8 +14,8 @@ export const MODEL_NAMES: WeatherModel[] = [
   "best_match",
   "gfs_seamless",
   "gfs_hrrr",
-  "ecmwf_ifs025",
-  "ecmwf_aifs025",
+  "ecmwf_ifs",
+  "ecmwf_aifs025_single",
   "gem_seamless",
   "gem_hrdps_continental",
 ];
@@ -126,7 +126,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
-  ecmwf_ifs025: new ModelConfig({
+  ecmwf_ifs: new ModelConfig({
     varsKey: "hourly",
     stepKey: "forecast_hourly",
     stepSize: 24 * 7, // 24 hours * 7 days
@@ -136,7 +136,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
-  ecmwf_aifs025: new ModelConfig({
+  ecmwf_aifs025_single: new ModelConfig({
     varsKey: "hourly",
     stepKey: "forecast_hourly",
     stepSize: 24 * 7, // 24 hours * 7 days
