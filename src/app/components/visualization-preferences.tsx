@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
+import React from "react";
 import NavWrapper from "./nav-wrapper";
 import MeteogramWrapper from "./meteogram-wrapper";
 import {
@@ -23,7 +23,7 @@ interface VisualizationPreferencesProps {
   elevationFt: number | null;
 }
 
-export default function VisualizationPreferencesComponent({
+const VisualizationPreferencesComponent = ({
   model,
   setModel,
   location,
@@ -34,7 +34,7 @@ export default function VisualizationPreferencesComponent({
   isLoading,
   error,
   elevationFt,
-}: VisualizationPreferencesProps) {
+}: VisualizationPreferencesProps) => {
   const { preferences, setPreference } = usePreferences();
 
   return (
@@ -58,4 +58,6 @@ export default function VisualizationPreferencesComponent({
       </main>
     </>
   );
-}
+};
+
+export default React.memo(VisualizationPreferencesComponent);

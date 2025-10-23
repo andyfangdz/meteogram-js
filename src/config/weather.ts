@@ -1,4 +1,3 @@
-import range from "lodash/range";
 import { Locations, WeatherModel } from "../types/weather";
 
 export const API_URL = "https://api.open-meteo.com/v1/forecast";
@@ -8,7 +7,10 @@ export const GEM_HPA_LEVELS = [
   500, 450, 400, 350, 300, 275, 250,
 ];
 
-export const DEFAULT_HPA_LEVELS = range(1000, 250, -25);
+export const DEFAULT_HPA_LEVELS = Array.from(
+  { length: 31 },
+  (_, i) => 1000 - i * 25,
+);
 
 export const MODEL_NAMES: WeatherModel[] = [
   "best_match",

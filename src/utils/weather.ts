@@ -1,4 +1,3 @@
-import range from "lodash/range";
 import { CloudColumn, WeatherModel } from "../types/weather";
 import { FEET_PER_METER, MODEL_CONFIGS } from "../config/weather";
 
@@ -9,6 +8,15 @@ function geopotentialToMsl(geopotentialMeters: number): number {
     (EARTH_RADIUS_METERS * geopotentialMeters) /
     (EARTH_RADIUS_METERS - geopotentialMeters)
   );
+}
+
+// Helper function to create a range of numbers (replaces lodash/range)
+function createRange(start: number, end: number, step: number): number[] {
+  const range: number[] = [];
+  for (let i = start; i < end; i += step) {
+    range.push(i);
+  }
+  return range;
 }
 
 export function transformWeatherData(
@@ -27,7 +35,7 @@ export function transformWeatherData(
   const windDirectionBaseIndex = 4 * modelConfig.hpaLevels.length;
   const groundTempIndex = 5 * modelConfig.hpaLevels.length;
 
-  const cloudData = range(
+  const cloudData = createRange(
     Number(forecastData.time()),
     Number(forecastData.timeEnd()),
     forecastData.interval(),

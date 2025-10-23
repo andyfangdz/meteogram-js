@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { CloudCell } from "../../types/weather";
 import { hPaToInHg, kmhToKnots, formatNumber } from "../../utils/meteogram";
 
@@ -11,6 +11,15 @@ interface MeteogramTooltipProps {
   frozen?: boolean;
 }
 
+const BASE_CONTAINER_STYLE = {
+  backgroundColor: "rgba(255,255,255,0.9)",
+  padding: "8px",
+  borderRadius: "4px",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+  fontSize: "12px",
+  zIndex: 100,
+} as const;
+
 const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   date,
   cloudCell,
@@ -19,28 +28,25 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   useLocalTime,
   frozen = false,
 }) => {
+  const foreignObjectStyle = useMemo(
+    () => ({
+      pointerEvents: frozen ? ("auto" as const) : ("none" as const),
+    }),
+    [frozen],
+  );
+
+  const containerStyle = useMemo(
+    () => ({
+      ...BASE_CONTAINER_STYLE,
+      pointerEvents: frozen ? ("auto" as const) : ("none" as const),
+      userSelect: frozen ? ("text" as const) : ("none" as const),
+    }),
+    [frozen],
+  );
+
   return (
-    <foreignObject
-      x={x}
-      y={y}
-      width="200"
-      height="200"
-      style={{
-        pointerEvents: frozen ? "auto" : "none",
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "rgba(255,255,255,0.9)",
-          padding: "8px",
-          borderRadius: "4px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-          pointerEvents: frozen ? "auto" : "none",
-          userSelect: frozen ? "text" : "none",
-          fontSize: "12px",
-          zIndex: 100,
-        }}
-      >
+    <foreignObject x={x} y={y} width="200" height="200" style={foreignObjectStyle}>
+      <div style={containerStyle}>
         <div>{`Time: ${
           useLocalTime
             ? date.toLocaleTimeString()

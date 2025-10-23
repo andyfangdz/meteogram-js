@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, Skeleton } from "@heroui/react";
 
-export default function LoadingSkeleton() {
+const LoadingSkeleton = () => {
   return (
     <Card className="w-[200px] space-y-5 p-4" radius="lg">
       <Skeleton className="rounded-lg">
@@ -20,4 +20,6 @@ export default function LoadingSkeleton() {
       </div>
     </Card>
   );
-}
+};
+
+export default React.memo(LoadingSkeleton);

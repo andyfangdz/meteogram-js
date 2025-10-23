@@ -52,7 +52,7 @@ function ClientWrapperInternal({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Separate refresh functions for manual and background updates
-  const refreshDataWithLoading = async () => {
+  const refreshDataWithLoading = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -71,7 +71,7 @@ function ClientWrapperInternal({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [model, initialLocation]);
 
   const refreshDataInBackground = useCallback(async () => {
     try {
@@ -100,23 +100,29 @@ function ClientWrapperInternal({
     };
   }, [initialModel, initialLocation, refreshDataInBackground]);
 
-  const handleLocationChange = (newLocation: SetStateAction<string>) => {
-    const resolvedLocation =
-      typeof newLocation === "function"
-        ? newLocation(initialLocation)
-        : newLocation;
-    router.push(
-      `/${encodeURIComponent(resolvedLocation)}/${model}?${serializeVisualizationPreferences(preferences).toString()}`,
-    );
-  };
+  const handleLocationChange = useCallback(
+    (newLocation: SetStateAction<string>) => {
+      const resolvedLocation =
+        typeof newLocation === "function"
+          ? newLocation(initialLocation)
+          : newLocation;
+      router.push(
+        `/${encodeURIComponent(resolvedLocation)}/${model}?${serializeVisualizationPreferences(preferences).toString()}`,
+      );
+    },
+    [initialLocation, model, preferences, router],
+  );
 
-  const handleModelChange = (newModel: SetStateAction<WeatherModel>) => {
-    const resolvedModel =
-      typeof newModel === "function" ? newModel(initialModel) : newModel;
-    router.push(
-      `/${encodeURIComponent(initialLocation)}/${resolvedModel}?${serializeVisualizationPreferences(preferences).toString()}`,
-    );
-  };
+  const handleModelChange = useCallback(
+    (newModel: SetStateAction<WeatherModel>) => {
+      const resolvedModel =
+        typeof newModel === "function" ? newModel(initialModel) : newModel;
+      router.push(
+        `/${encodeURIComponent(initialLocation)}/${resolvedModel}?${serializeVisualizationPreferences(preferences).toString()}`,
+      );
+    },
+    [initialLocation, initialModel, preferences, router],
+  );
 
   return (
     <VisualizationPreferencesComponent

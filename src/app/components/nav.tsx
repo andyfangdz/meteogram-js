@@ -74,6 +74,78 @@ const NavContext = createContext<{
   setShowIsotachLines: () => {},
 });
 
+interface PreferencesPanelProps {
+  useLocalTime: boolean;
+  setUseLocalTime: (value: boolean) => void;
+  highlightCeilingCoverage: boolean;
+  setHighlightCeilingCoverage: (value: boolean) => void;
+  clampCloudCoverageAt50Pct: boolean;
+  setClampCloudCoverageAt50Pct: (value: boolean) => void;
+  showPressureLines: boolean;
+  setShowPressureLines: (value: boolean) => void;
+  showWindBarbs: boolean;
+  setShowWindBarbs: (value: boolean) => void;
+  showIsothermLines: boolean;
+  setShowIsothermLines: (value: boolean) => void;
+  showIsotachLines: boolean;
+  setShowIsotachLines: (value: boolean) => void;
+}
+
+const PreferencesPanel = React.memo(({
+  useLocalTime,
+  setUseLocalTime,
+  highlightCeilingCoverage,
+  setHighlightCeilingCoverage,
+  clampCloudCoverageAt50Pct,
+  setClampCloudCoverageAt50Pct,
+  showPressureLines,
+  setShowPressureLines,
+  showWindBarbs,
+  setShowWindBarbs,
+  showIsothermLines,
+  setShowIsothermLines,
+  showIsotachLines,
+  setShowIsotachLines,
+}: PreferencesPanelProps) => (
+  <div className="flex flex-col gap-4 p-4">
+    <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
+      Use Local Time
+    </Switch>
+    <Switch
+      isSelected={highlightCeilingCoverage}
+      onValueChange={setHighlightCeilingCoverage}
+    >
+      Highlight Ceiling Coverage
+    </Switch>
+    <Switch
+      isSelected={clampCloudCoverageAt50Pct}
+      onValueChange={setClampCloudCoverageAt50Pct}
+    >
+      Clamp Cloud Coverage at 50%
+    </Switch>
+    <Switch
+      isSelected={showPressureLines}
+      onValueChange={setShowPressureLines}
+    >
+      Show Pressure Lines
+    </Switch>
+    <Switch isSelected={showWindBarbs} onValueChange={setShowWindBarbs}>
+      Show Wind Barbs
+    </Switch>
+    <Switch
+      isSelected={showIsothermLines}
+      onValueChange={setShowIsothermLines}
+    >
+      Show Isotherm Lines
+    </Switch>
+    <Switch isSelected={showIsotachLines} onValueChange={setShowIsotachLines}>
+      Show Isotach Lines
+    </Switch>
+  </div>
+));
+
+PreferencesPanel.displayName = "PreferencesPanel";
+
 export default function Nav({
   model,
   setModel,
@@ -101,44 +173,6 @@ export default function Nav({
   const handleMenuToggle = useCallback(() => {
     setIsMenuOpen((prev) => !prev);
   }, []);
-
-  const PreferencesPanel = () => (
-    <div className="flex flex-col gap-4 p-4">
-      <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
-        Use Local Time
-      </Switch>
-      <Switch
-        isSelected={highlightCeilingCoverage}
-        onValueChange={setHighlightCeilingCoverage}
-      >
-        Highlight Ceiling Coverage
-      </Switch>
-      <Switch
-        isSelected={clampCloudCoverageAt50Pct}
-        onValueChange={setClampCloudCoverageAt50Pct}
-      >
-        Clamp Cloud Coverage at 50%
-      </Switch>
-      <Switch
-        isSelected={showPressureLines}
-        onValueChange={setShowPressureLines}
-      >
-        Show Pressure Lines
-      </Switch>
-      <Switch isSelected={showWindBarbs} onValueChange={setShowWindBarbs}>
-        Show Wind Barbs
-      </Switch>
-      <Switch
-        isSelected={showIsothermLines}
-        onValueChange={setShowIsothermLines}
-      >
-        Show Isotherm Lines
-      </Switch>
-      <Switch isSelected={showIsotachLines} onValueChange={setShowIsotachLines}>
-        Show Isotach Lines
-      </Switch>
-    </div>
-  );
 
   return (
     <NavContext.Provider
@@ -237,7 +271,22 @@ export default function Nav({
             <Button color="primary" onPress={updateWeatherData}>
               Refresh
             </Button>
-            <PreferencesPanel />
+            <PreferencesPanel
+              useLocalTime={useLocalTime}
+              setUseLocalTime={setUseLocalTime}
+              highlightCeilingCoverage={highlightCeilingCoverage}
+              setHighlightCeilingCoverage={setHighlightCeilingCoverage}
+              clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
+              setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
+              showPressureLines={showPressureLines}
+              setShowPressureLines={setShowPressureLines}
+              showWindBarbs={showWindBarbs}
+              setShowWindBarbs={setShowWindBarbs}
+              showIsothermLines={showIsothermLines}
+              setShowIsothermLines={setShowIsothermLines}
+              showIsotachLines={showIsotachLines}
+              setShowIsotachLines={setShowIsotachLines}
+            />
           </div>
         </NavbarMenu>
       </Navbar>
@@ -250,7 +299,22 @@ export default function Nav({
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div className="overflow-y-auto h-full">
-          <PreferencesPanel />
+          <PreferencesPanel
+            useLocalTime={useLocalTime}
+            setUseLocalTime={setUseLocalTime}
+            highlightCeilingCoverage={highlightCeilingCoverage}
+            setHighlightCeilingCoverage={setHighlightCeilingCoverage}
+            clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
+            setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
+            showPressureLines={showPressureLines}
+            setShowPressureLines={setShowPressureLines}
+            showWindBarbs={showWindBarbs}
+            setShowWindBarbs={setShowWindBarbs}
+            showIsothermLines={showIsothermLines}
+            setShowIsothermLines={setShowIsothermLines}
+            showIsotachLines={showIsotachLines}
+            setShowIsotachLines={setShowIsotachLines}
+          />
         </div>
       </div>
     </NavContext.Provider>

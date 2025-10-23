@@ -14,7 +14,7 @@ interface ModelDropdownProps {
   setModel: (newModel: WeatherModel) => void;
 }
 
-export default function ModelDropdown({ model, setModel }: ModelDropdownProps) {
+const ModelDropdown = ({ model, setModel }: ModelDropdownProps) => {
   return (
     <Dropdown>
       <DropdownTrigger>
@@ -38,4 +38,6 @@ export default function ModelDropdown({ model, setModel }: ModelDropdownProps) {
       </DropdownMenu>
     </Dropdown>
   );
-}
+};
+
+export default React.memo(ModelDropdown);

@@ -1,7 +1,7 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { timeFormat } from "@visx/vendor/d3-time-format";
-import { useState, useEffect } from "react";
 
 const lastUpdateFormat = timeFormat("%H:%M:%S");
 
@@ -9,7 +9,7 @@ interface LastUpdateTimeProps {
   lastUpdate: Date | null;
 }
 
-export default function LastUpdateTime({ lastUpdate }: LastUpdateTimeProps) {
+const LastUpdateTime = ({ lastUpdate }: LastUpdateTimeProps) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -26,4 +26,6 @@ export default function LastUpdateTime({ lastUpdate }: LastUpdateTimeProps) {
       Last Update: {lastUpdate ? lastUpdateFormat(lastUpdate) : "Never"}
     </span>
   );
-}
+};
+
+export default React.memo(LastUpdateTime);

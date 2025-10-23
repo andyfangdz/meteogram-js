@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { CloudColumn, WeatherModel } from "../../types/weather";
 import Meteogram from "./meteogram";
 import { usePreferences } from "@/context/PreferencesContext";
@@ -12,13 +13,13 @@ interface MeteogramWrapperProps {
   elevationFt: number | null;
 }
 
-export default function MeteogramWrapper({
+const MeteogramWrapper = ({
   weatherData,
   isLoading,
   error,
   model,
   elevationFt,
-}: MeteogramWrapperProps) {
+}: MeteogramWrapperProps) => {
   const { preferences } = usePreferences();
 
   return (
@@ -45,4 +46,6 @@ export default function MeteogramWrapper({
       />
     </div>
   );
-}
+};
+
+export default React.memo(MeteogramWrapper);
