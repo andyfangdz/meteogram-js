@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useCallback } from "react";
 import { WeatherModel } from "../../types/weather";
 import Nav from "./nav";
 import { usePreferences } from "@/context/PreferencesContext";
@@ -22,6 +22,43 @@ export default function NavWrapper({
 }: NavWrapperProps) {
   const { preferences, setPreference } = usePreferences();
 
+  // Memoize all setter functions to prevent unnecessary re-renders in Nav component
+  // setPreference from PreferencesContext is already stable (wrapped in useCallback)
+  const setUseLocalTime = useCallback(
+    (val: boolean) => setPreference("useLocalTime", val),
+    [setPreference]
+  );
+
+  const setHighlightCeilingCoverage = useCallback(
+    (val: boolean) => setPreference("highlightCeilingCoverage", val),
+    [setPreference]
+  );
+
+  const setClampCloudCoverageAt50Pct = useCallback(
+    (val: boolean) => setPreference("clampCloudCoverageAt50Pct", val),
+    [setPreference]
+  );
+
+  const setShowPressureLines = useCallback(
+    (val: boolean) => setPreference("showPressureLines", val),
+    [setPreference]
+  );
+
+  const setShowWindBarbs = useCallback(
+    (val: boolean) => setPreference("showWindBarbs", val),
+    [setPreference]
+  );
+
+  const setShowIsothermLines = useCallback(
+    (val: boolean) => setPreference("showIsothermLines", val),
+    [setPreference]
+  );
+
+  const setShowIsotachLines = useCallback(
+    (val: boolean) => setPreference("showIsotachLines", val),
+    [setPreference]
+  );
+
   return (
     <Nav
       location={location}
@@ -31,29 +68,19 @@ export default function NavWrapper({
       updateWeatherData={refetch}
       lastUpdate={lastUpdate}
       useLocalTime={preferences.useLocalTime}
-      setUseLocalTime={(val: boolean) => setPreference("useLocalTime", val)}
+      setUseLocalTime={setUseLocalTime}
       highlightCeilingCoverage={preferences.highlightCeilingCoverage}
-      setHighlightCeilingCoverage={(val: boolean) =>
-        setPreference("highlightCeilingCoverage", val)
-      }
+      setHighlightCeilingCoverage={setHighlightCeilingCoverage}
       clampCloudCoverageAt50Pct={preferences.clampCloudCoverageAt50Pct}
-      setClampCloudCoverageAt50Pct={(val: boolean) =>
-        setPreference("clampCloudCoverageAt50Pct", val)
-      }
+      setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
       showPressureLines={preferences.showPressureLines}
-      setShowPressureLines={(val: boolean) =>
-        setPreference("showPressureLines", val)
-      }
+      setShowPressureLines={setShowPressureLines}
       showWindBarbs={preferences.showWindBarbs}
-      setShowWindBarbs={(val: boolean) => setPreference("showWindBarbs", val)}
+      setShowWindBarbs={setShowWindBarbs}
       showIsothermLines={preferences.showIsothermLines}
-      setShowIsothermLines={(val: boolean) =>
-        setPreference("showIsothermLines", val)
-      }
+      setShowIsothermLines={setShowIsothermLines}
       showIsotachLines={preferences.showIsotachLines}
-      setShowIsotachLines={(val: boolean) =>
-        setPreference("showIsotachLines", val)
-      }
+      setShowIsotachLines={setShowIsotachLines}
     />
   );
 }

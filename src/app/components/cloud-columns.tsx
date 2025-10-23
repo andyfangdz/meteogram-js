@@ -37,15 +37,55 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   onHover,
   onFreezeChange,
 }) => {
-  // Use Set for O(1) pressure level lookups (Set creation is cheaper than useMemo overhead)
-  const pressureLevelsSet = new Set(pressureLevels);
-  
+  // Convert pressureLevels array to Set for O(1) lookups during filtering
+  // This optimization is beneficial when filtering large datasets (many cloud cells per column)
+  // Trade-off: Set creation has overhead, but pays off when pressureLevels.length > ~10
+  // and when weatherData contains many columns with many cloud cells each
+  const pressureLevelsSet = React.useMemo(() => new Set(pressureLevels), [pressureLevels]);
+
+  // Memoize filtered weather data to avoid recomputing on every render
+  const filteredWeatherData = React.useMemo(() => {
+    return weatherData.map((d) => ({
+      ...d,
+      filteredClouds: d.cloud?.filter(
+        (cloud) => cloud.hpa != null && pressureLevelsSet.has(cloud.hpa),
+      ) || [],
+    }));
+  }, [weatherData, pressureLevelsSet]);
+
+  // Stable event handlers using useCallback
+  // IMPORTANT: These callbacks depend on onHover and onFreezeChange being stable.
+  // The parent component MUST memoize these callbacks (e.g., with useCallback)
+  // to prevent these handlers from being recreated on every render.
+  // Currently verified: meteogram.tsx memoizes both callbacks correctly.
+  const handleMouseEnter = React.useCallback((date: Date, cloud: CloudCell) => {
+    if (!frozenRect) {
+      onHover(date, cloud);
+    }
+  }, [frozenRect, onHover]);
+
+  const handleMouseLeave = React.useCallback(() => {
+    if (!frozenRect) {
+      onHover(null, null);
+    }
+  }, [frozenRect, onHover]);
+
+  const handleClick = React.useCallback((date: Date, cloud: CloudCell, event: React.MouseEvent) => {
+    if ((event.nativeEvent as PointerEvent).pointerType === "mouse") {
+      if (frozenRect) {
+        onFreezeChange(null);
+        onHover(date, cloud);
+      } else {
+        onFreezeChange({ date, cloudCell: cloud });
+        onHover(date, cloud);
+      }
+    }
+  }, [frozenRect, onFreezeChange, onHover]);
+
   return (
     <>
-      {weatherData.map((d) => {
-        const filteredClouds = d.cloud?.filter(
-          (cloud) => cloud.hpa != null && pressureLevelsSet.has(cloud.hpa),
-        );
+      {filteredWeatherData.map((d) => {
+        const { filteredClouds } = d;
 
         return (
           <Group
@@ -78,30 +118,9 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                   stroke="transparent"
                   strokeWidth={0}
                   style={{ cursor: "default" }}
-                  onMouseEnter={() => {
-                    if (!frozenRect) {
-                      onHover(d.date, cloud);
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    if (!frozenRect) {
-                      onHover(null, null);
-                    }
-                  }}
-                  onClick={(event: React.MouseEvent) => {
-                    if (
-                      (event.nativeEvent as PointerEvent).pointerType ===
-                      "mouse"
-                    ) {
-                      if (frozenRect) {
-                        onFreezeChange(null);
-                        onHover(d.date, cloud);
-                      } else {
-                        onFreezeChange({ date: d.date, cloudCell: cloud });
-                        onHover(d.date, cloud);
-                      }
-                    }
-                  }}
+                  onMouseEnter={() => handleMouseEnter(d.date, cloud)}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={(event) => handleClick(d.date, cloud, event)}
                 />
               );
             })}

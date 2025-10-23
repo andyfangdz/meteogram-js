@@ -4,6 +4,7 @@ import React, {
   createContext,
   useContext,
   useCallback,
+  useMemo,
 } from "react";
 import {
   Navbar,
@@ -74,13 +75,8 @@ const NavContext = createContext<{
   setShowIsotachLines: () => {},
 });
 
-export default function Nav({
-  model,
-  setModel,
-  location,
-  setLocation,
-  lastUpdate,
-  updateWeatherData,
+// Extracted and memoized PreferencesPanel component
+const PreferencesPanel = React.memo(function PreferencesPanel({
   useLocalTime,
   setUseLocalTime,
   highlightCeilingCoverage,
@@ -95,14 +91,23 @@ export default function Nav({
   setShowIsothermLines,
   showIsotachLines,
   setShowIsotachLines,
-}: NavProps) {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-
-  const handleMenuToggle = useCallback(() => {
-    setIsMenuOpen((prev) => !prev);
-  }, []);
-
-  const PreferencesPanel = () => (
+}: {
+  useLocalTime: boolean;
+  setUseLocalTime: (value: boolean) => void;
+  highlightCeilingCoverage: boolean;
+  setHighlightCeilingCoverage: (value: boolean) => void;
+  clampCloudCoverageAt50Pct: boolean;
+  setClampCloudCoverageAt50Pct: (value: boolean) => void;
+  showPressureLines: boolean;
+  setShowPressureLines: (value: boolean) => void;
+  showWindBarbs: boolean;
+  setShowWindBarbs: (value: boolean) => void;
+  showIsothermLines: boolean;
+  setShowIsothermLines: (value: boolean) => void;
+  showIsotachLines: boolean;
+  setShowIsotachLines: (value: boolean) => void;
+}) {
+  return (
     <div className="flex flex-col gap-4 p-4">
       <Switch isSelected={useLocalTime} onValueChange={setUseLocalTime}>
         Use Local Time
@@ -139,24 +144,70 @@ export default function Nav({
       </Switch>
     </div>
   );
+});
+
+export default function Nav({
+  model,
+  setModel,
+  location,
+  setLocation,
+  lastUpdate,
+  updateWeatherData,
+  useLocalTime,
+  setUseLocalTime,
+  highlightCeilingCoverage,
+  setHighlightCeilingCoverage,
+  clampCloudCoverageAt50Pct,
+  setClampCloudCoverageAt50Pct,
+  showPressureLines,
+  setShowPressureLines,
+  showWindBarbs,
+  setShowWindBarbs,
+  showIsothermLines,
+  setShowIsothermLines,
+  showIsotachLines,
+  setShowIsotachLines,
+}: NavProps) {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+  const handleMenuToggle = useCallback(() => {
+    setIsMenuOpen((prev) => !prev);
+  }, []);
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      useLocalTime,
+      setUseLocalTime,
+      highlightCeilingCoverage,
+      setHighlightCeilingCoverage,
+      clampCloudCoverageAt50Pct,
+      setClampCloudCoverageAt50Pct,
+      showPressureLines,
+      setShowPressureLines,
+      showIsothermLines,
+      setShowIsothermLines,
+      showIsotachLines,
+      setShowIsotachLines,
+    }),
+    [
+      useLocalTime,
+      setUseLocalTime,
+      highlightCeilingCoverage,
+      setHighlightCeilingCoverage,
+      clampCloudCoverageAt50Pct,
+      setClampCloudCoverageAt50Pct,
+      showPressureLines,
+      setShowPressureLines,
+      showIsothermLines,
+      setShowIsothermLines,
+      showIsotachLines,
+      setShowIsotachLines,
+    ]
+  );
 
   return (
-    <NavContext.Provider
-      value={{
-        useLocalTime,
-        setUseLocalTime,
-        highlightCeilingCoverage,
-        setHighlightCeilingCoverage,
-        clampCloudCoverageAt50Pct,
-        setClampCloudCoverageAt50Pct,
-        showPressureLines,
-        setShowPressureLines,
-        showIsothermLines,
-        setShowIsothermLines,
-        showIsotachLines,
-        setShowIsotachLines,
-      }}
-    >
+    <NavContext.Provider value={contextValue}>
       <Navbar
         className="relative z-[1000]"
         shouldHideOnScroll={false}
@@ -237,7 +288,22 @@ export default function Nav({
             <Button color="primary" onPress={updateWeatherData}>
               Refresh
             </Button>
-            <PreferencesPanel />
+            <PreferencesPanel
+              useLocalTime={useLocalTime}
+              setUseLocalTime={setUseLocalTime}
+              highlightCeilingCoverage={highlightCeilingCoverage}
+              setHighlightCeilingCoverage={setHighlightCeilingCoverage}
+              clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
+              setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
+              showPressureLines={showPressureLines}
+              setShowPressureLines={setShowPressureLines}
+              showWindBarbs={showWindBarbs}
+              setShowWindBarbs={setShowWindBarbs}
+              showIsothermLines={showIsothermLines}
+              setShowIsothermLines={setShowIsothermLines}
+              showIsotachLines={showIsotachLines}
+              setShowIsotachLines={setShowIsotachLines}
+            />
           </div>
         </NavbarMenu>
       </Navbar>
@@ -250,7 +316,22 @@ export default function Nav({
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div className="overflow-y-auto h-full">
-          <PreferencesPanel />
+          <PreferencesPanel
+            useLocalTime={useLocalTime}
+            setUseLocalTime={setUseLocalTime}
+            highlightCeilingCoverage={highlightCeilingCoverage}
+            setHighlightCeilingCoverage={setHighlightCeilingCoverage}
+            clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
+            setClampCloudCoverageAt50Pct={setClampCloudCoverageAt50Pct}
+            showPressureLines={showPressureLines}
+            setShowPressureLines={setShowPressureLines}
+            showWindBarbs={showWindBarbs}
+            setShowWindBarbs={setShowWindBarbs}
+            showIsothermLines={showIsothermLines}
+            setShowIsothermLines={setShowIsothermLines}
+            showIsotachLines={showIsotachLines}
+            setShowIsotachLines={setShowIsotachLines}
+          />
         </div>
       </div>
     </NavContext.Provider>

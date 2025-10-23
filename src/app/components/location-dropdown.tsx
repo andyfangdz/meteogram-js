@@ -28,8 +28,8 @@ import { useRouter } from "next/navigation";
 import { LocationsWithDescription } from "../../types/weather";
 import { useDebouncedCallback } from "use-debounce";
 
-// Shared components to use in both mobile and desktop views
-const LocationButton = ({
+// Shared components to use in both mobile and desktop views - memoized for performance
+const LocationButton = React.memo(function LocationButton({
   locationName,
   description,
   onClick,
@@ -37,22 +37,24 @@ const LocationButton = ({
   locationName: string;
   description?: string;
   onClick: () => void;
-}) => (
-  <Button
-    className="w-full justify-start mb-2 h-auto py-2 text-left flex flex-col items-start"
-    variant="flat"
-    onPress={onClick}
-  >
-    <code className="font-medium">{locationName}</code>
-    {description && (
-      <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
-        {description}
-      </span>
-    )}
-  </Button>
-);
+}) {
+  return (
+    <Button
+      className="w-full justify-start mb-2 h-auto py-2 text-left flex flex-col items-start"
+      variant="flat"
+      onPress={onClick}
+    >
+      <code className="font-medium">{locationName}</code>
+      {description && (
+        <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
+          {description}
+        </span>
+      )}
+    </Button>
+  );
+});
 
-const SearchInput = ({
+const SearchInput = React.memo(function SearchInput({
   value,
   onChange,
   onSearch,
@@ -64,7 +66,8 @@ const SearchInput = ({
   onSearch: (value: string) => void;
   isLoading: boolean;
   isMobile?: boolean;
-}) => (
+}) {
+  return (
   <div
     className={`relative ${isMobile ? "sticky top-0 z-10 pb-2 bg-white modal-input-container" : ""}`}
     onClick={(e) => e.stopPropagation()}
@@ -97,7 +100,8 @@ const SearchInput = ({
       />
     )}
   </div>
-);
+  );
+});
 
 // Helper to process descriptions for better display
 const truncateDescription = (desc: string, maxLength = 100) => {
@@ -158,13 +162,13 @@ export default function LocationDropdown({
     }
   }, 300); // 300ms debounce delay
 
-  const handleSearchChange = (query: string) => {
+  const handleSearchChange = React.useCallback((query: string) => {
     setSearchQuery(query);
     // Call the debounced function
     debouncedSearch(query);
-  };
+  }, [debouncedSearch]);
 
-  const handleLocationSelect = (loc: string) => {
+  const handleLocationSelect = React.useCallback((loc: string) => {
     if (loc in LOCATIONS) {
       setLocation(loc);
     } else {
@@ -175,9 +179,11 @@ export default function LocationDropdown({
         setLocation(coordString);
       }
     }
-  };
+  }, [customLocations, setLocation]);
 
   // Render location sections for mobile modal
+  // Note: Not using useCallback here as this function is only called once per render
+  // and returns JSX that React needs to reconcile anyway (minimal benefit from memoization)
   const renderMobileLocationSections = () => (
     <>
       {Object.entries(customLocations).length > 0 && (
@@ -215,6 +221,70 @@ export default function LocationDropdown({
       </div>
     </>
   );
+
+  // Build dropdown items list - memoized to avoid rebuilding on every render
+  // IMPORTANT: Must be called before any conditional returns (Rules of Hooks)
+  const dropdownItems = React.useMemo(() => {
+    const items = [];
+
+    // Search input
+    items.push(
+      <DropdownItem key="search" isReadOnly onClick={(e) => e.stopPropagation()}>
+        <SearchInput
+          value={searchQuery}
+          onChange={handleSearchChange}
+          onSearch={handleSearchChange}
+          isLoading={isLoading}
+        />
+      </DropdownItem>,
+    );
+
+    // Add search results if available
+    if (Object.entries(customLocations).length > 0) {
+      // Add header
+      items.push(
+        <DropdownItem key="search-results-header" isReadOnly>
+          <p className="text-sm font-semibold my-1">Search Results</p>
+        </DropdownItem>,
+      );
+
+      // Add search results
+      Object.entries(customLocations).forEach(([loc, data]) => {
+        items.push(
+          <DropdownItem key={loc} textValue={loc}>
+            <div className="flex flex-col">
+              <code className="font-medium">{loc}</code>
+              {data.description && (
+                <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
+                  {truncateDescription(data.description)}
+                </span>
+              )}
+            </div>
+          </DropdownItem>,
+        );
+      });
+    }
+
+    // Add saved locations header
+    if (Object.entries(LOCATIONS).length > 0) {
+      items.push(
+        <DropdownItem key="saved-locations-header" isReadOnly>
+          <p className="text-sm font-semibold my-1 mt-2">Saved Locations</p>
+        </DropdownItem>,
+      );
+
+      // Add saved locations
+      Object.entries(LOCATIONS).forEach(([loc, _]) => {
+        items.push(
+          <DropdownItem key={loc}>
+            <code className="font-medium">{loc}</code>
+          </DropdownItem>,
+        );
+      });
+    }
+
+    return items;
+  }, [searchQuery, handleSearchChange, isLoading, customLocations]);
 
   // Use Modal on mobile, Dropdown on desktop
   if (isMobile) {
@@ -265,65 +335,6 @@ export default function LocationDropdown({
         </Modal>
       </>
     );
-  }
-
-  // Build dropdown items list
-  const dropdownItems = [];
-
-  // Search input
-  dropdownItems.push(
-    <DropdownItem key="search" isReadOnly onClick={(e) => e.stopPropagation()}>
-      <SearchInput
-        value={searchQuery}
-        onChange={handleSearchChange}
-        onSearch={handleSearchChange}
-        isLoading={isLoading}
-      />
-    </DropdownItem>,
-  );
-
-  // Add search results if available
-  if (Object.entries(customLocations).length > 0) {
-    // Add header
-    dropdownItems.push(
-      <DropdownItem key="search-results-header" isReadOnly>
-        <p className="text-sm font-semibold my-1">Search Results</p>
-      </DropdownItem>,
-    );
-
-    // Add search results
-    Object.entries(customLocations).forEach(([loc, data]) => {
-      dropdownItems.push(
-        <DropdownItem key={loc} textValue={loc}>
-          <div className="flex flex-col">
-            <code className="font-medium">{loc}</code>
-            {data.description && (
-              <span className="text-xs text-gray-500 mt-1 line-clamp-2 overflow-hidden text-ellipsis">
-                {truncateDescription(data.description)}
-              </span>
-            )}
-          </div>
-        </DropdownItem>,
-      );
-    });
-  }
-
-  // Add saved locations header
-  if (Object.entries(LOCATIONS).length > 0) {
-    dropdownItems.push(
-      <DropdownItem key="saved-locations-header" isReadOnly>
-        <p className="text-sm font-semibold my-1 mt-2">Saved Locations</p>
-      </DropdownItem>,
-    );
-
-    // Add saved locations
-    Object.entries(LOCATIONS).forEach(([loc, _]) => {
-      dropdownItems.push(
-        <DropdownItem key={loc}>
-          <code className="font-medium">{loc}</code>
-        </DropdownItem>,
-      );
-    });
   }
 
   // Desktop view with dropdown
