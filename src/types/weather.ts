@@ -37,7 +37,7 @@ export type WeatherModel =
   | "best_match"
   | "gfs_seamless"
   | "gfs_hrrr"
-  | "ecmwf_ifs"
+  // | "ecmwf_ifs" // Disabled: doesn't provide pressure-level data needed for meteogram
   | "ecmwf_aifs025_single"
   | "gem_seamless"
   | "gem_hrdps_continental";
