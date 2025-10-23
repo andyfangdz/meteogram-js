@@ -13,6 +13,8 @@ interface MeteogramWrapperProps {
   elevationFt: number | null;
 }
 
+// Memoized to prevent re-renders when parent updates without prop changes.
+// Preferences come from context, so this primarily helps with parent re-renders unrelated to props.
 const MeteogramWrapper = React.memo(function MeteogramWrapper({
   weatherData,
   isLoading,

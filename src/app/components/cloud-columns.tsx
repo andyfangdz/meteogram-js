@@ -37,8 +37,8 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   onHover,
   onFreezeChange,
 }) => {
-  // Memoize pressure levels set for faster lookup
-  const pressureLevelsSet = React.useMemo(() => new Set(pressureLevels), [pressureLevels]);
+  // Use Set for O(1) pressure level lookups (Set creation is cheaper than useMemo overhead)
+  const pressureLevelsSet = new Set(pressureLevels);
   
   return (
     <>
