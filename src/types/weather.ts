@@ -37,8 +37,8 @@ export type WeatherModel =
   | "best_match"
   | "gfs_seamless"
   | "gfs_hrrr"
-  | "ecmwf_ifs025"
-  | "ecmwf_aifs025"
+  | "ecmwf_ifs"
+  | "ecmwf_aifs025_single"
   | "gem_seamless"
   | "gem_hrdps_continental";
 
