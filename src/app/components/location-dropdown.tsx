@@ -220,58 +220,8 @@ export default function LocationDropdown({
     </>
   ), [customLocations, handleLocationSelect, onClose]);
 
-  // Use Modal on mobile, Dropdown on desktop
-  if (isMobile) {
-    return (
-      <>
-        <Button variant="bordered" className="capitalize" onPress={onOpen}>
-          <code>{displayName}</code>
-        </Button>
-
-        <Modal
-          isOpen={isOpen}
-          onClose={onClose}
-          placement="bottom"
-          classNames={{
-            base: "m-0",
-            wrapper: "items-end",
-            body: "p-4",
-          }}
-          hideCloseButton
-          className="modal-mobile-ready"
-        >
-          <ModalContent className="modal-content-mobile">
-            <ModalHeader className="flex justify-between items-center border-b pb-3">
-              <span>Select Location</span>
-            </ModalHeader>
-            <ModalBody
-              className="overflow-y-auto"
-              style={{ maxHeight: "30vh" }}
-            >
-              <SearchInput
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onSearch={handleSearchChange}
-                isLoading={isLoading}
-                isMobile={true}
-              />
-
-              <div className="mt-3 modal-scrollable-section">
-                {renderMobileLocationSections()}
-              </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button fullWidth color="primary" onPress={onClose}>
-                Close
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      </>
-    );
-  }
-
   // Build dropdown items list - memoized to avoid rebuilding on every render
+  // IMPORTANT: Must be called before any conditional returns (Rules of Hooks)
   const dropdownItems = React.useMemo(() => {
     const items = [];
 
@@ -333,6 +283,57 @@ export default function LocationDropdown({
 
     return items;
   }, [searchQuery, handleSearchChange, isLoading, customLocations]);
+
+  // Use Modal on mobile, Dropdown on desktop
+  if (isMobile) {
+    return (
+      <>
+        <Button variant="bordered" className="capitalize" onPress={onOpen}>
+          <code>{displayName}</code>
+        </Button>
+
+        <Modal
+          isOpen={isOpen}
+          onClose={onClose}
+          placement="bottom"
+          classNames={{
+            base: "m-0",
+            wrapper: "items-end",
+            body: "p-4",
+          }}
+          hideCloseButton
+          className="modal-mobile-ready"
+        >
+          <ModalContent className="modal-content-mobile">
+            <ModalHeader className="flex justify-between items-center border-b pb-3">
+              <span>Select Location</span>
+            </ModalHeader>
+            <ModalBody
+              className="overflow-y-auto"
+              style={{ maxHeight: "30vh" }}
+            >
+              <SearchInput
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onSearch={handleSearchChange}
+                isLoading={isLoading}
+                isMobile={true}
+              />
+
+              <div className="mt-3 modal-scrollable-section">
+                {renderMobileLocationSections()}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button fullWidth color="primary" onPress={onClose}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </>
+    );
+  }
 
   // Desktop view with dropdown
   return (
