@@ -25,7 +25,6 @@ export async function fetchElevationAction(
   longitude: number,
 ): Promise<number | null> {
   const elevationUrl = `https://api.open-meteo.com/v1/elevation?latitude=${latitude}&longitude=${longitude}`;
-  console.log(`Fetching elevation from: ${elevationUrl}`);
   try {
     const response = await fetch(elevationUrl, {
       next: { revalidate: 3600 * 24 },
@@ -41,7 +40,6 @@ export async function fetchElevationAction(
       const elevationInMeters = data.elevation[0];
       return elevationInMeters * FEET_PER_METER;
     }
-    console.warn("Elevation data not found in response:", data);
     return null;
   } catch (error) {
     console.error("Failed to fetch elevation data:", error);
@@ -57,7 +55,6 @@ export async function fetchWeatherDataAction(
   model: WeatherModel,
   location: string,
 ): Promise<ReturnType<typeof fetchWeatherApi>> {
-  console.log(`Fetching weather for model: ${model}, location: ${location}`);
   const modelConfig = MODEL_CONFIGS[model];
   if (!modelConfig) {
     throw new Error(`Invalid weather model specified: ${model}`);
@@ -105,10 +102,8 @@ export async function fetchWeatherDataAction(
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   };
 
-  console.log("Calling OpenMeteo API with params:", params);
   try {
     const responses = await fetchWeatherApi(API_URL, params);
-    console.log(`Received ${responses.length} response(s) from OpenMeteo.`);
     return responses;
   } catch (error) {
     console.error("Failed to fetch weather API data:", error);
