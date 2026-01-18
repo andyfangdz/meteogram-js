@@ -25,7 +25,8 @@ export function transformWeatherData(
   const temperatureBaseIndex = 2 * modelConfig.hpaLevels.length;
   const windSpeedBaseIndex = 3 * modelConfig.hpaLevels.length;
   const windDirectionBaseIndex = 4 * modelConfig.hpaLevels.length;
-  const groundTempIndex = 5 * modelConfig.hpaLevels.length;
+  const dewPointBaseIndex = 5 * modelConfig.hpaLevels.length;
+  const groundTempIndex = 6 * modelConfig.hpaLevels.length;
 
   const cloudData = range(
     Number(forecastData.time()),
@@ -50,6 +51,9 @@ export function transformWeatherData(
         const windDirection = forecastData
           .variables(windDirectionBaseIndex + hpaIndex)!
           .values(index)!;
+        const dewPoint = forecastData
+          .variables(dewPointBaseIndex + hpaIndex)!
+          .values(index)!;
 
         // Only return valid data
         if (
@@ -58,11 +62,13 @@ export function transformWeatherData(
           temperature == null ||
           windSpeed == null ||
           windDirection == null ||
+          dewPoint == null ||
           !Number.isFinite(cloudCoverage) ||
           !Number.isFinite(geopotentialMeters) ||
           !Number.isFinite(temperature) ||
           !Number.isFinite(windSpeed) ||
-          !Number.isFinite(windDirection)
+          !Number.isFinite(windDirection) ||
+          !Number.isFinite(dewPoint)
         ) {
           return null;
         }
@@ -73,6 +79,7 @@ export function transformWeatherData(
           mslFt: geopotentialToMsl(geopotentialMeters) * FEET_PER_METER,
           cloudCoverage,
           temperature,
+          dewPoint,
           windSpeed,
           windDirection,
         };

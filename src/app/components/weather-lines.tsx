@@ -7,6 +7,7 @@ import {
   findFreezingLevels,
   findIsothermPoints,
   findIsotachPoints,
+  findDewPointDepressionPoints,
 } from "../../utils/meteogram";
 import { MODEL_CONFIGS } from "../../config/weather";
 
@@ -29,6 +30,22 @@ interface IsotachLine {
   points: Point[];
 }
 
+interface DewPointDepressionLine {
+  spread: number;
+  points: Point[];
+}
+
+// Color scheme for dew point depression: cyan (moist) -> yellow -> orange (dry)
+const DEW_POINT_DEPRESSION_COLORS: Record<number, string> = {
+  3: "#00CED1", // Cyan - near saturation
+  5: "#FFD700", // Yellow - moderate
+  10: "#FF8C00", // Orange - dry
+};
+
+const getDewPointDepressionColor = (spread: number): string => {
+  return DEW_POINT_DEPRESSION_COLORS[spread] || "#888888";
+};
+
 interface WeatherLinesProps {
   weatherData: CloudColumn[];
   scales: {
@@ -37,6 +54,7 @@ interface WeatherLinesProps {
   };
   showIsothermLines: boolean;
   showIsotachLines: boolean;
+  showDewPointDepressionLines: boolean;
   model: WeatherModel;
 }
 
@@ -45,6 +63,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
   scales,
   showIsothermLines,
   showIsotachLines,
+  showDewPointDepressionLines,
   model,
 }) => {
   // Convert the utility function results into the format we need
@@ -71,6 +90,11 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
       MODEL_CONFIGS[model].maxIsothermStepDistance,
     );
   }, [weatherData, showIsotachLines, model]);
+
+  const dewPointDepressionPoints = React.useMemo(() => {
+    if (!showDewPointDepressionLines) return [];
+    return findDewPointDepressionPoints(weatherData, [3, 5, 10]);
+  }, [weatherData, showDewPointDepressionLines]);
 
   // Memoize freezing level paths to avoid rebuilding on every render
   const freezingPaths = React.useMemo(() => {
@@ -122,6 +146,25 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
       };
     });
   }, [isotachPoints, scales, weatherData]);
+
+  // Memoize dew point depression paths with colors
+  const dewPointDepressionPaths = React.useMemo(() => {
+    return dewPointDepressionPoints.map(({ spread, points }) => {
+      if (!points.length) return null;
+      const pathD = points.reduce((path: string, point: Point, i: number) => {
+        const x = formatNumber(scales.dateScale(weatherData[point.x].date));
+        const y = formatNumber(scales.mslScale(point.y));
+        if (i === 0) return `M ${x} ${y}`;
+        return `${path} L ${x} ${y}`;
+      }, "");
+      return {
+        spread,
+        pathD,
+        color: getDewPointDepressionColor(spread),
+        firstPoint: points[0],
+      };
+    });
+  }, [dewPointDepressionPoints, scales, weatherData]);
 
   return (
     <>
@@ -222,6 +265,49 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
                 pointerEvents="none"
               >
                 {`${speedKnots.toFixed(0)}kt`}
+              </text>
+            </g>
+          );
+        })}
+
+      {/* Dew Point Depression Lines */}
+      {showDewPointDepressionLines &&
+        dewPointDepressionPaths.map((data, lineIndex: number) => {
+          if (!data || !data.pathD) return null;
+
+          const { spread, pathD, color, firstPoint } = data;
+
+          return (
+            <g
+              key={`dew-point-depression-${spread}-${formatNumber(firstPoint.y)}-${lineIndex}`}
+              className={`dew-point-depression-group dew-point-depression-${spread}`}
+              pointerEvents="none"
+            >
+              <path
+                className="dew-point-depression-line"
+                d={pathD}
+                stroke={color}
+                strokeWidth={1.5}
+                strokeDasharray="4,4"
+                opacity={0.8}
+                fill="none"
+              />
+              <text
+                className="dew-point-depression-label"
+                x={formatNumber(
+                  scales.dateScale(weatherData[firstPoint.x].date),
+                )}
+                y={formatNumber(scales.mslScale(firstPoint.y))}
+                dx="-2.5em"
+                dy="0.3em"
+                fontSize="10"
+                fill={color}
+                stroke="white"
+                strokeWidth="2"
+                paintOrder="stroke"
+                pointerEvents="none"
+              >
+                {`${spread}°C`}
               </text>
             </g>
           );

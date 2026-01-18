@@ -45,6 +45,8 @@ interface NavProps {
   setShowIsothermLines: (value: boolean) => void;
   showIsotachLines: boolean;
   setShowIsotachLines: (value: boolean) => void;
+  showDewPointDepressionLines: boolean;
+  setShowDewPointDepressionLines: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
@@ -60,6 +62,8 @@ const NavContext = createContext<{
   setShowIsothermLines: (value: boolean) => void;
   showIsotachLines: boolean;
   setShowIsotachLines: (value: boolean) => void;
+  showDewPointDepressionLines: boolean;
+  setShowDewPointDepressionLines: (value: boolean) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -73,6 +77,8 @@ const NavContext = createContext<{
   setShowIsothermLines: () => {},
   showIsotachLines: false,
   setShowIsotachLines: () => {},
+  showDewPointDepressionLines: true,
+  setShowDewPointDepressionLines: () => {},
 });
 
 // Extracted and memoized PreferencesPanel component
@@ -91,6 +97,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowIsothermLines,
   showIsotachLines,
   setShowIsotachLines,
+  showDewPointDepressionLines,
+  setShowDewPointDepressionLines,
 }: {
   useLocalTime: boolean;
   setUseLocalTime: (value: boolean) => void;
@@ -106,6 +114,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowIsothermLines: (value: boolean) => void;
   showIsotachLines: boolean;
   setShowIsotachLines: (value: boolean) => void;
+  showDewPointDepressionLines: boolean;
+  setShowDewPointDepressionLines: (value: boolean) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -142,6 +152,12 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
       <Switch isSelected={showIsotachLines} onValueChange={setShowIsotachLines}>
         Show Isotach Lines
       </Switch>
+      <Switch
+        isSelected={showDewPointDepressionLines}
+        onValueChange={setShowDewPointDepressionLines}
+      >
+        Show Dew Point Spread Lines
+      </Switch>
     </div>
   );
 });
@@ -167,6 +183,8 @@ export default function Nav({
   setShowIsothermLines,
   showIsotachLines,
   setShowIsotachLines,
+  showDewPointDepressionLines,
+  setShowDewPointDepressionLines,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -189,6 +207,8 @@ export default function Nav({
       setShowIsothermLines,
       showIsotachLines,
       setShowIsotachLines,
+      showDewPointDepressionLines,
+      setShowDewPointDepressionLines,
     }),
     [
       useLocalTime,
@@ -203,6 +223,8 @@ export default function Nav({
       setShowIsothermLines,
       showIsotachLines,
       setShowIsotachLines,
+      showDewPointDepressionLines,
+      setShowDewPointDepressionLines,
     ]
   );
 
@@ -303,6 +325,8 @@ export default function Nav({
               setShowIsothermLines={setShowIsothermLines}
               showIsotachLines={showIsotachLines}
               setShowIsotachLines={setShowIsotachLines}
+              showDewPointDepressionLines={showDewPointDepressionLines}
+              setShowDewPointDepressionLines={setShowDewPointDepressionLines}
             />
           </div>
         </NavbarMenu>
@@ -331,6 +355,8 @@ export default function Nav({
             setShowIsothermLines={setShowIsothermLines}
             showIsotachLines={showIsotachLines}
             setShowIsotachLines={setShowIsotachLines}
+            showDewPointDepressionLines={showDewPointDepressionLines}
+            setShowDewPointDepressionLines={setShowDewPointDepressionLines}
           />
         </div>
       </div>

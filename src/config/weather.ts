@@ -83,6 +83,10 @@ export class ModelConfig {
     return this.hpaLevels.map((hpa) => `wind_direction_${hpa}hPa`);
   }
 
+  getDewPointVars() {
+    return this.hpaLevels.map((hpa) => `dew_point_${hpa}hPa`);
+  }
+
   getAllVariables() {
     return [
       ...this.getCloudCoverVars(),
@@ -90,6 +94,7 @@ export class ModelConfig {
       ...this.getTemperatureVars(),
       ...this.getWindSpeedVars(),
       ...this.getWindDirectionVars(),
+      ...this.getDewPointVars(),
       "temperature_2m", // Ground level temperature
     ];
   }

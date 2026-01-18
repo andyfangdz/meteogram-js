@@ -219,6 +219,20 @@ const createInterpolatedWindSpeedGrid = (
   });
 };
 
+// Convert weather data to a high-resolution dew point depression grid
+// Dew point depression = temperature - dewPoint
+const createInterpolatedDewPointDepressionGrid = (
+  weatherData: CloudColumn[],
+  resolution: number = 100,
+): number[][] => {
+  return createInterpolatedGrid(weatherData, resolution, {
+    valueExtractor: (cell) =>
+      cell.temperature != null && cell.dewPoint != null
+        ? cell.temperature - cell.dewPoint
+        : undefined,
+  });
+};
+
 // Helper function to convert grid coordinates back to weather data coordinates
 const gridToWeatherCoords = (
   x: number,
@@ -591,6 +605,81 @@ export const findIsotachPoints = (
     return result;
   } catch (error) {
     console.error("Error computing isotachs:", error);
+    return [];
+  }
+};
+
+// Helper function to find dew point depression isolines
+// Dew point depression = temperature - dew point (how far from saturation)
+export const findDewPointDepressionPoints = (
+  weatherData: CloudColumn[],
+  thresholds: number[] = [3, 5, 10],
+) => {
+  if (!weatherData?.length) {
+    return [];
+  }
+
+  // Create high-resolution dew point depression grid
+  const resolution = 100;
+  const depressionGrid = createInterpolatedDewPointDepressionGrid(
+    weatherData,
+    resolution,
+  );
+
+  if (depressionGrid.length === 0) return [];
+
+  // Find altitude range for coordinate conversion
+  let minAlt = Infinity;
+  let maxAlt = -Infinity;
+  weatherData.forEach((column) => {
+    column.cloud.forEach((cell) => {
+      if (cell.mslFt != null) {
+        minAlt = Math.min(minAlt, cell.mslFt);
+        maxAlt = Math.max(maxAlt, cell.mslFt);
+      }
+    });
+  });
+
+  if (minAlt === Infinity || maxAlt === -Infinity) return [];
+
+  // Add padding to altitude range
+  const altPadding = (maxAlt - minAlt) * 0.1;
+  minAlt -= altPadding;
+  maxAlt += altPadding;
+
+  try {
+    // Use marching-squares to find dew point depression isolines
+    const lines = isoLines(depressionGrid, thresholds, { noFrame: true });
+
+    if (!lines) return [];
+
+    // Convert the lines to our format, keeping separate paths for each threshold
+    const result: {
+      spread: number;
+      points: { x: number; y: number }[];
+    }[] = [];
+
+    thresholds.forEach((spread, i) => {
+      const spreadLines = lines[i] || [];
+      spreadLines
+        .filter((line) => line.length > 2)
+        .forEach((line) => {
+          // Convert each line to weather coordinates
+          const points = line.map(([x, y]) =>
+            gridToWeatherCoords(x, y, weatherData, minAlt, maxAlt, resolution),
+          );
+
+          // Clip the line to valid ranges and filter out short segments
+          const clippedPoints = clipLineToValidRanges(points, weatherData);
+          if (clippedPoints.length > 2) {
+            result.push({ spread, points: clippedPoints });
+          }
+        });
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error computing dew point depression lines:", error);
     return [];
   }
 };
