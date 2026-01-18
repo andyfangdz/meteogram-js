@@ -213,7 +213,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
               <text
                 className="isotherm-label"
                 x={formatNumber(
-                  scales.dateScale(weatherData[firstPoint.x].date),
+                  scales.dateScale(weatherData[Math.floor(firstPoint.x)].date),
                 )}
                 y={formatNumber(scales.mslScale(firstPoint.y))}
                 dx="-2.5em"
@@ -253,7 +253,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
               <text
                 className="isotach-label"
                 x={formatNumber(
-                  scales.dateScale(weatherData[firstPoint.x].date),
+                  scales.dateScale(weatherData[Math.floor(firstPoint.x)].date),
                 )}
                 y={formatNumber(scales.mslScale(firstPoint.y))}
                 dx="-2.5em"
@@ -298,7 +298,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
               <text
                 className="dew-point-depression-label"
                 x={formatNumber(
-                  scales.dateScale(weatherData[firstPoint.x].date),
+                  scales.dateScale(weatherData[Math.floor(firstPoint.x)].date),
                 )}
                 y={formatNumber(scales.mslScale(firstPoint.y))}
                 dx="-2.5em"
