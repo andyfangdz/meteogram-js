@@ -156,7 +156,7 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
         isSelected={showDewPointDepressionLines}
         onValueChange={setShowDewPointDepressionLines}
       >
-        Show Dew Point Spread Lines
+        Show Dew Point Depression Lines
       </Switch>
     </div>
   );

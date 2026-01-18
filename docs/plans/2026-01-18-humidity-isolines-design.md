@@ -9,7 +9,7 @@ Add dew point depression isolines to the meteogram visualization. Dew point depr
 ### Metric
 - **Dew Point Depression** = Temperature - Dew Point (in °C)
 - Smaller values indicate air closer to saturation (higher moisture)
-- Values near 0°C indicate fog/cloud formation conditions
+- Values with dew point depression near 0°C indicate conditions favorable for fog/cloud formation
 
 ### Isoline Thresholds
 Fixed aviation-relevant values:
