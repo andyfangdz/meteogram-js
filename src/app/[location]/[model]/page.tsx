@@ -1,4 +1,3 @@
-import { HeroUIProvider } from "@heroui/react";
 import ClientWrapper from "../../components/client-wrapper";
 import { MODEL_NAMES } from "@/config/weather";
 import { LOCATIONS } from "@/config/weather";
@@ -56,18 +55,16 @@ export default async function Page({ params, searchParams }: PageProps) {
   ]);
 
   return (
-    <HeroUIProvider>
-      <div className="min-h-screen flex flex-col">
-        <ClientWrapper
-          initialLocation={decodedLocation}
-          initialModel={model as WeatherModel}
-          initialWeatherData={initialData.data}
-          initialTimestamp={initialData.timestamp}
-          initialElevationFt={initialData.elevationFt}
-          initialPreferences={preferencesResult.preferences}
-          cookieReadSuccess={preferencesResult.cookieReadSuccess}
-        />
-      </div>
-    </HeroUIProvider>
+    <div className="min-h-screen flex flex-col">
+      <ClientWrapper
+        initialLocation={decodedLocation}
+        initialModel={model as WeatherModel}
+        initialWeatherData={initialData.data}
+        initialTimestamp={initialData.timestamp}
+        initialElevationFt={initialData.elevationFt}
+        initialPreferences={preferencesResult.preferences}
+        cookieReadSuccess={preferencesResult.cookieReadSuccess}
+      />
+    </div>
   );
 }

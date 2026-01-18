@@ -20,6 +20,7 @@ import {
   usePreferences,
 } from "@/context/PreferencesContext";
 import { serializeVisualizationPreferences } from "@/utils/params";
+import { HeroUIProvider } from "@heroui/react";
 
 interface ClientWrapperProps {
   initialLocation: string;
@@ -136,17 +137,19 @@ function ClientWrapperInternal({
 
 export default function ClientWrapper(props: ClientWrapperProps) {
   return (
-    <PreferencesProvider
-      initialPreferences={props.initialPreferences}
-      cookieReadSuccess={props.cookieReadSuccess}
-    >
-      <ClientWrapperInternal
-        initialLocation={props.initialLocation}
-        initialModel={props.initialModel}
-        initialWeatherData={props.initialWeatherData}
-        initialTimestamp={props.initialTimestamp}
-        initialElevationFt={props.initialElevationFt}
-      />
-    </PreferencesProvider>
+    <HeroUIProvider>
+      <PreferencesProvider
+        initialPreferences={props.initialPreferences}
+        cookieReadSuccess={props.cookieReadSuccess}
+      >
+        <ClientWrapperInternal
+          initialLocation={props.initialLocation}
+          initialModel={props.initialModel}
+          initialWeatherData={props.initialWeatherData}
+          initialTimestamp={props.initialTimestamp}
+          initialElevationFt={props.initialElevationFt}
+        />
+      </PreferencesProvider>
+    </HeroUIProvider>
   );
 }

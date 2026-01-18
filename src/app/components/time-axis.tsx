@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import type { AxisBottom as AxisBottomType, AxisScale } from "@visx/axis";
 import { timeFormat, utcFormat } from "@visx/vendor/d3-time-format";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSyncExternalStore, useCallback, useMemo } from "react";
 
 const AxisBottom = dynamic<React.ComponentProps<typeof AxisBottomType>>(
   () => import("@visx/axis").then((mod) => mod.AxisBottom),
@@ -12,6 +12,18 @@ const AxisBottom = dynamic<React.ComponentProps<typeof AxisBottomType>>(
     loading: () => null, // Render nothing while loading
   },
 );
+
+function subscribe() {
+  return () => {};
+}
+
+function getSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 interface TimeAxisProps {
   left: number;
@@ -30,11 +42,7 @@ export default function TimeAxis({
   stroke,
   tickStroke,
 }: TimeAxisProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   // Memoize tickFormat to avoid recreating on every render
   const tickFormat = useCallback((value: Date | number) => {
