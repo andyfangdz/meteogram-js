@@ -28,6 +28,7 @@ export type MeteogramProps = {
   showWindBarbs?: boolean;
   showIsothermLines?: boolean;
   showIsotachLines?: boolean;
+  showDewPointDepressionLines?: boolean;
   model: WeatherModel;
   elevationFt: number | null;
 };
@@ -51,6 +52,7 @@ const Meteogram = React.memo(function Meteogram({
   showWindBarbs = true,
   showIsothermLines = false,
   showIsotachLines = false,
+  showDewPointDepressionLines = true,
   model,
   elevationFt,
 }: MeteogramProps) {
@@ -204,6 +206,7 @@ const Meteogram = React.memo(function Meteogram({
           scales={scales}
           showIsothermLines={showIsothermLines}
           showIsotachLines={showIsotachLines}
+          showDewPointDepressionLines={showDewPointDepressionLines}
           model={model}
         />
         {showPressureLines && (

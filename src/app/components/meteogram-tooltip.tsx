@@ -65,6 +65,12 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
         {cloudCell.temperature != null && (
           <div>{`Temperature: ${formatNumber(cloudCell.temperature)}°C`}</div>
         )}
+        {cloudCell.dewPoint != null && (
+          <div>{`Dew Point: ${formatNumber(cloudCell.dewPoint)}°C`}</div>
+        )}
+        {cloudCell.temperature != null && cloudCell.dewPoint != null && (
+          <div>{`Spread (T-Td): ${formatNumber(cloudCell.temperature - cloudCell.dewPoint)}°C`}</div>
+        )}
         {cloudCell.windSpeed != null && (
           <div>{`Wind Speed: ${kmhToKnots(cloudCell.windSpeed)} kt`}</div>
         )}

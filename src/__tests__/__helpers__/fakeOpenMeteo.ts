@@ -67,6 +67,12 @@ export function createFakeOpenMeteoResponse(
     variables.push(series);
   });
 
+  // dew point per level (temperature minus spread, where spread is 3°C at ground level and increases by 1°C per altitude level)
+  hpaLevels.forEach((_hpa, hpaIndex) => {
+    const series = Array.from({ length: steps }, (_v, t) => 10 - hpaIndex * 2 - t - (3 + hpaIndex));
+    variables.push(series);
+  });
+
   // ground temperature (2m)
   const groundTemp = Array.from({ length: steps }, (_v, t) => 15 - t);
   variables.push(groundTemp);

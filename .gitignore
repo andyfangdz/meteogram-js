@@ -37,3 +37,4 @@ yarn-error.log*
 next-env.d.ts
 find-an-approach.github.io
 .playwright-mcp
+.claude/

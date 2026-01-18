@@ -59,6 +59,11 @@ export default function NavWrapper({
     [setPreference]
   );
 
+  const setShowDewPointDepressionLines = useCallback(
+    (val: boolean) => setPreference("showDewPointDepressionLines", val),
+    [setPreference]
+  );
+
   return (
     <Nav
       location={location}
@@ -81,6 +86,8 @@ export default function NavWrapper({
       setShowIsothermLines={setShowIsothermLines}
       showIsotachLines={preferences.showIsotachLines}
       setShowIsotachLines={setShowIsotachLines}
+      showDewPointDepressionLines={preferences.showDewPointDepressionLines}
+      setShowDewPointDepressionLines={setShowDewPointDepressionLines}
     />
   );
 }
