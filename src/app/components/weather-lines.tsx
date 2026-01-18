@@ -289,10 +289,10 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
                 className="dew-point-depression-line"
                 d={pathD}
                 stroke={color}
-                strokeWidth={1.5}
-                strokeDasharray="2,3"
+                strokeWidth={2}
+                strokeDasharray="1,6"
                 strokeLinecap="round"
-                opacity={0.8}
+                opacity={0.9}
                 fill="none"
               />
               <text
