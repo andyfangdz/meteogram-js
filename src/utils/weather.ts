@@ -19,7 +19,19 @@ export function transformWeatherData(
   const modelConfig = MODEL_CONFIGS[model];
   const forecastData = response[modelConfig.forecastDataKey]()!;
 
-  // Calculate base indices for each variable type
+  // Variable index ordering in the Open-Meteo API response.
+  // The order MUST match getAllVariables() in config/weather.ts which constructs the API request.
+  //
+  // For N pressure levels, the variables are ordered as follows:
+  //   [0, N)     - cloud_cover_<hPa>      (cloud coverage per pressure level)
+  //   [N, 2N)    - geopotential_height_<hPa> (height per pressure level)
+  //   [2N, 3N)   - temperature_<hPa>      (temperature per pressure level)
+  //   [3N, 4N)   - wind_speed_<hPa>       (wind speed per pressure level)
+  //   [4N, 5N)   - wind_direction_<hPa>   (wind direction per pressure level)
+  //   [5N, 6N)   - dew_point_<hPa>        (dew point per pressure level)
+  //   6N         - temperature_2m         (ground temperature)
+  //
+  // When adding new variables, update both getAllVariables() and these indices.
   const cloudCoverBaseIndex = 0;
   const geopotentialBaseIndex = modelConfig.hpaLevels.length;
   const temperatureBaseIndex = 2 * modelConfig.hpaLevels.length;

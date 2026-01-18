@@ -221,15 +221,21 @@ const createInterpolatedWindSpeedGrid = (
 
 // Convert weather data to a high-resolution dew point depression grid
 // Dew point depression = temperature - dewPoint
+// Note: In rare cases of supersaturation, dewPoint > temperature, resulting in negative depression.
+// We clamp to 0 since negative depression values are not physically meaningful for visualization.
 const createInterpolatedDewPointDepressionGrid = (
   weatherData: CloudColumn[],
   resolution: number = 100,
 ): number[][] => {
   return createInterpolatedGrid(weatherData, resolution, {
-    valueExtractor: (cell) =>
-      cell.temperature != null && cell.dewPoint != null
-        ? cell.temperature - cell.dewPoint
-        : undefined,
+    valueExtractor: (cell) => {
+      if (cell.temperature == null || cell.dewPoint == null) {
+        return undefined;
+      }
+      const depression = cell.temperature - cell.dewPoint;
+      // Clamp to 0: negative depression (supersaturation) is treated as saturated (0°C spread)
+      return Math.max(0, depression);
+    },
   });
 };
 

@@ -87,15 +87,19 @@ export class ModelConfig {
     return this.hpaLevels.map((hpa) => `dew_point_${hpa}hPa`);
   }
 
+  // Returns all variables for the API request.
+  // IMPORTANT: The order here determines the index order in the API response.
+  // See utils/weather.ts for the index calculations that depend on this order.
+  // When adding new variables, update both this method and the indices in utils/weather.ts.
   getAllVariables() {
     return [
-      ...this.getCloudCoverVars(),
-      ...this.getGeopotentialHeightVars(),
-      ...this.getTemperatureVars(),
-      ...this.getWindSpeedVars(),
-      ...this.getWindDirectionVars(),
-      ...this.getDewPointVars(),
-      "temperature_2m", // Ground level temperature
+      ...this.getCloudCoverVars(), // indices [0, N)
+      ...this.getGeopotentialHeightVars(), // indices [N, 2N)
+      ...this.getTemperatureVars(), // indices [2N, 3N)
+      ...this.getWindSpeedVars(), // indices [3N, 4N)
+      ...this.getWindDirectionVars(), // indices [4N, 5N)
+      ...this.getDewPointVars(), // indices [5N, 6N)
+      "temperature_2m", // index 6N (ground level temperature)
     ];
   }
 }
