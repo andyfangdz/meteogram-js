@@ -37,7 +37,9 @@ interface DewPointDepressionLine {
 
 // Color scheme for dew point depression: cyan (moist) -> yellow -> orange (dry)
 const DEW_POINT_DEPRESSION_COLORS: Record<number, string> = {
-  3: "#00CED1", // Cyan - near saturation
+  0: "#FF00FF", // Magenta - saturated
+  1: "#00FFFF", // Cyan - nearly saturated
+  3: "#00CED1", // Dark cyan - near saturation
   5: "#FFD700", // Yellow - moderate
   10: "#FF8C00", // Orange - dry
 };
@@ -93,7 +95,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
 
   const dewPointDepressionPoints = React.useMemo(() => {
     if (!showDewPointDepressionLines) return [];
-    return findDewPointDepressionPoints(weatherData, [3, 5, 10]);
+    return findDewPointDepressionPoints(weatherData, [0, 1, 3, 5, 10]);
   }, [weatherData, showDewPointDepressionLines]);
 
   // Memoize freezing level paths to avoid rebuilding on every render
@@ -307,7 +309,7 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
                 paintOrder="stroke"
                 pointerEvents="none"
               >
-                {`${spread}°C`}
+                {`Δ${spread}°`}
               </text>
             </g>
           );
