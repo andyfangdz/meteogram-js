@@ -290,7 +290,8 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
                 d={pathD}
                 stroke={color}
                 strokeWidth={1.5}
-                strokeDasharray="4,4"
+                strokeDasharray="2,3"
+                strokeLinecap="round"
                 opacity={0.8}
                 fill="none"
               />
