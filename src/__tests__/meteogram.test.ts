@@ -17,6 +17,7 @@ function createTestCloudColumn(
       mslFt: c.mslFt,
       mslFtTop: c.mslFt + 500,
       mslFtBottom: c.mslFt - 500,
+      geopotentialFt: c.mslFt * 0.98, // Approximate geopotential height
       temperature: c.temperature,
       dewPoint: c.dewPoint,
       cloudCoverage: 50,
