@@ -6,4 +6,5 @@ export const DEFAULT_PREFERENCES = {
   showWindBarbs: true,
   showIsothermLines: false,
   showIsotachLines: false,
+  showDewPointDepressionLines: true,
 } as const;
