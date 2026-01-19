@@ -22,12 +22,46 @@ import {
 import { serializeVisualizationPreferences } from "@/utils/params";
 import { HeroUIProvider } from "@heroui/react";
 
+// Type for the global weather data injected via script tag
+interface SerializedWeatherData {
+  data: Array<{
+    date: string;
+    cloud: CloudColumn["cloud"];
+    groundTemp: number;
+  }>;
+  timestamp: string;
+  elevationFt: number | null;
+}
+
+declare global {
+  interface Window {
+    __WEATHER_DATA__?: SerializedWeatherData;
+  }
+}
+
+// Parse serialized weather data from the global variable
+function getInitialWeatherData(): {
+  data: CloudColumn[];
+  timestamp: string;
+  elevationFt: number | null;
+} | null {
+  if (typeof window === "undefined" || !window.__WEATHER_DATA__) {
+    return null;
+  }
+  const { data, timestamp, elevationFt } = window.__WEATHER_DATA__;
+  return {
+    data: data.map((column) => ({
+      ...column,
+      date: new Date(column.date),
+    })),
+    timestamp,
+    elevationFt,
+  };
+}
+
 interface ClientWrapperProps {
   initialLocation: string;
   initialModel: WeatherModel;
-  initialWeatherData: CloudColumn[];
-  initialTimestamp: string;
-  initialElevationFt: number | null;
   initialPreferences: VisualizationPreferences;
   cookieReadSuccess?: boolean;
 }
@@ -35,20 +69,26 @@ interface ClientWrapperProps {
 function ClientWrapperInternal({
   initialLocation,
   initialModel,
-  initialWeatherData,
-  initialTimestamp,
-  initialElevationFt,
-}: Omit<ClientWrapperProps, "initialPreferences">) {
+}: Omit<ClientWrapperProps, "initialPreferences" | "cookieReadSuccess">) {
   const router = useRouter();
   const { preferences } = usePreferences();
   const [model, setModel] = useState<WeatherModel>(initialModel);
-  const [weatherData, setWeatherData] =
-    useState<CloudColumn[]>(initialWeatherData);
-  const [timestamp, setTimestamp] = useState<string>(initialTimestamp);
-  const [elevationFt, setElevationFt] = useState<number | null>(
-    initialElevationFt,
-  );
-  const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize state from global weather data (injected via script tag)
+  const [weatherData, setWeatherData] = useState<CloudColumn[]>(() => {
+    const initial = getInitialWeatherData();
+    return initial?.data ?? [];
+  });
+  const [timestamp, setTimestamp] = useState<string>(() => {
+    const initial = getInitialWeatherData();
+    return initial?.timestamp ?? "";
+  });
+  const [elevationFt, setElevationFt] = useState<number | null>(() => {
+    const initial = getInitialWeatherData();
+    return initial?.elevationFt ?? null;
+  });
+
+  const [isLoading, setIsLoading] = useState(() => !getInitialWeatherData());
   const [error, setError] = useState<Error | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -145,9 +185,6 @@ export default function ClientWrapper(props: ClientWrapperProps) {
         <ClientWrapperInternal
           initialLocation={props.initialLocation}
           initialModel={props.initialModel}
-          initialWeatherData={props.initialWeatherData}
-          initialTimestamp={props.initialTimestamp}
-          initialElevationFt={props.initialElevationFt}
         />
       </PreferencesProvider>
     </HeroUIProvider>

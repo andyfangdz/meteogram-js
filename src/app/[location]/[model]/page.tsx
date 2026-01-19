@@ -5,6 +5,7 @@ import { WeatherModel } from "@/types/weather";
 import { notFound } from "next/navigation";
 import { getWeatherData } from "@/app/actions/weather";
 import { getInitialPreferences } from "@/utils/serverPreferences";
+import { WeatherDataScript } from "../../components/weather-data-script";
 
 interface PageProps {
   params: Promise<{
@@ -54,14 +55,23 @@ export default async function Page({ params, searchParams }: PageProps) {
     getInitialPreferences(searchParamsResolved),
   ]);
 
+  // Serialize weather data for script tag injection (bypasses RSC serialization)
+  const serializedData = initialData.data.map((column) => ({
+    ...column,
+    date: column.date.toISOString(),
+  }));
+  const weatherDataJson = JSON.stringify({
+    data: serializedData,
+    timestamp: initialData.timestamp,
+    elevationFt: initialData.elevationFt,
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
+      <WeatherDataScript dataJson={weatherDataJson} />
       <ClientWrapper
         initialLocation={decodedLocation}
         initialModel={model as WeatherModel}
-        initialWeatherData={initialData.data}
-        initialTimestamp={initialData.timestamp}
-        initialElevationFt={initialData.elevationFt}
         initialPreferences={preferencesResult.preferences}
         cookieReadSuccess={preferencesResult.cookieReadSuccess}
       />
