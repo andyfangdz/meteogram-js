@@ -1,10 +1,34 @@
 import { describe, it, expect } from "vitest";
 import { transformWeatherData } from "@/utils/weather";
-import { MODEL_CONFIGS } from "@/config/weather";
+import { MODEL_CONFIGS, MAX_VARIABLES_PER_REQUEST } from "@/config/weather";
 import type { WeatherModel } from "@/types/weather";
 import { createFakeOpenMeteoResponse, geopotentialToMslMeters } from "./__helpers__/fakeOpenMeteo";
 
 function getModel(): WeatherModel { return "gfs_seamless"; }
+
+function splitFakeResponse(response: any, chunkSize: number): any[] {
+  const model = getModel();
+  const forecastKey = MODEL_CONFIGS[model].forecastDataKey;
+  const forecast = response[forecastKey]();
+  
+  // Create enough chunks to cover all variables
+  // GFS has ~187 variables. 187/80 = 3 chunks.
+  const chunks = [];
+  for (let i = 0; i < 5; i++) {
+    const chunkIndex = i;
+    chunks.push({
+      ...response,
+      [forecastKey]: () => ({
+        ...forecast,
+        variables: (index: number) => {
+          const globalIndex = chunkIndex * chunkSize + index;
+          return forecast.variables(globalIndex);
+        }
+      })
+    });
+  }
+  return chunks;
+}
 
 describe("utils/weather.transformWeatherData", () => {
   it("creates CloudColumns with sorted cells and top/bottom bounds", () => {
@@ -15,8 +39,10 @@ describe("utils/weather.transformWeatherData", () => {
       MODEL_CONFIGS[model].hpaLevels,
       1,
     );
+    
+    const responses = splitFakeResponse(fakeResponse, MAX_VARIABLES_PER_REQUEST);
 
-    const result = transformWeatherData(fakeResponse as any, model);
+    const result = transformWeatherData(responses as any, model);
     expect(result).toHaveLength(1);
     const col = result[0];
 
@@ -75,7 +101,7 @@ describe("utils/weather.transformWeatherData", () => {
       return origVariables(index);
     };
 
-    const result = transformWeatherData(fakeResponse, model);
+    const result = transformWeatherData(splitFakeResponse(fakeResponse, MAX_VARIABLES_PER_REQUEST), model);
     expect(result).toHaveLength(1);
     const col = result[0];
 

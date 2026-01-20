@@ -13,8 +13,10 @@ import {
   MODEL_CONFIGS,
   LOCATIONS,
   FEET_PER_METER,
+  MAX_VARIABLES_PER_REQUEST,
 } from "@/config/weather";
 import { fetchWeatherApi } from "openmeteo";
+import chunk from "lodash/chunk";
 
 /**
  * Server Action to fetch elevation data for a given coordinate.
@@ -140,28 +142,26 @@ export async function getWeatherData(
 
     const modelConfig = MODEL_CONFIGS[model];
 
-    // Fetch main variables and dew point variables separately to avoid stack overflow
-    // in OpenMeteo SDK / flatbuffers for large models.
-    const [mainResponses, dewPointResponses, elevationFt] = await Promise.all([
-      fetchWeatherDataAction(model, location, modelConfig.getMainVariables()),
-      fetchWeatherDataAction(model, location, modelConfig.getDewPointVars()),
+    // Fetch variables in chunks to avoid stack overflow in OpenMeteo SDK / flatbuffers
+    // when handling large numbers of variables (>100).
+    const allVars = modelConfig.getAllVariables();
+    const varChunks = chunk(allVars, MAX_VARIABLES_PER_REQUEST);
+
+    const [chunkResults, elevationFt] = await Promise.all([
+      Promise.all(
+        varChunks.map((vars) => fetchWeatherDataAction(model, location, vars)),
+      ),
       fetchElevationAction(coordinates.latitude, coordinates.longitude),
     ]);
 
-    if (
-      !mainResponses ||
-      !mainResponses[0] ||
-      !dewPointResponses ||
-      !dewPointResponses[0]
-    ) {
-      throw new Error("No weather data received");
+    if (chunkResults.some((res) => !res || !res[0])) {
+      throw new Error("No weather data received for some chunks");
     }
 
-    const transformedData = transformWeatherData(
-      mainResponses[0],
-      model,
-      dewPointResponses[0],
-    );
+    // Flatten to get one response object per chunk
+    const responses = chunkResults.map((res) => res[0]);
+
+    const transformedData = transformWeatherData(responses, model);
 
     return {
       data: transformedData,

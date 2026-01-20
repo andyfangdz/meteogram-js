@@ -1,6 +1,10 @@
 import range from "lodash/range";
 import { CloudColumn, WeatherModel } from "../types/weather";
-import { FEET_PER_METER, MODEL_CONFIGS } from "../config/weather";
+import {
+  FEET_PER_METER,
+  MODEL_CONFIGS,
+  MAX_VARIABLES_PER_REQUEST,
+} from "../config/weather";
 
 const EARTH_RADIUS_METERS = 6371000;
 
@@ -12,58 +16,54 @@ function geopotentialToMsl(geopotentialMeters: number): number {
 }
 
 export function transformWeatherData(
-  response: any,
+  responses: any[],
   model: WeatherModel,
-  dewPointResponse?: any,
 ): CloudColumn[] {
-  const utcOffsetSeconds = response.utcOffsetSeconds();
+  // Use first response for time grid metadata (all chunks share same time grid)
+  const mainResponse = responses[0];
+  const utcOffsetSeconds = mainResponse.utcOffsetSeconds();
   const modelConfig = MODEL_CONFIGS[model];
-  const forecastData = response[modelConfig.forecastDataKey]()!;
-  const dewPointData = dewPointResponse
-    ? dewPointResponse[modelConfig.forecastDataKey]()!
-    : forecastData;
+  const forecastDataMain = mainResponse[modelConfig.forecastDataKey]()!;
+
+  // Helper to access values across chunked responses
+  const getValue = (globalIndex: number, timeIndex: number): number | null => {
+    const chunkIndex = Math.floor(globalIndex / MAX_VARIABLES_PER_REQUEST);
+    const varIndex = globalIndex % MAX_VARIABLES_PER_REQUEST;
+
+    if (chunkIndex >= responses.length) return null;
+
+    const response = responses[chunkIndex];
+    const forecastData = response[modelConfig.forecastDataKey]()!;
+    const variable = forecastData.variables(varIndex);
+    return variable ? variable.values(timeIndex) : null;
+  };
 
   const len = modelConfig.hpaLevels.length;
-  const hasSeparateDewPoint = !!dewPointResponse;
-
   const cloudCoverBaseIndex = 0;
   const geopotentialBaseIndex = len;
   const temperatureBaseIndex = 2 * len;
   const windSpeedBaseIndex = 3 * len;
   const windDirectionBaseIndex = 4 * len;
-  
-  // If split, dewPoint is in separate response at 0.
-  // Main response has groundTemp at 5 * len.
-  // If merged, dewPoint is at 5 * len, groundTemp at 6 * len.
-  const dewPointBaseIndex = hasSeparateDewPoint ? 0 : 5 * len;
-  const groundTempIndex = hasSeparateDewPoint ? 5 * len : 6 * len;
+  const dewPointBaseIndex = 5 * len;
+  const groundTempIndex = 6 * len;
 
   const cloudData = range(
-    Number(forecastData.time()),
-    Number(forecastData.timeEnd()),
-    forecastData.interval(),
+    Number(forecastDataMain.time()),
+    Number(forecastDataMain.timeEnd()),
+    forecastDataMain.interval(),
   ).map((time, index) => ({
     date: new Date((time + utcOffsetSeconds) * 1000),
     cloud: modelConfig.hpaLevels
       .map((hpa, hpaIndex) => {
-        const cloudCoverage = forecastData
-          .variables(cloudCoverBaseIndex + hpaIndex)!
-          .values(index)!;
-        const geopotentialMeters = forecastData
-          .variables(geopotentialBaseIndex + hpaIndex)!
-          .values(index)!;
-        const temperature = forecastData
-          .variables(temperatureBaseIndex + hpaIndex)!
-          .values(index)!;
-        const windSpeed = forecastData
-          .variables(windSpeedBaseIndex + hpaIndex)!
-          .values(index)!;
-        const windDirection = forecastData
-          .variables(windDirectionBaseIndex + hpaIndex)!
-          .values(index)!;
-        const dewPoint = dewPointData
-          .variables(dewPointBaseIndex + hpaIndex)!
-          .values(index)!;
+        const cloudCoverage = getValue(cloudCoverBaseIndex + hpaIndex, index);
+        const geopotentialMeters = getValue(
+          geopotentialBaseIndex + hpaIndex,
+          index,
+        );
+        const temperature = getValue(temperatureBaseIndex + hpaIndex, index);
+        const windSpeed = getValue(windSpeedBaseIndex + hpaIndex, index);
+        const windDirection = getValue(windDirectionBaseIndex + hpaIndex, index);
+        const dewPoint = getValue(dewPointBaseIndex + hpaIndex, index);
 
         // Only return valid data
         if (
@@ -95,9 +95,7 @@ export function transformWeatherData(
         };
       })
       .filter(Boolean), // Remove null entries
-    groundTemp: forecastData
-      .variables(groundTempIndex)! // temperature_2m is after all HPA variables
-      .values(index)!,
+    groundTemp: getValue(groundTempIndex, index)!,
   }));
 
   return cloudData.map((dateAndCloud) => {
