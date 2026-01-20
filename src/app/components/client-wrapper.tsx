@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useRef,
+  useMemo,
   useCallback,
   SetStateAction,
 } from "react";
@@ -42,20 +43,28 @@ function ClientWrapperInternal({
   const router = useRouter();
   const { preferences } = usePreferences();
   const [model, setModel] = useState<WeatherModel>(initialModel);
-  const [weatherData, setWeatherData] = useState<CloudColumn[]>([]);
-  const [timestamp, setTimestamp] = useState<string>(initialTimestamp);
 
-  useEffect(() => {
+  // Parse initial data once - available during SSR
+  const parsedInitialData = useMemo(() => {
     try {
-      const parsed = JSON.parse(initialWeatherDataStr).map((col: any) => ({
+      return JSON.parse(initialWeatherDataStr).map((col: any) => ({
         ...col,
         date: new Date(col.date),
       }));
-      setWeatherData(parsed);
     } catch (e) {
       console.error("Failed to parse initial weather data", e);
+      return [];
     }
   }, [initialWeatherDataStr]);
+
+  const [weatherData, setWeatherData] =
+    useState<CloudColumn[]>(parsedInitialData);
+  const [timestamp, setTimestamp] = useState<string>(initialTimestamp);
+
+  // Synchronize state with parsedInitialData if it changes (e.g. on navigation)
+  useEffect(() => {
+    setWeatherData(parsedInitialData);
+  }, [parsedInitialData]);
   const [elevationFt, setElevationFt] = useState<number | null>(
     initialElevationFt,
   );
