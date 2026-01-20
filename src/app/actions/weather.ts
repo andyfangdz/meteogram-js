@@ -54,6 +54,7 @@ export async function fetchElevationAction(
 export async function fetchWeatherDataAction(
   model: WeatherModel,
   location: string,
+  variables?: string[],
 ): Promise<ReturnType<typeof fetchWeatherApi>> {
   const modelConfig = MODEL_CONFIGS[model];
   if (!modelConfig) {
@@ -94,7 +95,9 @@ export async function fetchWeatherDataAction(
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
     models: model,
-    [modelConfig.varsKey]: modelConfig.getAllVariables().join(","),
+    [modelConfig.varsKey]: variables
+      ? variables.join(",")
+      : modelConfig.getAllVariables().join(","),
     ...(modelConfig.stepKey &&
       modelConfig.stepSize != null && {
         [modelConfig.stepKey]: modelConfig.stepSize,
@@ -135,16 +138,30 @@ export async function getWeatherData(
       throw new Error(`Coordinates for location '${location}' not found.`);
     }
 
-    const [weatherResponses, elevationFt] = await Promise.all([
-      fetchWeatherDataAction(model, location),
+    const modelConfig = MODEL_CONFIGS[model];
+
+    // Fetch main variables and dew point variables separately to avoid stack overflow
+    // in OpenMeteo SDK / flatbuffers for large models.
+    const [mainResponses, dewPointResponses, elevationFt] = await Promise.all([
+      fetchWeatherDataAction(model, location, modelConfig.getMainVariables()),
+      fetchWeatherDataAction(model, location, modelConfig.getDewPointVars()),
       fetchElevationAction(coordinates.latitude, coordinates.longitude),
     ]);
 
-    if (!weatherResponses || !weatherResponses[0]) {
+    if (
+      !mainResponses ||
+      !mainResponses[0] ||
+      !dewPointResponses ||
+      !dewPointResponses[0]
+    ) {
       throw new Error("No weather data received");
     }
 
-    const transformedData = transformWeatherData(weatherResponses[0], model);
+    const transformedData = transformWeatherData(
+      mainResponses[0],
+      model,
+      dewPointResponses[0],
+    );
 
     return {
       data: transformedData,

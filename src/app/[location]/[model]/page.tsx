@@ -59,7 +59,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       <ClientWrapper
         initialLocation={decodedLocation}
         initialModel={model as WeatherModel}
-        initialWeatherData={initialData.data}
+        initialWeatherDataStr={JSON.stringify(initialData.data)}
         initialTimestamp={initialData.timestamp}
         initialElevationFt={initialData.elevationFt}
         initialPreferences={preferencesResult.preferences}

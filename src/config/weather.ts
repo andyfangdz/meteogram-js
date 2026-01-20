@@ -87,6 +87,18 @@ export class ModelConfig {
     return this.hpaLevels.map((hpa) => `dew_point_${hpa}hPa`);
   }
 
+  // Returns all variables EXCEPT dew point (to avoid stack overflow in OpenMeteo SDK)
+  getMainVariables() {
+    return [
+      ...this.getCloudCoverVars(), // indices [0, N)
+      ...this.getGeopotentialHeightVars(), // indices [N, 2N)
+      ...this.getTemperatureVars(), // indices [2N, 3N)
+      ...this.getWindSpeedVars(), // indices [3N, 4N)
+      ...this.getWindDirectionVars(), // indices [4N, 5N)
+      "temperature_2m", // index 5N
+    ];
+  }
+
   // Returns all variables for the API request.
   // IMPORTANT: The order here determines the index order in the API response.
   // See utils/weather.ts for the index calculations that depend on this order.

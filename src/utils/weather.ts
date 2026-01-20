@@ -14,31 +14,29 @@ function geopotentialToMsl(geopotentialMeters: number): number {
 export function transformWeatherData(
   response: any,
   model: WeatherModel,
+  dewPointResponse?: any,
 ): CloudColumn[] {
   const utcOffsetSeconds = response.utcOffsetSeconds();
   const modelConfig = MODEL_CONFIGS[model];
   const forecastData = response[modelConfig.forecastDataKey]()!;
+  const dewPointData = dewPointResponse
+    ? dewPointResponse[modelConfig.forecastDataKey]()!
+    : forecastData;
 
-  // Variable index ordering in the Open-Meteo API response.
-  // The order MUST match getAllVariables() in config/weather.ts which constructs the API request.
-  //
-  // For N pressure levels, the variables are ordered as follows:
-  //   [0, N)     - cloud_cover_<hPa>      (cloud coverage per pressure level)
-  //   [N, 2N)    - geopotential_height_<hPa> (height per pressure level)
-  //   [2N, 3N)   - temperature_<hPa>      (temperature per pressure level)
-  //   [3N, 4N)   - wind_speed_<hPa>       (wind speed per pressure level)
-  //   [4N, 5N)   - wind_direction_<hPa>   (wind direction per pressure level)
-  //   [5N, 6N)   - dew_point_<hPa>        (dew point per pressure level)
-  //   6N         - temperature_2m         (ground temperature)
-  //
-  // When adding new variables, update both getAllVariables() and these indices.
+  const len = modelConfig.hpaLevels.length;
+  const hasSeparateDewPoint = !!dewPointResponse;
+
   const cloudCoverBaseIndex = 0;
-  const geopotentialBaseIndex = modelConfig.hpaLevels.length;
-  const temperatureBaseIndex = 2 * modelConfig.hpaLevels.length;
-  const windSpeedBaseIndex = 3 * modelConfig.hpaLevels.length;
-  const windDirectionBaseIndex = 4 * modelConfig.hpaLevels.length;
-  const dewPointBaseIndex = 5 * modelConfig.hpaLevels.length;
-  const groundTempIndex = 6 * modelConfig.hpaLevels.length;
+  const geopotentialBaseIndex = len;
+  const temperatureBaseIndex = 2 * len;
+  const windSpeedBaseIndex = 3 * len;
+  const windDirectionBaseIndex = 4 * len;
+  
+  // If split, dewPoint is in separate response at 0.
+  // Main response has groundTemp at 5 * len.
+  // If merged, dewPoint is at 5 * len, groundTemp at 6 * len.
+  const dewPointBaseIndex = hasSeparateDewPoint ? 0 : 5 * len;
+  const groundTempIndex = hasSeparateDewPoint ? 5 * len : 6 * len;
 
   const cloudData = range(
     Number(forecastData.time()),
@@ -63,7 +61,7 @@ export function transformWeatherData(
         const windDirection = forecastData
           .variables(windDirectionBaseIndex + hpaIndex)!
           .values(index)!;
-        const dewPoint = forecastData
+        const dewPoint = dewPointData
           .variables(dewPointBaseIndex + hpaIndex)!
           .values(index)!;
 

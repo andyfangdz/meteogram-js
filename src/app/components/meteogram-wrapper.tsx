@@ -2,8 +2,14 @@
 
 import React from "react";
 import { CloudColumn, WeatherModel } from "../../types/weather";
-import Meteogram from "./meteogram";
 import { usePreferences } from "@/context/PreferencesContext";
+import dynamic from "next/dynamic";
+import LoadingSkeleton from "./loading-skeleton";
+
+const Meteogram = dynamic(() => import("./meteogram"), {
+  ssr: false,
+  loading: () => <LoadingSkeleton />,
+});
 
 interface MeteogramWrapperProps {
   weatherData: CloudColumn[];

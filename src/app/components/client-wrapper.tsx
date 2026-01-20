@@ -25,7 +25,7 @@ import { HeroUIProvider } from "@heroui/react";
 interface ClientWrapperProps {
   initialLocation: string;
   initialModel: WeatherModel;
-  initialWeatherData: CloudColumn[];
+  initialWeatherDataStr: string;
   initialTimestamp: string;
   initialElevationFt: number | null;
   initialPreferences: VisualizationPreferences;
@@ -35,16 +35,27 @@ interface ClientWrapperProps {
 function ClientWrapperInternal({
   initialLocation,
   initialModel,
-  initialWeatherData,
+  initialWeatherDataStr,
   initialTimestamp,
   initialElevationFt,
 }: Omit<ClientWrapperProps, "initialPreferences">) {
   const router = useRouter();
   const { preferences } = usePreferences();
   const [model, setModel] = useState<WeatherModel>(initialModel);
-  const [weatherData, setWeatherData] =
-    useState<CloudColumn[]>(initialWeatherData);
+  const [weatherData, setWeatherData] = useState<CloudColumn[]>([]);
   const [timestamp, setTimestamp] = useState<string>(initialTimestamp);
+
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(initialWeatherDataStr).map((col: any) => ({
+        ...col,
+        date: new Date(col.date),
+      }));
+      setWeatherData(parsed);
+    } catch (e) {
+      console.error("Failed to parse initial weather data", e);
+    }
+  }, [initialWeatherDataStr]);
   const [elevationFt, setElevationFt] = useState<number | null>(
     initialElevationFt,
   );
@@ -145,7 +156,7 @@ export default function ClientWrapper(props: ClientWrapperProps) {
         <ClientWrapperInternal
           initialLocation={props.initialLocation}
           initialModel={props.initialModel}
-          initialWeatherData={props.initialWeatherData}
+          initialWeatherDataStr={props.initialWeatherDataStr}
           initialTimestamp={props.initialTimestamp}
           initialElevationFt={props.initialElevationFt}
         />
