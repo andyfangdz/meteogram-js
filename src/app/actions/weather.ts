@@ -161,7 +161,7 @@ export async function getWeatherData(
     // Flatten to get one response object per chunk
     const responses = chunkResults.map((res) => res[0]);
 
-    const transformedData = transformWeatherData(responses, model);
+    const transformedData = transformWeatherData(responses, model, coordinates.latitude);
 
     return {
       data: transformedData,

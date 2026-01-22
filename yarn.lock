@@ -10252,6 +10252,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+
+"wgs84@npm:^0.0.0":
+  version: 0.0.0
+  resolution: "wgs84@npm:0.0.0"
+  checksum: 10c0/00d1e563845be641f0e340f4349ea6a1a55f38232ba7d1a977547f008418836928e3f8f3709f9355761817a91726a430213bc464fe3212d86333b53aad89658d
+  languageName: node
+  linkType: hard
 "which-boxed-primitive@npm:^1.1.0, which-boxed-primitive@npm:^1.1.1":
   version: 1.1.1
   resolution: "which-boxed-primitive@npm:1.1.1"

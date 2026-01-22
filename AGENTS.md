@@ -128,12 +128,15 @@ The Meteogram expects `weatherData` sorted by **descending pressure** (ascending
 
 ### 4. Geopotential → MSL Conversion
 
-Heights use spherical Earth approximation:
+Heights use the **WGS84 ellipsoidal Earth model** via the `wgs84` npm package. The conversion accounts for Earth's flattening and varies with latitude:
+
 ```typescript
-msl = (EARTH_RADIUS * geopotential) / (EARTH_RADIUS - geopotential)
+// Uses WGS84 ellipsoid constants from the wgs84 package
+const localRadius = getWGS84LocalRadius(latitude);
+msl = (localRadius * geopotential) / (localRadius - geopotential);
 ```
 
-This is **not** a simple scale factor. Don't replace with linear conversion.
+This is **not** a simple scale factor and requires the location's latitude to be accurate. The `transformWeatherData` function in `src/utils/weather.ts` accepts latitude as a parameter for this conversion. Don't replace with a linear conversion or remove the latitude dependency.
 
 ### 5. Edge Compatibility
 
