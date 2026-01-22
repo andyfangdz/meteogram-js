@@ -34,15 +34,16 @@ describe("utils/weather.transformWeatherData", () => {
   it("creates CloudColumns with sorted cells and top/bottom bounds", () => {
     const model = getModel();
     const forecastKey = MODEL_CONFIGS[model].forecastDataKey;
+    const testLatitude = 40.0; // Test latitude in degrees
     const fakeResponse = createFakeOpenMeteoResponse(
       forecastKey,
       MODEL_CONFIGS[model].hpaLevels,
       1,
     );
-    
+
     const responses = splitFakeResponse(fakeResponse, MAX_VARIABLES_PER_REQUEST);
 
-    const result = transformWeatherData(responses as any, model);
+    const result = transformWeatherData(responses as any, model, testLatitude);
     expect(result).toHaveLength(1);
     const col = result[0];
 
@@ -61,8 +62,8 @@ describe("utils/weather.transformWeatherData", () => {
     const second = col.cloud[1];
     const last = col.cloud[col.cloud.length - 1];
 
-    const expectedMslFirst = geopotentialToMslMeters(100) * 3.28084; // helper builds geopotential = 100 + index*100
-    const expectedMslSecond = geopotentialToMslMeters(200) * 3.28084;
+    const expectedMslFirst = geopotentialToMslMeters(100, testLatitude) * 3.28084; // helper builds geopotential = 100 + index*100
+    const expectedMslSecond = geopotentialToMslMeters(200, testLatitude) * 3.28084;
     expect(first.mslFt).toBeCloseTo(expectedMslFirst, 1);
     expect(second.mslFt).toBeCloseTo(expectedMslSecond, 1);
 
@@ -82,6 +83,7 @@ describe("utils/weather.transformWeatherData", () => {
   it("filters out invalid cells with non-finite values", () => {
     const model = getModel();
     const forecastKey = MODEL_CONFIGS[model].forecastDataKey;
+    const testLatitude = 40.0; // Test latitude in degrees
     const fakeResponse = createFakeOpenMeteoResponse(
       forecastKey,
       MODEL_CONFIGS[model].hpaLevels,
@@ -101,7 +103,7 @@ describe("utils/weather.transformWeatherData", () => {
       return origVariables(index);
     };
 
-    const result = transformWeatherData(splitFakeResponse(fakeResponse, MAX_VARIABLES_PER_REQUEST), model);
+    const result = transformWeatherData(splitFakeResponse(fakeResponse, MAX_VARIABLES_PER_REQUEST), model, testLatitude);
     expect(result).toHaveLength(1);
     const col = result[0];
 

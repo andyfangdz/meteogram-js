@@ -1,4 +1,5 @@
 import { FEET_PER_METER } from "@/config/weather";
+import { RADIUS, POLAR_RADIUS } from "wgs84";
 
 export type ForecastKey = "hourly" | "minutely15";
 
@@ -17,11 +18,38 @@ type FakeResponse = {
   minutely15?: () => FakeForecast;
 };
 
-export function geopotentialToMslMeters(geopotentialMeters: number): number {
-  const EARTH_RADIUS_METERS = 6371000;
+/**
+ * Calculate the local Earth radius at a given latitude using WGS84 ellipsoid.
+ * Uses constants from the wgs84 package.
+ * @param latitudeDegrees - Latitude in degrees
+ * @returns Local Earth radius in meters
+ */
+function getWGS84LocalRadius(latitudeDegrees: number): number {
+  const latRad = (latitudeDegrees * Math.PI) / 180;
+  const cosLat = Math.cos(latRad);
+  const sinLat = Math.sin(latRad);
+
+  // Using WGS84 constants from the wgs84 package
+  const a = RADIUS; // Semi-major axis (equatorial radius)
+  const b = POLAR_RADIUS; // Semi-minor axis (polar radius)
+
+  const numerator = Math.sqrt(
+    Math.pow(a * a * cosLat, 2) + Math.pow(b * b * sinLat, 2),
+  );
+  const denominator = Math.sqrt(
+    Math.pow(a * cosLat, 2) + Math.pow(b * sinLat, 2),
+  );
+
+  return numerator / denominator;
+}
+
+export function geopotentialToMslMeters(
+  geopotentialMeters: number,
+  latitudeDegrees: number,
+): number {
+  const localRadius = getWGS84LocalRadius(latitudeDegrees);
   return (
-    (EARTH_RADIUS_METERS * geopotentialMeters) /
-    (EARTH_RADIUS_METERS - geopotentialMeters)
+    (localRadius * geopotentialMeters) / (localRadius - geopotentialMeters)
   );
 }
 
