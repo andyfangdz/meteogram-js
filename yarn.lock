@@ -8223,6 +8223,7 @@ __metadata:
     usehooks-ts: "npm:^3.1.1"
     vite: "npm:^7.3.1"
     vitest: "npm:^4.0.17"
+    wgs84: "npm:^0.0.0"
     whatwg-url: "npm:^15.1.0"
   languageName: unknown
   linkType: soft
@@ -10235,6 +10236,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"wgs84@npm:^0.0.0":
+  version: 0.0.0
+  resolution: "wgs84@npm:0.0.0"
+  checksum: 10c0/4f4094c7149fbb50e89ab415aeb2db565c66746be18702ea82ab75c6e6e2a58b552d0898f4b8d6a16bf5824a14917577e46e04a8b20fbf9f09f06d755d381c0b
+  languageName: node
+  linkType: hard
+
 "whatwg-mimetype@npm:^4.0.0":
   version: 4.0.0
   resolution: "whatwg-mimetype@npm:4.0.0"
@@ -10252,13 +10260,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-
-"wgs84@npm:^0.0.0":
-  version: 0.0.0
-  resolution: "wgs84@npm:0.0.0"
-  checksum: 10c0/00d1e563845be641f0e340f4349ea6a1a55f38232ba7d1a977547f008418836928e3f8f3709f9355761817a91726a430213bc464fe3212d86333b53aad89658d
-  languageName: node
-  linkType: hard
 "which-boxed-primitive@npm:^1.1.0, which-boxed-primitive@npm:^1.1.1":
   version: 1.1.1
   resolution: "which-boxed-primitive@npm:1.1.1"
