@@ -4,7 +4,7 @@ export const DEFAULT_PREFERENCES = {
   clampCloudCoverageAt50Pct: true,
   showPressureLines: false,
   showWindBarbs: true,
-  showIsothermLines: false,
+  showIsothermLines: true,
   showIsotachLines: false,
   showDewPointDepressionLines: true,
 } as const;
