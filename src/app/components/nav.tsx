@@ -261,9 +261,9 @@ export default function Nav({
           <NavbarItem>
             <Link
               href={`/route/KCDW-KFRG/${model}`}
-              className="text-sm font-medium hover:text-primary transition-colors"
+              className="text-sm font-medium text-primary hover:text-primary-600 transition-colors"
             >
-              Route
+              En-Route
             </Link>
           </NavbarItem>
         </NavbarContent>
@@ -316,6 +316,12 @@ export default function Nav({
             <Chip>
               <LastUpdateTime lastUpdate={lastUpdate} />
             </Chip>
+            <Link
+              href={`/route/KCDW-KFRG/${model}`}
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
+              En-Route View
+            </Link>
             <Button color="primary" onPress={updateWeatherData}>
               Refresh
             </Button>
