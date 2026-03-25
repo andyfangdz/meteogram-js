@@ -19,6 +19,7 @@ import {
   Chip,
   Switch,
 } from "@heroui/react";
+import Link from "next/link";
 import { WeatherModel } from "../../types/weather";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
@@ -256,6 +257,14 @@ export default function Nav({
             <Chip>
               <LastUpdateTime lastUpdate={lastUpdate} />
             </Chip>
+          </NavbarItem>
+          <NavbarItem>
+            <Link
+              href={`/route/KCDW-KFRG/${model}`}
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
+              Route
+            </Link>
           </NavbarItem>
         </NavbarContent>
 
