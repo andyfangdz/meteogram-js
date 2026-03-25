@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { haversineDistanceNM, forwardBearing, interpolateGreatCircle } from "@/utils/route";
+import { haversineDistanceNM, forwardBearing, interpolateGreatCircle, parseWaypointString, generateRouteSamplePoints } from "@/utils/route";
 
 describe("haversineDistanceNM", () => {
   it("returns 0 for same point", () => {
@@ -54,5 +54,53 @@ describe("interpolateGreatCircle", () => {
     for (let i = 1; i < points.length; i++) {
       expect(points[i].distanceNM).toBeGreaterThan(points[i - 1].distanceNM);
     }
+  });
+});
+
+describe("parseWaypointString", () => {
+  it("parses dash-separated airport codes", () => {
+    const result = parseWaypointString("KCDW-KFRG");
+    expect(result).toEqual([
+      { name: "KCDW", identifier: "KCDW" },
+      { name: "KFRG", identifier: "KFRG" },
+    ]);
+  });
+
+  it("parses custom coordinate waypoints", () => {
+    const result = parseWaypointString("KCDW-MySpot@41.5,-73.0-KFRG");
+    expect(result).toHaveLength(3);
+    expect(result[1]).toEqual({ name: "MySpot", identifier: "MySpot@41.5,-73.0" });
+  });
+
+  it("throws for fewer than 2 waypoints", () => {
+    expect(() => parseWaypointString("KCDW")).toThrow("at least 2 waypoints");
+  });
+});
+
+describe("generateRouteSamplePoints", () => {
+  it("generates points for a multi-waypoint route", () => {
+    const waypoints = [
+      { name: "A", latitude: 40.87, longitude: -74.28 },
+      { name: "B", latitude: 41.5, longitude: -73.0 },
+      { name: "C", latitude: 40.73, longitude: -73.42 },
+    ];
+    const points = generateRouteSamplePoints(waypoints, 25);
+    const userPoints = points.filter((p) => p.isUserDefined);
+    expect(userPoints).toHaveLength(3);
+    expect(userPoints[0].name).toBe("A");
+    expect(userPoints[1].name).toBe("B");
+    expect(userPoints[2].name).toBe("C");
+    for (let i = 1; i < points.length; i++) {
+      expect(points[i].distanceNM).toBeGreaterThan(points[i - 1].distanceNM);
+    }
+  });
+
+  it("caps total points at maxPoints", () => {
+    const waypoints = [
+      { name: "A", latitude: 40.0, longitude: -74.0 },
+      { name: "B", latitude: 50.0, longitude: -60.0 },
+    ];
+    const result = generateRouteSamplePoints(waypoints, 5, 20);
+    expect(result.length).toBeLessThanOrEqual(20);
   });
 });

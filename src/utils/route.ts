@@ -2,6 +2,11 @@ import type { RouteWaypoint } from "../types/weather";
 
 const EARTH_RADIUS_NM = 3440.065;
 
+interface ParsedWaypoint {
+  name: string;
+  identifier: string;
+}
+
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
 }
@@ -97,4 +102,75 @@ export function interpolateGreatCircle(
   });
 
   return points;
+}
+
+export function parseWaypointString(waypointString: string): ParsedWaypoint[] {
+  // Split on '-' but re-join parts that are bare numbers (negative coordinate continuations).
+  // e.g. "KCDW-MySpot@41.5,-73.0-KFRG" → ["KCDW", "MySpot@41.5,-73.0", "KFRG"]
+  const rawParts = waypointString.split("-").filter(Boolean);
+  const parts: string[] = [];
+  for (const raw of rawParts) {
+    if (parts.length > 0 && /^[\d.]+$/.test(raw)) {
+      // bare number — treat as the negative-longitude continuation of the previous part
+      parts[parts.length - 1] += `-${raw}`;
+    } else {
+      parts.push(raw);
+    }
+  }
+  if (parts.length < 2) {
+    throw new Error("Route requires at least 2 waypoints");
+  }
+  return parts.map((part) => {
+    const name = part.includes("@") ? part.split("@")[0] : part;
+    return { name, identifier: part };
+  });
+}
+
+export function generateRouteSamplePoints(
+  resolvedWaypoints: Array<{ name: string; latitude: number; longitude: number }>,
+  resolutionNM: number,
+  maxPoints: number = 50,
+): RouteWaypoint[] {
+  if (resolvedWaypoints.length < 2) {
+    throw new Error("Route requires at least 2 waypoints");
+  }
+
+  let totalDistance = 0;
+  for (let i = 0; i < resolvedWaypoints.length - 1; i++) {
+    totalDistance += haversineDistanceNM(
+      resolvedWaypoints[i].latitude, resolvedWaypoints[i].longitude,
+      resolvedWaypoints[i + 1].latitude, resolvedWaypoints[i + 1].longitude,
+    );
+  }
+
+  let effectiveRes = resolutionNM;
+  const estimatedPoints = Math.ceil(totalDistance / resolutionNM) + resolvedWaypoints.length;
+  if (estimatedPoints > maxPoints) {
+    effectiveRes = totalDistance / (maxPoints - resolvedWaypoints.length);
+  }
+
+  const allPoints: RouteWaypoint[] = [];
+  let cumulativeDistance = 0;
+
+  for (let i = 0; i < resolvedWaypoints.length - 1; i++) {
+    const start = resolvedWaypoints[i];
+    const end = resolvedWaypoints[i + 1];
+    const legPoints = interpolateGreatCircle(
+      { lat: start.latitude, lon: start.longitude, name: start.name },
+      { lat: end.latitude, lon: end.longitude, name: end.name },
+      effectiveRes,
+      cumulativeDistance,
+    );
+
+    if (i > 0) {
+      legPoints.shift();
+    }
+    allPoints.push(...legPoints);
+
+    cumulativeDistance += haversineDistanceNM(
+      start.latitude, start.longitude, end.latitude, end.longitude,
+    );
+  }
+
+  return allPoints;
 }
