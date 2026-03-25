@@ -95,3 +95,41 @@ export function serializeVisualizationPreferences(
 
   return params;
 }
+
+export interface RouteParams {
+  cruiseAltitudeFt: number;
+  tasKnots: number;
+  departureTime: Date;
+  resolutionNM: number;
+}
+
+function getNextWholeHour(): Date {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  now.setHours(now.getHours() + 1);
+  return now;
+}
+
+export function parseRouteParams(searchParams: Record<string, string | undefined>): RouteParams {
+  const alt = searchParams.alt ? parseInt(searchParams.alt, 10) : 6000;
+  const tas = searchParams.tas ? parseInt(searchParams.tas, 10) : 120;
+  const res = searchParams.res ? Math.max(5, parseInt(searchParams.res, 10)) : 25;
+  const dep = searchParams.dep ? new Date(searchParams.dep) : getNextWholeHour();
+
+  return {
+    cruiseAltitudeFt: isNaN(alt) ? 6000 : alt,
+    tasKnots: isNaN(tas) ? 120 : tas,
+    resolutionNM: isNaN(res) ? 25 : res,
+    departureTime: isNaN(dep.getTime()) ? getNextWholeHour() : dep,
+  };
+}
+
+export function serializeRouteParams(params: RouteParams): URLSearchParams {
+  const urlParams = new URLSearchParams();
+  if (params.cruiseAltitudeFt !== 6000) urlParams.set("alt", params.cruiseAltitudeFt.toString());
+  if (params.tasKnots !== 120) urlParams.set("tas", params.tasKnots.toString());
+  if (params.resolutionNM !== 25) urlParams.set("res", params.resolutionNM.toString());
+  // Always serialize departure time (no meaningful default to compare against)
+  urlParams.set("dep", params.departureTime.toISOString());
+  return urlParams;
+}
