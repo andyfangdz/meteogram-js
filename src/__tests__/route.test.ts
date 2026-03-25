@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { haversineDistanceNM, forwardBearing, interpolateGreatCircle, parseWaypointString, generateRouteSamplePoints } from "@/utils/route";
+import { haversineDistanceNM, forwardBearing, interpolateGreatCircle, parseWaypointString, generateRouteSamplePoints, tailwindComponent, computeTimings, closestColumnByTime } from "@/utils/route";
+import type { CloudColumn, RouteWaypoint } from "@/types/weather";
 
 describe("haversineDistanceNM", () => {
   it("returns 0 for same point", () => {
@@ -102,5 +103,53 @@ describe("generateRouteSamplePoints", () => {
     ];
     const result = generateRouteSamplePoints(waypoints, 5, 20);
     expect(result.length).toBeLessThanOrEqual(20);
+  });
+});
+
+describe("tailwindComponent", () => {
+  it("returns negative (headwind) when wind is from ahead", () => {
+    const result = tailwindComponent(20, 0, 0);
+    expect(result).toBeCloseTo(-20 * 0.539957, 1);
+  });
+
+  it("returns positive (tailwind) when wind is from behind", () => {
+    const result = tailwindComponent(20, 180, 0);
+    expect(result).toBeCloseTo(20 * 0.539957, 1);
+  });
+
+  it("returns ~0 for pure crosswind", () => {
+    const result = tailwindComponent(20, 90, 0);
+    expect(result).toBeCloseTo(0, 1);
+  });
+});
+
+describe("computeTimings", () => {
+  it("computes time-over based on TAS with calm wind", () => {
+    const departureTime = new Date("2026-03-24T14:00:00Z");
+    const waypoints: RouteWaypoint[] = [
+      { name: "A", latitude: 40, longitude: -74, distanceNM: 0, isUserDefined: true },
+      { name: "B", latitude: 40.5, longitude: -73.5, distanceNM: 30, isUserDefined: false },
+      { name: "C", latitude: 41, longitude: -73, distanceNM: 60, isUserDefined: true },
+    ];
+
+    const makeWeatherData = (_index: number): CloudColumn[] => [{
+      date: new Date("2026-03-24T14:00:00Z"),
+      groundTemp: 15,
+      cloud: [{
+        hpa: 850, mslFt: 5000, geopotentialFt: 5000,
+        cloudCoverage: 50, mslFtBottom: 4500, mslFtTop: 5500,
+        temperature: 5, dewPoint: 2,
+        windSpeed: 0, windDirection: 0,
+      }],
+    }];
+
+    const result = computeTimings(waypoints, makeWeatherData, 6000, 120, departureTime);
+    expect(result[0].estimatedTimeOver).toEqual(departureTime);
+    // 30 NM at 120 kts = 15 min
+    const expected15min = new Date(departureTime.getTime() + 15 * 60 * 1000);
+    expect(result[1].estimatedTimeOver.getTime()).toBeCloseTo(expected15min.getTime(), -3);
+    // 60 NM at 120 kts = 30 min
+    const expected30min = new Date(departureTime.getTime() + 30 * 60 * 1000);
+    expect(result[2].estimatedTimeOver.getTime()).toBeCloseTo(expected30min.getTime(), -3);
   });
 });

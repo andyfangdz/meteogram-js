@@ -1,4 +1,4 @@
-import type { RouteWaypoint } from "../types/weather";
+import type { RouteWaypoint, CloudColumn, CloudCell } from "../types/weather";
 
 const EARTH_RADIUS_NM = 3440.065;
 
@@ -124,6 +124,93 @@ export function parseWaypointString(waypointString: string): ParsedWaypoint[] {
     const name = part.includes("@") ? part.split("@")[0] : part;
     return { name, identifier: part };
   });
+}
+
+/**
+ * Calculate tailwind component in knots.
+ * Positive = tailwind, negative = headwind.
+ * windDirection is meteorological (direction wind blows FROM).
+ */
+export function tailwindComponent(
+  windSpeedKmh: number,
+  windDirectionDeg: number,
+  bearingDeg: number,
+): number {
+  const windSpeedKnots = windSpeedKmh * 0.539957;
+  const diffRad = toRad(windDirectionDeg - bearingDeg);
+  return -windSpeedKnots * Math.cos(diffRad);
+}
+
+function findCellAtAltitude(cloud: CloudCell[], altitudeFt: number): CloudCell | null {
+  if (cloud.length === 0) return null;
+  let closest = cloud[0];
+  let minDiff = Math.abs(cloud[0].mslFt - altitudeFt);
+  for (const cell of cloud) {
+    const diff = Math.abs(cell.mslFt - altitudeFt);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = cell;
+    }
+  }
+  return closest;
+}
+
+export function closestColumnByTime(
+  weatherData: CloudColumn[],
+  targetTime: Date,
+): CloudColumn | null {
+  if (weatherData.length === 0) return null;
+  let closest = weatherData[0];
+  let minDiff = Math.abs(weatherData[0].date.getTime() - targetTime.getTime());
+  for (const col of weatherData) {
+    const diff = Math.abs(col.date.getTime() - targetTime.getTime());
+    if (diff < minDiff) { minDiff = diff; closest = col; }
+  }
+  return closest;
+}
+
+/**
+ * Compute bearings and estimated time-over for each waypoint.
+ * getWeatherDataForPoint returns the forecast CloudColumn[] for a given waypoint index.
+ */
+export function computeTimings(
+  waypoints: RouteWaypoint[],
+  getWeatherDataForPoint: (index: number) => CloudColumn[],
+  cruiseAltitudeFt: number,
+  tasKnots: number,
+  departureTime: Date,
+): Array<{ waypoint: RouteWaypoint; estimatedTimeOver: Date; bearingDeg: number }> {
+  const results: Array<{ waypoint: RouteWaypoint; estimatedTimeOver: Date; bearingDeg: number }> = [];
+  let currentTime = departureTime;
+
+  for (let i = 0; i < waypoints.length; i++) {
+    const wp = waypoints[i];
+    const bearing = i < waypoints.length - 1
+      ? forwardBearing(wp.latitude, wp.longitude, waypoints[i + 1].latitude, waypoints[i + 1].longitude)
+      : results.length > 0 ? results[results.length - 1].bearingDeg : 0;
+
+    results.push({ waypoint: wp, estimatedTimeOver: new Date(currentTime), bearingDeg: bearing });
+
+    if (i < waypoints.length - 1) {
+      const legDist = waypoints[i + 1].distanceNM - wp.distanceNM;
+      const weatherData = getWeatherDataForPoint(i);
+      const column = closestColumnByTime(weatherData, currentTime);
+      let gs = tasKnots;
+
+      if (column) {
+        const cell = findCellAtAltitude(column.cloud, cruiseAltitudeFt);
+        if (cell && isFinite(cell.windSpeed) && isFinite(cell.windDirection)) {
+          const tw = tailwindComponent(cell.windSpeed, cell.windDirection, bearing);
+          gs = tasKnots + tw;
+          if (gs < 10) gs = 10; // Safety floor
+        }
+      }
+
+      const hoursToNext = legDist / gs;
+      currentTime = new Date(currentTime.getTime() + hoursToNext * 3600 * 1000);
+    }
+  }
+  return results;
 }
 
 export function generateRouteSamplePoints(
