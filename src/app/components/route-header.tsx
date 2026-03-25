@@ -89,8 +89,9 @@ export default function RouteHeader({
       maxWidth="full"
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
-      className="border-b border-divider"
-      height="auto"
+      className="relative z-[1000] border-b border-divider"
+      shouldHideOnScroll={false}
+      disableScrollHandler={true}
     >
       {/* Mobile toggle */}
       <NavbarContent className="md:hidden" justify="start">
