@@ -152,22 +152,63 @@ async function initNavaidsCache() {
     const lines = text.split("\n");
     const newCache: Record<string, CachedLocation> = {};
 
+    // Simple CSV field parser that handles quoted and unquoted fields
+    function parseCSVLine(line: string): string[] {
+      const fields: string[] = [];
+      let i = 0;
+      while (i <= line.length) {
+        if (i === line.length) { fields.push(""); break; }
+        if (line[i] === '"') {
+          // Quoted field
+          let val = "";
+          i++; // skip opening quote
+          while (i < line.length) {
+            if (line[i] === '"') {
+              if (i + 1 < line.length && line[i + 1] === '"') {
+                val += '"';
+                i += 2;
+              } else {
+                i++; // skip closing quote
+                break;
+              }
+            } else {
+              val += line[i];
+              i++;
+            }
+          }
+          fields.push(val);
+          if (i < line.length && line[i] === ',') i++; // skip comma
+        } else {
+          // Unquoted field
+          const comma = line.indexOf(',', i);
+          if (comma === -1) {
+            fields.push(line.substring(i));
+            break;
+          } else {
+            fields.push(line.substring(i, comma));
+            i = comma + 1;
+          }
+        }
+      }
+      return fields;
+    }
+
     // Skip header line
+    // CSV columns: 0=id, 1=filename, 2=ident, 3=name, 4=type, 5=frequency_khz,
+    //   6=latitude_deg, 7=longitude_deg, 8=elevation_ft, 9=iso_country, ...
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Parse CSV — fields are quoted
-      const fields = line.match(/("(?:[^"]|"")*"|[^,]*),?/g);
-      if (!fields || fields.length < 8) continue;
+      const fields = parseCSVLine(line);
+      if (fields.length < 10) continue;
 
-      const clean = (s: string) => s.replace(/^"|"$/g, "").replace(/""/g, '"').replace(/,$/, "");
-      const ident = clean(fields[2]).toUpperCase();
-      const name = clean(fields[3]);
-      const type = clean(fields[4]); // VOR, VOR-DME, VORTAC, NDB, etc.
-      const lat = parseFloat(clean(fields[6]));
-      const lon = parseFloat(clean(fields[7]));
-      const country = clean(fields[9]);
+      const ident = fields[2].toUpperCase();
+      const name = fields[3];
+      const type = fields[4]; // VOR, VOR-DME, VORTAC, NDB, etc.
+      const lat = parseFloat(fields[6]);
+      const lon = parseFloat(fields[7]);
+      const country = fields[9];
 
       if (ident && !isNaN(lat) && !isNaN(lon) && country === "US") {
         // If multiple navaids share an ident, prefer VOR/VORTAC over NDB

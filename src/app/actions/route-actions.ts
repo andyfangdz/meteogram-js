@@ -101,21 +101,22 @@ async function fetchWeatherForPoint(
   const allVars = modelConfig.getAllVariables();
   const varChunks = chunk(allVars, MAX_VARIABLES_PER_REQUEST);
 
-  const responses = await Promise.all(
-    varChunks.map((vars) => {
-      const params: Record<string, unknown> = {
-        cell_selection: "nearest",
-        latitude,
-        longitude,
-        models: model,
-        [modelConfig.varsKey]: vars.join(","),
-        start_date: startDate,
-        end_date: endDate,
-        timezone: "UTC",
-      };
-      return fetchWeatherApi("https://api.open-meteo.com/v1/forecast", params);
-    }),
-  );
+  // Fetch variable chunks sequentially to avoid rate limiting
+  const responses = [];
+  for (const vars of varChunks) {
+    const params: Record<string, unknown> = {
+      cell_selection: "nearest",
+      latitude,
+      longitude,
+      models: model,
+      [modelConfig.varsKey]: vars.join(","),
+      start_date: startDate,
+      end_date: endDate,
+      timezone: "UTC",
+    };
+    const res = await fetchWeatherApi("https://api.open-meteo.com/v1/forecast", params);
+    responses.push(res);
+  }
 
   if (responses.some((res) => !res || !res[0])) {
     throw new Error(`No weather data for point ${latitude},${longitude}`);
@@ -126,6 +127,10 @@ async function fetchWeatherForPoint(
     model,
     latitude,
   );
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -151,12 +156,18 @@ export async function fetchRouteWeatherAction(
   // Fetch elevation for all points in one batch
   const elevationsPromise = fetchBatchElevationAction(waypoints);
 
-  // Fetch weather in batches of 10
-  const BATCH_SIZE = 10;
+  // Fetch weather in small batches with delays to avoid Open-Meteo rate limiting.
+  // Each fetchWeatherForPoint makes multiple sequential API calls (variable chunks),
+  // so even a small batch can generate many requests.
+  const BATCH_SIZE = 3;
   const weatherBatches = chunk(waypoints, BATCH_SIZE);
   const allWeatherData: Array<CloudColumn[] | null> = [];
 
-  for (const batch of weatherBatches) {
+  for (let batchIdx = 0; batchIdx < weatherBatches.length; batchIdx++) {
+    if (batchIdx > 0) {
+      await delay(500); // Brief pause between batches
+    }
+    const batch = weatherBatches[batchIdx];
     const batchResults = await Promise.allSettled(
       batch.map((wp) =>
         fetchWeatherForPoint(wp.latitude, wp.longitude, model, startDate, endDate),
