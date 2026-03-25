@@ -4,6 +4,7 @@ import { FEET_PER_METER, LOCATIONS, MODEL_CONFIGS, MAX_VARIABLES_PER_REQUEST } f
 import type { RouteWaypoint, CloudColumn, WeatherModel } from "@/types/weather";
 import { parseWaypointString, generateRouteSamplePoints, computeTimings, closestColumnByTime } from "@/utils/route";
 import { transformWeatherData } from "@/utils/weather";
+import { geocodeLocationAction } from "./geocoding";
 import { fetchWeatherApi } from "openmeteo";
 import chunk from "lodash/chunk";
 
@@ -47,21 +48,35 @@ export async function resolveRouteWaypoints(
 ): Promise<RouteWaypoint[]> {
   const parsed = parseWaypointString(waypointString);
 
-  const resolved = parsed.map((wp) => {
-    if (wp.identifier.includes("@")) {
-      const [name, coordStr] = wp.identifier.split("@");
-      const [lat, lon] = coordStr.split(",").map(Number);
-      if (isNaN(lat) || isNaN(lon)) {
-        throw new Error(`Invalid coordinates for waypoint: ${wp.identifier}`);
+  const resolved = await Promise.all(
+    parsed.map(async (wp) => {
+      // Custom coordinates: Name@lat,lon
+      if (wp.identifier.includes("@")) {
+        const [name, coordStr] = wp.identifier.split("@");
+        const [lat, lon] = coordStr.split(",").map(Number);
+        if (isNaN(lat) || isNaN(lon)) {
+          throw new Error(`Invalid coordinates for waypoint: ${wp.identifier}`);
+        }
+        return { name, latitude: lat, longitude: lon };
       }
-      return { name, latitude: lat, longitude: lon };
-    }
-    const loc = LOCATIONS[wp.identifier.toUpperCase()];
-    if (!loc) {
-      throw new Error(`Unknown location: ${wp.identifier}`);
-    }
-    return { name: wp.name, latitude: loc.latitude, longitude: loc.longitude };
-  });
+
+      // Try predefined locations first
+      const loc = LOCATIONS[wp.identifier.toUpperCase()];
+      if (loc) {
+        return { name: wp.name, latitude: loc.latitude, longitude: loc.longitude };
+      }
+
+      // Fall back to geocoding (airport codes, etc.)
+      const geocoded = await geocodeLocationAction(wp.identifier);
+      const firstMatch = Object.entries(geocoded)[0];
+      if (firstMatch) {
+        const [id, data] = firstMatch;
+        return { name: id, latitude: data.latitude, longitude: data.longitude };
+      }
+
+      throw new Error(`Could not resolve waypoint: ${wp.identifier}`);
+    }),
+  );
 
   return generateRouteSamplePoints(resolved, resolutionNM);
 }
