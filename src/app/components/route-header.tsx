@@ -1,9 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Input, Button, Select, SelectItem } from "@heroui/react";
 import { WeatherModel } from "../../types/weather";
 import { MODEL_NAMES } from "../../config/weather";
+
+/**
+ * Convert an ISO UTC string to a datetime-local value in the user's local timezone.
+ * datetime-local expects "YYYY-MM-DDTHH:mm" in local time.
+ */
+function isoToLocalDatetimeValue(isoString: string): string {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/**
+ * Convert a datetime-local value (local time) to an ISO UTC string.
+ */
+function localDatetimeValueToISO(localValue: string): string {
+  // datetime-local gives us a local time string; new Date() interprets it as local
+  const date = new Date(localValue);
+  if (isNaN(date.getTime())) return new Date().toISOString();
+  return date.toISOString();
+}
 
 export interface RouteHeaderUpdate {
   waypoints: string;
@@ -102,11 +127,11 @@ export default function RouteHeader({
       />
 
       <Input
-        label="Departure"
+        label="Departure (local)"
         type="datetime-local"
-        value={localDep.replace("Z", "").substring(0, 16)}
+        value={isoToLocalDatetimeValue(localDep)}
         onChange={(e) =>
-          setLocalDep(new Date(e.target.value).toISOString())
+          setLocalDep(localDatetimeValueToISO(e.target.value))
         }
         size="sm"
         className="min-w-[180px]"

@@ -39,19 +39,58 @@ export default async function RoutePage({ params, searchParams }: PageProps) {
   const { cruiseAltitudeFt, tasKnots, departureTime, resolutionNM } =
     routeParams;
 
-  const resolvedWaypoints = await resolveRouteWaypoints(
-    decodedWaypoints,
-    resolutionNM,
-  );
+  let resolvedWaypoints;
+  try {
+    resolvedWaypoints = await resolveRouteWaypoints(
+      decodedWaypoints,
+      resolutionNM,
+    );
+  } catch (error) {
+    console.error("Failed to resolve waypoints:", error);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-xl font-bold mb-2">Could not resolve route</h1>
+          <p className="text-default-500">
+            {error instanceof Error ? error.message : "Unknown error resolving waypoints"}
+          </p>
+          <p className="text-default-400 mt-2">
+            Check that all waypoints are valid airport codes, navaid identifiers, or Name@lat,lon format.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const { crossSectionData, elevations, routePoints } =
-    await fetchRouteWeatherAction(
+  let crossSectionData, elevations, routePoints;
+  try {
+    const result = await fetchRouteWeatherAction(
       resolvedWaypoints,
       model as WeatherModel,
       departureTime,
       cruiseAltitudeFt,
       tasKnots,
     );
+    crossSectionData = result.crossSectionData;
+    elevations = result.elevations;
+    routePoints = result.routePoints;
+  } catch (error) {
+    console.error("Failed to fetch route weather:", error);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-xl font-bold mb-2">Could not fetch weather data</h1>
+          <p className="text-default-500">
+            {error instanceof Error ? error.message : "Unknown error fetching weather"}
+          </p>
+          <p className="text-default-400 mt-2">
+            The departure time may be outside the forecast range for this model.
+            Try a closer date or a different model (e.g., gfs_seamless for longer range).
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <RouteClientWrapper
