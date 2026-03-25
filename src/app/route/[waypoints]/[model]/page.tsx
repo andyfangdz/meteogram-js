@@ -6,7 +6,7 @@ import { parseRouteParams } from "@/utils/params";
 import {
   resolveRouteWaypoints,
   fetchRouteWeatherAction,
-} from "@/app/actions/route";
+} from "@/app/actions/route-actions";
 import RouteClientWrapper from "@/app/components/route-client-wrapper";
 
 export const dynamic = "force-dynamic";
