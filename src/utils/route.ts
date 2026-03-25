@@ -216,7 +216,7 @@ export function computeTimings(
 export function generateRouteSamplePoints(
   resolvedWaypoints: Array<{ name: string; latitude: number; longitude: number }>,
   resolutionNM: number,
-  maxPoints: number = 50,
+  maxPoints: number = 30,
 ): RouteWaypoint[] {
   if (resolvedWaypoints.length < 2) {
     throw new Error("Route requires at least 2 waypoints");

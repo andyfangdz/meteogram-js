@@ -49,45 +49,80 @@ const RouteWeatherLines: React.FC<RouteWeatherLinesProps> = ({
   showDewPointDepressionLines,
   maxStepDistance,
 }) => {
-  const freezingPoints = React.useMemo(() => {
-    return findFreezingLevels(crossSectionData);
+  // Filter out columns with empty cloud arrays to avoid interpolation errors
+  const validData = React.useMemo(() => {
+    return crossSectionData.map((col) => ({
+      ...col,
+      cloud: col.cloud ?? [],
+    }));
   }, [crossSectionData]);
+
+  const freezingPoints = React.useMemo(() => {
+    try {
+      return findFreezingLevels(validData);
+    } catch (e) {
+      console.error("Error computing freezing levels:", e);
+      return [];
+    }
+  }, [validData]);
 
   const isothermPoints = React.useMemo(() => {
     if (!showIsothermLines) return [];
-    return findIsothermPoints(crossSectionData, 2, 500, maxStepDistance);
-  }, [crossSectionData, showIsothermLines, maxStepDistance]);
+    try {
+      return findIsothermPoints(validData, 2, 500, maxStepDistance);
+    } catch (e) {
+      console.error("Error computing isotherms:", e);
+      return [];
+    }
+  }, [validData, showIsothermLines, maxStepDistance]);
 
   const isotachPoints = React.useMemo(() => {
     if (!showIsotachLines) return [];
-    return findIsotachPoints(crossSectionData, 10, 500, maxStepDistance);
-  }, [crossSectionData, showIsotachLines, maxStepDistance]);
+    try {
+      return findIsotachPoints(validData, 10, 500, maxStepDistance);
+    } catch (e) {
+      console.error("Error computing isotachs:", e);
+      return [];
+    }
+  }, [validData, showIsotachLines, maxStepDistance]);
 
   const dewPointDepressionPoints = React.useMemo(() => {
     if (!showDewPointDepressionLines) return [];
-    return findDewPointDepressionPoints(crossSectionData, [0, 1, 3, 5, 10]);
-  }, [crossSectionData, showDewPointDepressionLines]);
+    try {
+      return findDewPointDepressionPoints(validData, [0, 1, 3, 5, 10]);
+    } catch (e) {
+      console.error("Error computing dew point depression:", e);
+      return [];
+    }
+  }, [validData, showDewPointDepressionLines]);
+
+  const getX = React.useCallback(
+    (pointX: number): number => {
+      const idx = Math.min(Math.floor(pointX), waypoints.length - 1);
+      if (idx < 0 || !waypoints[idx]) return 0;
+      return formatNumber(scales.distanceScale(waypoints[idx].distanceNM));
+    },
+    [waypoints, scales],
+  );
 
   const freezingPaths = React.useMemo(() => {
     return freezingPoints.map(({ points }) => {
       if (!points.length) return null;
       return points.reduce((path: string, point: Point, i: number) => {
-        const x = formatNumber(
-          scales.distanceScale(waypoints[point.x].distanceNM),
-        );
+        const x = getX(point.x);
         const y = formatNumber(scales.mslScale(point.y));
         if (i === 0) return `M ${x} ${y}`;
         return `${path} L ${x} ${y}`;
       }, "");
     });
-  }, [freezingPoints, scales, waypoints]);
+  }, [freezingPoints, scales, getX]);
 
   const isothermPaths = React.useMemo(() => {
     return isothermPoints.map(({ temp, points }) => {
       if (!points.length) return null;
       const pathD = points.reduce((path: string, point: Point, i: number) => {
         const x = formatNumber(
-          scales.distanceScale(waypoints[point.x].distanceNM),
+          scales.distanceScale(waypoints[Math.min(Math.floor(point.x), waypoints.length - 1)]?.distanceNM ?? 0),
         );
         const y = formatNumber(scales.mslScale(point.y));
         if (i === 0) return `M ${x} ${y}`;
@@ -107,7 +142,7 @@ const RouteWeatherLines: React.FC<RouteWeatherLinesProps> = ({
       if (!points.length) return null;
       const pathD = points.reduce((path: string, point: Point, i: number) => {
         const x = formatNumber(
-          scales.distanceScale(waypoints[point.x].distanceNM),
+          scales.distanceScale(waypoints[Math.min(Math.floor(point.x), waypoints.length - 1)]?.distanceNM ?? 0),
         );
         const y = formatNumber(scales.mslScale(point.y));
         if (i === 0) return `M ${x} ${y}`;
@@ -127,7 +162,7 @@ const RouteWeatherLines: React.FC<RouteWeatherLinesProps> = ({
       if (!points.length) return null;
       const pathD = points.reduce((path: string, point: Point, i: number) => {
         const x = formatNumber(
-          scales.distanceScale(waypoints[point.x].distanceNM),
+          scales.distanceScale(waypoints[Math.min(Math.floor(point.x), waypoints.length - 1)]?.distanceNM ?? 0),
         );
         const y = formatNumber(scales.mslScale(point.y));
         if (i === 0) return `M ${x} ${y}`;
