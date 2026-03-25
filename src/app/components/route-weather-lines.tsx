@@ -57,11 +57,13 @@ const RouteWeatherLines: React.FC<RouteWeatherLinesProps> = ({
     }));
   }, [crossSectionData]);
 
+  // Contour line algorithms (marching squares) can overflow on route data
+  // because adjacent columns represent different geographic locations with
+  // discontinuous atmospheric profiles. Silently fall back to empty on error.
   const freezingPoints = React.useMemo(() => {
     try {
       return findFreezingLevels(validData);
-    } catch (e) {
-      console.error("Error computing freezing levels:", e);
+    } catch {
       return [];
     }
   }, [validData]);
@@ -70,8 +72,7 @@ const RouteWeatherLines: React.FC<RouteWeatherLinesProps> = ({
     if (!showIsothermLines) return [];
     try {
       return findIsothermPoints(validData, 2, 500, maxStepDistance);
-    } catch (e) {
-      console.error("Error computing isotherms:", e);
+    } catch {
       return [];
     }
   }, [validData, showIsothermLines, maxStepDistance]);
@@ -80,8 +81,7 @@ const RouteWeatherLines: React.FC<RouteWeatherLinesProps> = ({
     if (!showIsotachLines) return [];
     try {
       return findIsotachPoints(validData, 10, 500, maxStepDistance);
-    } catch (e) {
-      console.error("Error computing isotachs:", e);
+    } catch {
       return [];
     }
   }, [validData, showIsotachLines, maxStepDistance]);
@@ -90,8 +90,7 @@ const RouteWeatherLines: React.FC<RouteWeatherLinesProps> = ({
     if (!showDewPointDepressionLines) return [];
     try {
       return findDewPointDepressionPoints(validData, [0, 1, 3, 5, 10]);
-    } catch (e) {
-      console.error("Error computing dew point depression:", e);
+    } catch {
       return [];
     }
   }, [validData, showDewPointDepressionLines]);
