@@ -93,7 +93,7 @@ function RouteClientWrapperInternal({
         onUpdate={handleUpdate}
         isLoading={false}
       />
-      <div className="flex-1 p-2">
+      <main className="flex-1 items-center justify-between p-4">
         <ParentSize>
           {({ width }) => (
             <RouteMeteogram
@@ -115,7 +115,7 @@ function RouteClientWrapperInternal({
             />
           )}
         </ParentSize>
-      </div>
+      </main>
     </div>
   );
 }

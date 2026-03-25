@@ -1,14 +1,23 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Input, Button, Select, SelectItem } from "@heroui/react";
+import { useState } from "react";
+import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  NavbarMenuToggle,
+  NavbarMenu,
+  Button,
+  Input,
+  Select,
+  SelectItem,
+  Chip,
+} from "@heroui/react";
+import Link from "next/link";
 import { WeatherModel } from "../../types/weather";
 import { MODEL_NAMES } from "../../config/weather";
 
-/**
- * Convert an ISO UTC string to a datetime-local value in the user's local timezone.
- * datetime-local expects "YYYY-MM-DDTHH:mm" in local time.
- */
 function isoToLocalDatetimeValue(isoString: string): string {
   const date = new Date(isoString);
   if (isNaN(date.getTime())) return "";
@@ -20,14 +29,21 @@ function isoToLocalDatetimeValue(isoString: string): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-/**
- * Convert a datetime-local value (local time) to an ISO UTC string.
- */
 function localDatetimeValueToISO(localValue: string): string {
-  // datetime-local gives us a local time string; new Date() interprets it as local
   const date = new Date(localValue);
   if (isNaN(date.getTime())) return new Date().toISOString();
   return date.toISOString();
+}
+
+function formatDepTime(isoString: string): string {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export interface RouteHeaderUpdate {
@@ -66,6 +82,7 @@ export default function RouteHeader({
   const [localTas, setLocalTas] = useState(String(tasKnots));
   const [localDep, setLocalDep] = useState(departureTime);
   const [localRes, setLocalRes] = useState(String(resolutionNM));
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleUpdate = () => {
     onUpdate({
@@ -79,84 +96,210 @@ export default function RouteHeader({
   };
 
   return (
-    <div className="flex flex-wrap gap-2 p-3 bg-background border-b border-divider items-end">
-      <Input
-        label="Waypoints"
-        placeholder="KCDW-KFRG"
-        value={localWaypoints}
-        onValueChange={setLocalWaypoints}
-        size="sm"
-        className="min-w-[200px] flex-1"
-        isDisabled={isLoading}
-      />
+    <Navbar
+      maxWidth="full"
+      isMenuOpen={isMenuOpen}
+      onMenuOpenChange={setIsMenuOpen}
+      className="border-b border-divider"
+      height="auto"
+    >
+      {/* Mobile toggle */}
+      <NavbarContent className="md:hidden" justify="start">
+        <NavbarMenuToggle
+          className="md:hidden"
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        />
+        <NavbarBrand>
+          <Link href={`/${localWaypoints.split("-")[0] || "KCDW"}/${localModel}`} className="font-bold text-inherit hover:text-primary transition-colors">
+            Meteogram
+          </Link>
+          <Chip size="sm" variant="flat" color="primary" className="ml-2">Route</Chip>
+        </NavbarBrand>
+      </NavbarContent>
 
-      <Select
-        label="Model"
-        selectedKeys={[localModel]}
-        onSelectionChange={(keys) => {
-          const selected = Array.from(keys)[0] as WeatherModel;
-          if (selected) setLocalModel(selected);
-        }}
-        size="sm"
-        className="min-w-[160px]"
-        isDisabled={isLoading}
-      >
-        {MODEL_NAMES.map((m) => (
-          <SelectItem key={m}>{m}</SelectItem>
-        ))}
-      </Select>
+      {/* Desktop: Brand + Route */}
+      <NavbarContent className="hidden md:flex" justify="start">
+        <NavbarBrand>
+          <Link href={`/${localWaypoints.split("-")[0] || "KCDW"}/${localModel}`} className="font-bold text-inherit hover:text-primary transition-colors">
+            Meteogram
+          </Link>
+          <Chip size="sm" variant="flat" color="primary" className="ml-2">Route</Chip>
+        </NavbarBrand>
+      </NavbarContent>
 
-      <Input
-        label="Alt (ft)"
-        type="number"
-        value={localAlt}
-        onValueChange={setLocalAlt}
-        size="sm"
-        className="w-24"
-        isDisabled={isLoading}
-      />
+      {/* Desktop: Inline controls */}
+      <NavbarContent className="hidden md:flex gap-2" justify="center">
+        <NavbarItem>
+          <Input
+            placeholder="KCDW-SBJ-KIAD"
+            value={localWaypoints}
+            onValueChange={setLocalWaypoints}
+            size="sm"
+            variant="bordered"
+            className="w-48"
+            classNames={{ input: "font-mono text-sm" }}
+            isDisabled={isLoading}
+            aria-label="Waypoints"
+            startContent={<span className="text-default-400 text-xs whitespace-nowrap">RTE</span>}
+          />
+        </NavbarItem>
+        <NavbarItem>
+          <Select
+            selectedKeys={[localModel]}
+            onSelectionChange={(keys) => {
+              const selected = Array.from(keys)[0] as WeatherModel;
+              if (selected) setLocalModel(selected);
+            }}
+            size="sm"
+            variant="bordered"
+            className="w-36"
+            isDisabled={isLoading}
+            aria-label="Model"
+          >
+            {MODEL_NAMES.map((m) => (
+              <SelectItem key={m}>{m}</SelectItem>
+            ))}
+          </Select>
+        </NavbarItem>
+        <NavbarItem>
+          <div className="flex items-center gap-1">
+            <Input
+              value={localAlt}
+              onValueChange={setLocalAlt}
+              size="sm"
+              type="number"
+              variant="bordered"
+              className="w-20"
+              classNames={{ input: "font-mono text-sm text-center" }}
+              isDisabled={isLoading}
+              aria-label="Altitude"
+              endContent={<span className="text-default-400 text-xs">ft</span>}
+            />
+            <Input
+              value={localTas}
+              onValueChange={setLocalTas}
+              size="sm"
+              type="number"
+              variant="bordered"
+              className="w-20"
+              classNames={{ input: "font-mono text-sm text-center" }}
+              isDisabled={isLoading}
+              aria-label="TAS"
+              endContent={<span className="text-default-400 text-xs">kt</span>}
+            />
+          </div>
+        </NavbarItem>
+        <NavbarItem>
+          <Chip
+            size="sm"
+            variant="flat"
+            className="cursor-default"
+          >
+            {formatDepTime(localDep)}
+          </Chip>
+        </NavbarItem>
+      </NavbarContent>
 
-      <Input
-        label="TAS (kts)"
-        type="number"
-        value={localTas}
-        onValueChange={setLocalTas}
-        size="sm"
-        className="w-24"
-        isDisabled={isLoading}
-      />
+      {/* Desktop: Actions */}
+      <NavbarContent className="hidden md:flex" justify="end">
+        <NavbarItem>
+          <Button
+            color="primary"
+            size="sm"
+            onPress={handleUpdate}
+            isLoading={isLoading}
+          >
+            Update
+          </Button>
+        </NavbarItem>
+      </NavbarContent>
 
-      <Input
-        label="Departure (local)"
-        type="datetime-local"
-        value={isoToLocalDatetimeValue(localDep)}
-        onChange={(e) =>
-          setLocalDep(localDatetimeValueToISO(e.target.value))
-        }
-        size="sm"
-        className="min-w-[180px]"
-        isDisabled={isLoading}
-      />
-
-      <Input
-        label="Res (NM)"
-        type="number"
-        value={localRes}
-        onValueChange={setLocalRes}
-        size="sm"
-        className="w-24"
-        isDisabled={isLoading}
-      />
-
-      <Button
-        color="primary"
-        size="sm"
-        onPress={handleUpdate}
-        isLoading={isLoading}
-        className="self-end mb-0.5"
-      >
-        Update
-      </Button>
-    </div>
+      {/* Mobile menu with all controls */}
+      <NavbarMenu>
+        <div className="flex flex-col gap-3 pt-4 pb-6">
+          <Input
+            label="Route"
+            placeholder="KCDW-SBJ-KIAD"
+            value={localWaypoints}
+            onValueChange={setLocalWaypoints}
+            size="sm"
+            variant="bordered"
+            classNames={{ input: "font-mono" }}
+            isDisabled={isLoading}
+          />
+          <Select
+            label="Model"
+            selectedKeys={[localModel]}
+            onSelectionChange={(keys) => {
+              const selected = Array.from(keys)[0] as WeatherModel;
+              if (selected) setLocalModel(selected);
+            }}
+            size="sm"
+            variant="bordered"
+            isDisabled={isLoading}
+          >
+            {MODEL_NAMES.map((m) => (
+              <SelectItem key={m}>{m}</SelectItem>
+            ))}
+          </Select>
+          <div className="flex gap-2">
+            <Input
+              label="Alt (ft)"
+              value={localAlt}
+              onValueChange={setLocalAlt}
+              size="sm"
+              type="number"
+              variant="bordered"
+              className="flex-1"
+              classNames={{ input: "font-mono" }}
+              isDisabled={isLoading}
+            />
+            <Input
+              label="TAS (kts)"
+              value={localTas}
+              onValueChange={setLocalTas}
+              size="sm"
+              type="number"
+              variant="bordered"
+              className="flex-1"
+              classNames={{ input: "font-mono" }}
+              isDisabled={isLoading}
+            />
+            <Input
+              label="Res (NM)"
+              value={localRes}
+              onValueChange={setLocalRes}
+              size="sm"
+              type="number"
+              variant="bordered"
+              className="flex-1"
+              classNames={{ input: "font-mono" }}
+              isDisabled={isLoading}
+            />
+          </div>
+          <Input
+            label="Departure (local)"
+            type="datetime-local"
+            value={isoToLocalDatetimeValue(localDep)}
+            onChange={(e) => setLocalDep(localDatetimeValueToISO(e.target.value))}
+            size="sm"
+            variant="bordered"
+            isDisabled={isLoading}
+          />
+          <Button
+            color="primary"
+            size="md"
+            onPress={() => {
+              handleUpdate();
+              setIsMenuOpen(false);
+            }}
+            isLoading={isLoading}
+            fullWidth
+          >
+            Update Route
+          </Button>
+        </div>
+      </NavbarMenu>
+    </Navbar>
   );
 }
