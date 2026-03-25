@@ -4,7 +4,7 @@ import { FEET_PER_METER, LOCATIONS, MODEL_CONFIGS, MAX_VARIABLES_PER_REQUEST } f
 import type { RouteWaypoint, CloudColumn, WeatherModel } from "@/types/weather";
 import { parseWaypointString, generateRouteSamplePoints, computeTimings, closestColumnByTime } from "@/utils/route";
 import { transformWeatherData } from "@/utils/weather";
-import { geocodeLocationAction } from "./geocoding";
+import { geocodeLocationAction, lookupNavaid } from "./geocoding";
 import { fetchWeatherApi } from "openmeteo";
 import chunk from "lodash/chunk";
 
@@ -66,7 +66,13 @@ export async function resolveRouteWaypoints(
         return { name: wp.name, latitude: loc.latitude, longitude: loc.longitude };
       }
 
-      // Fall back to geocoding (airport codes, etc.)
+      // Try navaids (VOR, NDB, VORTAC, etc.)
+      const navaid = await lookupNavaid(wp.identifier);
+      if (navaid) {
+        return { name: wp.name.toUpperCase(), latitude: navaid.latitude, longitude: navaid.longitude };
+      }
+
+      // Fall back to airport geocoding
       const geocoded = await geocodeLocationAction(wp.identifier);
       const firstMatch = Object.entries(geocoded)[0];
       if (firstMatch) {
