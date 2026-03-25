@@ -35,17 +35,6 @@ function localDatetimeValueToISO(localValue: string): string {
   return date.toISOString();
 }
 
-function formatDepTime(isoString: string): string {
-  const date = new Date(isoString);
-  if (isNaN(date.getTime())) return "—";
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export interface RouteHeaderUpdate {
   waypoints: string;
   model: WeatherModel;
@@ -190,13 +179,17 @@ export default function RouteHeader({
           </div>
         </NavbarItem>
         <NavbarItem>
-          <Chip
+          <Input
+            type="datetime-local"
+            value={isoToLocalDatetimeValue(localDep)}
+            onChange={(e) => setLocalDep(localDatetimeValueToISO(e.target.value))}
             size="sm"
-            variant="flat"
-            className="cursor-default"
-          >
-            {formatDepTime(localDep)}
-          </Chip>
+            variant="bordered"
+            className="w-48"
+            classNames={{ input: "font-mono text-sm" }}
+            isDisabled={isLoading}
+            aria-label="Departure time"
+          />
         </NavbarItem>
       </NavbarContent>
 
