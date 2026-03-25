@@ -15,6 +15,7 @@ This document provides comprehensive guidance for AI agents working on this code
 | Add preference | `src/config/preferences.ts`, `src/utils/params.ts`, `src/context/PreferencesContext.tsx`, nav components | Cookie + URL sync test |
 | Modify visualization | `src/app/components/meteogram.tsx` and children | Visual inspection + `yarn ts` |
 | Change data transform | `src/utils/weather.ts` | Run `yarn test` (transform tests exist) |
+| Add route feature | `src/utils/route.ts`, `src/app/actions/route-actions.ts`, route components | `yarn ts && yarn build` |
 
 ---
 
@@ -40,11 +41,13 @@ This document provides comprehensive guidance for AI agents working on this code
 src/
 ├── app/
 │   ├── [location]/[model]/page.tsx    # Main dynamic route (server component)
+│   ├── route/[waypoints]/[model]/page.tsx  # Route cross-section page
 │   ├── page.tsx                        # Root redirect
 │   ├── layout.tsx                      # Root layout with providers
 │   ├── actions/
 │   │   ├── weather.ts                  # Server actions: fetchWeatherDataAction, getWeatherData
-│   │   └── geocoding.ts                # Location resolution utilities
+│   │   ├── geocoding.ts                # Location resolution utilities
+│   │   └── route-actions.ts            # Route-specific server actions
 │   └── components/
 │       ├── client-wrapper.tsx          # Client boundary, state management, auto-refresh
 │       ├── meteogram.tsx               # Main visualization container
@@ -52,6 +55,15 @@ src/
 │       ├── weather-lines.tsx           # Isotherms, isotachs, freezing level
 │       ├── pressure-lines.tsx          # Constant-pressure surface lines
 │       ├── nav.tsx, nav-wrapper.tsx    # Navigation bar with preference toggles
+│       ├── route-client-wrapper.tsx    # Client boundary for route view
+│       ├── route-meteogram.tsx         # Route cross-section visualization container
+│       ├── route-cloud-columns.tsx     # Cloud coverage along route
+│       ├── route-weather-lines.tsx     # Isotherms/isotachs along route
+│       ├── route-pressure-lines.tsx    # Pressure surface lines along route
+│       ├── terrain-profile.tsx         # Terrain elevation profile
+│       ├── altitude-line.tsx           # Cruise altitude indicator
+│       ├── waypoint-markers.tsx        # Waypoint tick marks on X-axis
+│       ├── route-header.tsx            # Route summary header
 │       └── ...                         # Other UI components
 ├── config/
 │   ├── weather.ts                      # MODEL_CONFIGS, LOCATIONS, pressure levels
@@ -59,14 +71,16 @@ src/
 ├── context/
 │   └── PreferencesContext.tsx          # Client-side preference state + persistence
 ├── hooks/
-│   └── useMeteogramScales.ts           # Memoized Visx scales
+│   ├── useMeteogramScales.ts           # Memoized Visx scales
+│   └── useRouteScales.ts               # Memoized Visx scales for route view
 ├── types/
 │   └── weather.ts                      # TypeScript interfaces
 ├── utils/
 │   ├── weather.ts                      # transformWeatherData function
 │   ├── meteogram.ts                    # Grid interpolation, contour helpers
 │   ├── params.ts                       # URL param serialization
-│   └── serverPreferences.ts            # Server-side cookie/URL preference logic
+│   ├── serverPreferences.ts            # Server-side cookie/URL preference logic
+│   └── route.ts                        # Great circle math, sample points, timing
 └── __tests__/                          # Unit tests
 ```
 
@@ -84,6 +98,22 @@ transformWeatherData (utils/weather.ts)
 ClientWrapper (state holder, 60s refresh)
        ↓
 Meteogram → CloudColumns, WeatherLines, etc.
+```
+
+Route cross-section flow:
+
+```
+[Route URL: /route/KCDW-KFRG/gfs_hrrr?alt=6000&tas=120]
+       ↓
+resolveRouteWaypoints → generateRouteSamplePoints
+       ↓
+fetchRouteWeatherAction (batched, 10 at a time)
+       ↓
+computeTimings (wind-corrected groundspeed)
+       ↓
+assembleRouteCrossSection (pick closest column per point)
+       ↓
+RouteClientWrapper → RouteMeteogram
 ```
 
 ### Key Abstractions
@@ -243,6 +273,59 @@ Meteogram (SVG container, scales, dimensions)
 
 ---
 
+## Route View
+
+The en-route cross-section shows weather along a flight path rather than at a single point over time. The X-axis represents distance (nautical miles along the route) rather than time.
+
+### URL Structure
+
+```
+/route/{waypoints}/{model}?alt=6000&tas=120&dep=&res=
+```
+
+| Param | Description |
+|-------|-------------|
+| `waypoints` | Dash-separated list of waypoints (e.g., `KCDW-KFRG` or `KCDW-Name@40.73,-73.42-KFRG`) |
+| `alt` | Cruise altitude in feet MSL |
+| `tas` | True airspeed in knots (used for wind-corrected timing) |
+| `dep` | Departure time (ISO string or empty for "now") |
+| `res` | Sample resolution in NM (optional, defaults to auto) |
+
+### Waypoint Formats
+
+- **Airport code**: `KCDW` — resolved via geocoding to lat/lon
+- **Custom point**: `Name@lat,lon` — same format as single-location URLs
+- Waypoints are dash-separated in the URL path segment
+
+### Sample Point Generation
+
+- Route is divided into sample points every N nautical miles using great circle math (`src/utils/route.ts`)
+- Point count is capped at 50 to limit API calls
+- Each sample point fetches weather independently via `fetchRouteWeatherAction`
+- API requests are batched 10 at a time to stay within rate limits
+
+### Key Constraint: File Naming in app/
+
+**Do NOT name any file `route.ts` inside the `src/app/` directory tree.** Next.js App Router treats files named `route.ts` (or `route.js`) as HTTP route handlers. A file at e.g. `src/app/actions/route.ts` would be interpreted as a handler for the `/actions` path, not a module. Route-related server actions live in `src/app/actions/route-actions.ts`.
+
+### Route Component Hierarchy
+
+```
+RouteMeteogram (SVG container, distance-based X scale)
+├── RouteCloudColumns (cloud rectangles per sample point)
+│   └── WindBarb (per filtered cell)
+├── RouteWeatherLines (isotherms, isotachs along route)
+├── RoutePressureLines (constant-pressure paths)
+├── TerrainProfile (filled elevation profile at bottom)
+├── AltitudeLine (horizontal cruise altitude indicator)
+├── WaypointMarkers (tick marks + labels at waypoint positions)
+├── DistanceAxis (X-axis in NM)
+├── AxisLeft (Y-axis in feet/pressure)
+└── RouteMeteogramTooltip (data display on hover)
+```
+
+---
+
 ## Testing & Verification
 
 ### Commands
@@ -273,6 +356,7 @@ yarn test:watch   # Test watch mode
 - `src/__tests__/weather.transform.test.ts` — Data transformation
 - `src/__tests__/params.test.ts` — URL param parsing
 - `src/__tests__/server-actions.test.ts` — API orchestration
+- `src/__tests__/route.test.ts` — Route computation (great circle, timing, waypoint parsing)
 
 ---
 
@@ -356,3 +440,13 @@ Server-side cookie reading can fail on Edge. The `cookieReadSuccess` flag trigge
 | Contour lines | `src/app/components/weather-lines.tsx` |
 | Type definitions | `src/types/weather.ts` |
 | Tests | `src/__tests__/*.test.ts` |
+| Route page | `src/app/route/[waypoints]/[model]/page.tsx` |
+| Route server actions | `src/app/actions/route-actions.ts` |
+| Route math utilities | `src/utils/route.ts` |
+| Route visualization | `src/app/components/route-meteogram.tsx` |
+| Route cloud rendering | `src/app/components/route-cloud-columns.tsx` |
+| Route contour lines | `src/app/components/route-weather-lines.tsx` |
+| Terrain profile | `src/app/components/terrain-profile.tsx` |
+| Altitude indicator | `src/app/components/altitude-line.tsx` |
+| Waypoint markers | `src/app/components/waypoint-markers.tsx` |
+| Route scales hook | `src/hooks/useRouteScales.ts` |

@@ -2,7 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "yarn build",
   "devCommand": "yarn dev",
-  "installCommand": "yarn install",
+  "installCommand": "corepack enable && corepack yarn install",
   "framework": "nextjs",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "functions": {
+    "src/app/**/*.tsx": {
+      "maxDuration": 60
+    }
+  }
 }

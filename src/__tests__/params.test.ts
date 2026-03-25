@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseVisualizationPreferences, serializeVisualizationPreferences } from "@/utils/params";
+import { parseVisualizationPreferences, serializeVisualizationPreferences, parseRouteParams, serializeRouteParams } from "@/utils/params";
 import { DEFAULT_PREFERENCES } from "@/config/preferences";
 
 describe("utils/params", () => {
@@ -34,5 +34,48 @@ describe("utils/params", () => {
 
     const obj = Object.fromEntries(params.entries());
     expect(obj).toEqual({ showWindBarbs: "false", useLocalTime: "true" });
+  });
+});
+
+describe("parseRouteParams", () => {
+  it("parses all route params with defaults", () => {
+    const result = parseRouteParams({});
+    expect(result.cruiseAltitudeFt).toBe(6000);
+    expect(result.tasKnots).toBe(120);
+    expect(result.resolutionNM).toBe(25);
+    expect(result.departureTime).toBeInstanceOf(Date);
+  });
+
+  it("parses provided route params", () => {
+    const result = parseRouteParams({
+      alt: "8000",
+      tas: "150",
+      res: "10",
+      dep: "2026-03-24T14:00:00.000Z",
+    });
+    expect(result.cruiseAltitudeFt).toBe(8000);
+    expect(result.tasKnots).toBe(150);
+    expect(result.resolutionNM).toBe(10);
+    expect(result.departureTime).toEqual(new Date("2026-03-24T14:00:00.000Z"));
+  });
+
+  it("clamps resolution to minimum of 5", () => {
+    const result = parseRouteParams({ res: "2" });
+    expect(result.resolutionNM).toBe(5);
+  });
+});
+
+describe("serializeRouteParams", () => {
+  it("serializes non-default route params", () => {
+    const params = serializeRouteParams({
+      cruiseAltitudeFt: 8000,
+      tasKnots: 120,
+      resolutionNM: 25,
+      departureTime: new Date("2026-03-24T14:00:00.000Z"),
+    });
+    expect(params.get("alt")).toBe("8000");
+    expect(params.has("tas")).toBe(false);
+    expect(params.has("res")).toBe(false);
+    expect(params.get("dep")).toBe("2026-03-24T14:00:00.000Z");
   });
 });

@@ -6,19 +6,24 @@ import Fuse from "fuse.js";
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const AIRPORTS_API_URL =
   "https://find-an-approach.github.io/data/approaches.json";
+const NAVAIDS_CSV_URL =
+  "https://davidmegginson.github.io/ourairports-data/navaids.csv";
 
-// In-memory cache for airports data (server-side)
-let airportsCache: Record<
-  string,
-  { latitude: number; longitude: number; description: string; id: string }
-> = {};
-let isCacheInitialized = false;
-let airportsFuseIndex: Fuse<{
+interface CachedLocation {
   latitude: number;
   longitude: number;
   description: string;
   id: string;
-}>;
+}
+
+// In-memory cache for airports data (server-side)
+let airportsCache: Record<string, CachedLocation> = {};
+let isCacheInitialized = false;
+let airportsFuseIndex: Fuse<CachedLocation>;
+
+// In-memory cache for navaids (VOR, NDB, FIX)
+let navaidsCache: Record<string, CachedLocation> = {};
+let isNavaidsCacheInitialized = false;
 
 interface NominatimResult {
   display_name: string;
@@ -127,6 +132,115 @@ async function initAirportsCache() {
     console.error("Failed to initialize server-side airports cache:", error);
     isCacheInitialized = false; // Allow retry on next call
   }
+}
+
+// Initialize navaids cache from OurAirports CSV
+async function initNavaidsCache() {
+  if (isNavaidsCacheInitialized) return;
+
+  console.log("Initializing server-side navaids cache...");
+  try {
+    const response = await fetch(NAVAIDS_CSV_URL, {
+      next: { revalidate: 3600 * 24 },
+    });
+    if (!response.ok) {
+      console.error("Failed to fetch navaids data:", response.statusText);
+      return;
+    }
+
+    const text = await response.text();
+    const lines = text.split("\n");
+    const newCache: Record<string, CachedLocation> = {};
+
+    // Simple CSV field parser that handles quoted and unquoted fields
+    function parseCSVLine(line: string): string[] {
+      const fields: string[] = [];
+      let i = 0;
+      while (i <= line.length) {
+        if (i === line.length) { fields.push(""); break; }
+        if (line[i] === '"') {
+          // Quoted field
+          let val = "";
+          i++; // skip opening quote
+          while (i < line.length) {
+            if (line[i] === '"') {
+              if (i + 1 < line.length && line[i + 1] === '"') {
+                val += '"';
+                i += 2;
+              } else {
+                i++; // skip closing quote
+                break;
+              }
+            } else {
+              val += line[i];
+              i++;
+            }
+          }
+          fields.push(val);
+          if (i < line.length && line[i] === ',') i++; // skip comma
+        } else {
+          // Unquoted field
+          const comma = line.indexOf(',', i);
+          if (comma === -1) {
+            fields.push(line.substring(i));
+            break;
+          } else {
+            fields.push(line.substring(i, comma));
+            i = comma + 1;
+          }
+        }
+      }
+      return fields;
+    }
+
+    // Skip header line
+    // CSV columns: 0=id, 1=filename, 2=ident, 3=name, 4=type, 5=frequency_khz,
+    //   6=latitude_deg, 7=longitude_deg, 8=elevation_ft, 9=iso_country, ...
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const fields = parseCSVLine(line);
+      if (fields.length < 10) continue;
+
+      const ident = fields[2].toUpperCase();
+      const name = fields[3];
+      const type = fields[4]; // VOR, VOR-DME, VORTAC, NDB, etc.
+      const lat = parseFloat(fields[6]);
+      const lon = parseFloat(fields[7]);
+      const country = fields[9];
+
+      if (ident && !isNaN(lat) && !isNaN(lon) && country === "US") {
+        // If multiple navaids share an ident, prefer VOR/VORTAC over NDB
+        if (!newCache[ident] || type.includes("VOR")) {
+          newCache[ident] = {
+            latitude: lat,
+            longitude: lon,
+            description: `${name} ${type} (${ident})`,
+            id: ident,
+          };
+        }
+      }
+    }
+
+    navaidsCache = newCache;
+    isNavaidsCacheInitialized = true;
+    console.log(`Loaded ${Object.keys(navaidsCache).length} navaids into server cache`);
+  } catch (error) {
+    console.error("Failed to initialize navaids cache:", error);
+  }
+}
+
+/**
+ * Look up a navaid (VOR, NDB, etc.) by identifier.
+ * Returns the first match or null.
+ */
+export async function lookupNavaid(
+  ident: string,
+): Promise<{ latitude: number; longitude: number; description: string } | null> {
+  await initNavaidsCache();
+  const normalized = ident.trim().toUpperCase();
+  return navaidsCache[normalized] ?? null;
 }
 
 export async function geocodeLocationAction(

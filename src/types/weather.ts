@@ -61,3 +61,32 @@ export interface VisualizationPreferences {
   showIsotachLines: boolean;
   showDewPointDepressionLines: boolean;
 }
+
+export interface RouteWaypoint {
+  name: string;
+  latitude: number;
+  longitude: number;
+  distanceNM: number;
+  isUserDefined: boolean;
+}
+
+export interface RoutePoint {
+  waypoint: RouteWaypoint;
+  weatherData: CloudColumn[];
+  elevationFt: number | null;
+  estimatedTimeOver: Date;
+  bearingDeg: number;
+}
+
+export interface RouteConfig {
+  waypoints: RouteWaypoint[];
+  cruiseAltitudeFt: number;
+  tasKnots: number;
+  departureTime: Date;
+  resolutionNM: number;
+}
+
+export interface RouteCrossSection {
+  routeConfig: RouteConfig;
+  points: RoutePoint[];
+}
