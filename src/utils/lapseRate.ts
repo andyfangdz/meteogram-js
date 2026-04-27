@@ -93,3 +93,19 @@ export const STABILITY_LABELS: Record<StabilityCategory, string> = {
   "conditionally-unstable": "Conditionally unstable",
   "absolutely-unstable": "Absolutely unstable",
 };
+
+// Parcel buoyancy tint: positive (parcel warmer than env, CAPE) → red,
+// negative (parcel colder than env, CIN) → blue. Magnitude clamped at 4 °C
+// for opacity scaling so a typical CAPE region reads as a saturated tint.
+const BUOYANCY_CLAMP_C = 4;
+const BUOYANCY_MAX_ALPHA = 0.45;
+
+export function getBuoyancyColor(buoyancyC: number): string | null {
+  if (!Number.isFinite(buoyancyC) || buoyancyC === 0) return null;
+  const magnitude = Math.min(Math.abs(buoyancyC) / BUOYANCY_CLAMP_C, 1);
+  const alpha = magnitude * BUOYANCY_MAX_ALPHA;
+  if (alpha < 0.04) return null;
+  return buoyancyC > 0
+    ? `rgba(239, 68, 68, ${alpha.toFixed(3)})`
+    : `rgba(59, 130, 246, ${alpha.toFixed(3)})`;
+}

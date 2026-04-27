@@ -12,6 +12,7 @@ type SearchParams = {
   showDewPointDepressionLines?: string;
   showStabilityTint?: string;
   showCondensationLevels?: string;
+  showParcelBuoyancy?: string;
 };
 
 /**
@@ -71,6 +72,10 @@ export function parseVisualizationPreferences(
       searchParams.showCondensationLevels,
       DEFAULT_PREFERENCES.showCondensationLevels,
     ),
+    showParcelBuoyancy: getBoolParam(
+      searchParams.showParcelBuoyancy,
+      DEFAULT_PREFERENCES.showParcelBuoyancy,
+    ),
   };
 }
 
@@ -104,6 +109,7 @@ export function serializeVisualizationPreferences(
   setParamIfDifferent("showDewPointDepressionLines", "showDewPointDepressionLines");
   setParamIfDifferent("showStabilityTint", "showStabilityTint");
   setParamIfDifferent("showCondensationLevels", "showCondensationLevels");
+  setParamIfDifferent("showParcelBuoyancy", "showParcelBuoyancy");
 
   return params;
 }

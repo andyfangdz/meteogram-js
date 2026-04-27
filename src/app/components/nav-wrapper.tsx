@@ -74,6 +74,11 @@ export default function NavWrapper({
     [setPreference]
   );
 
+  const setShowParcelBuoyancy = useCallback(
+    (val: boolean) => setPreference("showParcelBuoyancy", val),
+    [setPreference]
+  );
+
   return (
     <Nav
       location={location}
@@ -102,6 +107,8 @@ export default function NavWrapper({
       setShowStabilityTint={setShowStabilityTint}
       showCondensationLevels={preferences.showCondensationLevels}
       setShowCondensationLevels={setShowCondensationLevels}
+      showParcelBuoyancy={preferences.showParcelBuoyancy}
+      setShowParcelBuoyancy={setShowParcelBuoyancy}
     />
   );
 }

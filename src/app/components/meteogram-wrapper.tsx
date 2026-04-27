@@ -45,6 +45,7 @@ const MeteogramWrapper = React.memo(function MeteogramWrapper({
         showDewPointDepressionLines={preferences.showDewPointDepressionLines}
         showStabilityTint={preferences.showStabilityTint}
         showCondensationLevels={preferences.showCondensationLevels}
+        showParcelBuoyancy={preferences.showParcelBuoyancy}
         isLoading={isLoading}
         model={model}
         elevationFt={elevationFt}

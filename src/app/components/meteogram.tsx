@@ -8,7 +8,7 @@ import LoadingSkeleton from "./loading-skeleton";
 import TimeAxis from "./time-axis";
 import { WeatherModel } from "../../types/weather";
 import { useMeteogramScales } from "../../hooks/useMeteogramScales";
-import { computeColumnCondensationLevels } from "../../utils/condensation";
+import { computeColumnParcelProfile } from "../../utils/condensation";
 import CloudColumns from "./cloud-columns";
 import WeatherLines from "./weather-lines";
 import MeteogramTooltip from "./meteogram-tooltip";
@@ -32,6 +32,7 @@ export type MeteogramProps = {
   showDewPointDepressionLines?: boolean;
   showStabilityTint?: boolean;
   showCondensationLevels?: boolean;
+  showParcelBuoyancy?: boolean;
   model: WeatherModel;
   elevationFt: number | null;
 };
@@ -58,6 +59,7 @@ const Meteogram = React.memo(function Meteogram({
   showDewPointDepressionLines = true,
   showStabilityTint = false,
   showCondensationLevels = false,
+  showParcelBuoyancy = false,
   model,
   elevationFt,
 }: MeteogramProps) {
@@ -90,12 +92,17 @@ const Meteogram = React.memo(function Meteogram({
     [bounds.xMax, weatherData.length],
   );
 
-  const condensationLevels = useMemo(() => {
-    if (!showCondensationLevels || elevationFt == null) return [];
+  const parcelProfiles = useMemo(() => {
+    if (
+      (!showCondensationLevels && !showParcelBuoyancy) ||
+      elevationFt == null
+    ) {
+      return [];
+    }
     return weatherData.map((column) =>
-      computeColumnCondensationLevels(column, elevationFt),
+      computeColumnParcelProfile(column, elevationFt),
     );
-  }, [weatherData, elevationFt, showCondensationLevels]);
+  }, [weatherData, elevationFt, showCondensationLevels, showParcelBuoyancy]);
 
   // Memoize pressure levels with optimized O(n) algorithm
   const pressureLevels = useMemo(() => {
@@ -209,6 +216,8 @@ const Meteogram = React.memo(function Meteogram({
           clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
           showWindBarbs={showWindBarbs}
           showStabilityTint={showStabilityTint}
+          showParcelBuoyancy={showParcelBuoyancy}
+          parcelProfiles={parcelProfiles}
           model={model}
           frozenRect={frozenRect}
           onHover={handleHover}
@@ -221,7 +230,7 @@ const Meteogram = React.memo(function Meteogram({
           showIsotachLines={showIsotachLines}
           showDewPointDepressionLines={showDewPointDepressionLines}
           showCondensationLevels={showCondensationLevels}
-          condensationLevels={condensationLevels}
+          condensationLevels={parcelProfiles}
           model={model}
         />
         {showPressureLines && (

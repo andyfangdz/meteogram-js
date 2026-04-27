@@ -9,4 +9,5 @@ export const DEFAULT_PREFERENCES = {
   showDewPointDepressionLines: false,
   showStabilityTint: false,
   showCondensationLevels: false,
+  showParcelBuoyancy: false,
 } as const;

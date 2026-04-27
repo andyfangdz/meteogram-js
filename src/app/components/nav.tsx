@@ -51,6 +51,8 @@ interface NavProps {
   setShowStabilityTint: (value: boolean) => void;
   showCondensationLevels: boolean;
   setShowCondensationLevels: (value: boolean) => void;
+  showParcelBuoyancy: boolean;
+  setShowParcelBuoyancy: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
@@ -72,6 +74,8 @@ const NavContext = createContext<{
   setShowStabilityTint: (value: boolean) => void;
   showCondensationLevels: boolean;
   setShowCondensationLevels: (value: boolean) => void;
+  showParcelBuoyancy: boolean;
+  setShowParcelBuoyancy: (value: boolean) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -91,6 +95,8 @@ const NavContext = createContext<{
   setShowStabilityTint: () => {},
   showCondensationLevels: false,
   setShowCondensationLevels: () => {},
+  showParcelBuoyancy: false,
+  setShowParcelBuoyancy: () => {},
 });
 
 // Extracted and memoized PreferencesPanel component
@@ -115,6 +121,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowStabilityTint,
   showCondensationLevels,
   setShowCondensationLevels,
+  showParcelBuoyancy,
+  setShowParcelBuoyancy,
 }: {
   useLocalTime: boolean;
   setUseLocalTime: (value: boolean) => void;
@@ -136,6 +144,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowStabilityTint: (value: boolean) => void;
   showCondensationLevels: boolean;
   setShowCondensationLevels: (value: boolean) => void;
+  showParcelBuoyancy: boolean;
+  setShowParcelBuoyancy: (value: boolean) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -190,6 +200,12 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
       >
         Show LCL / LFC
       </Switch>
+      <Switch
+        isSelected={showParcelBuoyancy}
+        onValueChange={setShowParcelBuoyancy}
+      >
+        Show Parcel Buoyancy
+      </Switch>
     </div>
   );
 });
@@ -221,6 +237,8 @@ export default function Nav({
   setShowStabilityTint,
   showCondensationLevels,
   setShowCondensationLevels,
+  showParcelBuoyancy,
+  setShowParcelBuoyancy,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -249,6 +267,8 @@ export default function Nav({
       setShowStabilityTint,
       showCondensationLevels,
       setShowCondensationLevels,
+      showParcelBuoyancy,
+      setShowParcelBuoyancy,
     }),
     [
       useLocalTime,
@@ -269,6 +289,8 @@ export default function Nav({
       setShowStabilityTint,
       showCondensationLevels,
       setShowCondensationLevels,
+      showParcelBuoyancy,
+      setShowParcelBuoyancy,
     ]
   );
 
@@ -375,6 +397,8 @@ export default function Nav({
               setShowStabilityTint={setShowStabilityTint}
               showCondensationLevels={showCondensationLevels}
               setShowCondensationLevels={setShowCondensationLevels}
+              showParcelBuoyancy={showParcelBuoyancy}
+              setShowParcelBuoyancy={setShowParcelBuoyancy}
             />
           </div>
         </NavbarMenu>
@@ -409,6 +433,8 @@ export default function Nav({
             setShowStabilityTint={setShowStabilityTint}
             showCondensationLevels={showCondensationLevels}
             setShowCondensationLevels={setShowCondensationLevels}
+            showParcelBuoyancy={showParcelBuoyancy}
+            setShowParcelBuoyancy={setShowParcelBuoyancy}
           />
         </div>
       </div>

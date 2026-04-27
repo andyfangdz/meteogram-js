@@ -68,4 +68,5 @@ export interface VisualizationPreferences {
   showDewPointDepressionLines: boolean;
   showStabilityTint: boolean;
   showCondensationLevels: boolean;
+  showParcelBuoyancy: boolean;
 }
