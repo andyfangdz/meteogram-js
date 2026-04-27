@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "yarn build",
   "devCommand": "yarn dev",
-  "installCommand": "corepack enable && yarn install --immutable",
+  "installCommand": "npm install -g yarn@4.9.1 && yarn install --immutable",
   "framework": "nextjs",
   "outputDirectory": ".next"
 }
