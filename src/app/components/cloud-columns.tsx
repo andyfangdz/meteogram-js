@@ -2,6 +2,11 @@ import React from "react";
 import { Group } from "@visx/group";
 import { CloudColumn, CloudCell } from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
+import {
+  computeMALR,
+  getStabilityCategory,
+  getStabilityColor,
+} from "../../utils/lapseRate";
 import WindBarb from "./wind-barb";
 import { MODEL_CONFIGS } from "../../config/weather";
 import { WeatherModel } from "../../types/weather";
@@ -18,6 +23,7 @@ interface CloudColumnsProps {
   highlightCeilingCoverage: boolean;
   clampCloudCoverageAt50Pct: boolean;
   showWindBarbs: boolean;
+  showStabilityTint: boolean;
   model: WeatherModel;
   frozenRect: { date: Date; cloudCell: CloudCell } | null;
   onHover: (date: Date | null, cloudCell: CloudCell | null) => void;
@@ -32,6 +38,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   highlightCeilingCoverage,
   clampCloudCoverageAt50Pct,
   showWindBarbs,
+  showStabilityTint,
   model,
   frozenRect,
   onHover,
@@ -93,6 +100,30 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             left={formatNumber(scales.dateScale(d.date))}
             className="cloud-column"
           >
+            {showStabilityTint &&
+              filteredClouds?.map((cloud) => {
+                if (cloud.lapseRateAboveCPerKm == null) return null;
+                const malr = computeMALR(cloud.temperature, cloud.hpa);
+                const category = getStabilityCategory(
+                  cloud.lapseRateAboveCPerKm,
+                  malr,
+                );
+                return (
+                  <rect
+                    className={`stability-tint stability-${category}`}
+                    key={`stability-${cloud.hpa}`}
+                    x={formatNumber(0)}
+                    y={formatNumber(scales.mslScale(cloud.mslFtTop))}
+                    width={formatNumber(barWidth)}
+                    height={formatNumber(
+                      scales.mslScale(cloud.mslFtBottom) -
+                        scales.mslScale(cloud.mslFtTop),
+                    )}
+                    fill={getStabilityColor(category)}
+                    pointerEvents="none"
+                  />
+                );
+              })}
             {filteredClouds?.map((cloud) => {
               const coverage = clampCloudCoverageAt50Pct
                 ? Math.min(cloud.cloudCoverage, 50)

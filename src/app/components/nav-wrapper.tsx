@@ -64,6 +64,11 @@ export default function NavWrapper({
     [setPreference]
   );
 
+  const setShowStabilityTint = useCallback(
+    (val: boolean) => setPreference("showStabilityTint", val),
+    [setPreference]
+  );
+
   return (
     <Nav
       location={location}
@@ -88,6 +93,8 @@ export default function NavWrapper({
       setShowIsotachLines={setShowIsotachLines}
       showDewPointDepressionLines={preferences.showDewPointDepressionLines}
       setShowDewPointDepressionLines={setShowDewPointDepressionLines}
+      showStabilityTint={preferences.showStabilityTint}
+      setShowStabilityTint={setShowStabilityTint}
     />
   );
 }

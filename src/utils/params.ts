@@ -10,6 +10,7 @@ type SearchParams = {
   showIsothermLines?: string;
   showIsotachLines?: string;
   showDewPointDepressionLines?: string;
+  showStabilityTint?: string;
 };
 
 /**
@@ -61,6 +62,10 @@ export function parseVisualizationPreferences(
       searchParams.showDewPointDepressionLines,
       DEFAULT_PREFERENCES.showDewPointDepressionLines,
     ),
+    showStabilityTint: getBoolParam(
+      searchParams.showStabilityTint,
+      DEFAULT_PREFERENCES.showStabilityTint,
+    ),
   };
 }
 
@@ -92,6 +97,7 @@ export function serializeVisualizationPreferences(
   setParamIfDifferent("showIsothermLines", "showIsothermLines");
   setParamIfDifferent("showIsotachLines", "showIsotachLines");
   setParamIfDifferent("showDewPointDepressionLines", "showDewPointDepressionLines");
+  setParamIfDifferent("showStabilityTint", "showStabilityTint");
 
   return params;
 }

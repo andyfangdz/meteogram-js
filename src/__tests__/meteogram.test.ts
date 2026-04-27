@@ -24,6 +24,7 @@ function createTestCloudColumn(
       hpa: 850,
       windSpeed: 20,
       windDirection: 270,
+      lapseRateAboveCPerKm: null,
     })),
     groundTemp: 15,
   };

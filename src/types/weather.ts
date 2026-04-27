@@ -9,6 +9,9 @@ export interface CloudCell {
   dewPoint: number; // Dew point in Celsius
   windSpeed: number; // Wind speed in km/h
   windDirection: number; // Wind direction in degrees (0-360)
+  // Environmental lapse rate from this cell to the next-higher-altitude cell, °C/km.
+  // null on the topmost cell where there is no level above.
+  lapseRateAboveCPerKm: number | null;
 }
 
 export interface CloudColumn {
@@ -60,4 +63,5 @@ export interface VisualizationPreferences {
   showIsothermLines: boolean;
   showIsotachLines: boolean;
   showDewPointDepressionLines: boolean;
+  showStabilityTint: boolean;
 }

@@ -7,4 +7,5 @@ export const DEFAULT_PREFERENCES = {
   showIsothermLines: true,
   showIsotachLines: false,
   showDewPointDepressionLines: false,
+  showStabilityTint: false,
 } as const;

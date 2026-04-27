@@ -47,6 +47,8 @@ interface NavProps {
   setShowIsotachLines: (value: boolean) => void;
   showDewPointDepressionLines: boolean;
   setShowDewPointDepressionLines: (value: boolean) => void;
+  showStabilityTint: boolean;
+  setShowStabilityTint: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
@@ -64,6 +66,8 @@ const NavContext = createContext<{
   setShowIsotachLines: (value: boolean) => void;
   showDewPointDepressionLines: boolean;
   setShowDewPointDepressionLines: (value: boolean) => void;
+  showStabilityTint: boolean;
+  setShowStabilityTint: (value: boolean) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -79,6 +83,8 @@ const NavContext = createContext<{
   setShowIsotachLines: () => {},
   showDewPointDepressionLines: true,
   setShowDewPointDepressionLines: () => {},
+  showStabilityTint: false,
+  setShowStabilityTint: () => {},
 });
 
 // Extracted and memoized PreferencesPanel component
@@ -99,6 +105,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowIsotachLines,
   showDewPointDepressionLines,
   setShowDewPointDepressionLines,
+  showStabilityTint,
+  setShowStabilityTint,
 }: {
   useLocalTime: boolean;
   setUseLocalTime: (value: boolean) => void;
@@ -116,6 +124,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowIsotachLines: (value: boolean) => void;
   showDewPointDepressionLines: boolean;
   setShowDewPointDepressionLines: (value: boolean) => void;
+  showStabilityTint: boolean;
+  setShowStabilityTint: (value: boolean) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -158,6 +168,12 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
       >
         Show Dew Point Depression Lines
       </Switch>
+      <Switch
+        isSelected={showStabilityTint}
+        onValueChange={setShowStabilityTint}
+      >
+        Show Stability Tint
+      </Switch>
     </div>
   );
 });
@@ -185,6 +201,8 @@ export default function Nav({
   setShowIsotachLines,
   showDewPointDepressionLines,
   setShowDewPointDepressionLines,
+  showStabilityTint,
+  setShowStabilityTint,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -209,6 +227,8 @@ export default function Nav({
       setShowIsotachLines,
       showDewPointDepressionLines,
       setShowDewPointDepressionLines,
+      showStabilityTint,
+      setShowStabilityTint,
     }),
     [
       useLocalTime,
@@ -225,6 +245,8 @@ export default function Nav({
       setShowIsotachLines,
       showDewPointDepressionLines,
       setShowDewPointDepressionLines,
+      showStabilityTint,
+      setShowStabilityTint,
     ]
   );
 
@@ -327,6 +349,8 @@ export default function Nav({
               setShowIsotachLines={setShowIsotachLines}
               showDewPointDepressionLines={showDewPointDepressionLines}
               setShowDewPointDepressionLines={setShowDewPointDepressionLines}
+              showStabilityTint={showStabilityTint}
+              setShowStabilityTint={setShowStabilityTint}
             />
           </div>
         </NavbarMenu>
@@ -357,6 +381,8 @@ export default function Nav({
             setShowIsotachLines={setShowIsotachLines}
             showDewPointDepressionLines={showDewPointDepressionLines}
             setShowDewPointDepressionLines={setShowDewPointDepressionLines}
+            showStabilityTint={showStabilityTint}
+            setShowStabilityTint={setShowStabilityTint}
           />
         </div>
       </div>

@@ -74,6 +74,9 @@ export async function getInitialPreferences(
     "showPressureLines",
     "showWindBarbs",
     "showIsothermLines",
+    "showIsotachLines",
+    "showDewPointDepressionLines",
+    "showStabilityTint",
   ];
 
   // Check if any preference-related parameters exist in the URL

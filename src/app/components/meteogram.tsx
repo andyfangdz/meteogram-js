@@ -29,6 +29,7 @@ export type MeteogramProps = {
   showIsothermLines?: boolean;
   showIsotachLines?: boolean;
   showDewPointDepressionLines?: boolean;
+  showStabilityTint?: boolean;
   model: WeatherModel;
   elevationFt: number | null;
 };
@@ -53,6 +54,7 @@ const Meteogram = React.memo(function Meteogram({
   showIsothermLines = false,
   showIsotachLines = false,
   showDewPointDepressionLines = true,
+  showStabilityTint = false,
   model,
   elevationFt,
 }: MeteogramProps) {
@@ -196,6 +198,7 @@ const Meteogram = React.memo(function Meteogram({
           highlightCeilingCoverage={highlightCeilingCoverage}
           clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
           showWindBarbs={showWindBarbs}
+          showStabilityTint={showStabilityTint}
           model={model}
           frozenRect={frozenRect}
           onHover={handleHover}
