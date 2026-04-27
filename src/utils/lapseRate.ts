@@ -4,10 +4,10 @@ import { FEET_PER_METER } from "../config/weather";
 export const DALR_C_PER_KM = 9.8;
 export const ISA_C_PER_KM = 6.5;
 
-// 1 km = 3.28084 kft. Aviation conventionally uses °C per 1000 ft.
-const KFT_PER_KM = 3.28084;
+const FT_PER_KM = FEET_PER_METER * 1000;
+
 export const cPerKmToCPerKft = (cPerKm: number): number =>
-  cPerKm / KFT_PER_KM;
+  (cPerKm * 1000) / FT_PER_KM;
 
 export type StabilityCategory =
   | "absolutely-stable"
@@ -15,7 +15,7 @@ export type StabilityCategory =
   | "absolutely-unstable";
 
 // Saturated (moist) adiabatic lapse rate, °C/km.
-// Standard formula using Bolton (1980) for saturation vapor pressure.
+// Bolton (1980) saturation vapor pressure:
 //   Γ_w = g * (1 + L r_s / (R_d T)) / (c_pd + L^2 r_s / (R_v T^2))
 // where T is in Kelvin, p in hPa.
 export function computeMALR(temperatureC: number, pressureHpa: number): number {
@@ -25,9 +25,18 @@ export function computeMALR(temperatureC: number, pressureHpa: number): number {
   const Rv = 461.5;
   const cp = 1004;
   const L = 2.501e6;
+  // Saturation mixing ratio cap. Real atmospheric values stay well under 0.04
+  // (≈30 °C at 1000 hPa); past that the parcel is so loaded with vapor that
+  // the MALR formula is undefined, and a runaway rs would push the result
+  // toward zero and misclassify stability.
+  const RS_MAX = 0.04;
 
   const esHpa = 6.112 * Math.exp((17.67 * temperatureC) / (temperatureC + 243.5));
-  const rs = (Rd / Rv) * (esHpa / Math.max(pressureHpa - esHpa, 1e-6));
+  const denomHpa = pressureHpa - esHpa;
+  const rs =
+    denomHpa > 0
+      ? Math.min((Rd / Rv) * (esHpa / denomHpa), RS_MAX)
+      : RS_MAX;
 
   const numerator = 1 + (L * rs) / (Rd * T);
   const denominator = cp + (L * L * rs) / (Rv * T * T);
@@ -44,7 +53,7 @@ export function computeELR(
 ): number | null {
   const dHFt = upper.mslFt - lower.mslFt;
   if (!Number.isFinite(dHFt) || dHFt <= 0) return null;
-  const dHKm = dHFt / FEET_PER_METER / 1000;
+  const dHKm = dHFt / FT_PER_KM;
   const dT = lower.temperature - upper.temperature;
   return dT / dHKm;
 }
@@ -58,14 +67,25 @@ export function getStabilityCategory(
   return "conditionally-unstable";
 }
 
-const STABILITY_COLORS: Record<StabilityCategory, string> = {
-  "absolutely-stable": "rgba(34, 197, 94, 0.28)",
-  "conditionally-unstable": "rgba(234, 179, 8, 0.32)",
-  "absolutely-unstable": "rgba(239, 68, 68, 0.38)",
+const STABILITY_RGB: Record<StabilityCategory, [number, number, number]> = {
+  "absolutely-stable": [34, 197, 94],
+  "conditionally-unstable": [234, 179, 8],
+  "absolutely-unstable": [239, 68, 68],
 };
 
-export function getStabilityColor(category: StabilityCategory): string {
-  return STABILITY_COLORS[category];
+const STABILITY_DEFAULT_ALPHA: Record<StabilityCategory, number> = {
+  "absolutely-stable": 0.28,
+  "conditionally-unstable": 0.32,
+  "absolutely-unstable": 0.38,
+};
+
+export function getStabilityColor(
+  category: StabilityCategory,
+  alpha?: number,
+): string {
+  const [r, g, b] = STABILITY_RGB[category];
+  const a = alpha ?? STABILITY_DEFAULT_ALPHA[category];
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
 export const STABILITY_LABELS: Record<StabilityCategory, string> = {

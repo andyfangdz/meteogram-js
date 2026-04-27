@@ -3,7 +3,6 @@ import { Group } from "@visx/group";
 import { CloudColumn, CloudCell } from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
 import {
-  computeMALR,
   getStabilityCategory,
   getStabilityColor,
 } from "../../utils/lapseRate";
@@ -134,10 +133,9 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             {showStabilityTint &&
               filteredClouds?.map((cloud, idx) => {
                 if (cloud.lapseRateAboveCPerKm == null) return null;
-                const malr = computeMALR(cloud.temperature, cloud.hpa);
                 const category = getStabilityCategory(
                   cloud.lapseRateAboveCPerKm,
-                  malr,
+                  cloud.malrCPerKm,
                 );
                 // mslFtTop/mslFtBottom come from the unfiltered list, so a
                 // level dropped because it's missing in some other column

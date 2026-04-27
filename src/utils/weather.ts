@@ -6,7 +6,7 @@ import {
   MODEL_CONFIGS,
   MAX_VARIABLES_PER_REQUEST,
 } from "../config/weather";
-import { computeELR } from "./lapseRate";
+import { computeELR, computeMALR } from "./lapseRate";
 
 /**
  * Calculate the local Earth radius at a given latitude using WGS84 ellipsoid.
@@ -169,6 +169,7 @@ export function transformWeatherData(
           mslFtBottom,
           mslFtTop,
           lapseRateAboveCPerKm,
+          malrCPerKm: computeMALR(cloud!.temperature, cloud!.hpa),
         };
       }),
       groundTemp: dateAndCloud.groundTemp,

@@ -12,6 +12,8 @@ export interface CloudCell {
   // Environmental lapse rate from this cell to the next-higher-altitude cell, °C/km.
   // null on the topmost cell where there is no level above.
   lapseRateAboveCPerKm: number | null;
+  // Saturated (moist) adiabatic lapse rate at this cell's (T, p), °C/km.
+  malrCPerKm: number;
 }
 
 export interface CloudColumn {

@@ -80,6 +80,32 @@ describe("utils/weather.transformWeatherData", () => {
     expect(last.mslFtTop).toBeCloseTo(last.mslFt + 500, 5);
   });
 
+  it("populates lapseRateAboveCPerKm and malrCPerKm on every cell", () => {
+    const model = getModel();
+    const forecastKey = MODEL_CONFIGS[model].forecastDataKey;
+    const fakeResponse = createFakeOpenMeteoResponse(
+      forecastKey,
+      MODEL_CONFIGS[model].hpaLevels,
+      1,
+    );
+    const responses = splitFakeResponse(
+      fakeResponse,
+      MAX_VARIABLES_PER_REQUEST,
+    );
+
+    const result = transformWeatherData(responses as any, model, 40.0);
+    const cells = result[0].cloud;
+
+    cells.forEach((c) => {
+      expect(c.malrCPerKm).toBeGreaterThan(0);
+      expect(c.malrCPerKm).toBeLessThan(10);
+      expect(c.lapseRateAboveCPerKm).not.toBeNaN();
+      expect(c.lapseRateAboveCPerKm).not.toBeUndefined();
+    });
+    // Topmost cell: extrapolated from the layer below, so still defined.
+    expect(cells[cells.length - 1].lapseRateAboveCPerKm).not.toBeNull();
+  });
+
   it("filters out invalid cells with non-finite values", () => {
     const model = getModel();
     const forecastKey = MODEL_CONFIGS[model].forecastDataKey;

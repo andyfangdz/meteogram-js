@@ -35,4 +35,17 @@ describe("utils/params", () => {
     const obj = Object.fromEntries(params.entries());
     expect(obj).toEqual({ showWindBarbs: "false", useLocalTime: "true" });
   });
+
+  it("round-trips showStabilityTint", () => {
+    const parsed = parseVisualizationPreferences({ showStabilityTint: "true" });
+    expect(parsed.showStabilityTint).toBe(true);
+
+    const serialized = serializeVisualizationPreferences({
+      ...DEFAULT_PREFERENCES,
+      showStabilityTint: true,
+    });
+    expect(Object.fromEntries(serialized.entries())).toEqual({
+      showStabilityTint: "true",
+    });
+  });
 });

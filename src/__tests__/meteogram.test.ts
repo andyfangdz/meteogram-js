@@ -25,6 +25,7 @@ function createTestCloudColumn(
       windSpeed: 20,
       windDirection: 270,
       lapseRateAboveCPerKm: null,
+      malrCPerKm: 6,
     })),
     groundTemp: 15,
   };

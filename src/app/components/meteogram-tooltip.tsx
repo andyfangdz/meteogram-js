@@ -2,7 +2,6 @@ import React from "react";
 import { CloudCell } from "../../types/weather";
 import { hPaToInHg, kmhToKnots, formatNumber } from "../../utils/meteogram";
 import {
-  computeMALR,
   getStabilityCategory,
   getStabilityColor,
   STABILITY_LABELS,
@@ -29,10 +28,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   frozen = false,
 }) => {
   const elr = cloudCell.lapseRateAboveCPerKm;
-  const malr =
-    cloudCell.temperature != null && cloudCell.hpa != null
-      ? computeMALR(cloudCell.temperature, cloudCell.hpa)
-      : null;
+  const malr = cloudCell.malrCPerKm;
   const stability =
     elr != null && malr != null ? getStabilityCategory(elr, malr) : null;
   return (
@@ -107,10 +103,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
                 padding: "1px 6px",
                 marginBottom: "2px",
                 borderRadius: "3px",
-                backgroundColor: getStabilityColor(stability).replace(
-                  /[\d.]+\)$/,
-                  "0.6)",
-                ),
+                backgroundColor: getStabilityColor(stability, 0.6),
                 fontWeight: 600,
               }}
             >
