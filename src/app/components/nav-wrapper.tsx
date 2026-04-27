@@ -69,6 +69,11 @@ export default function NavWrapper({
     [setPreference]
   );
 
+  const setShowCondensationLevels = useCallback(
+    (val: boolean) => setPreference("showCondensationLevels", val),
+    [setPreference]
+  );
+
   return (
     <Nav
       location={location}
@@ -95,6 +100,8 @@ export default function NavWrapper({
       setShowDewPointDepressionLines={setShowDewPointDepressionLines}
       showStabilityTint={preferences.showStabilityTint}
       setShowStabilityTint={setShowStabilityTint}
+      showCondensationLevels={preferences.showCondensationLevels}
+      setShowCondensationLevels={setShowCondensationLevels}
     />
   );
 }

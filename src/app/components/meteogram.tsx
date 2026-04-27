@@ -8,6 +8,7 @@ import LoadingSkeleton from "./loading-skeleton";
 import TimeAxis from "./time-axis";
 import { WeatherModel } from "../../types/weather";
 import { useMeteogramScales } from "../../hooks/useMeteogramScales";
+import { computeColumnCondensationLevels } from "../../utils/condensation";
 import CloudColumns from "./cloud-columns";
 import WeatherLines from "./weather-lines";
 import MeteogramTooltip from "./meteogram-tooltip";
@@ -30,6 +31,7 @@ export type MeteogramProps = {
   showIsotachLines?: boolean;
   showDewPointDepressionLines?: boolean;
   showStabilityTint?: boolean;
+  showCondensationLevels?: boolean;
   model: WeatherModel;
   elevationFt: number | null;
 };
@@ -55,6 +57,7 @@ const Meteogram = React.memo(function Meteogram({
   showIsotachLines = false,
   showDewPointDepressionLines = true,
   showStabilityTint = false,
+  showCondensationLevels = false,
   model,
   elevationFt,
 }: MeteogramProps) {
@@ -86,6 +89,13 @@ const Meteogram = React.memo(function Meteogram({
     () => (weatherData.length > 0 ? bounds.xMax / weatherData.length : 0),
     [bounds.xMax, weatherData.length],
   );
+
+  const condensationLevels = useMemo(() => {
+    if (!showCondensationLevels || elevationFt == null) return [];
+    return weatherData.map((column) =>
+      computeColumnCondensationLevels(column, elevationFt),
+    );
+  }, [weatherData, elevationFt, showCondensationLevels]);
 
   // Memoize pressure levels with optimized O(n) algorithm
   const pressureLevels = useMemo(() => {
@@ -210,6 +220,8 @@ const Meteogram = React.memo(function Meteogram({
           showIsothermLines={showIsothermLines}
           showIsotachLines={showIsotachLines}
           showDewPointDepressionLines={showDewPointDepressionLines}
+          showCondensationLevels={showCondensationLevels}
+          condensationLevels={condensationLevels}
           model={model}
         />
         {showPressureLines && (

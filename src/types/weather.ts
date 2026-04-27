@@ -66,4 +66,5 @@ export interface VisualizationPreferences {
   showIsotachLines: boolean;
   showDewPointDepressionLines: boolean;
   showStabilityTint: boolean;
+  showCondensationLevels: boolean;
 }

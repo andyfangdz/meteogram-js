@@ -8,4 +8,5 @@ export const DEFAULT_PREFERENCES = {
   showIsotachLines: false,
   showDewPointDepressionLines: false,
   showStabilityTint: false,
+  showCondensationLevels: false,
 } as const;

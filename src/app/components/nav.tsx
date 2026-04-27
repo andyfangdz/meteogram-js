@@ -49,6 +49,8 @@ interface NavProps {
   setShowDewPointDepressionLines: (value: boolean) => void;
   showStabilityTint: boolean;
   setShowStabilityTint: (value: boolean) => void;
+  showCondensationLevels: boolean;
+  setShowCondensationLevels: (value: boolean) => void;
 }
 
 const NavContext = createContext<{
@@ -68,6 +70,8 @@ const NavContext = createContext<{
   setShowDewPointDepressionLines: (value: boolean) => void;
   showStabilityTint: boolean;
   setShowStabilityTint: (value: boolean) => void;
+  showCondensationLevels: boolean;
+  setShowCondensationLevels: (value: boolean) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -85,6 +89,8 @@ const NavContext = createContext<{
   setShowDewPointDepressionLines: () => {},
   showStabilityTint: false,
   setShowStabilityTint: () => {},
+  showCondensationLevels: false,
+  setShowCondensationLevels: () => {},
 });
 
 // Extracted and memoized PreferencesPanel component
@@ -107,6 +113,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowDewPointDepressionLines,
   showStabilityTint,
   setShowStabilityTint,
+  showCondensationLevels,
+  setShowCondensationLevels,
 }: {
   useLocalTime: boolean;
   setUseLocalTime: (value: boolean) => void;
@@ -126,6 +134,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowDewPointDepressionLines: (value: boolean) => void;
   showStabilityTint: boolean;
   setShowStabilityTint: (value: boolean) => void;
+  showCondensationLevels: boolean;
+  setShowCondensationLevels: (value: boolean) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -174,6 +184,12 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
       >
         Show Stability Tint
       </Switch>
+      <Switch
+        isSelected={showCondensationLevels}
+        onValueChange={setShowCondensationLevels}
+      >
+        Show LCL / LFC
+      </Switch>
     </div>
   );
 });
@@ -203,6 +219,8 @@ export default function Nav({
   setShowDewPointDepressionLines,
   showStabilityTint,
   setShowStabilityTint,
+  showCondensationLevels,
+  setShowCondensationLevels,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -229,6 +247,8 @@ export default function Nav({
       setShowDewPointDepressionLines,
       showStabilityTint,
       setShowStabilityTint,
+      showCondensationLevels,
+      setShowCondensationLevels,
     }),
     [
       useLocalTime,
@@ -247,6 +267,8 @@ export default function Nav({
       setShowDewPointDepressionLines,
       showStabilityTint,
       setShowStabilityTint,
+      showCondensationLevels,
+      setShowCondensationLevels,
     ]
   );
 
@@ -351,6 +373,8 @@ export default function Nav({
               setShowDewPointDepressionLines={setShowDewPointDepressionLines}
               showStabilityTint={showStabilityTint}
               setShowStabilityTint={setShowStabilityTint}
+              showCondensationLevels={showCondensationLevels}
+              setShowCondensationLevels={setShowCondensationLevels}
             />
           </div>
         </NavbarMenu>
@@ -383,6 +407,8 @@ export default function Nav({
             setShowDewPointDepressionLines={setShowDewPointDepressionLines}
             showStabilityTint={showStabilityTint}
             setShowStabilityTint={setShowStabilityTint}
+            showCondensationLevels={showCondensationLevels}
+            setShowCondensationLevels={setShowCondensationLevels}
           />
         </div>
       </div>
