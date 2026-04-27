@@ -59,9 +59,9 @@ export function getStabilityCategory(
 }
 
 const STABILITY_COLORS: Record<StabilityCategory, string> = {
-  "absolutely-stable": "rgba(34, 197, 94, 0.18)",
-  "conditionally-unstable": "rgba(234, 179, 8, 0.22)",
-  "absolutely-unstable": "rgba(239, 68, 68, 0.28)",
+  "absolutely-stable": "rgba(34, 197, 94, 0.28)",
+  "conditionally-unstable": "rgba(234, 179, 8, 0.32)",
+  "absolutely-unstable": "rgba(239, 68, 68, 0.38)",
 };
 
 export function getStabilityColor(category: StabilityCategory): string {

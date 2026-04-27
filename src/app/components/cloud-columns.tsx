@@ -100,30 +100,6 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             left={formatNumber(scales.dateScale(d.date))}
             className="cloud-column"
           >
-            {showStabilityTint &&
-              filteredClouds?.map((cloud) => {
-                if (cloud.lapseRateAboveCPerKm == null) return null;
-                const malr = computeMALR(cloud.temperature, cloud.hpa);
-                const category = getStabilityCategory(
-                  cloud.lapseRateAboveCPerKm,
-                  malr,
-                );
-                return (
-                  <rect
-                    className={`stability-tint stability-${category}`}
-                    key={`stability-${cloud.hpa}`}
-                    x={formatNumber(0)}
-                    y={formatNumber(scales.mslScale(cloud.mslFtTop))}
-                    width={formatNumber(barWidth)}
-                    height={formatNumber(
-                      scales.mslScale(cloud.mslFtBottom) -
-                        scales.mslScale(cloud.mslFtTop),
-                    )}
-                    fill={getStabilityColor(category)}
-                    pointerEvents="none"
-                  />
-                );
-              })}
             {filteredClouds?.map((cloud) => {
               const coverage = clampCloudCoverageAt50Pct
                 ? Math.min(cloud.cloudCoverage, 50)
@@ -155,6 +131,30 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                 />
               );
             })}
+            {showStabilityTint &&
+              filteredClouds?.map((cloud) => {
+                if (cloud.lapseRateAboveCPerKm == null) return null;
+                const malr = computeMALR(cloud.temperature, cloud.hpa);
+                const category = getStabilityCategory(
+                  cloud.lapseRateAboveCPerKm,
+                  malr,
+                );
+                return (
+                  <rect
+                    className={`stability-tint stability-${category}`}
+                    key={`stability-${cloud.hpa}`}
+                    x={formatNumber(0)}
+                    y={formatNumber(scales.mslScale(cloud.mslFtTop))}
+                    width={formatNumber(barWidth)}
+                    height={formatNumber(
+                      scales.mslScale(cloud.mslFtBottom) -
+                        scales.mslScale(cloud.mslFtTop),
+                    )}
+                    fill={getStabilityColor(category)}
+                    pointerEvents="none"
+                  />
+                );
+              })}
           </Group>
         );
       })}

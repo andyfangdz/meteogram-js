@@ -156,9 +156,13 @@ export function transformWeatherData(
           ? (cloud!.mslFt + nextCloud.mslFt) / 2
           : cloud!.mslFt + 500; // If no upper level, go 500ft above
 
+        // For the topmost cell there's no layer above, so reuse the lapse
+        // rate from the layer just below — the tint should still cover it.
         const lapseRateAboveCPerKm = nextCloud
           ? computeELR(cloud!, nextCloud)
-          : null;
+          : prevCloud
+            ? computeELR(prevCloud, cloud!)
+            : null;
 
         return {
           ...cloud!,
