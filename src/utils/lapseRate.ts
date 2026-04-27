@@ -4,6 +4,11 @@ import { FEET_PER_METER } from "../config/weather";
 export const DALR_C_PER_KM = 9.8;
 export const ISA_C_PER_KM = 6.5;
 
+// 1 km = 3.28084 kft. Aviation conventionally uses °C per 1000 ft.
+const KFT_PER_KM = 3.28084;
+export const cPerKmToCPerKft = (cPerKm: number): number =>
+  cPerKm / KFT_PER_KM;
+
 export type StabilityCategory =
   | "absolutely-stable"
   | "conditionally-unstable"

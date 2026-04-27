@@ -8,6 +8,7 @@ import {
   STABILITY_LABELS,
   DALR_C_PER_KM,
   ISA_C_PER_KM,
+  cPerKmToCPerKft,
 } from "../../utils/lapseRate";
 
 interface MeteogramTooltipProps {
@@ -115,12 +116,12 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
             >
               {STABILITY_LABELS[stability]}
             </div>
-            <div>{`ELR: ${elr.toFixed(1)} °C/km`}</div>
-            <div style={{ color: "#666" }}>{`DALR ${DALR_C_PER_KM.toFixed(
-              1,
-            )} · MALR ${malr.toFixed(1)} · ISA ${ISA_C_PER_KM.toFixed(
-              1,
-            )} °C/km`}</div>
+            <div>{`ELR: ${cPerKmToCPerKft(elr).toFixed(2)} °C/kft`}</div>
+            <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(
+              DALR_C_PER_KM,
+            ).toFixed(2)} · MALR ${cPerKmToCPerKft(malr).toFixed(
+              2,
+            )} · ISA ${cPerKmToCPerKft(ISA_C_PER_KM).toFixed(2)} °C/kft`}</div>
           </div>
         )}
       </div>

@@ -291,7 +291,7 @@ const Meteogram = React.memo(function Meteogram({
               scales.dateScale((hoveredRect || frozenRect)!.date) +
                 margin.left +
                 10,
-              bounds.xMax + margin.left - 210,
+              bounds.xMax + margin.left - 250,
             ),
           )}
           y={formatNumber(
@@ -299,7 +299,7 @@ const Meteogram = React.memo(function Meteogram({
               scales.mslScale((hoveredRect || frozenRect)!.cloudCell.mslFtTop) +
                 margin.top -
                 10,
-              bounds.yMax + margin.top - 160,
+              bounds.yMax + margin.top - 290,
             ),
           )}
           useLocalTime={useLocalTime}
