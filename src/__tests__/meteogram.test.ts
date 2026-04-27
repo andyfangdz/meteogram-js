@@ -28,6 +28,7 @@ function createTestCloudColumn(
       malrCPerKm: 6,
     })),
     groundTemp: 15,
+    groundDewPoint: 11,
   };
 }
 

@@ -71,11 +71,15 @@ export function computeColumnCondensationLevels(
 ): CondensationLevels {
   const lowest = column.cloud[0];
   if (!lowest) return { lclMslFt: null, lfcMslFt: null };
-  const surfaceTempC =
-    Number.isFinite(column.groundTemp) ? column.groundTemp : lowest.temperature;
+  const surfaceTempC = Number.isFinite(column.groundTemp)
+    ? column.groundTemp
+    : lowest.temperature;
+  const surfaceDewPointC = Number.isFinite(column.groundDewPoint)
+    ? column.groundDewPoint
+    : lowest.dewPoint;
   return computeCondensationLevels({
     surfaceTempC,
-    surfaceDewPointC: lowest.dewPoint,
+    surfaceDewPointC,
     surfaceMslFt,
     cells: column.cloud,
   });

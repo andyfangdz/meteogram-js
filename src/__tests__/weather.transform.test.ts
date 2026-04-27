@@ -54,8 +54,10 @@ describe("utils/weather.transformWeatherData", () => {
       MODEL_CONFIGS[model].hpaLevels[MODEL_CONFIGS[model].hpaLevels.length - 1],
     );
 
-    // Validate groundTemp present
+    // Validate groundTemp and groundDewPoint present
     expect(typeof col.groundTemp).toBe("number");
+    expect(typeof col.groundDewPoint).toBe("number");
+    expect(col.groundDewPoint).toBeLessThan(col.groundTemp);
 
     // Validate msl bounds for first cell
     const first = col.cloud[0];

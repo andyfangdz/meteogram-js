@@ -82,6 +82,7 @@ export function transformWeatherData(
   const windDirectionBaseIndex = 4 * len;
   const dewPointBaseIndex = 5 * len;
   const groundTempIndex = 6 * len;
+  const groundDewPointIndex = 6 * len + 1;
 
   const cloudData = range(
     Number(forecastDataMain.time()),
@@ -132,6 +133,7 @@ export function transformWeatherData(
       })
       .filter(Boolean), // Remove null entries
     groundTemp: getValue(groundTempIndex, index)!,
+    groundDewPoint: getValue(groundDewPointIndex, index)!,
   }));
 
   return cloudData.map((dateAndCloud) => {
@@ -173,6 +175,7 @@ export function transformWeatherData(
         };
       }),
       groundTemp: dateAndCloud.groundTemp,
+      groundDewPoint: dateAndCloud.groundDewPoint,
     };
   });
 }
