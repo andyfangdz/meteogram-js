@@ -1,6 +1,6 @@
 import { CloudCell, CloudColumn } from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
-import { DALR_C_PER_KM } from "./lapseRate";
+import { DALR_C_PER_KM, computeMALR } from "./lapseRate";
 
 // Espy approximation: LCL height above ground ≈ 125 m per °C of dewpoint
 // depression. Captures the dry-adiabatic cooling rate (≈9.8 °C/km) closing
@@ -61,7 +61,12 @@ export function computeParcelProfile({
     } else {
       const startZKm = Math.max(prevZKm, lclZKm);
       const startT = prevZKm >= lclZKm ? parcelTempC : lclTempC;
-      parcelTempC = startT - cell.malrCPerKm * (zKm - startZKm);
+      // Compute MALR at the parcel's temperature, not the environment's.
+      // In the CAPE region the parcel is warmer than env → carries more water
+      // vapor → has a smaller MALR → cools slower than env's MALR would imply.
+      // Using cell.malrCPerKm here over-cools the parcel and shrinks CAPE/EL.
+      const parcelMalr = computeMALR(startT, cell.hpa);
+      parcelTempC = startT - parcelMalr * (zKm - startZKm);
     }
 
     parcelTempProfile.push(parcelTempC);
