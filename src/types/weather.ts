@@ -57,6 +57,8 @@ export interface WeatherApiParams {
   [key: string]: any;
 }
 
+export type ParcelMode = "surface" | "mixed-100" | "most-unstable";
+
 export interface VisualizationPreferences {
   useLocalTime: boolean;
   highlightCeilingCoverage: boolean;
@@ -69,4 +71,5 @@ export interface VisualizationPreferences {
   showStabilityTint: boolean;
   showCondensationLevels: boolean;
   showParcelBuoyancy: boolean;
+  parcelMode: ParcelMode;
 }

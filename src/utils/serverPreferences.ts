@@ -79,6 +79,7 @@ export async function getInitialPreferences(
     "showStabilityTint",
     "showCondensationLevels",
     "showParcelBuoyancy",
+    "parcelMode",
   ];
 
   // Check if any preference-related parameters exist in the URL

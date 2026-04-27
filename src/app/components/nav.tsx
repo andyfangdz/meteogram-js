@@ -19,9 +19,10 @@ import {
   Chip,
   Switch,
 } from "@heroui/react";
-import { WeatherModel } from "../../types/weather";
+import { WeatherModel, ParcelMode } from "../../types/weather";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
+import ParcelModeDropdown from "./parcel-mode-dropdown";
 import LastUpdateTime from "./last-update-time";
 
 interface NavProps {
@@ -53,6 +54,8 @@ interface NavProps {
   setShowCondensationLevels: (value: boolean) => void;
   showParcelBuoyancy: boolean;
   setShowParcelBuoyancy: (value: boolean) => void;
+  parcelMode: ParcelMode;
+  setParcelMode: (mode: ParcelMode) => void;
 }
 
 const NavContext = createContext<{
@@ -76,6 +79,8 @@ const NavContext = createContext<{
   setShowCondensationLevels: (value: boolean) => void;
   showParcelBuoyancy: boolean;
   setShowParcelBuoyancy: (value: boolean) => void;
+  parcelMode: ParcelMode;
+  setParcelMode: (mode: ParcelMode) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -97,6 +102,8 @@ const NavContext = createContext<{
   setShowCondensationLevels: () => {},
   showParcelBuoyancy: false,
   setShowParcelBuoyancy: () => {},
+  parcelMode: "surface",
+  setParcelMode: () => {},
 });
 
 // Extracted and memoized PreferencesPanel component
@@ -123,6 +130,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowCondensationLevels,
   showParcelBuoyancy,
   setShowParcelBuoyancy,
+  parcelMode,
+  setParcelMode,
 }: {
   useLocalTime: boolean;
   setUseLocalTime: (value: boolean) => void;
@@ -146,6 +155,8 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowCondensationLevels: (value: boolean) => void;
   showParcelBuoyancy: boolean;
   setShowParcelBuoyancy: (value: boolean) => void;
+  parcelMode: ParcelMode;
+  setParcelMode: (mode: ParcelMode) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -206,6 +217,10 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
       >
         Show Parcel Buoyancy
       </Switch>
+      <ParcelModeDropdown
+        parcelMode={parcelMode}
+        setParcelMode={setParcelMode}
+      />
     </div>
   );
 });
@@ -239,6 +254,8 @@ export default function Nav({
   setShowCondensationLevels,
   showParcelBuoyancy,
   setShowParcelBuoyancy,
+  parcelMode,
+  setParcelMode,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -269,6 +286,8 @@ export default function Nav({
       setShowCondensationLevels,
       showParcelBuoyancy,
       setShowParcelBuoyancy,
+      parcelMode,
+      setParcelMode,
     }),
     [
       useLocalTime,
@@ -291,6 +310,8 @@ export default function Nav({
       setShowCondensationLevels,
       showParcelBuoyancy,
       setShowParcelBuoyancy,
+      parcelMode,
+      setParcelMode,
     ]
   );
 
@@ -399,6 +420,8 @@ export default function Nav({
               setShowCondensationLevels={setShowCondensationLevels}
               showParcelBuoyancy={showParcelBuoyancy}
               setShowParcelBuoyancy={setShowParcelBuoyancy}
+              parcelMode={parcelMode}
+              setParcelMode={setParcelMode}
             />
           </div>
         </NavbarMenu>
@@ -435,6 +458,8 @@ export default function Nav({
             setShowCondensationLevels={setShowCondensationLevels}
             showParcelBuoyancy={showParcelBuoyancy}
             setShowParcelBuoyancy={setShowParcelBuoyancy}
+            parcelMode={parcelMode}
+            setParcelMode={setParcelMode}
           />
         </div>
       </div>

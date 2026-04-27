@@ -10,4 +10,5 @@ export const DEFAULT_PREFERENCES = {
   showStabilityTint: false,
   showCondensationLevels: false,
   showParcelBuoyancy: false,
+  parcelMode: "surface",
 } as const;

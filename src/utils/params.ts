@@ -1,5 +1,11 @@
 import { DEFAULT_PREFERENCES } from "@/config/preferences";
-import { VisualizationPreferences } from "@/types/weather";
+import { VisualizationPreferences, ParcelMode } from "@/types/weather";
+
+const PARCEL_MODE_VALUES: readonly ParcelMode[] = [
+  "surface",
+  "mixed-100",
+  "most-unstable",
+];
 
 type SearchParams = {
   useLocalTime?: string;
@@ -13,6 +19,7 @@ type SearchParams = {
   showStabilityTint?: string;
   showCondensationLevels?: string;
   showParcelBuoyancy?: string;
+  parcelMode?: string;
 };
 
 /**
@@ -76,6 +83,9 @@ export function parseVisualizationPreferences(
       searchParams.showParcelBuoyancy,
       DEFAULT_PREFERENCES.showParcelBuoyancy,
     ),
+    parcelMode: PARCEL_MODE_VALUES.includes(searchParams.parcelMode as ParcelMode)
+      ? (searchParams.parcelMode as ParcelMode)
+      : DEFAULT_PREFERENCES.parcelMode,
   };
 }
 
@@ -110,6 +120,9 @@ export function serializeVisualizationPreferences(
   setParamIfDifferent("showStabilityTint", "showStabilityTint");
   setParamIfDifferent("showCondensationLevels", "showCondensationLevels");
   setParamIfDifferent("showParcelBuoyancy", "showParcelBuoyancy");
+  if (preferences.parcelMode !== DEFAULT_PREFERENCES.parcelMode) {
+    params.set("parcelMode", preferences.parcelMode);
+  }
 
   return params;
 }

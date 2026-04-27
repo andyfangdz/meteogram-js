@@ -2,10 +2,54 @@ import { CloudCell, CloudColumn } from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
 import { DALR_C_PER_KM, computeMALR } from "./lapseRate";
 
+// Poisson constant R_d / c_p for dry air.
+const KAPPA = 287.05 / 1004;
+
+// Bolton (1980) saturation vapor pressure, hPa.
+function esHpa(tempC: number): number {
+  return 6.112 * Math.exp((17.67 * tempC) / (tempC + 243.5));
+}
+
+// Water vapor mixing ratio (kg/kg) from dewpoint and pressure.
+function mixingRatio(dewPointC: number, pressureHpa: number): number {
+  const e = esHpa(dewPointC);
+  const denom = Math.max(pressureHpa - e, 1e-6);
+  return (0.622 * e) / denom;
+}
+
+// Inverse — dewpoint from mixing ratio and pressure.
+function dewPointFromMixingRatio(r: number, pressureHpa: number): number {
+  const e = (r * pressureHpa) / (0.622 + r);
+  const ln = Math.log(Math.max(e, 1e-6) / 6.112);
+  return (243.5 * ln) / (17.67 - ln);
+}
+
+// Potential temperature (K).
+function potentialTempK(tempC: number, pressureHpa: number): number {
+  return (tempC + 273.15) * Math.pow(1000 / pressureHpa, KAPPA);
+}
+
+// Temperature (°C) at a given pressure for a parcel of given θ.
+function tempFromPotentialTempK(thetaK: number, pressureHpa: number): number {
+  return thetaK * Math.pow(pressureHpa / 1000, KAPPA) - 273.15;
+}
+
 // Espy approximation: LCL height above ground ≈ 125 m per °C of dewpoint
 // depression. Captures the dry-adiabatic cooling rate (≈9.8 °C/km) closing
 // against the dewpoint depression decrease rate (≈1.8 °C/km).
 const M_PER_C_DEPRESSION = 125;
+
+export const PARCEL_MODES = ["surface", "mixed-100", "most-unstable"] as const;
+export type ParcelMode = (typeof PARCEL_MODES)[number];
+
+export const PARCEL_MODE_LABELS: Record<ParcelMode, string> = {
+  surface: "Surface",
+  "mixed-100": "Mixed-Layer 100hPa",
+  "most-unstable": "Most-Unstable",
+};
+
+const MIXED_LAYER_DEPTH_HPA = 100;
+const MOST_UNSTABLE_SEARCH_DEPTH_HPA = 300;
 
 export interface ParcelProfile {
   lclMslFt: number | null;
@@ -81,28 +125,98 @@ export function computeParcelProfile({
   return { lclMslFt, lfcMslFt, parcelTempC: parcelTempProfile };
 }
 
+function emptyProfile(cells: CloudCell[]): ParcelProfile {
+  return {
+    lclMslFt: null,
+    lfcMslFt: null,
+    parcelTempC: cells.map(() => null),
+  };
+}
+
+// Ranking-only proxy for CAPE: sum of positive parcel-minus-env over altitude.
+// Good enough to pick the most-buoyant starting parcel; not a calibrated J/kg.
+function capeProxy(profile: ParcelProfile, cells: CloudCell[]): number {
+  let cape = 0;
+  for (let i = 0; i < cells.length; i++) {
+    const pt = profile.parcelTempC[i];
+    if (pt == null) continue;
+    const buoyancy = pt - cells[i].temperature;
+    if (buoyancy > 0) cape += buoyancy;
+  }
+  return cape;
+}
+
+function mean(xs: number[]): number {
+  return xs.reduce((s, x) => s + x, 0) / xs.length;
+}
+
 export function computeColumnParcelProfile(
   column: CloudColumn,
   surfaceMslFt: number,
+  mode: ParcelMode = "surface",
 ): ParcelProfile {
-  const lowest = column.cloud[0];
-  if (!lowest) {
-    return {
-      lclMslFt: null,
-      lfcMslFt: null,
-      parcelTempC: column.cloud.map(() => null),
-    };
+  const cells = column.cloud;
+  const lowest = cells[0];
+  if (!lowest) return emptyProfile(cells);
+
+  if (mode === "surface") {
+    const surfaceTempC = Number.isFinite(column.groundTemp)
+      ? column.groundTemp
+      : lowest.temperature;
+    const surfaceDewPointC = Number.isFinite(column.groundDewPoint)
+      ? column.groundDewPoint
+      : lowest.dewPoint;
+    return computeParcelProfile({
+      surfaceTempC,
+      surfaceDewPointC,
+      surfaceMslFt,
+      cells,
+    });
   }
-  const surfaceTempC = Number.isFinite(column.groundTemp)
-    ? column.groundTemp
-    : lowest.temperature;
-  const surfaceDewPointC = Number.isFinite(column.groundDewPoint)
-    ? column.groundDewPoint
-    : lowest.dewPoint;
-  return computeParcelProfile({
-    surfaceTempC,
-    surfaceDewPointC,
-    surfaceMslFt,
-    cells: column.cloud,
-  });
+
+  if (mode === "mixed-100") {
+    // ML-CAPE: average potential temperature θ and water vapor mixing ratio
+    // r over the lowest 100 hPa, then back-project to the surface pressure.
+    // Averaging raw T/Td would systematically under-warm the parcel because
+    // temperature drops with altitude inside the layer.
+    const surfaceHpa = lowest.hpa;
+    const mlCells = cells.filter(
+      (c) => c.hpa >= surfaceHpa - MIXED_LAYER_DEPTH_HPA,
+    );
+    if (mlCells.length === 0) return emptyProfile(cells);
+    const avgThetaK = mean(
+      mlCells.map((c) => potentialTempK(c.temperature, c.hpa)),
+    );
+    const avgR = mean(mlCells.map((c) => mixingRatio(c.dewPoint, c.hpa)));
+    return computeParcelProfile({
+      surfaceTempC: tempFromPotentialTempK(avgThetaK, surfaceHpa),
+      surfaceDewPointC: dewPointFromMixingRatio(avgR, surfaceHpa),
+      surfaceMslFt,
+      cells,
+    });
+  }
+
+  // most-unstable: try each cell in the lowest 300hPa as the starting
+  // parcel and keep the one with the largest CAPE proxy. Surfaces above
+  // the elevation are launched from their own MSL.
+  const surfaceHpa = lowest.hpa;
+  const candidates = cells.filter(
+    (c) => c.hpa >= surfaceHpa - MOST_UNSTABLE_SEARCH_DEPTH_HPA,
+  );
+  let bestProfile: ParcelProfile | null = null;
+  let bestCape = -Infinity;
+  for (const candidate of candidates) {
+    const profile = computeParcelProfile({
+      surfaceTempC: candidate.temperature,
+      surfaceDewPointC: candidate.dewPoint,
+      surfaceMslFt: candidate.mslFt,
+      cells,
+    });
+    const cape = capeProxy(profile, cells);
+    if (cape > bestCape) {
+      bestCape = cape;
+      bestProfile = profile;
+    }
+  }
+  return bestProfile ?? emptyProfile(cells);
 }

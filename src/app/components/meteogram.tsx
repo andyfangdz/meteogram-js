@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { Group } from "@visx/group";
 import { AxisLeft } from "@visx/axis";
-import { CloudColumn, CloudCell } from "../../types/weather";
+import { CloudColumn, CloudCell, ParcelMode } from "../../types/weather";
 import LoadingSkeleton from "./loading-skeleton";
 import TimeAxis from "./time-axis";
 import { WeatherModel } from "../../types/weather";
@@ -33,6 +33,7 @@ export type MeteogramProps = {
   showStabilityTint?: boolean;
   showCondensationLevels?: boolean;
   showParcelBuoyancy?: boolean;
+  parcelMode?: ParcelMode;
   model: WeatherModel;
   elevationFt: number | null;
 };
@@ -60,6 +61,7 @@ const Meteogram = React.memo(function Meteogram({
   showStabilityTint = false,
   showCondensationLevels = false,
   showParcelBuoyancy = false,
+  parcelMode = "surface",
   model,
   elevationFt,
 }: MeteogramProps) {
@@ -100,9 +102,15 @@ const Meteogram = React.memo(function Meteogram({
       return [];
     }
     return weatherData.map((column) =>
-      computeColumnParcelProfile(column, elevationFt),
+      computeColumnParcelProfile(column, elevationFt, parcelMode),
     );
-  }, [weatherData, elevationFt, showCondensationLevels, showParcelBuoyancy]);
+  }, [
+    weatherData,
+    elevationFt,
+    showCondensationLevels,
+    showParcelBuoyancy,
+    parcelMode,
+  ]);
 
   // Memoize pressure levels with optimized O(n) algorithm
   const pressureLevels = useMemo(() => {

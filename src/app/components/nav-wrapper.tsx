@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
-import { WeatherModel } from "../../types/weather";
+import { WeatherModel, ParcelMode } from "../../types/weather";
 import Nav from "./nav";
 import { usePreferences } from "@/context/PreferencesContext";
 
@@ -79,6 +79,11 @@ export default function NavWrapper({
     [setPreference]
   );
 
+  const setParcelMode = useCallback(
+    (val: ParcelMode) => setPreference("parcelMode", val),
+    [setPreference]
+  );
+
   return (
     <Nav
       location={location}
@@ -109,6 +114,8 @@ export default function NavWrapper({
       setShowCondensationLevels={setShowCondensationLevels}
       showParcelBuoyancy={preferences.showParcelBuoyancy}
       setShowParcelBuoyancy={setShowParcelBuoyancy}
+      parcelMode={preferences.parcelMode}
+      setParcelMode={setParcelMode}
     />
   );
 }
