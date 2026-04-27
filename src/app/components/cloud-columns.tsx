@@ -132,23 +132,37 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
               );
             })}
             {showStabilityTint &&
-              filteredClouds?.map((cloud) => {
+              filteredClouds?.map((cloud, idx) => {
                 if (cloud.lapseRateAboveCPerKm == null) return null;
                 const malr = computeMALR(cloud.temperature, cloud.hpa);
                 const category = getStabilityCategory(
                   cloud.lapseRateAboveCPerKm,
                   malr,
                 );
+                // mslFtTop/mslFtBottom come from the unfiltered list, so a
+                // level dropped because it's missing in some other column
+                // leaves a gap. Use midpoints from the filtered neighbors
+                // here so adjacent tints tile without gaps.
+                const prev = idx > 0 ? filteredClouds[idx - 1] : null;
+                const next =
+                  idx < filteredClouds.length - 1
+                    ? filteredClouds[idx + 1]
+                    : null;
+                const tintBottom = prev
+                  ? (prev.mslFt + cloud.mslFt) / 2
+                  : cloud.mslFtBottom;
+                const tintTop = next
+                  ? (cloud.mslFt + next.mslFt) / 2
+                  : cloud.mslFtTop;
                 return (
                   <rect
                     className={`stability-tint stability-${category}`}
                     key={`stability-${cloud.hpa}`}
                     x={formatNumber(0)}
-                    y={formatNumber(scales.mslScale(cloud.mslFtTop))}
+                    y={formatNumber(scales.mslScale(tintTop))}
                     width={formatNumber(barWidth)}
                     height={formatNumber(
-                      scales.mslScale(cloud.mslFtBottom) -
-                        scales.mslScale(cloud.mslFtTop),
+                      scales.mslScale(tintBottom) - scales.mslScale(tintTop),
                     )}
                     fill={getStabilityColor(category)}
                     pointerEvents="none"
