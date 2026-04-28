@@ -1,5 +1,9 @@
 import { DEFAULT_PREFERENCES } from "@/config/preferences";
-import { VisualizationPreferences } from "@/types/weather";
+import {
+  VisualizationPreferences,
+  ParcelMode,
+  PARCEL_MODES,
+} from "@/types/weather";
 
 type SearchParams = {
   useLocalTime?: string;
@@ -10,6 +14,10 @@ type SearchParams = {
   showIsothermLines?: string;
   showIsotachLines?: string;
   showDewPointDepressionLines?: string;
+  showStabilityTint?: string;
+  showCondensationLevels?: string;
+  showParcelBuoyancy?: string;
+  parcelMode?: string;
 };
 
 /**
@@ -61,6 +69,23 @@ export function parseVisualizationPreferences(
       searchParams.showDewPointDepressionLines,
       DEFAULT_PREFERENCES.showDewPointDepressionLines,
     ),
+    showStabilityTint: getBoolParam(
+      searchParams.showStabilityTint,
+      DEFAULT_PREFERENCES.showStabilityTint,
+    ),
+    showCondensationLevels: getBoolParam(
+      searchParams.showCondensationLevels,
+      DEFAULT_PREFERENCES.showCondensationLevels,
+    ),
+    showParcelBuoyancy: getBoolParam(
+      searchParams.showParcelBuoyancy,
+      DEFAULT_PREFERENCES.showParcelBuoyancy,
+    ),
+    parcelMode: (PARCEL_MODES as readonly string[]).includes(
+      searchParams.parcelMode ?? "",
+    )
+      ? (searchParams.parcelMode as ParcelMode)
+      : DEFAULT_PREFERENCES.parcelMode,
   };
 }
 
@@ -92,6 +117,12 @@ export function serializeVisualizationPreferences(
   setParamIfDifferent("showIsothermLines", "showIsothermLines");
   setParamIfDifferent("showIsotachLines", "showIsotachLines");
   setParamIfDifferent("showDewPointDepressionLines", "showDewPointDepressionLines");
+  setParamIfDifferent("showStabilityTint", "showStabilityTint");
+  setParamIfDifferent("showCondensationLevels", "showCondensationLevels");
+  setParamIfDifferent("showParcelBuoyancy", "showParcelBuoyancy");
+  if (preferences.parcelMode !== DEFAULT_PREFERENCES.parcelMode) {
+    params.set("parcelMode", preferences.parcelMode);
+  }
 
   return params;
 }

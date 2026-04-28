@@ -3,11 +3,12 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { Group } from "@visx/group";
 import { AxisLeft } from "@visx/axis";
-import { CloudColumn, CloudCell } from "../../types/weather";
+import { CloudColumn, CloudCell, ParcelMode } from "../../types/weather";
 import LoadingSkeleton from "./loading-skeleton";
 import TimeAxis from "./time-axis";
 import { WeatherModel } from "../../types/weather";
 import { useMeteogramScales } from "../../hooks/useMeteogramScales";
+import { computeColumnParcelProfile } from "../../utils/condensation";
 import CloudColumns from "./cloud-columns";
 import WeatherLines from "./weather-lines";
 import MeteogramTooltip from "./meteogram-tooltip";
@@ -29,6 +30,10 @@ export type MeteogramProps = {
   showIsothermLines?: boolean;
   showIsotachLines?: boolean;
   showDewPointDepressionLines?: boolean;
+  showStabilityTint?: boolean;
+  showCondensationLevels?: boolean;
+  showParcelBuoyancy?: boolean;
+  parcelMode?: ParcelMode;
   model: WeatherModel;
   elevationFt: number | null;
 };
@@ -53,6 +58,10 @@ const Meteogram = React.memo(function Meteogram({
   showIsothermLines = false,
   showIsotachLines = false,
   showDewPointDepressionLines = true,
+  showStabilityTint = false,
+  showCondensationLevels = false,
+  showParcelBuoyancy = false,
+  parcelMode = "surface",
   model,
   elevationFt,
 }: MeteogramProps) {
@@ -84,6 +93,24 @@ const Meteogram = React.memo(function Meteogram({
     () => (weatherData.length > 0 ? bounds.xMax / weatherData.length : 0),
     [bounds.xMax, weatherData.length],
   );
+
+  const parcelProfiles = useMemo(() => {
+    if (
+      (!showCondensationLevels && !showParcelBuoyancy) ||
+      elevationFt == null
+    ) {
+      return [];
+    }
+    return weatherData.map((column) =>
+      computeColumnParcelProfile(column, elevationFt, parcelMode),
+    );
+  }, [
+    weatherData,
+    elevationFt,
+    showCondensationLevels,
+    showParcelBuoyancy,
+    parcelMode,
+  ]);
 
   // Memoize pressure levels with optimized O(n) algorithm
   const pressureLevels = useMemo(() => {
@@ -196,6 +223,9 @@ const Meteogram = React.memo(function Meteogram({
           highlightCeilingCoverage={highlightCeilingCoverage}
           clampCloudCoverageAt50Pct={clampCloudCoverageAt50Pct}
           showWindBarbs={showWindBarbs}
+          showStabilityTint={showStabilityTint}
+          showParcelBuoyancy={showParcelBuoyancy}
+          parcelProfiles={parcelProfiles}
           model={model}
           frozenRect={frozenRect}
           onHover={handleHover}
@@ -207,6 +237,8 @@ const Meteogram = React.memo(function Meteogram({
           showIsothermLines={showIsothermLines}
           showIsotachLines={showIsotachLines}
           showDewPointDepressionLines={showDewPointDepressionLines}
+          showCondensationLevels={showCondensationLevels}
+          condensationLevels={parcelProfiles}
           model={model}
         />
         {showPressureLines && (
@@ -288,7 +320,7 @@ const Meteogram = React.memo(function Meteogram({
               scales.dateScale((hoveredRect || frozenRect)!.date) +
                 margin.left +
                 10,
-              bounds.xMax + margin.left - 210,
+              bounds.xMax + margin.left - 250,
             ),
           )}
           y={formatNumber(
@@ -296,7 +328,7 @@ const Meteogram = React.memo(function Meteogram({
               scales.mslScale((hoveredRect || frozenRect)!.cloudCell.mslFtTop) +
                 margin.top -
                 10,
-              bounds.yMax + margin.top - 160,
+              bounds.yMax + margin.top - 290,
             ),
           )}
           useLocalTime={useLocalTime}

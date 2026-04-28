@@ -54,8 +54,10 @@ describe("utils/weather.transformWeatherData", () => {
       MODEL_CONFIGS[model].hpaLevels[MODEL_CONFIGS[model].hpaLevels.length - 1],
     );
 
-    // Validate groundTemp present
+    // Validate groundTemp and groundDewPoint present
     expect(typeof col.groundTemp).toBe("number");
+    expect(typeof col.groundDewPoint).toBe("number");
+    expect(col.groundDewPoint).toBeLessThan(col.groundTemp);
 
     // Validate msl bounds for first cell
     const first = col.cloud[0];
@@ -78,6 +80,32 @@ describe("utils/weather.transformWeatherData", () => {
       5,
     );
     expect(last.mslFtTop).toBeCloseTo(last.mslFt + 500, 5);
+  });
+
+  it("populates lapseRateAboveCPerKm and malrCPerKm on every cell", () => {
+    const model = getModel();
+    const forecastKey = MODEL_CONFIGS[model].forecastDataKey;
+    const fakeResponse = createFakeOpenMeteoResponse(
+      forecastKey,
+      MODEL_CONFIGS[model].hpaLevels,
+      1,
+    );
+    const responses = splitFakeResponse(
+      fakeResponse,
+      MAX_VARIABLES_PER_REQUEST,
+    );
+
+    const result = transformWeatherData(responses as any, model, 40.0);
+    const cells = result[0].cloud;
+
+    cells.forEach((c) => {
+      expect(c.malrCPerKm).toBeGreaterThan(0);
+      expect(c.malrCPerKm).toBeLessThan(10);
+      // Every cell should have a finite ELR — non-top cells from the layer
+      // above, the topmost extrapolated from the layer below.
+      expect(c.lapseRateAboveCPerKm).not.toBeNull();
+      expect(Number.isFinite(c.lapseRateAboveCPerKm as number)).toBe(true);
+    });
   });
 
   it("filters out invalid cells with non-finite values", () => {

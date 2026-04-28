@@ -7,4 +7,8 @@ export const DEFAULT_PREFERENCES = {
   showIsothermLines: true,
   showIsotachLines: false,
   showDewPointDepressionLines: false,
+  showStabilityTint: false,
+  showCondensationLevels: false,
+  showParcelBuoyancy: false,
+  parcelMode: "surface",
 } as const;

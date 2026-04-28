@@ -19,9 +19,10 @@ import {
   Chip,
   Switch,
 } from "@heroui/react";
-import { WeatherModel } from "../../types/weather";
+import { WeatherModel, ParcelMode } from "../../types/weather";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
+import ParcelModeDropdown from "./parcel-mode-dropdown";
 import LastUpdateTime from "./last-update-time";
 
 interface NavProps {
@@ -47,6 +48,14 @@ interface NavProps {
   setShowIsotachLines: (value: boolean) => void;
   showDewPointDepressionLines: boolean;
   setShowDewPointDepressionLines: (value: boolean) => void;
+  showStabilityTint: boolean;
+  setShowStabilityTint: (value: boolean) => void;
+  showCondensationLevels: boolean;
+  setShowCondensationLevels: (value: boolean) => void;
+  showParcelBuoyancy: boolean;
+  setShowParcelBuoyancy: (value: boolean) => void;
+  parcelMode: ParcelMode;
+  setParcelMode: (mode: ParcelMode) => void;
 }
 
 const NavContext = createContext<{
@@ -64,6 +73,14 @@ const NavContext = createContext<{
   setShowIsotachLines: (value: boolean) => void;
   showDewPointDepressionLines: boolean;
   setShowDewPointDepressionLines: (value: boolean) => void;
+  showStabilityTint: boolean;
+  setShowStabilityTint: (value: boolean) => void;
+  showCondensationLevels: boolean;
+  setShowCondensationLevels: (value: boolean) => void;
+  showParcelBuoyancy: boolean;
+  setShowParcelBuoyancy: (value: boolean) => void;
+  parcelMode: ParcelMode;
+  setParcelMode: (mode: ParcelMode) => void;
 }>({
   useLocalTime: false,
   setUseLocalTime: () => {},
@@ -79,6 +96,14 @@ const NavContext = createContext<{
   setShowIsotachLines: () => {},
   showDewPointDepressionLines: true,
   setShowDewPointDepressionLines: () => {},
+  showStabilityTint: false,
+  setShowStabilityTint: () => {},
+  showCondensationLevels: false,
+  setShowCondensationLevels: () => {},
+  showParcelBuoyancy: false,
+  setShowParcelBuoyancy: () => {},
+  parcelMode: "surface",
+  setParcelMode: () => {},
 });
 
 // Extracted and memoized PreferencesPanel component
@@ -99,6 +124,14 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowIsotachLines,
   showDewPointDepressionLines,
   setShowDewPointDepressionLines,
+  showStabilityTint,
+  setShowStabilityTint,
+  showCondensationLevels,
+  setShowCondensationLevels,
+  showParcelBuoyancy,
+  setShowParcelBuoyancy,
+  parcelMode,
+  setParcelMode,
 }: {
   useLocalTime: boolean;
   setUseLocalTime: (value: boolean) => void;
@@ -116,6 +149,14 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
   setShowIsotachLines: (value: boolean) => void;
   showDewPointDepressionLines: boolean;
   setShowDewPointDepressionLines: (value: boolean) => void;
+  showStabilityTint: boolean;
+  setShowStabilityTint: (value: boolean) => void;
+  showCondensationLevels: boolean;
+  setShowCondensationLevels: (value: boolean) => void;
+  showParcelBuoyancy: boolean;
+  setShowParcelBuoyancy: (value: boolean) => void;
+  parcelMode: ParcelMode;
+  setParcelMode: (mode: ParcelMode) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -158,6 +199,28 @@ const PreferencesPanel = React.memo(function PreferencesPanel({
       >
         Show Dew Point Depression Lines
       </Switch>
+      <Switch
+        isSelected={showStabilityTint}
+        onValueChange={setShowStabilityTint}
+      >
+        Show Stability Tint
+      </Switch>
+      <Switch
+        isSelected={showCondensationLevels}
+        onValueChange={setShowCondensationLevels}
+      >
+        Show LCL / LFC
+      </Switch>
+      <Switch
+        isSelected={showParcelBuoyancy}
+        onValueChange={setShowParcelBuoyancy}
+      >
+        Show Parcel Buoyancy
+      </Switch>
+      <ParcelModeDropdown
+        parcelMode={parcelMode}
+        setParcelMode={setParcelMode}
+      />
     </div>
   );
 });
@@ -185,6 +248,14 @@ export default function Nav({
   setShowIsotachLines,
   showDewPointDepressionLines,
   setShowDewPointDepressionLines,
+  showStabilityTint,
+  setShowStabilityTint,
+  showCondensationLevels,
+  setShowCondensationLevels,
+  showParcelBuoyancy,
+  setShowParcelBuoyancy,
+  parcelMode,
+  setParcelMode,
 }: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -209,6 +280,14 @@ export default function Nav({
       setShowIsotachLines,
       showDewPointDepressionLines,
       setShowDewPointDepressionLines,
+      showStabilityTint,
+      setShowStabilityTint,
+      showCondensationLevels,
+      setShowCondensationLevels,
+      showParcelBuoyancy,
+      setShowParcelBuoyancy,
+      parcelMode,
+      setParcelMode,
     }),
     [
       useLocalTime,
@@ -225,6 +304,14 @@ export default function Nav({
       setShowIsotachLines,
       showDewPointDepressionLines,
       setShowDewPointDepressionLines,
+      showStabilityTint,
+      setShowStabilityTint,
+      showCondensationLevels,
+      setShowCondensationLevels,
+      showParcelBuoyancy,
+      setShowParcelBuoyancy,
+      parcelMode,
+      setParcelMode,
     ]
   );
 
@@ -327,6 +414,14 @@ export default function Nav({
               setShowIsotachLines={setShowIsotachLines}
               showDewPointDepressionLines={showDewPointDepressionLines}
               setShowDewPointDepressionLines={setShowDewPointDepressionLines}
+              showStabilityTint={showStabilityTint}
+              setShowStabilityTint={setShowStabilityTint}
+              showCondensationLevels={showCondensationLevels}
+              setShowCondensationLevels={setShowCondensationLevels}
+              showParcelBuoyancy={showParcelBuoyancy}
+              setShowParcelBuoyancy={setShowParcelBuoyancy}
+              parcelMode={parcelMode}
+              setParcelMode={setParcelMode}
             />
           </div>
         </NavbarMenu>
@@ -357,6 +452,14 @@ export default function Nav({
             setShowIsotachLines={setShowIsotachLines}
             showDewPointDepressionLines={showDewPointDepressionLines}
             setShowDewPointDepressionLines={setShowDewPointDepressionLines}
+            showStabilityTint={showStabilityTint}
+            setShowStabilityTint={setShowStabilityTint}
+            showCondensationLevels={showCondensationLevels}
+            setShowCondensationLevels={setShowCondensationLevels}
+            showParcelBuoyancy={showParcelBuoyancy}
+            setShowParcelBuoyancy={setShowParcelBuoyancy}
+            parcelMode={parcelMode}
+            setParcelMode={setParcelMode}
           />
         </div>
       </div>

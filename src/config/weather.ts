@@ -100,6 +100,7 @@ export class ModelConfig {
       ...this.getWindDirectionVars(), // indices [4N, 5N)
       ...this.getDewPointVars(), // indices [5N, 6N)
       "temperature_2m", // index 6N (ground level temperature)
+      "dew_point_2m", // index 6N+1 (ground level dew point)
     ];
   }
 }

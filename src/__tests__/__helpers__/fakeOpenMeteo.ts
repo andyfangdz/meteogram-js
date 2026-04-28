@@ -105,6 +105,10 @@ export function createFakeOpenMeteoResponse(
   const groundTemp = Array.from({ length: steps }, (_v, t) => 15 - t);
   variables.push(groundTemp);
 
+  // ground dew point (2m), 4°C below ground temperature
+  const groundDewPoint = Array.from({ length: steps }, (_v, t) => 15 - t - 4);
+  variables.push(groundDewPoint);
+
   const forecast: FakeForecast = {
     time: () => start,
     timeEnd: () => endExclusive,

@@ -48,6 +48,11 @@ const getDewPointDepressionColor = (spread: number): string => {
   return DEW_POINT_DEPRESSION_COLORS[spread] || "#888888";
 };
 
+interface CondensationLevel {
+  lclMslFt: number | null;
+  lfcMslFt: number | null;
+}
+
 interface WeatherLinesProps {
   weatherData: CloudColumn[];
   scales: {
@@ -57,6 +62,8 @@ interface WeatherLinesProps {
   showIsothermLines: boolean;
   showIsotachLines: boolean;
   showDewPointDepressionLines: boolean;
+  showCondensationLevels: boolean;
+  condensationLevels: CondensationLevel[];
   model: WeatherModel;
 }
 
@@ -66,6 +73,8 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
   showIsothermLines,
   showIsotachLines,
   showDewPointDepressionLines,
+  showCondensationLevels,
+  condensationLevels,
   model,
 }) => {
   // Convert the utility function results into the format we need
@@ -149,6 +158,50 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
     });
   }, [isotachPoints, scales, weatherData]);
 
+  // Memoize LCL/LFC paths. The arrays are parallel to weatherData; null entries
+  // (e.g. when surface is supersaturated, or no LFC exists) split the path.
+  // Also returns the first-valid label position so we can place "LCL"/"LFC"
+  // text on the curve without re-scanning the array in the render path.
+  const condensationPaths = React.useMemo(() => {
+    if (!showCondensationLevels || condensationLevels.length === 0) {
+      return {
+        lclPaths: [] as string[],
+        lfcPaths: [] as string[],
+        lclLabel: null as { x: number; y: number } | null,
+        lfcLabel: null as { x: number; y: number } | null,
+      };
+    }
+    const build = (key: "lclMslFt" | "lfcMslFt") => {
+      const segments: string[] = [];
+      let current = "";
+      let label: { x: number; y: number } | null = null;
+      condensationLevels.forEach((level, idx) => {
+        const value = level[key];
+        if (value == null || !Number.isFinite(value)) {
+          if (current) {
+            segments.push(current);
+            current = "";
+          }
+          return;
+        }
+        const x = formatNumber(scales.dateScale(weatherData[idx].date));
+        const y = formatNumber(scales.mslScale(value));
+        if (label == null) label = { x, y };
+        current += current ? ` L ${x} ${y}` : `M ${x} ${y}`;
+      });
+      if (current) segments.push(current);
+      return { segments, label };
+    };
+    const lcl = build("lclMslFt");
+    const lfc = build("lfcMslFt");
+    return {
+      lclPaths: lcl.segments,
+      lfcPaths: lfc.segments,
+      lclLabel: lcl.label,
+      lfcLabel: lfc.label,
+    };
+  }, [condensationLevels, showCondensationLevels, scales, weatherData]);
+
   // Memoize dew point depression paths with colors
   const dewPointDepressionPaths = React.useMemo(() => {
     return dewPointDepressionPoints.map(({ spread, points }) => {
@@ -187,6 +240,67 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
           />
         );
       })}
+
+      {/* LCL (Lifted Condensation Level) */}
+      {showCondensationLevels &&
+        condensationPaths.lclPaths.map((pathD, idx) => (
+          <path
+            className="condensation-lcl"
+            key={`lcl-${idx}`}
+            d={pathD}
+            stroke="#7a3fbf"
+            strokeWidth={2}
+            fill="none"
+            pointerEvents="none"
+          />
+        ))}
+      {showCondensationLevels && condensationPaths.lclLabel && (
+        <text
+          className="condensation-lcl-label"
+          x={formatNumber(condensationPaths.lclLabel.x + 4)}
+          y={formatNumber(condensationPaths.lclLabel.y - 4)}
+          fontSize="10"
+          fontWeight="bold"
+          fill="#7a3fbf"
+          stroke="white"
+          strokeWidth="3"
+          paintOrder="stroke"
+          pointerEvents="none"
+        >
+          LCL
+        </text>
+      )}
+
+      {/* LFC (Level of Free Convection) */}
+      {showCondensationLevels &&
+        condensationPaths.lfcPaths.map((pathD, idx) => (
+          <path
+            className="condensation-lfc"
+            key={`lfc-${idx}`}
+            d={pathD}
+            stroke="#c2185b"
+            strokeWidth={2}
+            strokeDasharray="6,3"
+            fill="none"
+            pointerEvents="none"
+          />
+        ))}
+      {showCondensationLevels && condensationPaths.lfcLabel && (
+        <text
+          className="condensation-lfc-label"
+          x={formatNumber(condensationPaths.lfcLabel.x + 4)}
+          y={formatNumber(condensationPaths.lfcLabel.y - 4)}
+          fontSize="10"
+          fontWeight="bold"
+          fill="#c2185b"
+          stroke="white"
+          strokeWidth="3"
+          paintOrder="stroke"
+          pointerEvents="none"
+        >
+          LFC
+        </text>
+      )}
 
       {/* Isotherm Lines */}
       {showIsothermLines &&

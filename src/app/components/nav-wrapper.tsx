@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
-import { WeatherModel } from "../../types/weather";
+import { WeatherModel, ParcelMode } from "../../types/weather";
 import Nav from "./nav";
 import { usePreferences } from "@/context/PreferencesContext";
 
@@ -64,6 +64,26 @@ export default function NavWrapper({
     [setPreference]
   );
 
+  const setShowStabilityTint = useCallback(
+    (val: boolean) => setPreference("showStabilityTint", val),
+    [setPreference]
+  );
+
+  const setShowCondensationLevels = useCallback(
+    (val: boolean) => setPreference("showCondensationLevels", val),
+    [setPreference]
+  );
+
+  const setShowParcelBuoyancy = useCallback(
+    (val: boolean) => setPreference("showParcelBuoyancy", val),
+    [setPreference]
+  );
+
+  const setParcelMode = useCallback(
+    (val: ParcelMode) => setPreference("parcelMode", val),
+    [setPreference]
+  );
+
   return (
     <Nav
       location={location}
@@ -88,6 +108,14 @@ export default function NavWrapper({
       setShowIsotachLines={setShowIsotachLines}
       showDewPointDepressionLines={preferences.showDewPointDepressionLines}
       setShowDewPointDepressionLines={setShowDewPointDepressionLines}
+      showStabilityTint={preferences.showStabilityTint}
+      setShowStabilityTint={setShowStabilityTint}
+      showCondensationLevels={preferences.showCondensationLevels}
+      setShowCondensationLevels={setShowCondensationLevels}
+      showParcelBuoyancy={preferences.showParcelBuoyancy}
+      setShowParcelBuoyancy={setShowParcelBuoyancy}
+      parcelMode={preferences.parcelMode}
+      setParcelMode={setParcelMode}
     />
   );
 }

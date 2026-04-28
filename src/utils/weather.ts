@@ -6,6 +6,7 @@ import {
   MODEL_CONFIGS,
   MAX_VARIABLES_PER_REQUEST,
 } from "../config/weather";
+import { computeELR, computeMALR } from "./lapseRate";
 
 /**
  * Calculate the local Earth radius at a given latitude using WGS84 ellipsoid.
@@ -81,6 +82,7 @@ export function transformWeatherData(
   const windDirectionBaseIndex = 4 * len;
   const dewPointBaseIndex = 5 * len;
   const groundTempIndex = 6 * len;
+  const groundDewPointIndex = 6 * len + 1;
 
   const cloudData = range(
     Number(forecastDataMain.time()),
@@ -131,6 +133,7 @@ export function transformWeatherData(
       })
       .filter(Boolean), // Remove null entries
     groundTemp: getValue(groundTempIndex, index)!,
+    groundDewPoint: getValue(groundDewPointIndex, index)!,
   }));
 
   return cloudData.map((dateAndCloud) => {
@@ -155,13 +158,24 @@ export function transformWeatherData(
           ? (cloud!.mslFt + nextCloud.mslFt) / 2
           : cloud!.mslFt + 500; // If no upper level, go 500ft above
 
+        // For the topmost cell there's no layer above, so reuse the lapse
+        // rate from the layer just below — the tint should still cover it.
+        const lapseRateAboveCPerKm = nextCloud
+          ? computeELR(cloud!, nextCloud)
+          : prevCloud
+            ? computeELR(prevCloud, cloud!)
+            : null;
+
         return {
           ...cloud!,
           mslFtBottom,
           mslFtTop,
+          lapseRateAboveCPerKm,
+          malrCPerKm: computeMALR(cloud!.temperature, cloud!.hpa),
         };
       }),
       groundTemp: dateAndCloud.groundTemp,
+      groundDewPoint: dateAndCloud.groundDewPoint,
     };
   });
 }
