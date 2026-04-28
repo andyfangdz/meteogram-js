@@ -91,6 +91,29 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
     }
   }, [frozenRect, onHover]);
 
+  // Tint extents from filtered neighbors. mslFtTop/mslFtBottom on the cell
+  // come from the unfiltered list, so when a level is dropped from the
+  // pressure-level set the surrounding cells leave a vertical gap exactly
+  // the size of the missing layer. Using midpoints between filtered
+  // neighbors makes adjacent tints tile without gaps.
+  const getTintBounds = React.useCallback(
+    (filteredClouds: CloudCell[], idx: number) => {
+      const cloud = filteredClouds[idx];
+      const prev = idx > 0 ? filteredClouds[idx - 1] : null;
+      const next =
+        idx < filteredClouds.length - 1 ? filteredClouds[idx + 1] : null;
+      return {
+        tintBottom: prev
+          ? (prev.mslFt + cloud.mslFt) / 2
+          : cloud.mslFtBottom,
+        tintTop: next
+          ? (cloud.mslFt + next.mslFt) / 2
+          : cloud.mslFtTop,
+      };
+    },
+    [],
+  );
+
   const handleClick = React.useCallback((date: Date, cloud: CloudCell, event: React.MouseEvent) => {
     if ((event.nativeEvent as PointerEvent).pointerType === "mouse") {
       if (frozenRect) {
@@ -146,27 +169,16 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
               );
             })}
             {showStabilityTint &&
-              filteredClouds?.map((cloud, idx) => {
+              filteredClouds.map((cloud, idx) => {
                 if (cloud.lapseRateAboveCPerKm == null) return null;
                 const category = getStabilityCategory(
                   cloud.lapseRateAboveCPerKm,
                   cloud.malrCPerKm,
                 );
-                // mslFtTop/mslFtBottom come from the unfiltered list, so a
-                // level dropped because it's missing in some other column
-                // leaves a gap. Use midpoints from the filtered neighbors
-                // here so adjacent tints tile without gaps.
-                const prev = idx > 0 ? filteredClouds[idx - 1] : null;
-                const next =
-                  idx < filteredClouds.length - 1
-                    ? filteredClouds[idx + 1]
-                    : null;
-                const tintBottom = prev
-                  ? (prev.mslFt + cloud.mslFt) / 2
-                  : cloud.mslFtBottom;
-                const tintTop = next
-                  ? (cloud.mslFt + next.mslFt) / 2
-                  : cloud.mslFtTop;
+                const { tintTop, tintBottom } = getTintBounds(
+                  filteredClouds,
+                  idx,
+                );
                 return (
                   <rect
                     className={`stability-tint stability-${category}`}
@@ -183,23 +195,16 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                 );
               })}
             {showParcelBuoyancy &&
-              filteredClouds?.map((cloud, idx) => {
+              filteredClouds.map((cloud, idx) => {
                 const parcelT = filteredParcelTemps[idx];
                 if (parcelT == null) return null;
                 const buoyancy = parcelT - cloud.temperature;
                 const fill = getBuoyancyColor(buoyancy);
                 if (!fill) return null;
-                const prev = idx > 0 ? filteredClouds[idx - 1] : null;
-                const next =
-                  idx < filteredClouds.length - 1
-                    ? filteredClouds[idx + 1]
-                    : null;
-                const tintBottom = prev
-                  ? (prev.mslFt + cloud.mslFt) / 2
-                  : cloud.mslFtBottom;
-                const tintTop = next
-                  ? (cloud.mslFt + next.mslFt) / 2
-                  : cloud.mslFtTop;
+                const { tintTop, tintBottom } = getTintBounds(
+                  filteredClouds,
+                  idx,
+                );
                 return (
                   <rect
                     className={`parcel-tint parcel-${

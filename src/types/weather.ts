@@ -57,7 +57,8 @@ export interface WeatherApiParams {
   [key: string]: any;
 }
 
-export type ParcelMode = "surface" | "mixed-100" | "most-unstable";
+export const PARCEL_MODES = ["surface", "mixed-100", "most-unstable"] as const;
+export type ParcelMode = (typeof PARCEL_MODES)[number];
 
 export interface VisualizationPreferences {
   useLocalTime: boolean;

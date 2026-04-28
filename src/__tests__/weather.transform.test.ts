@@ -101,11 +101,11 @@ describe("utils/weather.transformWeatherData", () => {
     cells.forEach((c) => {
       expect(c.malrCPerKm).toBeGreaterThan(0);
       expect(c.malrCPerKm).toBeLessThan(10);
-      expect(c.lapseRateAboveCPerKm).not.toBeNaN();
-      expect(c.lapseRateAboveCPerKm).not.toBeUndefined();
+      // Every cell should have a finite ELR — non-top cells from the layer
+      // above, the topmost extrapolated from the layer below.
+      expect(c.lapseRateAboveCPerKm).not.toBeNull();
+      expect(Number.isFinite(c.lapseRateAboveCPerKm as number)).toBe(true);
     });
-    // Topmost cell: extrapolated from the layer below, so still defined.
-    expect(cells[cells.length - 1].lapseRateAboveCPerKm).not.toBeNull();
   });
 
   it("filters out invalid cells with non-finite values", () => {

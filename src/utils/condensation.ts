@@ -1,6 +1,9 @@
-import { CloudCell, CloudColumn } from "../types/weather";
+import { CloudCell, CloudColumn, ParcelMode, PARCEL_MODES } from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
 import { DALR_C_PER_KM, computeMALR } from "./lapseRate";
+
+export { PARCEL_MODES };
+export type { ParcelMode };
 
 // Poisson constant R_d / c_p for dry air.
 const KAPPA = 287.05 / 1004;
@@ -38,9 +41,6 @@ function tempFromPotentialTempK(thetaK: number, pressureHpa: number): number {
 // depression. Captures the dry-adiabatic cooling rate (≈9.8 °C/km) closing
 // against the dewpoint depression decrease rate (≈1.8 °C/km).
 const M_PER_C_DEPRESSION = 125;
-
-export const PARCEL_MODES = ["surface", "mixed-100", "most-unstable"] as const;
-export type ParcelMode = (typeof PARCEL_MODES)[number];
 
 export const PARCEL_MODE_LABELS: Record<ParcelMode, string> = {
   surface: "Surface",
@@ -95,7 +95,10 @@ export function computeParcelProfile({
 
   for (const cell of cells) {
     const zKm = cell.mslFt / FEET_PER_METER / 1000;
-    if (zKm <= prevZKm) {
+    // Cells strictly below the surface have no parcel value. A cell at
+    // exactly the surface altitude gets the surface T (DALR formula at
+    // zKm == surfaceZKm naturally yields surfaceTempC).
+    if (zKm < prevZKm) {
       parcelTempProfile.push(null);
       continue;
     }

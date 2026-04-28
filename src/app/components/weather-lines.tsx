@@ -160,13 +160,21 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
 
   // Memoize LCL/LFC paths. The arrays are parallel to weatherData; null entries
   // (e.g. when surface is supersaturated, or no LFC exists) split the path.
+  // Also returns the first-valid label position so we can place "LCL"/"LFC"
+  // text on the curve without re-scanning the array in the render path.
   const condensationPaths = React.useMemo(() => {
     if (!showCondensationLevels || condensationLevels.length === 0) {
-      return { lclPaths: [], lfcPaths: [] };
+      return {
+        lclPaths: [] as string[],
+        lfcPaths: [] as string[],
+        lclLabel: null as { x: number; y: number } | null,
+        lfcLabel: null as { x: number; y: number } | null,
+      };
     }
-    const buildPath = (key: "lclMslFt" | "lfcMslFt") => {
+    const build = (key: "lclMslFt" | "lfcMslFt") => {
       const segments: string[] = [];
       let current = "";
+      let label: { x: number; y: number } | null = null;
       condensationLevels.forEach((level, idx) => {
         const value = level[key];
         if (value == null || !Number.isFinite(value)) {
@@ -178,12 +186,20 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
         }
         const x = formatNumber(scales.dateScale(weatherData[idx].date));
         const y = formatNumber(scales.mslScale(value));
+        if (label == null) label = { x, y };
         current += current ? ` L ${x} ${y}` : `M ${x} ${y}`;
       });
       if (current) segments.push(current);
-      return segments;
+      return { segments, label };
     };
-    return { lclPaths: buildPath("lclMslFt"), lfcPaths: buildPath("lfcMslFt") };
+    const lcl = build("lclMslFt");
+    const lfc = build("lfcMslFt");
+    return {
+      lclPaths: lcl.segments,
+      lfcPaths: lfc.segments,
+      lclLabel: lcl.label,
+      lfcLabel: lfc.label,
+    };
   }, [condensationLevels, showCondensationLevels, scales, weatherData]);
 
   // Memoize dew point depression paths with colors
@@ -238,18 +254,11 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
             pointerEvents="none"
           />
         ))}
-      {showCondensationLevels && condensationPaths.lclPaths[0] && (
+      {showCondensationLevels && condensationPaths.lclLabel && (
         <text
           className="condensation-lcl-label"
-          x={formatNumber(scales.dateScale(weatherData[0].date) + 4)}
-          y={(() => {
-            const first = condensationLevels.find(
-              (l) => l.lclMslFt != null && Number.isFinite(l.lclMslFt),
-            );
-            return first?.lclMslFt != null
-              ? formatNumber(scales.mslScale(first.lclMslFt) - 4)
-              : 0;
-          })()}
+          x={formatNumber(condensationPaths.lclLabel.x + 4)}
+          y={formatNumber(condensationPaths.lclLabel.y - 4)}
           fontSize="10"
           fontWeight="bold"
           fill="#7a3fbf"
@@ -276,18 +285,11 @@ const WeatherLines: React.FC<WeatherLinesProps> = ({
             pointerEvents="none"
           />
         ))}
-      {showCondensationLevels && condensationPaths.lfcPaths[0] && (
+      {showCondensationLevels && condensationPaths.lfcLabel && (
         <text
           className="condensation-lfc-label"
-          x={formatNumber(scales.dateScale(weatherData[0].date) + 4)}
-          y={(() => {
-            const first = condensationLevels.find(
-              (l) => l.lfcMslFt != null && Number.isFinite(l.lfcMslFt),
-            );
-            return first?.lfcMslFt != null
-              ? formatNumber(scales.mslScale(first.lfcMslFt) - 4)
-              : 0;
-          })()}
+          x={formatNumber(condensationPaths.lfcLabel.x + 4)}
+          y={formatNumber(condensationPaths.lfcLabel.y - 4)}
           fontSize="10"
           fontWeight="bold"
           fill="#c2185b"

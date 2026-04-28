@@ -1,11 +1,9 @@
 import { DEFAULT_PREFERENCES } from "@/config/preferences";
-import { VisualizationPreferences, ParcelMode } from "@/types/weather";
-
-const PARCEL_MODE_VALUES: readonly ParcelMode[] = [
-  "surface",
-  "mixed-100",
-  "most-unstable",
-];
+import {
+  VisualizationPreferences,
+  ParcelMode,
+  PARCEL_MODES,
+} from "@/types/weather";
 
 type SearchParams = {
   useLocalTime?: string;
@@ -83,7 +81,9 @@ export function parseVisualizationPreferences(
       searchParams.showParcelBuoyancy,
       DEFAULT_PREFERENCES.showParcelBuoyancy,
     ),
-    parcelMode: PARCEL_MODE_VALUES.includes(searchParams.parcelMode as ParcelMode)
+    parcelMode: (PARCEL_MODES as readonly string[]).includes(
+      searchParams.parcelMode ?? "",
+    )
       ? (searchParams.parcelMode as ParcelMode)
       : DEFAULT_PREFERENCES.parcelMode,
   };
