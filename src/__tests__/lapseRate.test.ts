@@ -231,6 +231,14 @@ describe("utils/lapseRate", () => {
       expect(getInstabilityLabel(-8, true)).toBe("Strongly stable");
       expect(getInstabilityLabel(0, true)).toBe("Neutral");
     });
+
+    it("returns — for non-finite input", () => {
+      // Defensive path — computeInstability shouldn't produce NaN/Infinity
+      // in practice, but the early-return exists, so pin it.
+      expect(getInstabilityLabel(NaN, true)).toBe("—");
+      expect(getInstabilityLabel(Infinity, false)).toBe("—");
+      expect(getInstabilityLabel(-Infinity, true)).toBe("—");
+    });
   });
 
   describe("getBuoyancyColor", () => {
