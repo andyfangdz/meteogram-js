@@ -14,9 +14,9 @@ export interface CloudCell {
   lapseRateAboveCPerKm: number | null;
   // Saturated (moist) adiabatic lapse rate at this cell's (T, p), °C/km.
   malrCPerKm: number;
-  // Continuous instability score: -dθe/dz between this cell and the next-
-  // higher-altitude cell, K/km. Positive = unstable, negative = stable.
-  // null on the topmost cell.
+  // Continuous instability score, K/km. Positive = unstable, negative =
+  // stable. The topmost cell extrapolates from the layer below (so the
+  // tint covers it) — only null when the column has fewer than two cells.
   instabilityKPerKm: number | null;
 }
 

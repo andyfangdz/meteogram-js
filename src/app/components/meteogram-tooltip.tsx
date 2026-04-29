@@ -31,6 +31,11 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   const instability = cloudCell.instabilityKPerKm;
   const instabilityFill =
     instability != null ? getInstabilityColor(instability) : null;
+  // Hide the stability block entirely when the score sits inside the neutral
+  // deadband — same convention used by the tint render in cloud-columns.tsx,
+  // so a near-invisible badge doesn't render with no useful information.
+  const showStabilityBlock =
+    elr != null && malr != null && instability != null && instabilityFill != null;
   return (
     <foreignObject
       x={x}
@@ -89,7 +94,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
         {cloudCell.windDirection != null && (
           <div>{`Wind Direction: ${formatNumber(cloudCell.windDirection)}°`}</div>
         )}
-        {elr != null && malr != null && instability != null && (
+        {showStabilityBlock && (
           <div
             style={{
               marginTop: "6px",
@@ -103,21 +108,24 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
                 padding: "1px 6px",
                 marginBottom: "2px",
                 borderRadius: "3px",
-                backgroundColor: instabilityFill ?? "rgba(0,0,0,0.05)",
+                backgroundColor: instabilityFill!,
                 fontWeight: 600,
               }}
             >
               {(() => {
-                const scoreCPerKft = cPerKmToCPerKft(instability);
-                return `${getInstabilityLabel(instability)}: ${
-                  scoreCPerKft >= 0 ? "+" : ""
-                }${scoreCPerKft.toFixed(2)} °C/kft`;
+                // The instability score is a θe (or θ) gradient — labeled in
+                // K/kft to keep it distinct from the °C/kft lapse rates below.
+                // Magnitude is the same since 1 K = 1 °C for differences.
+                const scoreKPerKft = cPerKmToCPerKft(instability!);
+                return `${getInstabilityLabel(instability!)}: ${
+                  scoreKPerKft >= 0 ? "+" : ""
+                }${scoreKPerKft.toFixed(2)} K/kft`;
               })()}
             </div>
-            <div>{`ELR: ${cPerKmToCPerKft(elr).toFixed(2)} °C/kft`}</div>
+            <div>{`ELR: ${cPerKmToCPerKft(elr!).toFixed(2)} °C/kft`}</div>
             <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(
               DALR_C_PER_KM,
-            ).toFixed(2)} · MALR ${cPerKmToCPerKft(malr).toFixed(
+            ).toFixed(2)} · MALR ${cPerKmToCPerKft(malr!).toFixed(
               2,
             )} · ISA ${cPerKmToCPerKft(ISA_C_PER_KM).toFixed(2)} °C/kft`}</div>
           </div>

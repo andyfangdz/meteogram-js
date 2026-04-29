@@ -8,6 +8,10 @@ const FT_PER_KM = FEET_PER_METER * 1000;
 const KAPPA = 287.05 / 1004; // R_d / c_p (Poisson constant for dry air)
 const L_VAPORIZATION = 2.501e6; // J/kg
 const C_P = 1004; // J/(kg·K)
+// Mixing ratio cap shared by computeMALR and computeThetaE. Real atmospheric
+// values stay well under 0.04 (≈30 °C at 1000 hPa). Past that the formulas
+// blow up — and either way the moisture content is unphysical, so clamp.
+const RS_MAX = 0.04;
 
 export const cPerKmToCPerKft = (cPerKm: number): number =>
   (cPerKm * 1000) / FT_PER_KM;
@@ -21,11 +25,6 @@ export function computeMALR(temperatureC: number, pressureHpa: number): number {
   const g = 9.81;
   const Rd = 287.05;
   const Rv = 461.5;
-  // Saturation mixing ratio cap. Real atmospheric values stay well under 0.04
-  // (≈30 °C at 1000 hPa); past that the parcel is so loaded with vapor that
-  // the MALR formula is undefined, and a runaway rs would push the result
-  // toward zero and misclassify stability.
-  const RS_MAX = 0.04;
 
   const esHpa = 6.112 * Math.exp((17.67 * temperatureC) / (temperatureC + 243.5));
   const denomHpa = pressureHpa - esHpa;
@@ -74,7 +73,7 @@ export function computeThetaE(
   const eHpa =
     6.112 * Math.exp((17.67 * dewPointC) / (dewPointC + 243.5));
   const denomHpa = Math.max(pressureHpa - eHpa, 1e-6);
-  const r = (0.622 * eHpa) / denomHpa;
+  const r = Math.min((0.622 * eHpa) / denomHpa, RS_MAX);
   const theta = computeTheta(temperatureC, pressureHpa);
   return theta * Math.exp((L_VAPORIZATION * r) / (C_P * T));
 }
@@ -82,11 +81,9 @@ export function computeThetaE(
 // Cell-level saturation flag: significant cloud cover or T-Td below ~1°C.
 const SATURATION_DEW_POINT_DEPRESSION_C = 1;
 const SATURATION_CLOUD_COVERAGE_PCT = 50;
-export function isCellSaturated(cell: {
-  cloudCoverage: number;
-  temperature: number;
-  dewPoint: number;
-}): boolean {
+export function isCellSaturated(
+  cell: Pick<CloudCell, "cloudCoverage" | "temperature" | "dewPoint">,
+): boolean {
   if (cell.cloudCoverage > SATURATION_CLOUD_COVERAGE_PCT) return true;
   const depression = cell.temperature - cell.dewPoint;
   return (
@@ -111,6 +108,13 @@ export function computeInstability(
   const dHFt = upper.mslFt - lower.mslFt;
   if (!Number.isFinite(dHFt) || dHFt <= 0) return null;
   const dHKm = dHFt / FT_PER_KM;
+  // Saturation is checked at the lower cell only: a parcel actually rising
+  // through this layer originates at the bottom and starts saturated only
+  // if the lower cell is. If only the upper cell is saturated (cloud base
+  // sitting at the upper level), the rising parcel is still dry until it
+  // reaches its LCL — the dry comparison is the honest one for the layer
+  // as a whole. The regression test pins the inverse case (lower=moist,
+  // upper=dry) where this matters most.
   if (isCellSaturated(lower)) {
     const thetaELower = computeThetaE(
       lower.temperature,
@@ -143,6 +147,8 @@ const INSTABILITY_STABLE_CLAMP = 15;
 
 export function getInstabilityColor(scoreKPerKm: number): string | null {
   if (!Number.isFinite(scoreKPerKm)) return null;
+  // Strict inequality matches getInstabilityLabel: a score at exactly the
+  // deadband edge is non-neutral and gets a faint color.
   if (Math.abs(scoreKPerKm) < INSTABILITY_NEUTRAL_DEADBAND) return null;
   if (scoreKPerKm > 0) {
     const t = Math.min(scoreKPerKm / INSTABILITY_UNSTABLE_CLAMP, 1);
@@ -160,10 +166,13 @@ export function getInstabilityColor(scoreKPerKm: number): string | null {
 
 export function getInstabilityLabel(scoreKPerKm: number): string {
   if (!Number.isFinite(scoreKPerKm)) return "—";
-  if (scoreKPerKm > 5) return "Strongly unstable";
-  if (scoreKPerKm > INSTABILITY_NEUTRAL_DEADBAND) return "Unstable";
-  if (scoreKPerKm < -5) return "Strongly stable";
-  if (scoreKPerKm < -INSTABILITY_NEUTRAL_DEADBAND) return "Stable";
+  // Boundaries match getInstabilityColor: a score at exactly the deadband
+  // edge gets a (faint) color AND a non-Neutral label, not an inconsistent
+  // mix. Beyond ±5 K/km we promote to "Strongly".
+  if (scoreKPerKm >= 5) return "Strongly unstable";
+  if (scoreKPerKm >= INSTABILITY_NEUTRAL_DEADBAND) return "Unstable";
+  if (scoreKPerKm <= -5) return "Strongly stable";
+  if (scoreKPerKm <= -INSTABILITY_NEUTRAL_DEADBAND) return "Stable";
   return "Neutral";
 }
 

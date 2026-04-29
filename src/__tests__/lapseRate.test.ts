@@ -2,11 +2,13 @@ import { describe, it, expect } from "vitest";
 import {
   computeMALR,
   computeELR,
+  computeTheta,
   computeThetaE,
   computeInstability,
   getInstabilityColor,
   getInstabilityLabel,
   getBuoyancyColor,
+  isCellSaturated,
   cPerKmToCPerKft,
   DALR_C_PER_KM,
   ISA_C_PER_KM,
@@ -58,6 +60,18 @@ describe("utils/lapseRate", () => {
     });
   });
 
+  describe("computeTheta", () => {
+    it("equals T in K at 1000 hPa (no compression)", () => {
+      expect(computeTheta(0, 1000)).toBeCloseTo(273.15, 5);
+      expect(computeTheta(15, 1000)).toBeCloseTo(288.15, 5);
+    });
+
+    it("is greater than T (in K) at lower pressures (parcel warms when compressed)", () => {
+      const T = 0; // °C
+      expect(computeTheta(T, 500)).toBeGreaterThan(T + 273.15);
+    });
+  });
+
   describe("computeThetaE", () => {
     it("rises with surface temperature and dewpoint", () => {
       const cool = computeThetaE(15, 10, 1000);
@@ -69,9 +83,40 @@ describe("utils/lapseRate", () => {
       // Very dry parcel (Td far below T) → tiny mixing ratio → θe ≈ θ.
       const T = 15;
       const p = 1000;
-      const theta = (T + 273.15) * Math.pow(1000 / p, 287.05 / 1004);
+      const theta = computeTheta(T, p);
       const thetaE = computeThetaE(T, T - 50, p);
       expect(thetaE).toBeCloseTo(theta, 0);
+    });
+
+    it("stays finite at and beyond saturation (Td == T and Td > T)", () => {
+      // Saturated: Td equals T.
+      const sat = computeThetaE(20, 20, 1000);
+      expect(Number.isFinite(sat)).toBe(true);
+      expect(sat).toBeGreaterThan(0);
+      // Pathological supersaturation (e.g., API noise) — must still be finite.
+      const supersat = computeThetaE(20, 25, 1000);
+      expect(Number.isFinite(supersat)).toBe(true);
+      expect(supersat).toBeGreaterThan(0);
+    });
+  });
+
+  describe("isCellSaturated", () => {
+    it("flags cells with > 50% cloud cover", () => {
+      expect(
+        isCellSaturated({ cloudCoverage: 75, temperature: 10, dewPoint: 0 }),
+      ).toBe(true);
+    });
+
+    it("flags cells where T - Td < 1°C", () => {
+      expect(
+        isCellSaturated({ cloudCoverage: 0, temperature: 10, dewPoint: 9.5 }),
+      ).toBe(true);
+    });
+
+    it("does not flag dry, clear cells", () => {
+      expect(
+        isCellSaturated({ cloudCoverage: 10, temperature: 10, dewPoint: 5 }),
+      ).toBe(false);
     });
   });
 
