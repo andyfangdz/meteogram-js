@@ -91,86 +91,83 @@ export function isCellSaturated(
   );
 }
 
-// Continuous instability score, K/km — moist Brunt–Väisälä framing:
-//   unsaturated layer: -dθ/dz   (a dry parcel cools at DALR)
-//   saturated layer:   -dθe/dz  (a saturated parcel cools at MALR)
-// Positive = unstable, negative = stable, near-zero = neutral. Using θe in
-// unsaturated air would conflate "potential instability" (would be unstable
-// upon lifting to saturation) with realized instability — the air isn't
-// actually saturating right now, so the dry comparison is the honest one.
+// Continuous instability score, K/km. Defined as -dθe/dz between two cells:
+// positive = unstable, negative = stable. Using θe captures both realized
+// instability (saturated parcel rising in saturated air) and conditional /
+// potential instability (unsaturated layer that would go unstable if lifted
+// to saturation). The two regimes are distinguished at render time by the
+// saturation flag on the lower cell — see getInstabilityColor.
 export function computeInstability(
-  lower: Pick<
-    CloudCell,
-    "mslFt" | "temperature" | "dewPoint" | "hpa" | "cloudCoverage"
-  >,
+  lower: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
   upper: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
 ): number | null {
   const dHFt = upper.mslFt - lower.mslFt;
   if (!Number.isFinite(dHFt) || dHFt <= 0) return null;
   const dHKm = dHFt / FT_PER_KM;
-  // Saturation is checked at the lower cell only: a parcel actually rising
-  // through this layer originates at the bottom and starts saturated only
-  // if the lower cell is. If only the upper cell is saturated (cloud base
-  // sitting at the upper level), the rising parcel is still dry until it
-  // reaches its LCL — the dry comparison is the honest one for the layer
-  // as a whole. The regression test pins the inverse case (lower=moist,
-  // upper=dry) where this matters most.
-  if (isCellSaturated(lower)) {
-    const thetaELower = computeThetaE(
-      lower.temperature,
-      lower.dewPoint,
-      lower.hpa,
-    );
-    const thetaEUpper = computeThetaE(
-      upper.temperature,
-      upper.dewPoint,
-      upper.hpa,
-    );
-    return (thetaELower - thetaEUpper) / dHKm;
-  }
-  const thetaLower = computeTheta(lower.temperature, lower.hpa);
-  const thetaUpper = computeTheta(upper.temperature, upper.hpa);
-  return (thetaLower - thetaUpper) / dHKm;
+  const thetaELower = computeThetaE(
+    lower.temperature,
+    lower.dewPoint,
+    lower.hpa,
+  );
+  const thetaEUpper = computeThetaE(
+    upper.temperature,
+    upper.dewPoint,
+    upper.hpa,
+  );
+  return (thetaELower - thetaEUpper) / dHKm;
 }
 
-// Continuous color for the instability score (K/km).
-//   stable (negative)   → faint green, fading at neutrality
-//   neutral (~0)        → no tint
-//   unstable (positive) → yellow→red ramp, alpha grows with magnitude
+// Continuous color for the instability score (K/km), distinguishing realized
+// from conditional instability via the saturation flag on the layer's bottom:
+//   saturated   + score > 0 → yellow→red ramp (active / realized instability)
+//   unsaturated + score > 0 → yellow only (conditional — would go unstable
+//                             if lifted to saturation but isn't right now)
+//   stable                  → faint green, fading at neutrality
+//   inside deadband         → no tint
 //
-// Asymmetric clamps reflect that strong instability (>5 K/km) is the
-// actionable signal and should pop visually, while strong stability (<-10
-// K/km) is the common case and reads quieter.
+// Asymmetric clamps reflect that strong instability is the actionable signal
+// and should pop visually, while strong stability is the common case.
 const INSTABILITY_NEUTRAL_DEADBAND = 1;
 const INSTABILITY_UNSTABLE_CLAMP = 10;
 const INSTABILITY_STABLE_CLAMP = 15;
 
-export function getInstabilityColor(scoreKPerKm: number): string | null {
+export function getInstabilityColor(
+  scoreKPerKm: number,
+  saturated: boolean,
+): string | null {
   if (!Number.isFinite(scoreKPerKm)) return null;
-  // Strict inequality matches getInstabilityLabel: a score at exactly the
-  // deadband edge is non-neutral and gets a faint color.
   if (Math.abs(scoreKPerKm) < INSTABILITY_NEUTRAL_DEADBAND) return null;
   if (scoreKPerKm > 0) {
     const t = Math.min(scoreKPerKm / INSTABILITY_UNSTABLE_CLAMP, 1);
-    // Yellow (234,179,8) → red (239,68,68) interpolation.
-    const r = Math.round(234 + (239 - 234) * t);
-    const g = Math.round(179 + (68 - 179) * t);
-    const b = Math.round(8 + (68 - 8) * t);
-    const alpha = 0.18 + 0.22 * t;
-    return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+    if (saturated) {
+      // Yellow (234,179,8) → red (239,68,68) interpolation: realized.
+      const r = Math.round(234 + (239 - 234) * t);
+      const g = Math.round(179 + (68 - 179) * t);
+      const b = Math.round(8 + (68 - 8) * t);
+      const alpha = 0.18 + 0.22 * t;
+      return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+    }
+    // Conditional: stay yellow with a softer alpha ramp so it reads as
+    // "watch this" rather than "this is happening now".
+    const alpha = 0.12 + 0.18 * t;
+    return `rgba(234, 179, 8, ${alpha.toFixed(3)})`;
   }
   const t = Math.min(-scoreKPerKm / INSTABILITY_STABLE_CLAMP, 1);
   const alpha = 0.1 + 0.2 * t;
   return `rgba(34, 197, 94, ${alpha.toFixed(3)})`;
 }
 
-export function getInstabilityLabel(scoreKPerKm: number): string {
+export function getInstabilityLabel(
+  scoreKPerKm: number,
+  saturated: boolean,
+): string {
   if (!Number.isFinite(scoreKPerKm)) return "—";
-  // Boundaries match getInstabilityColor: a score at exactly the deadband
-  // edge gets a (faint) color AND a non-Neutral label, not an inconsistent
-  // mix. Beyond ±5 K/km we promote to "Strongly".
-  if (scoreKPerKm >= 5) return "Strongly unstable";
-  if (scoreKPerKm >= INSTABILITY_NEUTRAL_DEADBAND) return "Unstable";
+  if (scoreKPerKm >= 5) {
+    return saturated ? "Strongly unstable" : "Strongly conditional";
+  }
+  if (scoreKPerKm >= INSTABILITY_NEUTRAL_DEADBAND) {
+    return saturated ? "Unstable" : "Conditionally unstable";
+  }
   if (scoreKPerKm <= -5) return "Strongly stable";
   if (scoreKPerKm <= -INSTABILITY_NEUTRAL_DEADBAND) return "Stable";
   return "Neutral";

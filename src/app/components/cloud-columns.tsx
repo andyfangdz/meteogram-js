@@ -5,6 +5,7 @@ import { formatNumber } from "../../utils/meteogram";
 import {
   getInstabilityColor,
   getBuoyancyColor,
+  isCellSaturated,
 } from "../../utils/lapseRate";
 import type { ParcelProfile } from "../../utils/condensation";
 import WindBarb from "./wind-barb";
@@ -170,17 +171,25 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             {showStabilityTint &&
               filteredClouds.map((cloud, idx) => {
                 if (cloud.instabilityKPerKm == null) return null;
-                const fill = getInstabilityColor(cloud.instabilityKPerKm);
+                const saturated = isCellSaturated(cloud);
+                const fill = getInstabilityColor(
+                  cloud.instabilityKPerKm,
+                  saturated,
+                );
                 if (!fill) return null;
                 const { tintTop, tintBottom } = getTintBounds(
                   filteredClouds,
                   idx,
                 );
+                const cls =
+                  cloud.instabilityKPerKm > 0
+                    ? saturated
+                      ? "unstable"
+                      : "conditional"
+                    : "stable";
                 return (
                   <rect
-                    className={`stability-tint stability-${
-                      cloud.instabilityKPerKm > 0 ? "unstable" : "stable"
-                    }`}
+                    className={`stability-tint stability-${cls}`}
                     key={`stability-${cloud.hpa}`}
                     x={formatNumber(0)}
                     y={formatNumber(scales.mslScale(tintTop))}

@@ -122,60 +122,27 @@ describe("utils/lapseRate", () => {
 
   describe("computeInstability", () => {
     it("is positive in a saturated convective layer (warm/moist below, cold/dry above)", () => {
-      const lower = {
-        mslFt: 0,
-        temperature: 25,
-        dewPoint: 24, // saturated
-        hpa: 1000,
-        cloudCoverage: 80,
-      };
-      const upper = {
-        mslFt: 3280.84,
-        temperature: 12,
-        dewPoint: 0,
-        hpa: 700,
-      };
+      const lower = { mslFt: 0, temperature: 25, dewPoint: 24, hpa: 1000 };
+      const upper = { mslFt: 3280.84, temperature: 12, dewPoint: 0, hpa: 700 };
+      const score = computeInstability(lower, upper);
+      expect(score).not.toBeNull();
+      expect(score!).toBeGreaterThan(0);
+    });
+
+    it("is positive for an unsaturated layer with conditional instability (moist below, drier aloft)", () => {
+      // ELR small but moisture stratification negative → -dθe/dz > 0.
+      // Lower is unsaturated (4°C depression), so this is "conditional"
+      // not realized — render layer is responsible for the visual distinction.
+      const lower = { mslFt: 452, temperature: 9.4, dewPoint: 5.4, hpa: 1000 };
+      const upper = { mslFt: 1500, temperature: 9.4, dewPoint: -10, hpa: 975 };
       const score = computeInstability(lower, upper);
       expect(score).not.toBeNull();
       expect(score!).toBeGreaterThan(0);
     });
 
     it("is negative for a strongly stable inversion", () => {
-      const lower = {
-        mslFt: 0,
-        temperature: 5,
-        dewPoint: 0,
-        hpa: 1000,
-        cloudCoverage: 0,
-      };
-      const upper = {
-        mslFt: 1640,
-        temperature: 15,
-        dewPoint: 5,
-        hpa: 950,
-      };
-      const score = computeInstability(lower, upper);
-      expect(score).not.toBeNull();
-      expect(score!).toBeLessThan(0);
-    });
-
-    it("does not flag a near-isothermal *unsaturated* layer as unstable", () => {
-      // Regression: with θe everywhere, a dry layer above moist surface read
-      // as "potentially unstable" and lit up red even when ELR < MALR. Using
-      // θ in unsaturated air gives the right (stable) answer.
-      const lower = {
-        mslFt: 452,
-        temperature: 9.4,
-        dewPoint: 5.4, // 4°C depression — clearly unsaturated
-        hpa: 1000,
-        cloudCoverage: 0,
-      };
-      const upper = {
-        mslFt: 1500,
-        temperature: 9.4, // near-isothermal
-        dewPoint: -10, // much drier above
-        hpa: 975,
-      };
+      const lower = { mslFt: 0, temperature: 5, dewPoint: 0, hpa: 1000 };
+      const upper = { mslFt: 1640, temperature: 15, dewPoint: 5, hpa: 950 };
       const score = computeInstability(lower, upper);
       expect(score).not.toBeNull();
       expect(score!).toBeLessThan(0);
@@ -184,13 +151,7 @@ describe("utils/lapseRate", () => {
     it("returns null when the cells are at the same altitude", () => {
       expect(
         computeInstability(
-          {
-            mslFt: 5000,
-            temperature: 10,
-            dewPoint: 5,
-            hpa: 850,
-            cloudCoverage: 0,
-          },
+          { mslFt: 5000, temperature: 10, dewPoint: 5, hpa: 850 },
           { mslFt: 5000, temperature: 10, dewPoint: 5, hpa: 850 },
         ),
       ).toBeNull();
@@ -198,41 +159,50 @@ describe("utils/lapseRate", () => {
   });
 
   describe("getInstabilityColor", () => {
-    it("returns null inside the neutral deadband", () => {
-      expect(getInstabilityColor(0)).toBeNull();
-      expect(getInstabilityColor(0.5)).toBeNull();
-      expect(getInstabilityColor(-0.5)).toBeNull();
+    it("returns null inside the neutral deadband regardless of saturation", () => {
+      expect(getInstabilityColor(0, true)).toBeNull();
+      expect(getInstabilityColor(0.5, false)).toBeNull();
+      expect(getInstabilityColor(-0.5, true)).toBeNull();
     });
 
-    it("uses warm hues (yellow → red) for unstable scores", () => {
-      // +2 K/km should be near yellow.
-      const yellow = getInstabilityColor(2)!;
-      expect(yellow).toMatch(/^rgba\(/);
-      // +10 K/km should be near red.
-      const red = getInstabilityColor(10)!;
-      const rRed = parseInt(red.match(/rgba\((\d+),/)![1], 10);
-      const rYellow = parseInt(yellow.match(/rgba\((\d+),/)![1], 10);
-      expect(rRed).toBeGreaterThanOrEqual(rYellow); // red has bigger R component
+    it("uses yellow→red ramp for saturated unstable layers", () => {
+      const mild = getInstabilityColor(2, true)!;
+      const strong = getInstabilityColor(10, true)!;
+      const mildR = parseInt(mild.match(/rgba\((\d+),/)![1], 10);
+      const strongR = parseInt(strong.match(/rgba\((\d+),/)![1], 10);
+      expect(strongR).toBeGreaterThanOrEqual(mildR); // red has bigger R
     });
 
-    it("uses green for stable scores with alpha growing in magnitude", () => {
-      const mild = getInstabilityColor(-3)!;
-      const strong = getInstabilityColor(-15)!;
-      expect(mild).toMatch(/^rgba\(34, 197, 94/);
-      expect(strong).toMatch(/^rgba\(34, 197, 94/);
-      const mildAlpha = parseFloat(mild.match(/, ([\d.]+)\)$/)![1]);
-      const strongAlpha = parseFloat(strong.match(/, ([\d.]+)\)$/)![1]);
-      expect(strongAlpha).toBeGreaterThan(mildAlpha);
+    it("stays yellow for unsaturated unstable layers (conditional only)", () => {
+      // Conditional case keeps the yellow base color regardless of magnitude
+      // — magnitude shows up in alpha, not hue.
+      const mild = getInstabilityColor(2, false)!;
+      const strong = getInstabilityColor(10, false)!;
+      expect(mild).toMatch(/^rgba\(234, 179, 8/);
+      expect(strong).toMatch(/^rgba\(234, 179, 8/);
+    });
+
+    it("uses green for stable scores regardless of saturation", () => {
+      const sat = getInstabilityColor(-5, true)!;
+      const unsat = getInstabilityColor(-5, false)!;
+      expect(sat).toMatch(/^rgba\(34, 197, 94/);
+      expect(unsat).toMatch(/^rgba\(34, 197, 94/);
     });
   });
 
   describe("getInstabilityLabel", () => {
-    it("labels by magnitude and sign", () => {
-      expect(getInstabilityLabel(0)).toBe("Neutral");
-      expect(getInstabilityLabel(2)).toBe("Unstable");
-      expect(getInstabilityLabel(8)).toBe("Strongly unstable");
-      expect(getInstabilityLabel(-2)).toBe("Stable");
-      expect(getInstabilityLabel(-8)).toBe("Strongly stable");
+    it("distinguishes realized from conditional instability via the saturated flag", () => {
+      expect(getInstabilityLabel(2, true)).toBe("Unstable");
+      expect(getInstabilityLabel(2, false)).toBe("Conditionally unstable");
+      expect(getInstabilityLabel(8, true)).toBe("Strongly unstable");
+      expect(getInstabilityLabel(8, false)).toBe("Strongly conditional");
+    });
+
+    it("labels stable scores the same regardless of saturation", () => {
+      expect(getInstabilityLabel(-2, true)).toBe("Stable");
+      expect(getInstabilityLabel(-2, false)).toBe("Stable");
+      expect(getInstabilityLabel(-8, true)).toBe("Strongly stable");
+      expect(getInstabilityLabel(0, true)).toBe("Neutral");
     });
   });
 

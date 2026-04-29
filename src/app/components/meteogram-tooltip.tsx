@@ -4,6 +4,7 @@ import { hPaToInHg, kmhToKnots, formatNumber } from "../../utils/meteogram";
 import {
   getInstabilityColor,
   getInstabilityLabel,
+  isCellSaturated,
   DALR_C_PER_KM,
   ISA_C_PER_KM,
   cPerKmToCPerKft,
@@ -29,8 +30,9 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   const elr = cloudCell.lapseRateAboveCPerKm;
   const malr = cloudCell.malrCPerKm;
   const instability = cloudCell.instabilityKPerKm;
+  const saturated = isCellSaturated(cloudCell);
   const instabilityFill =
-    instability != null ? getInstabilityColor(instability) : null;
+    instability != null ? getInstabilityColor(instability, saturated) : null;
   // Hide the stability block entirely when the score sits inside the neutral
   // deadband — same convention used by the tint render in cloud-columns.tsx,
   // so a near-invisible badge doesn't render with no useful information.
@@ -117,7 +119,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
                 // K/kft to keep it distinct from the °C/kft lapse rates below.
                 // Magnitude is the same since 1 K = 1 °C for differences.
                 const scoreKPerKft = cPerKmToCPerKft(instability!);
-                return `${getInstabilityLabel(instability!)}: ${
+                return `${getInstabilityLabel(instability!, saturated)}: ${
                   scoreKPerKft >= 0 ? "+" : ""
                 }${scoreKPerKft.toFixed(2)} K/kft`;
               })()}
