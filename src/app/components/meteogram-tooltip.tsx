@@ -107,9 +107,12 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
                 fontWeight: 600,
               }}
             >
-              {`${getInstabilityLabel(instability)}: ${
-                instability >= 0 ? "+" : ""
-              }${instability.toFixed(1)} K/km`}
+              {(() => {
+                const scoreCPerKft = cPerKmToCPerKft(instability);
+                return `${getInstabilityLabel(instability)}: ${
+                  scoreCPerKft >= 0 ? "+" : ""
+                }${scoreCPerKft.toFixed(2)} °C/kft`;
+              })()}
             </div>
             <div>{`ELR: ${cPerKmToCPerKft(elr).toFixed(2)} °C/kft`}</div>
             <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(
