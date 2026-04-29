@@ -38,6 +38,16 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   // so a near-invisible badge doesn't render with no useful information.
   const showStabilityBlock =
     elr != null && malr != null && instability != null && instabilityFill != null;
+  // The instability score is labeled in K/kft. K vs °C is purely a convention
+  // — for differences they're numerically identical — and "K" signals that
+  // this is a θe gradient, not a temperature lapse rate like the °C/kft rows
+  // for ELR/DALR/MALR/ISA below.
+  const instabilityDisplay =
+    instability != null
+      ? `${getInstabilityLabel(instability, saturated)}: ${
+          cPerKmToCPerKft(instability) >= 0 ? "+" : ""
+        }${cPerKmToCPerKft(instability).toFixed(2)} K/kft`
+      : null;
   return (
     <foreignObject
       x={x}
@@ -114,15 +124,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
                 fontWeight: 600,
               }}
             >
-              {(() => {
-                // The instability score is a θe (or θ) gradient — labeled in
-                // K/kft to keep it distinct from the °C/kft lapse rates below.
-                // Magnitude is the same since 1 K = 1 °C for differences.
-                const scoreKPerKft = cPerKmToCPerKft(instability!);
-                return `${getInstabilityLabel(instability!, saturated)}: ${
-                  scoreKPerKft >= 0 ? "+" : ""
-                }${scoreKPerKft.toFixed(2)} K/kft`;
-              })()}
+              {instabilityDisplay}
             </div>
             <div>{`ELR: ${cPerKmToCPerKft(elr!).toFixed(2)} °C/kft`}</div>
             <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(

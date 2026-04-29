@@ -17,18 +17,23 @@ import {
 describe("utils/lapseRate", () => {
   describe("computeMALR", () => {
     it("falls between 3 and 9.8 °C/km for typical tropospheric inputs", () => {
+      // Warm/moist surface — small MALR (lots of latent heat release).
       expect(computeMALR(25, 1000)).toBeGreaterThan(3);
       expect(computeMALR(25, 1000)).toBeLessThan(7);
+      // Cold/dry mid-troposphere — MALR approaches DALR.
       expect(computeMALR(-30, 400)).toBeGreaterThan(7);
       expect(computeMALR(-30, 400)).toBeLessThan(DALR_C_PER_KM);
     });
 
     it("decreases with warmer temperature at the same pressure", () => {
+      // More water vapor → more latent heat → smaller MALR.
       expect(computeMALR(20, 1000)).toBeLessThan(computeMALR(0, 1000));
       expect(computeMALR(0, 1000)).toBeLessThan(computeMALR(-20, 1000));
     });
 
     it("clamps the saturation mixing ratio so p ≤ es is well-defined", () => {
+      // Pathological input: vapor pressure exceeds total pressure. Without
+      // the RS_MAX cap the formula would blow up.
       const result = computeMALR(40, 50);
       expect(Number.isFinite(result)).toBe(true);
       expect(result).toBeGreaterThan(0);
@@ -118,6 +123,15 @@ describe("utils/lapseRate", () => {
         isCellSaturated({ cloudCoverage: 10, temperature: 10, dewPoint: 5 }),
       ).toBe(false);
     });
+
+    it("treats supersaturation (Td > T) as saturated", () => {
+      // Pathological API noise: dewpoint exceeds temperature. Negative
+      // depression is < 1 by definition, so the cell is classified saturated
+      // — the right call since supersaturation implies condensation.
+      expect(
+        isCellSaturated({ cloudCoverage: 0, temperature: 10, dewPoint: 12 }),
+      ).toBe(true);
+    });
   });
 
   describe("computeInstability", () => {
@@ -187,6 +201,19 @@ describe("utils/lapseRate", () => {
       const unsat = getInstabilityColor(-5, false)!;
       expect(sat).toMatch(/^rgba\(34, 197, 94/);
       expect(unsat).toMatch(/^rgba\(34, 197, 94/);
+    });
+
+    it("agrees with getInstabilityLabel at the deadband boundary (±1.0)", () => {
+      // Color uses strict `<` for the deadband, label uses non-strict `>=`.
+      // At exactly 1.0 both render — color is non-null AND label is not
+      // "Neutral". Pin this so a future tweak can't desync them.
+      expect(getInstabilityColor(1.0, true)).not.toBeNull();
+      expect(getInstabilityLabel(1.0, true)).not.toBe("Neutral");
+      expect(getInstabilityColor(-1.0, false)).not.toBeNull();
+      expect(getInstabilityLabel(-1.0, false)).not.toBe("Neutral");
+      // Just inside the deadband, both should suppress.
+      expect(getInstabilityColor(0.999, true)).toBeNull();
+      expect(getInstabilityLabel(0.999, true)).toBe("Neutral");
     });
   });
 
