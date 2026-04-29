@@ -5,14 +5,16 @@ export const DALR_C_PER_KM = 9.8;
 export const ISA_C_PER_KM = 6.5;
 
 const FT_PER_KM = FEET_PER_METER * 1000;
+const KAPPA = 287.05 / 1004; // R_d / c_p (Poisson constant for dry air)
+const L_VAPORIZATION = 2.501e6; // J/kg
+const C_P = 1004; // J/(kg·K)
+// Mixing ratio cap shared by computeMALR and computeThetaE. Real atmospheric
+// values stay well under 0.04 (≈30 °C at 1000 hPa). Past that the formulas
+// blow up — and either way the moisture content is unphysical, so clamp.
+const RS_MAX = 0.04;
 
 export const cPerKmToCPerKft = (cPerKm: number): number =>
   (cPerKm * 1000) / FT_PER_KM;
-
-export type StabilityCategory =
-  | "absolutely-stable"
-  | "conditionally-unstable"
-  | "absolutely-unstable";
 
 // Saturated (moist) adiabatic lapse rate, °C/km.
 // Bolton (1980) saturation vapor pressure:
@@ -23,13 +25,6 @@ export function computeMALR(temperatureC: number, pressureHpa: number): number {
   const g = 9.81;
   const Rd = 287.05;
   const Rv = 461.5;
-  const cp = 1004;
-  const L = 2.501e6;
-  // Saturation mixing ratio cap. Real atmospheric values stay well under 0.04
-  // (≈30 °C at 1000 hPa); past that the parcel is so loaded with vapor that
-  // the MALR formula is undefined, and a runaway rs would push the result
-  // toward zero and misclassify stability.
-  const RS_MAX = 0.04;
 
   const esHpa = 6.112 * Math.exp((17.67 * temperatureC) / (temperatureC + 243.5));
   const denomHpa = pressureHpa - esHpa;
@@ -38,8 +33,9 @@ export function computeMALR(temperatureC: number, pressureHpa: number): number {
       ? Math.min((Rd / Rv) * (esHpa / denomHpa), RS_MAX)
       : RS_MAX;
 
-  const numerator = 1 + (L * rs) / (Rd * T);
-  const denominator = cp + (L * L * rs) / (Rv * T * T);
+  const numerator = 1 + (L_VAPORIZATION * rs) / (Rd * T);
+  const denominator =
+    C_P + (L_VAPORIZATION * L_VAPORIZATION * rs) / (Rv * T * T);
   const gammaPerMeter = (g * numerator) / denominator;
 
   return gammaPerMeter * 1000;
@@ -58,41 +54,124 @@ export function computeELR(
   return dT / dHKm;
 }
 
-export function getStabilityCategory(
-  elrCPerKm: number,
-  malrCPerKm: number,
-): StabilityCategory {
-  if (elrCPerKm >= DALR_C_PER_KM) return "absolutely-unstable";
-  if (elrCPerKm <= malrCPerKm) return "absolutely-stable";
-  return "conditionally-unstable";
+// Potential temperature θ (K) — the temperature a parcel of given (T, p)
+// would have if brought dry-adiabatically to 1000 hPa.
+export function computeTheta(temperatureC: number, pressureHpa: number): number {
+  return (temperatureC + 273.15) * Math.pow(1000 / pressureHpa, KAPPA);
 }
 
-const STABILITY_RGB: Record<StabilityCategory, [number, number, number]> = {
-  "absolutely-stable": [34, 197, 94],
-  "conditionally-unstable": [234, 179, 8],
-  "absolutely-unstable": [239, 68, 68],
-};
+// Equivalent potential temperature θe (K) — same as θ but accounting for the
+// latent heat that would be released if all water vapor condensed. Bolton
+// (1980) approximate form:  θe ≈ θ exp(L r / c_p T)  with r the actual
+// (dewpoint-derived) mixing ratio.
+export function computeThetaE(
+  temperatureC: number,
+  dewPointC: number,
+  pressureHpa: number,
+): number {
+  const T = temperatureC + 273.15;
+  const eHpa =
+    6.112 * Math.exp((17.67 * dewPointC) / (dewPointC + 243.5));
+  const denomHpa = Math.max(pressureHpa - eHpa, 1e-6);
+  const r = Math.min((0.622 * eHpa) / denomHpa, RS_MAX);
+  const theta = computeTheta(temperatureC, pressureHpa);
+  return theta * Math.exp((L_VAPORIZATION * r) / (C_P * T));
+}
 
-const STABILITY_DEFAULT_ALPHA: Record<StabilityCategory, number> = {
-  "absolutely-stable": 0.28,
-  "conditionally-unstable": 0.32,
-  "absolutely-unstable": 0.38,
-};
+// Cell-level saturation flag: significant cloud cover or T-Td below ~1°C.
+const SATURATION_DEW_POINT_DEPRESSION_C = 1;
+const SATURATION_CLOUD_COVERAGE_PCT = 50;
+export function isCellSaturated(
+  cell: Pick<CloudCell, "cloudCoverage" | "temperature" | "dewPoint">,
+): boolean {
+  if (cell.cloudCoverage > SATURATION_CLOUD_COVERAGE_PCT) return true;
+  const depression = cell.temperature - cell.dewPoint;
+  return (
+    Number.isFinite(depression) && depression < SATURATION_DEW_POINT_DEPRESSION_C
+  );
+}
 
-export function getStabilityColor(
-  category: StabilityCategory,
-  alpha?: number,
+// Continuous instability score, K/km. Defined as -dθe/dz between two cells:
+// positive = unstable, negative = stable. Using θe captures both realized
+// instability (saturated parcel rising in saturated air) and conditional /
+// potential instability (unsaturated layer that would go unstable if lifted
+// to saturation). The two regimes are distinguished at render time by the
+// saturation flag on the lower cell — see getInstabilityColor.
+export function computeInstability(
+  lower: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
+  upper: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
+): number | null {
+  const dHFt = upper.mslFt - lower.mslFt;
+  if (!Number.isFinite(dHFt) || dHFt <= 0) return null;
+  const dHKm = dHFt / FT_PER_KM;
+  const thetaELower = computeThetaE(
+    lower.temperature,
+    lower.dewPoint,
+    lower.hpa,
+  );
+  const thetaEUpper = computeThetaE(
+    upper.temperature,
+    upper.dewPoint,
+    upper.hpa,
+  );
+  return (thetaELower - thetaEUpper) / dHKm;
+}
+
+// Continuous color for the instability score (K/km), distinguishing realized
+// from conditional instability via the saturation flag on the layer's bottom:
+//   saturated   + score > 0 → yellow→red ramp (active / realized instability)
+//   unsaturated + score > 0 → yellow only (conditional — would go unstable
+//                             if lifted to saturation but isn't right now)
+//   stable                  → faint green, fading at neutrality
+//   inside deadband         → no tint
+//
+// Asymmetric clamps reflect that strong instability is the actionable signal
+// and should pop visually, while strong stability is the common case.
+const INSTABILITY_NEUTRAL_DEADBAND = 1;
+const INSTABILITY_UNSTABLE_CLAMP = 10;
+const INSTABILITY_STABLE_CLAMP = 15;
+
+export function getInstabilityColor(
+  scoreKPerKm: number,
+  saturated: boolean,
+): string | null {
+  if (!Number.isFinite(scoreKPerKm)) return null;
+  if (Math.abs(scoreKPerKm) < INSTABILITY_NEUTRAL_DEADBAND) return null;
+  if (scoreKPerKm > 0) {
+    const t = Math.min(scoreKPerKm / INSTABILITY_UNSTABLE_CLAMP, 1);
+    if (saturated) {
+      // Yellow (234,179,8) → red (239,68,68) interpolation: realized.
+      const r = Math.round(234 + (239 - 234) * t);
+      const g = Math.round(179 + (68 - 179) * t);
+      const b = Math.round(8 + (68 - 8) * t);
+      const alpha = 0.18 + 0.22 * t;
+      return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+    }
+    // Conditional: stay yellow with a softer alpha ramp so it reads as
+    // "watch this" rather than "this is happening now".
+    const alpha = 0.12 + 0.18 * t;
+    return `rgba(234, 179, 8, ${alpha.toFixed(3)})`;
+  }
+  const t = Math.min(-scoreKPerKm / INSTABILITY_STABLE_CLAMP, 1);
+  const alpha = 0.1 + 0.2 * t;
+  return `rgba(34, 197, 94, ${alpha.toFixed(3)})`;
+}
+
+export function getInstabilityLabel(
+  scoreKPerKm: number,
+  saturated: boolean,
 ): string {
-  const [r, g, b] = STABILITY_RGB[category];
-  const a = alpha ?? STABILITY_DEFAULT_ALPHA[category];
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
+  if (!Number.isFinite(scoreKPerKm)) return "—";
+  if (scoreKPerKm >= 5) {
+    return saturated ? "Strongly unstable" : "Strongly conditional";
+  }
+  if (scoreKPerKm >= INSTABILITY_NEUTRAL_DEADBAND) {
+    return saturated ? "Unstable" : "Conditionally unstable";
+  }
+  if (scoreKPerKm <= -5) return "Strongly stable";
+  if (scoreKPerKm <= -INSTABILITY_NEUTRAL_DEADBAND) return "Stable";
+  return "Neutral";
 }
-
-export const STABILITY_LABELS: Record<StabilityCategory, string> = {
-  "absolutely-stable": "Stable",
-  "conditionally-unstable": "Conditionally unstable",
-  "absolutely-unstable": "Absolutely unstable",
-};
 
 // Parcel buoyancy tint: positive (parcel warmer than env, CAPE) → red,
 // negative (parcel colder than env, CIN) → blue. Magnitude clamped at 4 °C

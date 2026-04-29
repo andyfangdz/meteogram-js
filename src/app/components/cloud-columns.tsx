@@ -3,9 +3,9 @@ import { Group } from "@visx/group";
 import { CloudColumn, CloudCell } from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
 import {
-  getStabilityCategory,
-  getStabilityColor,
+  getInstabilityColor,
   getBuoyancyColor,
+  isCellSaturated,
 } from "../../utils/lapseRate";
 import type { ParcelProfile } from "../../utils/condensation";
 import WindBarb from "./wind-barb";
@@ -170,18 +170,26 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             })}
             {showStabilityTint &&
               filteredClouds.map((cloud, idx) => {
-                if (cloud.lapseRateAboveCPerKm == null) return null;
-                const category = getStabilityCategory(
-                  cloud.lapseRateAboveCPerKm,
-                  cloud.malrCPerKm,
+                if (cloud.instabilityKPerKm == null) return null;
+                const saturated = isCellSaturated(cloud);
+                const fill = getInstabilityColor(
+                  cloud.instabilityKPerKm,
+                  saturated,
                 );
+                if (!fill) return null;
                 const { tintTop, tintBottom } = getTintBounds(
                   filteredClouds,
                   idx,
                 );
+                const cls =
+                  cloud.instabilityKPerKm > 0
+                    ? saturated
+                      ? "unstable"
+                      : "conditional"
+                    : "stable";
                 return (
                   <rect
-                    className={`stability-tint stability-${category}`}
+                    className={`stability-tint stability-${cls}`}
                     key={`stability-${cloud.hpa}`}
                     x={formatNumber(0)}
                     y={formatNumber(scales.mslScale(tintTop))}
@@ -189,7 +197,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                     height={formatNumber(
                       scales.mslScale(tintBottom) - scales.mslScale(tintTop),
                     )}
-                    fill={getStabilityColor(category)}
+                    fill={fill}
                     pointerEvents="none"
                   />
                 );

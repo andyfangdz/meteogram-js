@@ -2,9 +2,9 @@ import React from "react";
 import { CloudCell } from "../../types/weather";
 import { hPaToInHg, kmhToKnots, formatNumber } from "../../utils/meteogram";
 import {
-  getStabilityCategory,
-  getStabilityColor,
-  STABILITY_LABELS,
+  getInstabilityColor,
+  getInstabilityLabel,
+  isCellSaturated,
   DALR_C_PER_KM,
   ISA_C_PER_KM,
   cPerKmToCPerKft,
@@ -29,8 +29,30 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
 }) => {
   const elr = cloudCell.lapseRateAboveCPerKm;
   const malr = cloudCell.malrCPerKm;
-  const stability =
-    elr != null && malr != null ? getStabilityCategory(elr, malr) : null;
+  const instability = cloudCell.instabilityKPerKm;
+  const saturated = isCellSaturated(cloudCell);
+  const instabilityFill =
+    instability != null ? getInstabilityColor(instability, saturated) : null;
+  // Two independent conditions: the instability badge needs a non-deadband
+  // score, the ELR/DALR/MALR row needs the lapse-rate fields. Today both
+  // become null together (same dHFt <= 0 guard upstream), but splitting them
+  // here means a future tweak to either compute path can't silently suppress
+  // the other half of the block.
+  const showInstabilityBadge = instability != null && instabilityFill != null;
+  const showElrRow = elr != null && malr != null;
+  const showStabilityBlock = showInstabilityBadge || showElrRow;
+  // Instability score is labeled in K/kft. The K vs °C distinction is a
+  // convention — magnitudes are identical for differences — but "K" signals
+  // that this is a θe gradient, not a temperature lapse rate like the
+  // °C/kft rows below.
+  const instabilityKPerKft =
+    instability != null ? cPerKmToCPerKft(instability) : null;
+  const instabilityDisplay =
+    instability != null && instabilityKPerKft != null
+      ? `${getInstabilityLabel(instability, saturated)}: ${
+          instability >= 0 ? "+" : ""
+        }${instabilityKPerKft.toFixed(2)} K/kft`
+      : null;
   return (
     <foreignObject
       x={x}
@@ -89,7 +111,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
         {cloudCell.windDirection != null && (
           <div>{`Wind Direction: ${formatNumber(cloudCell.windDirection)}°`}</div>
         )}
-        {elr != null && malr != null && stability != null && (
+        {showStabilityBlock && (
           <div
             style={{
               marginTop: "6px",
@@ -97,24 +119,30 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
               borderTop: "1px solid rgba(0,0,0,0.1)",
             }}
           >
-            <div
-              style={{
-                display: "inline-block",
-                padding: "1px 6px",
-                marginBottom: "2px",
-                borderRadius: "3px",
-                backgroundColor: getStabilityColor(stability, 0.6),
-                fontWeight: 600,
-              }}
-            >
-              {STABILITY_LABELS[stability]}
-            </div>
-            <div>{`ELR: ${cPerKmToCPerKft(elr).toFixed(2)} °C/kft`}</div>
-            <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(
-              DALR_C_PER_KM,
-            ).toFixed(2)} · MALR ${cPerKmToCPerKft(malr).toFixed(
-              2,
-            )} · ISA ${cPerKmToCPerKft(ISA_C_PER_KM).toFixed(2)} °C/kft`}</div>
+            {showInstabilityBadge && (
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "1px 6px",
+                  marginBottom: "2px",
+                  borderRadius: "3px",
+                  backgroundColor: instabilityFill!,
+                  fontWeight: 600,
+                }}
+              >
+                {instabilityDisplay}
+              </div>
+            )}
+            {showElrRow && (
+              <>
+                <div>{`ELR: ${cPerKmToCPerKft(elr!).toFixed(2)} °C/kft`}</div>
+                <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(
+                  DALR_C_PER_KM,
+                ).toFixed(2)} · MALR ${cPerKmToCPerKft(malr!).toFixed(
+                  2,
+                )} · ISA ${cPerKmToCPerKft(ISA_C_PER_KM).toFixed(2)} °C/kft`}</div>
+              </>
+            )}
           </div>
         )}
       </div>

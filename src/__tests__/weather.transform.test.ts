@@ -105,6 +105,9 @@ describe("utils/weather.transformWeatherData", () => {
       // above, the topmost extrapolated from the layer below.
       expect(c.lapseRateAboveCPerKm).not.toBeNull();
       expect(Number.isFinite(c.lapseRateAboveCPerKm as number)).toBe(true);
+      // Same for the continuous instability score.
+      expect(c.instabilityKPerKm).not.toBeNull();
+      expect(Number.isFinite(c.instabilityKPerKm as number)).toBe(true);
     });
   });
 
