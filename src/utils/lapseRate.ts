@@ -55,50 +55,78 @@ export function computeELR(
   return dT / dHKm;
 }
 
-// Equivalent potential temperature θe (K) — the temperature a parcel would
-// have if all water vapor condensed and the parcel were brought adiabatically
-// to 1000 hPa. Bolton (1980) approximate form:
-//   θe ≈ T (p₀/p)^κ exp(L r / c_p T)
-// Vertical gradient of θe is the canonical continuous diagnostic of
-// conditional/potential instability — dθe/dz < 0 → unstable.
+// Potential temperature θ (K) — the temperature a parcel of given (T, p)
+// would have if brought dry-adiabatically to 1000 hPa.
+export function computeTheta(temperatureC: number, pressureHpa: number): number {
+  return (temperatureC + 273.15) * Math.pow(1000 / pressureHpa, KAPPA);
+}
+
+// Equivalent potential temperature θe (K) — same as θ but accounting for the
+// latent heat that would be released if all water vapor condensed. Bolton
+// (1980) approximate form:  θe ≈ θ exp(L r / c_p T)  with r the actual
+// (dewpoint-derived) mixing ratio.
 export function computeThetaE(
   temperatureC: number,
   dewPointC: number,
   pressureHpa: number,
 ): number {
   const T = temperatureC + 273.15;
-  // Mixing ratio of the actual air (uses dewpoint, not temperature).
   const eHpa =
     6.112 * Math.exp((17.67 * dewPointC) / (dewPointC + 243.5));
   const denomHpa = Math.max(pressureHpa - eHpa, 1e-6);
   const r = (0.622 * eHpa) / denomHpa;
-
-  const theta = T * Math.pow(1000 / pressureHpa, KAPPA);
+  const theta = computeTheta(temperatureC, pressureHpa);
   return theta * Math.exp((L_VAPORIZATION * r) / (C_P * T));
 }
 
-// Continuous instability score, K/km. Defined as -dθe/dz between two cells:
-// positive = unstable, negative = stable, near-zero = neutral. Subsumes the
-// dry/conditional/absolutely-unstable taxonomy in one signed quantity.
+// Cell-level saturation flag: significant cloud cover or T-Td below ~1°C.
+const SATURATION_DEW_POINT_DEPRESSION_C = 1;
+const SATURATION_CLOUD_COVERAGE_PCT = 50;
+export function isCellSaturated(cell: {
+  cloudCoverage: number;
+  temperature: number;
+  dewPoint: number;
+}): boolean {
+  if (cell.cloudCoverage > SATURATION_CLOUD_COVERAGE_PCT) return true;
+  const depression = cell.temperature - cell.dewPoint;
+  return (
+    Number.isFinite(depression) && depression < SATURATION_DEW_POINT_DEPRESSION_C
+  );
+}
+
+// Continuous instability score, K/km — moist Brunt–Väisälä framing:
+//   unsaturated layer: -dθ/dz   (a dry parcel cools at DALR)
+//   saturated layer:   -dθe/dz  (a saturated parcel cools at MALR)
+// Positive = unstable, negative = stable, near-zero = neutral. Using θe in
+// unsaturated air would conflate "potential instability" (would be unstable
+// upon lifting to saturation) with realized instability — the air isn't
+// actually saturating right now, so the dry comparison is the honest one.
 export function computeInstability(
-  lower: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
+  lower: Pick<
+    CloudCell,
+    "mslFt" | "temperature" | "dewPoint" | "hpa" | "cloudCoverage"
+  >,
   upper: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
 ): number | null {
   const dHFt = upper.mslFt - lower.mslFt;
   if (!Number.isFinite(dHFt) || dHFt <= 0) return null;
   const dHKm = dHFt / FT_PER_KM;
-  const thetaELower = computeThetaE(
-    lower.temperature,
-    lower.dewPoint,
-    lower.hpa,
-  );
-  const thetaEUpper = computeThetaE(
-    upper.temperature,
-    upper.dewPoint,
-    upper.hpa,
-  );
-  // -(dθe/dz): positive = unstable.
-  return (thetaELower - thetaEUpper) / dHKm;
+  if (isCellSaturated(lower)) {
+    const thetaELower = computeThetaE(
+      lower.temperature,
+      lower.dewPoint,
+      lower.hpa,
+    );
+    const thetaEUpper = computeThetaE(
+      upper.temperature,
+      upper.dewPoint,
+      upper.hpa,
+    );
+    return (thetaELower - thetaEUpper) / dHKm;
+  }
+  const thetaLower = computeTheta(lower.temperature, lower.hpa);
+  const thetaUpper = computeTheta(upper.temperature, upper.hpa);
+  return (thetaLower - thetaUpper) / dHKm;
 }
 
 // Continuous color for the instability score (K/km).

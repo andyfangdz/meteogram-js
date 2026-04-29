@@ -76,13 +76,13 @@ describe("utils/lapseRate", () => {
   });
 
   describe("computeInstability", () => {
-    it("is positive when θe decreases with altitude (conditional/potential instability)", () => {
-      // Warm moist below, cooler drier above → dθe/dz < 0 → score > 0.
+    it("is positive in a saturated convective layer (warm/moist below, cold/dry above)", () => {
       const lower = {
         mslFt: 0,
         temperature: 25,
-        dewPoint: 22,
+        dewPoint: 24, // saturated
         hpa: 1000,
+        cloudCoverage: 80,
       };
       const upper = {
         mslFt: 3280.84,
@@ -95,12 +95,13 @@ describe("utils/lapseRate", () => {
       expect(score!).toBeGreaterThan(0);
     });
 
-    it("is negative for a strongly stable layer (e.g., inversion)", () => {
+    it("is negative for a strongly stable inversion", () => {
       const lower = {
         mslFt: 0,
         temperature: 5,
         dewPoint: 0,
         hpa: 1000,
+        cloudCoverage: 0,
       };
       const upper = {
         mslFt: 1640,
@@ -113,10 +114,38 @@ describe("utils/lapseRate", () => {
       expect(score!).toBeLessThan(0);
     });
 
+    it("does not flag a near-isothermal *unsaturated* layer as unstable", () => {
+      // Regression: with θe everywhere, a dry layer above moist surface read
+      // as "potentially unstable" and lit up red even when ELR < MALR. Using
+      // θ in unsaturated air gives the right (stable) answer.
+      const lower = {
+        mslFt: 452,
+        temperature: 9.4,
+        dewPoint: 5.4, // 4°C depression — clearly unsaturated
+        hpa: 1000,
+        cloudCoverage: 0,
+      };
+      const upper = {
+        mslFt: 1500,
+        temperature: 9.4, // near-isothermal
+        dewPoint: -10, // much drier above
+        hpa: 975,
+      };
+      const score = computeInstability(lower, upper);
+      expect(score).not.toBeNull();
+      expect(score!).toBeLessThan(0);
+    });
+
     it("returns null when the cells are at the same altitude", () => {
       expect(
         computeInstability(
-          { mslFt: 5000, temperature: 10, dewPoint: 5, hpa: 850 },
+          {
+            mslFt: 5000,
+            temperature: 10,
+            dewPoint: 5,
+            hpa: 850,
+            cloudCoverage: 0,
+          },
           { mslFt: 5000, temperature: 10, dewPoint: 5, hpa: 850 },
         ),
       ).toBeNull();
