@@ -19,6 +19,7 @@ function cell(overrides: Partial<CloudCell>): CloudCell {
     windDirection: 0,
     lapseRateAboveCPerKm: null,
     malrCPerKm: 6,
+    instabilityKPerKm: null,
     ...overrides,
   };
 }

@@ -3,10 +3,8 @@ import { Group } from "@visx/group";
 import { CloudColumn, CloudCell } from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
 import {
-  getEffectiveStabilityCategory,
-  getStabilityColor,
+  getInstabilityColor,
   getBuoyancyColor,
-  isCellSaturated,
 } from "../../utils/lapseRate";
 import type { ParcelProfile } from "../../utils/condensation";
 import WindBarb from "./wind-barb";
@@ -171,19 +169,18 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             })}
             {showStabilityTint &&
               filteredClouds.map((cloud, idx) => {
-                if (cloud.lapseRateAboveCPerKm == null) return null;
-                const category = getEffectiveStabilityCategory(
-                  cloud.lapseRateAboveCPerKm,
-                  cloud.malrCPerKm,
-                  isCellSaturated(cloud),
-                );
+                if (cloud.instabilityKPerKm == null) return null;
+                const fill = getInstabilityColor(cloud.instabilityKPerKm);
+                if (!fill) return null;
                 const { tintTop, tintBottom } = getTintBounds(
                   filteredClouds,
                   idx,
                 );
                 return (
                   <rect
-                    className={`stability-tint stability-${category}`}
+                    className={`stability-tint stability-${
+                      cloud.instabilityKPerKm > 0 ? "unstable" : "stable"
+                    }`}
                     key={`stability-${cloud.hpa}`}
                     x={formatNumber(0)}
                     y={formatNumber(scales.mslScale(tintTop))}
@@ -191,7 +188,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                     height={formatNumber(
                       scales.mslScale(tintBottom) - scales.mslScale(tintTop),
                     )}
-                    fill={getStabilityColor(category)}
+                    fill={fill}
                     pointerEvents="none"
                   />
                 );

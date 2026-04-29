@@ -5,14 +5,12 @@ export const DALR_C_PER_KM = 9.8;
 export const ISA_C_PER_KM = 6.5;
 
 const FT_PER_KM = FEET_PER_METER * 1000;
+const KAPPA = 287.05 / 1004; // R_d / c_p (Poisson constant for dry air)
+const L_VAPORIZATION = 2.501e6; // J/kg
+const C_P = 1004; // J/(kg·K)
 
 export const cPerKmToCPerKft = (cPerKm: number): number =>
   (cPerKm * 1000) / FT_PER_KM;
-
-export type StabilityCategory =
-  | "absolutely-stable"
-  | "conditionally-unstable"
-  | "absolutely-unstable";
 
 // Saturated (moist) adiabatic lapse rate, °C/km.
 // Bolton (1980) saturation vapor pressure:
@@ -23,8 +21,6 @@ export function computeMALR(temperatureC: number, pressureHpa: number): number {
   const g = 9.81;
   const Rd = 287.05;
   const Rv = 461.5;
-  const cp = 1004;
-  const L = 2.501e6;
   // Saturation mixing ratio cap. Real atmospheric values stay well under 0.04
   // (≈30 °C at 1000 hPa); past that the parcel is so loaded with vapor that
   // the MALR formula is undefined, and a runaway rs would push the result
@@ -38,8 +34,9 @@ export function computeMALR(temperatureC: number, pressureHpa: number): number {
       ? Math.min((Rd / Rv) * (esHpa / denomHpa), RS_MAX)
       : RS_MAX;
 
-  const numerator = 1 + (L * rs) / (Rd * T);
-  const denominator = cp + (L * L * rs) / (Rv * T * T);
+  const numerator = 1 + (L_VAPORIZATION * rs) / (Rd * T);
+  const denominator =
+    C_P + (L_VAPORIZATION * L_VAPORIZATION * rs) / (Rv * T * T);
   const gammaPerMeter = (g * numerator) / denominator;
 
   return gammaPerMeter * 1000;
@@ -58,70 +55,89 @@ export function computeELR(
   return dT / dHKm;
 }
 
-export function getStabilityCategory(
-  elrCPerKm: number,
-  malrCPerKm: number,
-): StabilityCategory {
-  if (elrCPerKm >= DALR_C_PER_KM) return "absolutely-unstable";
-  if (elrCPerKm <= malrCPerKm) return "absolutely-stable";
-  return "conditionally-unstable";
+// Equivalent potential temperature θe (K) — the temperature a parcel would
+// have if all water vapor condensed and the parcel were brought adiabatically
+// to 1000 hPa. Bolton (1980) approximate form:
+//   θe ≈ T (p₀/p)^κ exp(L r / c_p T)
+// Vertical gradient of θe is the canonical continuous diagnostic of
+// conditional/potential instability — dθe/dz < 0 → unstable.
+export function computeThetaE(
+  temperatureC: number,
+  dewPointC: number,
+  pressureHpa: number,
+): number {
+  const T = temperatureC + 273.15;
+  // Mixing ratio of the actual air (uses dewpoint, not temperature).
+  const eHpa =
+    6.112 * Math.exp((17.67 * dewPointC) / (dewPointC + 243.5));
+  const denomHpa = Math.max(pressureHpa - eHpa, 1e-6);
+  const r = (0.622 * eHpa) / denomHpa;
+
+  const theta = T * Math.pow(1000 / pressureHpa, KAPPA);
+  return theta * Math.exp((L_VAPORIZATION * r) / (C_P * T));
 }
 
-// "Conditionally unstable" means stable to a dry parcel, unstable to a
-// saturated one — the condition being saturation. Once we know a layer is
-// already saturated (cloudy or near-saturation in T-Td), the condition is
-// met and the layer is realized as unstable. Outside of saturation the
-// classical 3-way result stands.
-export function getEffectiveStabilityCategory(
-  elrCPerKm: number,
-  malrCPerKm: number,
-  saturated: boolean,
-): StabilityCategory {
-  const base = getStabilityCategory(elrCPerKm, malrCPerKm);
-  if (saturated && base === "conditionally-unstable") return "absolutely-unstable";
-  return base;
+// Continuous instability score, K/km. Defined as -dθe/dz between two cells:
+// positive = unstable, negative = stable, near-zero = neutral. Subsumes the
+// dry/conditional/absolutely-unstable taxonomy in one signed quantity.
+export function computeInstability(
+  lower: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
+  upper: Pick<CloudCell, "mslFt" | "temperature" | "dewPoint" | "hpa">,
+): number | null {
+  const dHFt = upper.mslFt - lower.mslFt;
+  if (!Number.isFinite(dHFt) || dHFt <= 0) return null;
+  const dHKm = dHFt / FT_PER_KM;
+  const thetaELower = computeThetaE(
+    lower.temperature,
+    lower.dewPoint,
+    lower.hpa,
+  );
+  const thetaEUpper = computeThetaE(
+    upper.temperature,
+    upper.dewPoint,
+    upper.hpa,
+  );
+  // -(dθe/dz): positive = unstable.
+  return (thetaELower - thetaEUpper) / dHKm;
 }
 
-// Cell-level saturation flag: significant cloud cover or T-Td below ~1°C.
-// Both are independent, common indicators of a saturated layer.
-export const SATURATION_DEW_POINT_DEPRESSION_C = 1;
-export const SATURATION_CLOUD_COVERAGE_PCT = 50;
-export function isCellSaturated(cell: {
-  cloudCoverage: number;
-  temperature: number;
-  dewPoint: number;
-}): boolean {
-  if (cell.cloudCoverage > SATURATION_CLOUD_COVERAGE_PCT) return true;
-  const depression = cell.temperature - cell.dewPoint;
-  return Number.isFinite(depression) && depression < SATURATION_DEW_POINT_DEPRESSION_C;
+// Continuous color for the instability score (K/km).
+//   stable (negative)   → faint green, fading at neutrality
+//   neutral (~0)        → no tint
+//   unstable (positive) → yellow→red ramp, alpha grows with magnitude
+//
+// Asymmetric clamps reflect that strong instability (>5 K/km) is the
+// actionable signal and should pop visually, while strong stability (<-10
+// K/km) is the common case and reads quieter.
+const INSTABILITY_NEUTRAL_DEADBAND = 1;
+const INSTABILITY_UNSTABLE_CLAMP = 10;
+const INSTABILITY_STABLE_CLAMP = 15;
+
+export function getInstabilityColor(scoreKPerKm: number): string | null {
+  if (!Number.isFinite(scoreKPerKm)) return null;
+  if (Math.abs(scoreKPerKm) < INSTABILITY_NEUTRAL_DEADBAND) return null;
+  if (scoreKPerKm > 0) {
+    const t = Math.min(scoreKPerKm / INSTABILITY_UNSTABLE_CLAMP, 1);
+    // Yellow (234,179,8) → red (239,68,68) interpolation.
+    const r = Math.round(234 + (239 - 234) * t);
+    const g = Math.round(179 + (68 - 179) * t);
+    const b = Math.round(8 + (68 - 8) * t);
+    const alpha = 0.18 + 0.22 * t;
+    return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+  }
+  const t = Math.min(-scoreKPerKm / INSTABILITY_STABLE_CLAMP, 1);
+  const alpha = 0.1 + 0.2 * t;
+  return `rgba(34, 197, 94, ${alpha.toFixed(3)})`;
 }
 
-const STABILITY_RGB: Record<StabilityCategory, [number, number, number]> = {
-  "absolutely-stable": [34, 197, 94],
-  "conditionally-unstable": [234, 179, 8],
-  "absolutely-unstable": [239, 68, 68],
-};
-
-const STABILITY_DEFAULT_ALPHA: Record<StabilityCategory, number> = {
-  "absolutely-stable": 0.28,
-  "conditionally-unstable": 0.32,
-  "absolutely-unstable": 0.38,
-};
-
-export function getStabilityColor(
-  category: StabilityCategory,
-  alpha?: number,
-): string {
-  const [r, g, b] = STABILITY_RGB[category];
-  const a = alpha ?? STABILITY_DEFAULT_ALPHA[category];
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
+export function getInstabilityLabel(scoreKPerKm: number): string {
+  if (!Number.isFinite(scoreKPerKm)) return "—";
+  if (scoreKPerKm > 5) return "Strongly unstable";
+  if (scoreKPerKm > INSTABILITY_NEUTRAL_DEADBAND) return "Unstable";
+  if (scoreKPerKm < -5) return "Strongly stable";
+  if (scoreKPerKm < -INSTABILITY_NEUTRAL_DEADBAND) return "Stable";
+  return "Neutral";
 }
-
-export const STABILITY_LABELS: Record<StabilityCategory, string> = {
-  "absolutely-stable": "Stable",
-  "conditionally-unstable": "Conditionally unstable",
-  "absolutely-unstable": "Absolutely unstable",
-};
 
 // Parcel buoyancy tint: positive (parcel warmer than env, CAPE) → red,
 // negative (parcel colder than env, CIN) → blue. Magnitude clamped at 4 °C

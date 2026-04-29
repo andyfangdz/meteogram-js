@@ -2,11 +2,8 @@ import React from "react";
 import { CloudCell } from "../../types/weather";
 import { hPaToInHg, kmhToKnots, formatNumber } from "../../utils/meteogram";
 import {
-  getStabilityCategory,
-  getEffectiveStabilityCategory,
-  getStabilityColor,
-  isCellSaturated,
-  STABILITY_LABELS,
+  getInstabilityColor,
+  getInstabilityLabel,
   DALR_C_PER_KM,
   ISA_C_PER_KM,
   cPerKmToCPerKft,
@@ -31,16 +28,9 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
 }) => {
   const elr = cloudCell.lapseRateAboveCPerKm;
   const malr = cloudCell.malrCPerKm;
-  const saturated = isCellSaturated(cloudCell);
-  const baseStability =
-    elr != null && malr != null ? getStabilityCategory(elr, malr) : null;
-  const stability =
-    elr != null && malr != null
-      ? getEffectiveStabilityCategory(elr, malr, saturated)
-      : null;
-  const upgradedBySaturation =
-    baseStability === "conditionally-unstable" &&
-    stability === "absolutely-unstable";
+  const instability = cloudCell.instabilityKPerKm;
+  const instabilityFill =
+    instability != null ? getInstabilityColor(instability) : null;
   return (
     <foreignObject
       x={x}
@@ -99,7 +89,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
         {cloudCell.windDirection != null && (
           <div>{`Wind Direction: ${formatNumber(cloudCell.windDirection)}°`}</div>
         )}
-        {elr != null && malr != null && stability != null && (
+        {elr != null && malr != null && instability != null && (
           <div
             style={{
               marginTop: "6px",
@@ -113,17 +103,14 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
                 padding: "1px 6px",
                 marginBottom: "2px",
                 borderRadius: "3px",
-                backgroundColor: getStabilityColor(stability, 0.6),
+                backgroundColor: instabilityFill ?? "rgba(0,0,0,0.05)",
                 fontWeight: 600,
               }}
             >
-              {STABILITY_LABELS[stability]}
+              {`${getInstabilityLabel(instability)}: ${
+                instability >= 0 ? "+" : ""
+              }${instability.toFixed(1)} K/km`}
             </div>
-            {upgradedBySaturation && (
-              <div style={{ color: "#666", fontStyle: "italic" }}>
-                Saturated → conditional resolved
-              </div>
-            )}
             <div>{`ELR: ${cPerKmToCPerKft(elr).toFixed(2)} °C/kft`}</div>
             <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(
               DALR_C_PER_KM,
