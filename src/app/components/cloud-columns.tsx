@@ -3,9 +3,10 @@ import { Group } from "@visx/group";
 import { CloudColumn, CloudCell } from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
 import {
-  getStabilityCategory,
+  getEffectiveStabilityCategory,
   getStabilityColor,
   getBuoyancyColor,
+  isCellSaturated,
 } from "../../utils/lapseRate";
 import type { ParcelProfile } from "../../utils/condensation";
 import WindBarb from "./wind-barb";
@@ -171,9 +172,10 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             {showStabilityTint &&
               filteredClouds.map((cloud, idx) => {
                 if (cloud.lapseRateAboveCPerKm == null) return null;
-                const category = getStabilityCategory(
+                const category = getEffectiveStabilityCategory(
                   cloud.lapseRateAboveCPerKm,
                   cloud.malrCPerKm,
+                  isCellSaturated(cloud),
                 );
                 const { tintTop, tintBottom } = getTintBounds(
                   filteredClouds,

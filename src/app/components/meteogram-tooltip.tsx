@@ -3,7 +3,9 @@ import { CloudCell } from "../../types/weather";
 import { hPaToInHg, kmhToKnots, formatNumber } from "../../utils/meteogram";
 import {
   getStabilityCategory,
+  getEffectiveStabilityCategory,
   getStabilityColor,
+  isCellSaturated,
   STABILITY_LABELS,
   DALR_C_PER_KM,
   ISA_C_PER_KM,
@@ -29,8 +31,16 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
 }) => {
   const elr = cloudCell.lapseRateAboveCPerKm;
   const malr = cloudCell.malrCPerKm;
-  const stability =
+  const saturated = isCellSaturated(cloudCell);
+  const baseStability =
     elr != null && malr != null ? getStabilityCategory(elr, malr) : null;
+  const stability =
+    elr != null && malr != null
+      ? getEffectiveStabilityCategory(elr, malr, saturated)
+      : null;
+  const upgradedBySaturation =
+    baseStability === "conditionally-unstable" &&
+    stability === "absolutely-unstable";
   return (
     <foreignObject
       x={x}
@@ -109,6 +119,11 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
             >
               {STABILITY_LABELS[stability]}
             </div>
+            {upgradedBySaturation && (
+              <div style={{ color: "#666", fontStyle: "italic" }}>
+                Saturated → conditional resolved
+              </div>
+            )}
             <div>{`ELR: ${cPerKmToCPerKft(elr).toFixed(2)} °C/kft`}</div>
             <div style={{ color: "#666" }}>{`DALR ${cPerKmToCPerKft(
               DALR_C_PER_KM,

@@ -67,6 +67,35 @@ export function getStabilityCategory(
   return "conditionally-unstable";
 }
 
+// "Conditionally unstable" means stable to a dry parcel, unstable to a
+// saturated one — the condition being saturation. Once we know a layer is
+// already saturated (cloudy or near-saturation in T-Td), the condition is
+// met and the layer is realized as unstable. Outside of saturation the
+// classical 3-way result stands.
+export function getEffectiveStabilityCategory(
+  elrCPerKm: number,
+  malrCPerKm: number,
+  saturated: boolean,
+): StabilityCategory {
+  const base = getStabilityCategory(elrCPerKm, malrCPerKm);
+  if (saturated && base === "conditionally-unstable") return "absolutely-unstable";
+  return base;
+}
+
+// Cell-level saturation flag: significant cloud cover or T-Td below ~1°C.
+// Both are independent, common indicators of a saturated layer.
+export const SATURATION_DEW_POINT_DEPRESSION_C = 1;
+export const SATURATION_CLOUD_COVERAGE_PCT = 50;
+export function isCellSaturated(cell: {
+  cloudCoverage: number;
+  temperature: number;
+  dewPoint: number;
+}): boolean {
+  if (cell.cloudCoverage > SATURATION_CLOUD_COVERAGE_PCT) return true;
+  const depression = cell.temperature - cell.dewPoint;
+  return Number.isFinite(depression) && depression < SATURATION_DEW_POINT_DEPRESSION_C;
+}
+
 const STABILITY_RGB: Record<StabilityCategory, [number, number, number]> = {
   "absolutely-stable": [34, 197, 94],
   "conditionally-unstable": [234, 179, 8],

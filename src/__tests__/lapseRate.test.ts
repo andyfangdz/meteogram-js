@@ -3,8 +3,10 @@ import {
   computeMALR,
   computeELR,
   getStabilityCategory,
+  getEffectiveStabilityCategory,
   getStabilityColor,
   getBuoyancyColor,
+  isCellSaturated,
   cPerKmToCPerKft,
   DALR_C_PER_KM,
   ISA_C_PER_KM,
@@ -109,6 +111,50 @@ describe("utils/lapseRate", () => {
   describe("cPerKmToCPerKft", () => {
     it("converts 9.8 °C/km to ≈2.99 °C/kft", () => {
       expect(cPerKmToCPerKft(DALR_C_PER_KM)).toBeCloseTo(2.987, 2);
+    });
+  });
+
+  describe("isCellSaturated", () => {
+    it("returns true when cloud cover > 50%", () => {
+      expect(
+        isCellSaturated({ cloudCoverage: 75, temperature: 10, dewPoint: 0 }),
+      ).toBe(true);
+    });
+
+    it("returns true when dewpoint depression < 1°C", () => {
+      expect(
+        isCellSaturated({ cloudCoverage: 0, temperature: 10, dewPoint: 9.5 }),
+      ).toBe(true);
+    });
+
+    it("returns false when dry and clear", () => {
+      expect(
+        isCellSaturated({ cloudCoverage: 10, temperature: 10, dewPoint: 5 }),
+      ).toBe(false);
+    });
+  });
+
+  describe("getEffectiveStabilityCategory", () => {
+    it("upgrades conditionally-unstable to absolutely-unstable when saturated", () => {
+      // ELR=8 sits between MALR=6 and DALR=9.8 → conditionally unstable.
+      expect(getEffectiveStabilityCategory(8, 6, false)).toBe(
+        "conditionally-unstable",
+      );
+      expect(getEffectiveStabilityCategory(8, 6, true)).toBe(
+        "absolutely-unstable",
+      );
+    });
+
+    it("leaves stable and absolutely-unstable categories unchanged", () => {
+      expect(getEffectiveStabilityCategory(4, 6, true)).toBe(
+        "absolutely-stable",
+      );
+      expect(getEffectiveStabilityCategory(4, 6, false)).toBe(
+        "absolutely-stable",
+      );
+      expect(getEffectiveStabilityCategory(11, 6, true)).toBe(
+        "absolutely-unstable",
+      );
     });
   });
 });
