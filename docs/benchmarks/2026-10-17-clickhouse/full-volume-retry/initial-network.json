@@ -1,0 +1,23 @@
+[
+  {
+    "name": "catalog",
+    "url": "https://stac.dynamical.org/noaa-hrrr-forecast-48-hour-virtual/collection.json",
+    "status": 200,
+    "seconds": 0.8881728800006385,
+    "body": "{\n  \"type\": \"Collection\",\n  \"id\": \"noaa-hrrr-forecast-48-hour-virtual\",\n  \"stac_version\": \"1.1.0\",\n  \"description\": \"Weather forecasts from the High-Resolution Rapid Refresh (HRRR) model operated by NOAA NWS NCEP.\",\n  \"links\": [\n    {\n      \"rel\": \"root\",\n      \"href\": \"https://stac.dynamical.org/catalog.json\",\n      \"type\": \"application/json\",\n      \"title\": \"dynamical.org STAC Catalog\"\n    },\n    {\n      \"rel\": \"license\",\n      \"href\": \"https://creativecommons.org/licenses/by/4.0/\",\n      \"typ"
+  },
+  {
+    "name": "source",
+    "url": "https://dynamical-noaa-hrrr.s3.us-west-2.amazonaws.com/noaa-hrrr-forecast-48-hour-virtual/v0.5.0.icechunk/config.yaml",
+    "status": 404,
+    "seconds": 0.5967301630007569,
+    "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Key>noaa-hrrr-forecast-48-hour-virtual/v0.5.0.icechunk/config.yaml</Key><RequestId>21XJE02GNEMACDR3</RequestId><HostId>5quewZryvXJ7Mslj4sz1gXssz11aA9iSQQdKKjjlDDuviLdC2eoLHHRc/ZJPwFmiLpLIebBYTIo=</HostId></Error>"
+  },
+  {
+    "name": "control",
+    "url": "https://example.com",
+    "status": 200,
+    "seconds": 0.42662517099961406,
+    "body": "<!doctype html><html lang=en><head><meta charset=utf-8><link rel=icon href=data:,><meta name=viewport content=\"width=device-width,initial-scale=1\"><title>Example Domain</title><style>html{color-scheme:light dark;background:light-dark(#eee,#222)}body{font:16px/1.6 system-ui,sans-serif;max-width:26em;margin:auto;padding:25vh 2em 2em;text-align:center}</style></head><body><p>This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for t"
+  }
+]

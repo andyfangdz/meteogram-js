@@ -1,0 +1,108 @@
+[
+  {
+    "name": "atlanta",
+    "latitude": 33.6407,
+    "longitude": -84.4277,
+    "status": 200,
+    "ms": 62.22245800017845,
+    "gzip_bytes": 3670,
+    "cell_id": 1226422,
+    "lead_hours": [
+      0,
+      1
+    ],
+    "levels": 30,
+    "query_ms": 7.952006999403238
+  },
+  {
+    "name": "seattle",
+    "latitude": 47.4502,
+    "longitude": -122.3088,
+    "status": 200,
+    "ms": 44.74839700196753,
+    "gzip_bytes": 3642,
+    "cell_id": 199966,
+    "lead_hours": [
+      0,
+      1
+    ],
+    "levels": 30,
+    "query_ms": 7.302154001081362
+  },
+  {
+    "name": "miami",
+    "latitude": 25.7959,
+    "longitude": -80.287,
+    "status": 200,
+    "ms": 44.64311699848622,
+    "gzip_bytes": 3647,
+    "cell_id": 1708735,
+    "lead_hours": [
+      0,
+      1
+    ],
+    "levels": 30,
+    "query_ms": 7.245527998748003
+  },
+  {
+    "name": "los_angeles",
+    "latitude": 33.9416,
+    "longitude": -118.4085,
+    "status": 200,
+    "ms": 43.081183001049794,
+    "gzip_bytes": 3720,
+    "cell_id": 1124635,
+    "lead_hours": [
+      0,
+      1
+    ],
+    "levels": 30,
+    "query_ms": 7.372059000772424
+  },
+  {
+    "name": "denver",
+    "latitude": 39.8561,
+    "longitude": -104.6737,
+    "status": 200,
+    "ms": 43.060060997959226,
+    "gzip_bytes": 3707,
+    "cell_id": 848024,
+    "lead_hours": [
+      0,
+      1
+    ],
+    "levels": 30,
+    "query_ms": 7.526784000219777
+  },
+  {
+    "name": "boston",
+    "latitude": 42.3656,
+    "longitude": -71.0096,
+    "status": 200,
+    "ms": 49.916964999283664,
+    "gzip_bytes": 3663,
+    "cell_id": 508934,
+    "lead_hours": [
+      0,
+      1
+    ],
+    "levels": 30,
+    "query_ms": 7.645742996828631
+  },
+  {
+    "name": "out_of_region",
+    "latitude": 0,
+    "longitude": 0,
+    "status": 404,
+    "ms": 14.750477999768918,
+    "gzip_bytes": 63
+  },
+  {
+    "name": "invalid",
+    "latitude": 91,
+    "longitude": 0,
+    "status": 400,
+    "ms": 1.1325750019750558,
+    "gzip_bytes": 60
+  }
+]

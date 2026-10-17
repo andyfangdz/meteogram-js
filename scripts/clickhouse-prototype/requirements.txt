@@ -1,0 +1,9 @@
+icechunk==2.3.0
+gribberish==1.8.4
+xarray==2026.9.0
+zarr==3.4.1
+pyproj==3.8.0
+pyarrow==26.0.0
+clickhouse-connect==1.11.0
+psutil==7.2.2
+numpy==2.5.4

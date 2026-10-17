@@ -1,0 +1,87 @@
+{
+  "environment": {
+    "cpu": "AMD EPYC 9V74 VM, 4 CPU cgroup quota",
+    "memory_limit_bytes": 17179869184,
+    "disk": "overlay filesystem, backing medium not established",
+    "clickhouse_version": "26.9.20.23",
+    "python": "3.12.14"
+  },
+  "selected_layout": "256_zstd",
+  "source_sample_rows": 147456,
+  "source_sample_value_bytes": 107347968,
+  "source_sample_grib_bytes": 529908942,
+  "sample_disk_bytes": 63233948,
+  "sample_cpu_seconds": 24.824785098,
+  "models": {
+    "hrrr": {
+      "cells": 1638757,
+      "times": 49,
+      "levels": 30,
+      "vertical_fields": 6,
+      "float32_bytes_including_two_surface_fields": 58457739704,
+      "disk_bytes_if_sample_storage_ratio_holds": 34434873258.52569,
+      "storage_basis": "HRRR spatial/time extrapolation"
+    },
+    "gfs": {
+      "cells": 24885,
+      "times": 141,
+      "levels": 30,
+      "vertical_fields": 6,
+      "float32_bytes_including_two_surface_fields": 2554395480,
+      "disk_bytes_if_sample_storage_ratio_holds": 1504681587.9528809,
+      "storage_basis": "Unmeasured model: HRRR storage ratio scenario only"
+    },
+    "aifs": {
+      "cells": 24885,
+      "times": 31,
+      "levels": 8,
+      "vertical_fields": 5,
+      "float32_bytes_including_two_surface_fields": 129601080,
+      "disk_bytes_if_sample_storage_ratio_holds": 76342273.69319035,
+      "storage_basis": "Unmeasured model: HRRR storage ratio scenario only"
+    }
+  },
+  "hrrr_projected_ingest_minutes": 8.526737029980078,
+  "hrrr_projected_grib_bytes_per_cycle": 6491384539.5,
+  "cycles_per_month": 120,
+  "hrrr_projected_grib_bytes_per_month": 778966144740.0,
+  "cross_model_source_scenario": {
+    "warning": "GFS/AIFS compressed bytes were not measured. This assumes the same GRIB bytes per native grid value as observed HRRR; it is a planning scenario, not a benchmark.",
+    "gfs_bytes_per_cycle": 10179606791.811377,
+    "aifs_bytes_per_cycle": 516477595.00188667,
+    "all_models_bytes_per_month": 2062496271157.5916,
+    "other_models_half_to_double_packing_monthly_bytes": [
+      1420731207948.796, 3346026397575.183
+    ],
+    "with_20_percent_overhead_monthly_bytes": 2474995525389.11
+  },
+  "download_only_minutes_by_mbps": {
+    "50": 45.8332504701687,
+    "100": 22.91662523508435,
+    "300": 7.63887507836145,
+    "1000": 2.291662523508435,
+    "500": 4.58332504701687
+  },
+  "electricity_monthly_usd_at_025_kwh": {
+    "20": 3.5999999999999996,
+    "40": 7.199999999999999,
+    "80": 14.399999999999999
+  },
+  "user_machine": {
+    "cores": 4,
+    "ram_GB": 32,
+    "SSD_GB": 300,
+    "download_mbps": 500,
+    "upload_mbps": 80,
+    "data_cap": null
+  },
+  "compressed_staging": {
+    "measured_sample_raw_bytes": 107347968,
+    "measured_sample_compressed_bytes": 47591840,
+    "sample_ratio": 0.44334178733592794,
+    "full_cycle_bytes_if_ratio_holds": 27106686636.10368,
+    "measured_encode_seconds": 0.34709757702512434,
+    "measured_decode_seconds": 0.11132035801711027
+  },
+  "nominal_peak_disk_bytes_with_compressed_staging": 171170275116.7907
+}

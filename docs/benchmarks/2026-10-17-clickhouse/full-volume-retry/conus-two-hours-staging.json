@@ -1,0 +1,18 @@
+[
+  {
+    "lead": 0,
+    "layout": "by_field_4096_cell_blocks",
+    "raw_bytes": 1193015096,
+    "compressed_bytes": 626196322,
+    "encode_seconds": 3.5506768789746275,
+    "decode_seconds": 1.2778441660484532
+  },
+  {
+    "lead": 1,
+    "layout": "by_field_4096_cell_blocks",
+    "raw_bytes": 1193015096,
+    "compressed_bytes": 646216230,
+    "encode_seconds": 3.401046259990835,
+    "decode_seconds": 1.205434568968485
+  }
+]

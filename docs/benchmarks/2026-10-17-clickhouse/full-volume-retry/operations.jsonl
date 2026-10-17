@@ -1,0 +1,16 @@
+{"phase": "hrrr-0-fetch", "status": "started", "utc": "2026-10-17T16:53:34Z"}
+{"phase": "hrrr-0-fetch", "status": "finished", "returncode": 1, "seconds": 21.007691244001762, "peak_cgroup_memory_bytes": 1991147520, "minimum_free_disk_bytes": 29307408384, "server_rss_bytes": 663654400}
+{"phase": "hrrr-0-fetch", "status": "started", "utc": "2026-10-17T16:54:12Z"}
+{"phase": "hrrr-0-fetch", "status": "finished", "returncode": 1, "seconds": 21.00791851899703, "peak_cgroup_memory_bytes": 2175606784, "minimum_free_disk_bytes": 29307305984, "server_rss_bytes": 665264128}
+{"phase": "hrrr-0-fetch", "status": "retrying", "attempt": 2}
+{"phase": "hrrr-0-fetch", "status": "started", "utc": "2026-10-17T16:54:38Z"}
+{"phase": "hrrr-0-fetch", "status": "finished", "returncode": 1, "seconds": 22.00788604600166, "peak_cgroup_memory_bytes": 2007232512, "minimum_free_disk_bytes": 29307301888, "server_rss_bytes": 665223168}
+{"phase": "hrrr-0-fetch", "status": "retrying", "attempt": 3}
+{"phase": "hrrr-0-fetch", "status": "started", "utc": "2026-10-17T16:55:10Z"}
+{"phase": "hrrr-0-fetch", "status": "finished", "returncode": 1, "seconds": 23.007937619000586, "peak_cgroup_memory_bytes": 7009300480, "minimum_free_disk_bytes": 28081414144, "server_rss_bytes": 665247744}
+{"phase": "hrrr-0-fetch", "status": "retrying", "attempt": 4}
+{"phase": "hrrr-0-fetch", "status": "started", "utc": "2026-10-17T16:55:48Z"}
+{"phase": "hrrr-0-fetch", "status": "finished", "returncode": 1, "seconds": 22.01214383700062, "peak_cgroup_memory_bytes": 8471822336, "minimum_free_disk_bytes": 23593959424, "server_rss_bytes": 991170560}
+{"phase": "hrrr-0-fetch", "status": "retrying", "attempt": 5}
+{"phase": "hrrr-0-fetch", "status": "started", "utc": "2026-10-17T16:56:30Z"}
+{"phase": "hrrr-0-fetch", "status": "finished", "returncode": 1, "seconds": 26.00840615299967, "peak_cgroup_memory_bytes": 11845906432, "minimum_free_disk_bytes": 22272798720, "server_rss_bytes": 705576960}

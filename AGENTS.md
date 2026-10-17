@@ -326,6 +326,47 @@ Server-side cookie reading can fail on Edge. The `cookieReadSuccess` flag trigge
 
 ---
 
+## Dynamical migration investigation
+
+For continuation on the user's home Linux machine, read
+`docs/plans/dynamical-home-agent-handoff.md` first. The branch
+`codex/dynamical-clickhouse-handoff` packages the prototype and evidence, not the
+large source cache or database. The next goal is a fresh, full-resident CONUS
+HRRR/GFS/AIFS benchmark on that host, followed by measured operating estimates.
+
+`scripts/probe-dynamical.py` is a standalone `uv` script for bounded live reads
+from Dynamical's GFS, HRRR and AIFS virtual Zarr/Icechunk datasets. See
+`docs/plans/2026-10-14-dynamical-migration.md` for verified field coverage and
+chunk-cost measurements. This is diagnostic tooling; the app still uses
+Open-Meteo. Do not put full virtual-profile reads into page requests: the source
+chunks span entire maps and require a background extraction/cache architecture.
+The budget-focused proposal is in
+`docs/plans/2026-10-16-dynamical-cost-design.md`. The current requirement is
+arbitrary CONUS coordinates on a home Linux server, designed in
+`docs/plans/2026-10-17-dynamical-arbitrary-locations.md`: retain the regional grid,
+query a local store, cache requested profiles, and retain Open-Meteo when
+coverage/freshness is insufficient. ClickHouse and point-oriented materialized
+Zarr need benchmarking. This supersedes the five-site/static-only design; no
+backend or provider switch is deployed.
+
+`scripts/clickhouse-prototype/` now contains the isolated local ClickHouse
+extractor, layout benchmark and native-profile HTTP API. It uses its own
+`meteogram_bench` database and stores large artifacts outside the repository.
+Measured results and explicit full-run estimates are in
+`docs/plans/2026-10-17-clickhouse-prototype-results.md`, with evidence under
+`docs/benchmarks/2026-10-17-clickhouse/`. The successful source sample covers four
+HRRR times and four spatial tiles; a workspace network failure prevented full-run
+and GFS/AIFS acquisition. Do not describe those projections as completed full-run
+benchmarks or the prototype API as the app's normalized meteorological provider.
+
+A later retry added a snapshot-scoped source cache, offline replay and a
+disk-bounded `full-volume.py` benchmark runner. Actual full-CONUS HRRR geography
+was loaded for **two times**, with evidence in
+`docs/plans/2026-10-17-clickhouse-full-volume-retry.md`. The network again blocked
+49-time/GFS/AIFS acquisition. The runner's planned eight spatial batches are not
+a completed full-volume or full-resident benchmark; it drops completed HRRR
+batches to fit workspace disk. Preserve this distinction in future reports.
+
 ## Development Tips
 
 1. **Use `yarn dev` liberally** — Hot reload catches many issues early

@@ -1,0 +1,17 @@
+{
+  "valid_disjoint_ranges": {
+    "rows": 6,
+    "cell_id_span": 32768,
+    "ranges": 2,
+    "seconds": 0.0034834419984690612
+  },
+  "duplicate_rejected": true,
+  "missing_rejected": true,
+  "unexpected_id_rejected": true,
+  "actual_conus_two_hours": {
+    "rows": 3277514,
+    "cell_id_span": 32768,
+    "ranges": 59,
+    "seconds": 0.572736141999485
+  }
+}

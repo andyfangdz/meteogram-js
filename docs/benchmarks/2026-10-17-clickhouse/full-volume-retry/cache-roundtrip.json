@@ -1,0 +1,9 @@
+{
+  "verified_cells": 204844,
+  "leads": [
+    0,
+    1
+  ],
+  "checks": "Exact Float32 equality between online acquisition and offline full-region cache replay, all fields and levels",
+  "network_required": false
+}

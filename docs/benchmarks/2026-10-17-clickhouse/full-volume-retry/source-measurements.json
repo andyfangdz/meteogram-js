@@ -1,0 +1,334 @@
+{
+  "metadata": {
+    "model": "hrrr",
+    "dataset": "noaa-hrrr-forecast-48-hour-virtual",
+    "init_time": "2026-10-16T18:00:00.000000000",
+    "cells": 1638757,
+    "levels": [
+      1000,
+      975,
+      950,
+      925,
+      900,
+      875,
+      850,
+      825,
+      800,
+      775,
+      750,
+      725,
+      700,
+      675,
+      650,
+      625,
+      600,
+      575,
+      550,
+      525,
+      500,
+      475,
+      450,
+      425,
+      400,
+      375,
+      350,
+      325,
+      300,
+      275
+    ],
+    "leads": [
+      0,
+      1
+    ],
+    "variables": [
+      "geopotential_height",
+      "temperature",
+      "wind_u",
+      "wind_v",
+      "relative_humidity",
+      "dew_point_temperature"
+    ],
+    "surface_variables": [
+      "temperature_2m",
+      "dew_point_temperature_2m"
+    ],
+    "grid": {
+      "kind": "projected",
+      "native_cells": 1905141,
+      "conus_cells": 1638757
+    },
+    "workers": 16,
+    "zarr_concurrency": 16,
+    "open_seconds": 0.5397533270006534,
+    "units": {
+      "geopotential_height": "m",
+      "temperature": "degree_Celsius",
+      "wind_u": "m s-1",
+      "wind_v": "m s-1",
+      "relative_humidity": "percent",
+      "dew_point_temperature": "degree_Celsius"
+    },
+    "coverage": "conus",
+    "spatial_shards": 1,
+    "shard_index": 0,
+    "offline_cache": true,
+    "snapshot_id": "8QX1NG8ZDNGCXNFVESV0"
+  },
+  "offline_full_region_reports": [
+    {
+      "lead": 0,
+      "workers": 16,
+      "zarr_concurrency": 16,
+      "seconds": 8.825277343999915,
+      "cpu_seconds": 12.832204208,
+      "grib_bytes": 133347798,
+      "chunks": 182,
+      "decode_seconds": 4.753531745001965,
+      "network_rx_bytes": 24507,
+      "staged_value_bytes": 1193015096,
+      "peak_rss_bytes": 3674902528,
+      "process_write_bytes": 1193123840,
+      "fields": {
+        "geopotential_height": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 0.000244140625
+        },
+        "temperature": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "wind_u": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 1.9073486328125e-06
+        },
+        "wind_v": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 0.0
+        },
+        "relative_humidity": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "dew_point_temperature": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "temperature_2m": {
+          "finite": 1638757,
+          "total": 1638757,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "dew_point_temperature_2m": {
+          "finite": 1638757,
+          "total": 1638757,
+          "max_float32_error": 1.5258789289873675e-06
+        }
+      },
+      "map_retries": 0,
+      "source_cache": {
+        "hits": 182,
+        "hit_bytes": 133347798,
+        "misses": 0,
+        "downloaded_bytes": 0
+      }
+    },
+    {
+      "lead": 1,
+      "workers": 16,
+      "zarr_concurrency": 16,
+      "seconds": 8.529009894999035,
+      "cpu_seconds": 12.25179636,
+      "grib_bytes": 132020997,
+      "chunks": 182,
+      "decode_seconds": 4.619211217013799,
+      "network_rx_bytes": 23367,
+      "staged_value_bytes": 1193015096,
+      "peak_rss_bytes": 3800412160,
+      "process_write_bytes": 1193082880,
+      "fields": {
+        "geopotential_height": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 0.00048828125
+        },
+        "temperature": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "wind_u": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "wind_v": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 0.0
+        },
+        "relative_humidity": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "dew_point_temperature": {
+          "finite": 49162710,
+          "total": 49162710,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "temperature_2m": {
+          "finite": 1638757,
+          "total": 1638757,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "dew_point_temperature_2m": {
+          "finite": 1638757,
+          "total": 1638757,
+          "max_float32_error": 1.5258789289873675e-06
+        }
+      },
+      "map_retries": 0,
+      "source_cache": {
+        "hits": 182,
+        "hit_bytes": 132020997,
+        "misses": 0,
+        "downloaded_bytes": 0
+      }
+    }
+  ],
+  "online_first_shard_reports": [
+    {
+      "lead": 0,
+      "workers": 16,
+      "zarr_concurrency": 16,
+      "seconds": 15.71927673800019,
+      "cpu_seconds": 7.481985083,
+      "grib_bytes": 133347798,
+      "chunks": 182,
+      "decode_seconds": 4.664519728983578,
+      "network_rx_bytes": 142587546,
+      "staged_value_bytes": 149126432,
+      "peak_rss_bytes": 1231896576,
+      "process_write_bytes": 283148288,
+      "fields": {
+        "geopotential_height": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 0.000244140625
+        },
+        "temperature": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "wind_u": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 1.9073486328125e-06
+        },
+        "wind_v": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 0.0
+        },
+        "relative_humidity": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "dew_point_temperature": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "temperature_2m": {
+          "finite": 204844,
+          "total": 204844,
+          "max_float32_error": 3.8146970382513246e-07
+        },
+        "dew_point_temperature_2m": {
+          "finite": 204844,
+          "total": 204844,
+          "max_float32_error": 3.8146970382513246e-07
+        }
+      },
+      "map_retries": 0,
+      "source_cache": {
+        "hits": 0,
+        "hit_bytes": 0,
+        "misses": 182,
+        "downloaded_bytes": 133347798
+      }
+    },
+    {
+      "lead": 1,
+      "workers": 16,
+      "zarr_concurrency": 16,
+      "seconds": 11.191782169000362,
+      "cpu_seconds": 7.021684934,
+      "grib_bytes": 132020997,
+      "chunks": 182,
+      "decode_seconds": 4.549496167990583,
+      "network_rx_bytes": 138951886,
+      "staged_value_bytes": 149126432,
+      "peak_rss_bytes": 1231896576,
+      "process_write_bytes": 282157056,
+      "fields": {
+        "geopotential_height": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 0.00048828125
+        },
+        "temperature": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "wind_u": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "wind_v": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 0.0
+        },
+        "relative_humidity": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "dew_point_temperature": {
+          "finite": 6145320,
+          "total": 6145320,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "temperature_2m": {
+          "finite": 204844,
+          "total": 204844,
+          "max_float32_error": 3.8146970382513246e-07
+        },
+        "dew_point_temperature_2m": {
+          "finite": 204844,
+          "total": 204844,
+          "max_float32_error": 1.5258789289873675e-06
+        }
+      },
+      "map_retries": 0,
+      "source_cache": {
+        "hits": 0,
+        "hit_bytes": 0,
+        "misses": 182,
+        "downloaded_bytes": 132020997
+      }
+    }
+  ],
+  "limitation": "Only HRRR leads 0 and 1 cover the complete CONUS rectangle. The 49-time run and GFS/AIFS acquisition did not complete. Cache replay decoded actual source chunks with zero new source bytes."
+}
