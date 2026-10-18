@@ -1,0 +1,15 @@
+{
+  "models": {
+    "aifs": {
+      "clients": 1,
+      "count": 300,
+      "max_ms": 9.109291,
+      "p50_ms": 5.840735,
+      "p95_ms": 7.517433,
+      "p99_ms": 8.431456,
+      "queries_per_second": 169.96135747812158
+    }
+  },
+  "time": 1792344428.2013361,
+  "warmup_queries_per_model": 300
+}

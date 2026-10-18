@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "dtype": "uint16_le",
+  "shape": [
+    24885,
+    8,
+    5
+  ],
+  "block_cells": 4096,
+  "encoding": "spatial_delta_shuffle16",
+  "blocks": [
+    {
+      "offset": 0,
+      "bytes": 157120,
+      "values": 163840
+    },
+    {
+      "offset": 157120,
+      "bytes": 161645,
+      "values": 163840
+    },
+    {
+      "offset": 318765,
+      "bytes": 162517,
+      "values": 163840
+    },
+    {
+      "offset": 481282,
+      "bytes": 169891,
+      "values": 163840
+    },
+    {
+      "offset": 651173,
+      "bytes": 165904,
+      "values": 163840
+    },
+    {
+      "offset": 817077,
+      "bytes": 164997,
+      "values": 163840
+    },
+    {
+      "offset": 982074,
+      "bytes": 12906,
+      "values": 12360
+    }
+  ]
+}

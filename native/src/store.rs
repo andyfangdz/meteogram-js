@@ -237,6 +237,15 @@ pub fn load_with_workers(
     table: &str,
     workers: Option<usize>,
 ) -> Result<Value> {
+    load_with_layout(root, path, table, workers, false)
+}
+pub fn load_with_layout(
+    root: &Path,
+    path: &Path,
+    table: &str,
+    workers: Option<usize>,
+    packed: bool,
+) -> Result<Value> {
     ident(table)?;
     let started = Instant::now();
     let mut m = read_json(path.join("metadata.json"))?;
@@ -283,7 +292,11 @@ pub fn load_with_workers(
         .as_ref()
         .is_some_and(|fields| fields.iter().flatten().all(|n| *n <= 65536));
     let index_type = if index16 { "UInt16" } else { "UInt32" };
-    let tiled = index16 && m["model"] == "hrrr";
+    anyhow::ensure!(
+        !packed || index16,
+        "Packed loading requires UInt16 dictionaries"
+    );
+    let tiled = index16 && (m["model"] == "hrrr" || packed);
     let storage_rows = if tiled {
         nc.div_ceil(crate::packed::CELLS)
     } else {
@@ -401,6 +414,7 @@ pub fn load_with_workers(
     }
     atomic(path.join("metadata.json"), &m)?;
     let batch = match m["model"].as_str() {
+        Some("gfs") if tiled => 4096,
         Some("gfs") => 2048,
         Some("hrrr") if tiled => 16384,
         Some("hrrr") if index16 => 8192,

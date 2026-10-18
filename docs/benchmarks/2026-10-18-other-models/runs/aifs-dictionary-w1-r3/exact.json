@@ -1,0 +1,27 @@
+{
+  "models": {
+    "aifs": {
+      "cells": 24885,
+      "complete_profiles_exact": 100,
+      "logical_rows": 771435,
+      "max_coordinate_error_degrees": 0.0,
+      "storage_rows": 24885
+    },
+    "gfs": {
+      "cells": 24885,
+      "complete_profiles_exact": 100,
+      "logical_rows": 3508785,
+      "max_coordinate_error_degrees": 0.0,
+      "storage_rows": 24885
+    },
+    "hrrr": {
+      "cells": 1638757,
+      "complete_profiles_exact": 100,
+      "logical_rows": 80299093,
+      "max_coordinate_error_degrees": 0.0,
+      "storage_rows": 1638757
+    }
+  },
+  "success": true,
+  "time": 1792344344.7588568
+}

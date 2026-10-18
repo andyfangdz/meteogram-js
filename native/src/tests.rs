@@ -415,6 +415,53 @@ fn database_native_roundtrip_and_corruption_gate() {
             .iter()
             .enumerate()
             .all(|(i, v)| v.to_bits() == bits[i % bits.len()]));
+        let raw_only = root.path().join("raw_only");
+        let raw_report = crate::prepare::from_store_with_mode(
+            &coded_dir,
+            DATABASE,
+            &dict_table,
+            &raw_only,
+            None,
+            true,
+        )
+        .unwrap();
+        assert!(raw_report["dictionary"].is_null());
+        assert!(!raw_only.join("values.dict.zst").exists());
+        crate::stage::Array::open(&raw_only.join("lead-000.npy"), &[cells, 2, 2])
+            .unwrap()
+            .read_into(0, &mut decoded)
+            .unwrap();
+        assert!(decoded
+            .iter()
+            .enumerate()
+            .all(|(i, v)| v.to_bits() == bits[i % bits.len()]));
+        let gfs = root.path().join("experimental_gfs");
+        fs::create_dir(&gfs).unwrap();
+        for entry in fs::read_dir(&coded_dir).unwrap() {
+            let entry = entry.unwrap();
+            let name = entry.file_name();
+            let text = name.to_string_lossy();
+            if text.starts_with("lead-")
+                || text.starts_with("surface-")
+                || text == "cells.bin.zst"
+                || text == "values.dict.zst"
+            {
+                fs::hard_link(entry.path(), gfs.join(&name)).unwrap();
+            }
+        }
+        let mut gfs_metadata = coded_meta.clone();
+        gfs_metadata["model"] = json!("gfs");
+        atomic(gfs.join("metadata.json"), &gfs_metadata).unwrap();
+        let gfs_table = format!("{table}_gfs_packed");
+        let gfs_result =
+            store::load_with_layout(root.path(), &gfs, &gfs_table, Some(4), true).unwrap();
+        assert_eq!(
+            gfs_result["storage_rows"],
+            cells.div_ceil(crate::packed::CELLS)
+        );
+        store::validate(&gfs, &gfs_table, DATABASE, true).unwrap();
+        db.command(&format!("DROP TABLE {DATABASE}.{gfs_table} SYNC"))
+            .unwrap();
         let book = coded_dir.join("values.dict.zst");
         let pristine = fs::read(&book).unwrap();
         let mut corrupt = pristine.clone();

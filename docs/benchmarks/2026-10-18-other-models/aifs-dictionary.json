@@ -1,0 +1,39 @@
+{
+  "fields": [
+    {
+      "entries": 2254798,
+      "max_cardinality": 13088,
+      "slots": 248
+    },
+    {
+      "entries": 259355,
+      "max_cardinality": 2020,
+      "slots": 248
+    },
+    {
+      "entries": 320420,
+      "max_cardinality": 2207,
+      "slots": 248
+    },
+    {
+      "entries": 346562,
+      "max_cardinality": 2552,
+      "slots": 248
+    },
+    {
+      "entries": 400802,
+      "max_cardinality": 3153,
+      "slots": 248
+    },
+    {
+      "entries": 32531,
+      "max_cardinality": 1164,
+      "slots": 31
+    },
+    {
+      "entries": 32882,
+      "max_cardinality": 1268,
+      "slots": 31
+    }
+  ]
+}

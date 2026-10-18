@@ -1,0 +1,87 @@
+{
+  "queries": 7,
+  "validated_physical_rows": 98,
+  "validated_cells": 24885,
+  "logical_cell_lead_rows": 771435,
+  "full_float32_values": 32400270,
+  "overlap": false,
+  "ranges": [
+    {
+      "query_id": "ddeea8c6-742a-4e27-b19f-d14988ed1cd8",
+      "expected_rows": 16,
+      "key": "tile_id",
+      "min": 0,
+      "max": 15,
+      "read_rows": 16,
+      "read_bytes": 10667136,
+      "query_duration_ms": 63,
+      "memory_usage": 8617678
+    },
+    {
+      "query_id": "fb004a1c-fe6f-4701-86a2-f6385c278c99",
+      "expected_rows": 16,
+      "key": "tile_id",
+      "min": 16,
+      "max": 31,
+      "read_rows": 16,
+      "read_bytes": 10667136,
+      "query_duration_ms": 32,
+      "memory_usage": 8630054
+    },
+    {
+      "query_id": "5247be99-f5fb-4b84-9eca-88a4138639c8",
+      "expected_rows": 16,
+      "key": "tile_id",
+      "min": 32,
+      "max": 47,
+      "read_rows": 16,
+      "read_bytes": 10667136,
+      "query_duration_ms": 44,
+      "memory_usage": 8641822
+    },
+    {
+      "query_id": "c1bb5ecb-1921-41ca-a926-4ac2fe6f10b1",
+      "expected_rows": 16,
+      "key": "tile_id",
+      "min": 48,
+      "max": 63,
+      "read_rows": 16,
+      "read_bytes": 10667136,
+      "query_duration_ms": 46,
+      "memory_usage": 8643998
+    },
+    {
+      "query_id": "5cbc3557-11f5-4175-b392-0d65baa872b8",
+      "expected_rows": 16,
+      "key": "tile_id",
+      "min": 64,
+      "max": 79,
+      "read_rows": 16,
+      "read_bytes": 10667136,
+      "query_duration_ms": 47,
+      "memory_usage": 8643774
+    },
+    {
+      "query_id": "6c4ff543-802a-4805-a392-3041a516a79f",
+      "expected_rows": 16,
+      "key": "tile_id",
+      "min": 80,
+      "max": 95,
+      "read_rows": 16,
+      "read_bytes": 10667136,
+      "query_duration_ms": 45,
+      "memory_usage": 8644094
+    },
+    {
+      "query_id": "3bda15cf-3f3f-4cf6-822a-155b30af5e22",
+      "expected_rows": 2,
+      "key": "tile_id",
+      "min": 96,
+      "max": 97,
+      "read_rows": 2,
+      "read_bytes": 1333392,
+      "query_duration_ms": 30,
+      "memory_usage": 8644558
+    }
+  ]
+}

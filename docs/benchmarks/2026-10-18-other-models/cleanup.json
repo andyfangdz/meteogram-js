@@ -1,0 +1,10 @@
+{
+  "time": 1792344709.485,
+  "dropped_owned_tables": 26,
+  "removed_weather_files": 936,
+  "remaining_experiment_tables": 0,
+  "protected_table_count": 12,
+  "protected_rows_unchanged": true,
+  "failed_staging_temp_files_removed": 564,
+  "failed_staging_temp_bytes_removed": 1211831462
+}

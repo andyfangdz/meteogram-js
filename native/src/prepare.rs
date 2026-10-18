@@ -118,6 +118,17 @@ pub fn from_store(
     out: &Path,
     raw: Option<&Path>,
 ) -> Result<Value> {
+    from_store_with_mode(source, database, table, out, raw, false)
+}
+pub fn from_store_with_mode(
+    source: &Path,
+    database: &str,
+    table: &str,
+    out: &Path,
+    raw: Option<&Path>,
+    raw_only: bool,
+) -> Result<Value> {
+    anyhow::ensure!(!raw_only || raw.is_none(), "Raw-only export has one output");
     ident(database)?;
     ident(table)?;
     anyhow::ensure!(
@@ -179,9 +190,21 @@ pub fn from_store(
             })
             .collect()
     };
-    let mut coded = writers(out, "uint32_le")?;
-    let mut raw_writers = raw.map(|p| writers(p, "float32_le")).transpose()?;
-    let mut builders: Vec<_> = widths.iter().map(|w| FieldBuilder::new(*w)).collect();
+    let mut coded = if raw_only {
+        None
+    } else {
+        Some(writers(out, "uint32_le")?)
+    };
+    let mut raw_writers = if raw_only {
+        Some(writers(out, "float32_le")?)
+    } else {
+        raw.map(|p| writers(p, "float32_le")).transpose()?
+    };
+    let mut builders: Vec<_> = if raw_only {
+        Vec::new()
+    } else {
+        widths.iter().map(|w| FieldBuilder::new(*w)).collect()
+    };
     let db = Db::new()?;
     let started = Instant::now();
     let mut read_seconds = 0.;
@@ -236,19 +259,33 @@ pub fn from_store(
         };
         read_seconds += tick.elapsed().as_secs_f64();
         let tick = Instant::now();
-        let indices = std::thread::scope(|scope| -> Result<Vec<Vec<u32>>> {
-            let jobs: Vec<_> = builders
-                .iter_mut()
-                .zip(&columns)
-                .map(|(builder, values)| scope.spawn(move || builder.encode(values)))
-                .collect();
-            jobs.into_iter()
-                .map(|j| {
-                    j.join()
-                        .map_err(|_| anyhow::anyhow!("Dictionary preparation worker panicked"))?
-                })
-                .collect()
-        })?;
+        if raw_only {
+            anyhow::ensure!(
+                columns
+                    .iter()
+                    .flatten()
+                    .all(|bits| f32::from_bits(*bits).is_finite()),
+                "Non-finite raw export"
+            );
+        }
+        let indices = if raw_only {
+            None
+        } else {
+            Some(std::thread::scope(|scope| -> Result<Vec<Vec<u32>>> {
+                let jobs: Vec<_> = builders
+                    .iter_mut()
+                    .zip(&columns)
+                    .map(|(builder, values)| scope.spawn(move || builder.encode(values)))
+                    .collect();
+                jobs.into_iter()
+                    .map(|j| {
+                        j.join().map_err(|_| {
+                            anyhow::anyhow!("Dictionary preparation worker panicked")
+                        })?
+                    })
+                    .collect()
+            })?)
+        };
         encode_seconds += tick.elapsed().as_secs_f64();
         let tick = Instant::now();
         fn emit(
@@ -282,7 +319,9 @@ pub fn from_store(
             }
             Ok(())
         }
-        emit(&indices, &mut coded, count, nl, nf, nt)?;
+        if let (Some(indices), Some(coded)) = (&indices, &mut coded) {
+            emit(indices, coded, count, nl, nf, nt)?;
+        }
         if let Some(writers) = &mut raw_writers {
             emit(&columns, writers, count, nl, nf, nt)?;
         }
@@ -294,12 +333,15 @@ pub fn from_store(
             );
         }
     }
-    let entries = builders.into_iter().map(FieldBuilder::finish).collect();
-    let dictionary = Dictionary::new(entries);
-    let info = dictionary.save(out, &m)?;
+    let info = if raw_only {
+        None
+    } else {
+        let entries = builders.into_iter().map(FieldBuilder::finish).collect();
+        Some(Dictionary::new(entries).save(out, &m)?)
+    };
     let mut raw_bytes = 0u64;
     let mut encoded_bytes = 0u64;
-    for (p, g) in coded {
+    for (p, g) in coded.into_iter().flatten() {
         for w in [p, g] {
             let s = w.finish()?;
             raw_bytes += s["raw_bytes"].as_u64().unwrap();
@@ -308,18 +350,27 @@ pub fn from_store(
     }
     if let Some(writers) = raw_writers {
         for (p, g) in writers {
-            p.finish()?;
-            g.finish()?;
+            for writer in [p, g] {
+                let report = writer.finish()?;
+                if raw_only {
+                    raw_bytes += report["raw_bytes"].as_u64().context("Raw size")?;
+                    encoded_bytes += report["encoded_bytes"].as_u64().context("Encoded size")?;
+                }
+            }
         }
         let mut raw_metadata = m.clone();
         raw_metadata.as_object_mut().unwrap().remove("storage");
         raw_metadata["staging"] = json!({"encoding":"float32_bits"});
-        atomic(raw.unwrap().join("metadata.json"), &raw_metadata)?;
+        atomic(raw.unwrap_or(out).join("metadata.json"), &raw_metadata)?;
     }
     m.as_object_mut().unwrap().remove("storage");
-    m["staging"] = json!({"encoding":ENCODING,"dictionary":info});
+    m["staging"] = if raw_only {
+        json!({"encoding":"float32_bits"})
+    } else {
+        json!({"encoding":ENCODING,"dictionary":info})
+    };
     atomic(out.join("metadata.json"), &m)?;
-    let report = json!({"source_database":database,"source_table":table,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"],"cells":nc,"logical_rows":nc*nt,"raw_bytes":raw_bytes,"coded_stage_bytes":encoded_bytes,"dictionary":info,"read_seconds":read_seconds,"dictionary_encode_seconds":encode_seconds,"stage_seconds":stage_seconds,"seconds":started.elapsed().as_secs_f64(),"source_preparation_not_loader_timing":true});
+    let report = json!({"source_database":database,"source_table":table,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"],"cells":nc,"logical_rows":nc*nt,"raw_bytes":raw_bytes,"stage_bytes":encoded_bytes,"coded_stage_bytes":if raw_only {None}else{Some(encoded_bytes)},"raw_only":raw_only,"dictionary":info,"read_seconds":read_seconds,"dictionary_encode_seconds":encode_seconds,"stage_seconds":stage_seconds,"seconds":started.elapsed().as_secs_f64(),"source_preparation_not_loader_timing":true});
     atomic(out.join("preparation.json"), &report)?;
     Ok(report)
 }

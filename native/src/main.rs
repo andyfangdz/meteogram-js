@@ -45,6 +45,9 @@ enum Cmd {
         output: PathBuf,
         #[arg(long)]
         raw_output: Option<PathBuf>,
+        /// Export exact Float32 staging without constructing dictionaries.
+        #[arg(long, conflicts_with = "raw_output")]
+        raw_only: bool,
     },
     InspectDictionary {
         #[arg(long)]
@@ -110,6 +113,9 @@ enum Cmd {
         table: String,
         #[arg(long)]
         workers: Option<usize>,
+        /// Opt in to experimental UInt16 cell tiles for additional models.
+        #[arg(long)]
+        packed: bool,
     },
     Validate {
         #[arg(long)]
@@ -258,9 +264,14 @@ async fn main() -> Result<()> {
             table,
             output: target,
             raw_output,
+            raw_only,
         } => output(
             &tokio::task::spawn_blocking(move || {
-                prepare::from_store(&source, &database, &table, &target, raw_output.as_deref())
+                if raw_only {
+                    prepare::from_store_with_mode(&source, &database, &table, &target, None, true)
+                } else {
+                    prepare::from_store(&source, &database, &table, &target, raw_output.as_deref())
+                }
             })
             .await??,
             None,
@@ -336,9 +347,10 @@ async fn main() -> Result<()> {
             data,
             table,
             workers,
+            packed,
         } => output(
             &tokio::task::spawn_blocking(move || {
-                store::load_with_workers(&root, &data, &table, workers)
+                store::load_with_layout(&root, &data, &table, workers, packed)
             })
             .await??,
             None,

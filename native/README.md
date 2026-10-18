@@ -123,7 +123,11 @@ workers with 4,096-cell batches; packed HRRR uses six workers, two readers and
 16,384-cell batches, with at most four simultaneous inserts. GFS uses 2,048
 cells and AIFS 4,096. Other models
 default to one worker. `load --workers 1..6` selects an explicit
-insert worker count. Workers wait for each complete insert response, including
+insert worker count. `load --packed` explicitly enables experimental 256-cell
+tiles for other models with UInt16 dictionaries; it rejects raw-bit and UInt32
+inputs. This does not change acquisition or scheduled-loader defaults.
+Experimental packed GFS uses 4,096-cell batches, matching its staging frames.
+Workers wait for each complete insert response, including
 late server errors. Failed loads cancel and drain all workers before cleanup.
 Only the new unpublished table has merges paused during loading and full
 validation; merges must resume successfully before loading returns. On Linux,
@@ -159,6 +163,12 @@ last tile. Report physical tile rows separately from logical cells and
 cell/lead rows. This grouping reduces storage without averaging spatial cells.
 The reader accepts 8-, 64- and 256-cell tiles, UInt16/UInt32 dictionary profiles,
 and raw-bit profiles. SQL bound queries have an explicit 2 MiB parser limit.
+
+`prepare-store --raw-only` exports a complete local table as exact Float32
+staging without building palettes. It requires a fresh output directory and
+conflicts with `--raw-output`. The normal dictionary exporter retains the
+32-million-entry limit per field; this is a sum across all level/lead slots,
+separate from each slot's UInt16 limit. Preparation is outside loader timing.
 
 For a UInt16 source of at most 8 GiB, the loader can prefetch all input files
 inside the load clock when `MemAvailable >= input bytes + 12 GiB`; otherwise
@@ -274,3 +284,10 @@ native staging format's measured storage reduction.
 The [one-minute HRRR report](../docs/plans/2026-10-18-hrrr-one-minute-load.md)
 records complete 50.21- and 53.70-second fresh-table loads, exact dictionary
 storage, bounded insert concurrency, full validation and installation evidence.
+The [GFS/AIFS benchmark report](../docs/plans/2026-10-18-other-model-load-benchmarks.md)
+records three complete loads per configuration: four workers reduced median
+GFS loading from 16.07 to 6.33 seconds and raw AIFS from 1.60 to 0.75 seconds.
+AIFS tiles saved 40.8% of database-plus-codebook storage but increased warm
+profile-query p95 from 5.75 to 10.24 ms. Full GFS dictionary preparation exceeded
+the existing palette budget. These are isolated measurements; the installed
+binary and service defaults were left unchanged.

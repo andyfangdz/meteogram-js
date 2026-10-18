@@ -1,0 +1,50 @@
+[
+  {
+    "field": "cloud_cover",
+    "slots": 4230,
+    "entries": 3035847,
+    "max_cardinality": 998
+  },
+  {
+    "field": "dew_point_temperature_2m",
+    "slots": 141,
+    "entries": 222250,
+    "max_cardinality": 3620
+  },
+  {
+    "field": "geopotential_height",
+    "slots": 4230,
+    "entries": 38867743,
+    "max_cardinality": 13956
+  },
+  {
+    "field": "relative_humidity",
+    "slots": 4230,
+    "entries": 4070512,
+    "max_cardinality": 1001
+  },
+  {
+    "field": "temperature",
+    "slots": 4230,
+    "entries": 9002674,
+    "max_cardinality": 3586
+  },
+  {
+    "field": "temperature_2m",
+    "slots": 141,
+    "entries": 216153,
+    "max_cardinality": 3412
+  },
+  {
+    "field": "wind_u",
+    "slots": 4230,
+    "entries": 2712497,
+    "max_cardinality": 5177
+  },
+  {
+    "field": "wind_v",
+    "slots": 4230,
+    "entries": 2965075,
+    "max_cardinality": 5455
+  }
+]

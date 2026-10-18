@@ -453,6 +453,12 @@ source table into fresh raw/dictionary staging for controlled comparisons; its
 preparation time must not be reported as loader performance. This prototype's
 performance claims require complete measured loads; acquisition and preparation
 remain outside the load clock.
+`prepare-store --raw-only` exports the complete exact Float32 input without
+constructing palettes, and conflicts with `--raw-output`. It retains source
+coverage/shape/finite checks. Preserve the existing 32-million-entry **per-field**
+palette budget, summed across all level/lead slots, separately from UInt16's
+per-slot bound. The full 06Z GFS geopotential field exceeded that budget; do not
+silently raise it or describe its partial export as a completed benchmark.
 `sort-stage` losslessly sorts palettes and remaps staged indices for experiments.
 Direct HRRR acquisition sorts each map's palette in Float32 total order. Typed
 UInt16 arrays use indexed staging version 2: spatial slot-major wrapping deltas,
@@ -497,7 +503,11 @@ deployment evidence are in
 `docs/plans/2026-10-18-hrrr-load-optimization.md`. Those load times include all
 stored-value checks but exclude source acquisition/staging. Raw-bit HRRR loads
 retain 4,096-cell batches; HRRR packed loads use 16,384-cell batches and two
-readers/queued blocks; non-tiled UInt16 loads use 8,192-cell batches.
+readers/queued blocks; non-tiled HRRR UInt16 loads use 8,192-cell batches.
+`load --packed` opts additional UInt16 models into 256-cell tiles; normal
+acquisition/scheduled loads still use raw bits for GFS/AIFS and one worker.
+Experimental packed GFS uses 4,096 cells to align with staging frames; raw GFS
+retains 2,048 and AIFS retains 4,096. Keep the default HRRR behavior unchanged.
 Packed loads purge unused ClickHouse allocator pages initially and after each
 four validated batches, as well as before final validation. This keeps
 background logging below the unchanged 6 GiB RSS cap; all purge time is included
@@ -510,6 +520,15 @@ same frozen binary, all validation included, using the lossless 256-cell layout
 and four active-insert permits. Evidence and installation details are in
 `docs/plans/2026-10-18-hrrr-one-minute-load.md`. These are complete staged-load
 measurements, not complete network-refresh timings. Preserve this distinction.
+The isolated GFS/AIFS measurements are in
+`docs/plans/2026-10-18-other-model-load-benchmarks.md`: three complete fresh-table
+loads per configuration, all load gates inside the clock, plus independent
+audits and warm complete-profile queries. Four workers improved median GFS
+16.07→6.33 seconds and raw AIFS 1.60→0.75 seconds. AIFS 256-cell tiles saved
+40.8% including their required codebook but increased warm query p95
+5.75→10.24 ms. GFS dictionary preparation hit the unchanged palette budget;
+no full GFS dictionary/tile timing was measured. No binary/default changes were
+deployed for that benchmark.
 Packing completes small cell tiles across all leads to reuse output cache lines.
 Encoded maps are evicted only after both staged arrays are synced and the lead
 checkpoint is durable. Resume prunes any already-checkpointed maps and retains

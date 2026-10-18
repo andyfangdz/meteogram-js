@@ -1,0 +1,15 @@
+{
+  "time": 1792344603.621,
+  "catalog_unchanged": true,
+  "catalog_generation": 21,
+  "schedule_unchanged": true,
+  "next_update": 1792353569.6086054,
+  "installed_binary_unchanged": true,
+  "installed_sha256": "f819bbf34d1f5c49bb20afc0ad41c70e922d6b82f7cc1dfcd6e2de5debc37bc8",
+  "candidate_sha256": "2b62c46897059ebedfbc77eed63abd13499bd994a05513c4d38bba7e97dd2335",
+  "candidate_binary_unchanged": true,
+  "protected_tables": 12,
+  "protected_rows_unchanged": true,
+  "service_restarted": false,
+  "installed_candidate": false
+}
