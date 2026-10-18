@@ -3,7 +3,7 @@
     <listen_host>127.0.0.1</listen_host>
     <http_port>18123</http_port><tcp_port>19000</tcp_port>
     <path>./ch/data/</path><tmp_path>./ch/tmp/</tmp_path>
-    <max_server_memory_usage>6442450944</max_server_memory_usage>
+    <max_server_memory_usage>12884901888</max_server_memory_usage>
     <background_pool_size>8</background_pool_size>
     <background_merges_mutations_concurrency_ratio>4</background_merges_mutations_concurrency_ratio>
     <background_schedule_pool_size>16</background_schedule_pool_size>

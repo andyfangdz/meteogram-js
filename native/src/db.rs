@@ -147,7 +147,17 @@ impl Db {
             fs.join(",")
         };
         let q = if let Some(point) = point {
-            format!("SELECT cell_ids,{cols} FROM {database}.{table} PREWHERE tile_id={} LIMIT 2 FORMAT RowBinary",point/tile_cells)
+            let scope = if m["storage"]["partitioned_lead"] == true {
+                format!(
+                    " AND lead_hour={}",
+                    m["storage"]["lead_hour"]
+                        .as_u64()
+                        .context("Missing lead partition")?
+                )
+            } else {
+                String::new()
+            };
+            format!("SELECT cell_ids,{cols} FROM {database}.{table} PREWHERE tile_id={}{scope} LIMIT 2 FORMAT RowBinary",point/tile_cells)
         } else if profile {
             format!("SELECT {cols} FROM {database}.{table} PREWHERE cell_id={cell} LIMIT 2 FORMAT RowBinary")
         } else {
@@ -256,6 +266,89 @@ impl Db {
         if rows.len() != nt || rows.iter().zip(leads).any(|(r, l)| r[0] != *l) {
             bail!("Incomplete profile");
         }
+        Ok((rows, elapsed))
+    }
+    pub fn profile_leads(
+        &self,
+        database: &str,
+        table: &str,
+        m: &Value,
+        cell: u32,
+        point: usize,
+        books: &std::collections::BTreeMap<u16, std::sync::Arc<crate::dictionary::Dictionary>>,
+    ) -> Result<(Vec<Value>, f64)> {
+        ident(database)?;
+        ident(table)?;
+        let fields = fields(m);
+        for name in &fields {
+            ident(name)?;
+        }
+        let nf = m["variables"].as_array().context("Fields")?.len();
+        let nl = m["levels"].as_array().context("Levels")?.len();
+        let leads: Vec<u16> = serde_json::from_value(m["leads"].clone())?;
+        anyhow::ensure!(
+            !leads.is_empty() && leads.iter().copied().eq(books.keys().copied()),
+            "Incomplete run dictionaries"
+        );
+        let group = (point % crate::packed::CELLS) / crate::packed::LANES;
+        let cols=fields.iter().map(|name|format!("length({name}),arrayMap(i -> {name}[i],range(toUInt64({}),length({name})+toUInt64(1),toUInt64({})))",group+1,crate::packed::GROUPS)).collect::<Vec<_>>().join(",");
+        let hours = leads
+            .iter()
+            .map(u16::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
+        // The catalog's immutable hour set excludes every unfinished partition.
+        let query=format!("SELECT lead_hour,cell_ids,{cols} FROM {database}.{table} PREWHERE tile_id={} AND lead_hour IN ({hours}) ORDER BY lead_hour SETTINGS max_threads=2,max_block_size=1 FORMAT RowBinary",point/crate::packed::CELLS);
+        let start = Instant::now();
+        let bytes = self.bytes(&query)?;
+        let elapsed = start.elapsed().as_secs_f64() * 1000.;
+        let mut cursor = Cursor::new(bytes.as_slice());
+        let mut rows = Vec::new();
+        for lead in leads {
+            let mut b = [0; 2];
+            cursor.read_exact(&mut b)?;
+            anyhow::ensure!(
+                u16::from_le_bytes(b) == lead,
+                "Duplicate/missing forecast hour"
+            );
+            let ids = array(&mut cursor, 4)?;
+            anyhow::ensure!(
+                ids.get(point % crate::packed::CELLS) == Some(&cell)
+                    && ids.len() <= crate::packed::CELLS,
+                "Incorrect lead cell association"
+            );
+            let mut row = vec![json!(lead)];
+            for field in 0..fields.len() {
+                let width = if field < nf { nl } else { 1 };
+                let mut length = [0; 8];
+                cursor.read_exact(&mut length)?;
+                anyhow::ensure!(
+                    u64::from_le_bytes(length) == (width * crate::packed::GROUPS) as u64,
+                    "Malformed lead tile length"
+                );
+                let codes = packed_array(&mut cursor, point % crate::packed::LANES, 1)?;
+                anyhow::ensure!(codes.len() == width, "Malformed lead profile length");
+                let values = codes
+                    .into_iter()
+                    .enumerate()
+                    .map(|(slot, code)| {
+                        Ok(json!(
+                            f32::from_bits(books[&lead].value(field, slot, code)?) as f64
+                        ))
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                row.push(if field < nf {
+                    Value::Array(values)
+                } else {
+                    values.into_iter().next().unwrap()
+                });
+            }
+            rows.push(Value::Array(row));
+        }
+        anyhow::ensure!(
+            cursor.position() == bytes.len() as u64,
+            "Unexpected lead profile rows"
+        );
         Ok((rows, elapsed))
     }
 }

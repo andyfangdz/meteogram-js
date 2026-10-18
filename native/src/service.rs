@@ -165,22 +165,10 @@ pub async fn service(
                         .arg("18080"),
                 )?;
             }
-            if children.0.contains_key("update") && !children.alive("update") {
-                let mut child = children.0.remove("update").unwrap();
-                let code = child.wait()?.code().unwrap_or(1);
-                next_update = now() + if code == 0 { interval * 3600. } else { 1800. };
-                atomic(
-                    &schedule,
-                    &json!({"next_update":next_update,"last_exit":code}),
-                )?;
+            if !children.alive("update") {
+                children.start(&root,"update",Command::new(&exe).arg("watch").arg("--root").arg(&root).arg("--poll-seconds").arg(interval.to_string()))?;
             }
-            if now() >= next_update && !children.alive("update") {
-                children.start(
-                    &root,
-                    "update",
-                    Command::new(&exe).arg("update").arg("--root").arg(&root),
-                )?;
-            }
+            if schedule.exists() {next_update=read_json(&schedule)?["next_update"].as_f64().unwrap_or(0.);}
             let processes: serde_json::Map<String, serde_json::Value> = children
                 .0
                 .iter_mut()
@@ -195,7 +183,7 @@ pub async fn service(
             atomic(
                 root.join("service-status.json"),
                 &json!({"time":now(),
-                "next_update":next_update,"children":processes,"implementation":"rust"}),
+                "next_update":next_update,"children":processes,"implementation":"rust","incremental":true,"poll_seconds":interval}),
             )?;
             tokio::select! {
                 _ = tokio::time::sleep(Duration::from_secs(2)) => {},

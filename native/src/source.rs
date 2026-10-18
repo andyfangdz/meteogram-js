@@ -27,14 +27,20 @@ pub struct Source {
     pub snapshot: String,
     pub collection: Value,
 }
+static REPOSITORIES: std::sync::OnceLock<tokio::sync::Mutex<HashMap<String, Arc<Repository>>>> =
+    std::sync::OnceLock::new();
 impl Source {
     pub async fn open(model: &str, pin: Option<&Value>) -> Result<Self> {
+        let product = pin
+            .and_then(|p| p["dataset"].as_str())
+            .unwrap_or(dataset(model)?);
+        anyhow::ensure!(valid_dataset(model, product), "Unsupported source product");
         let collection: Value = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(60))
             .build()?
             .get(format!(
                 "https://stac.dynamical.org/{}/collection.json",
-                dataset(model)?
+                product
             ))
             .send()
             .await?
@@ -65,27 +71,32 @@ impl Source {
                 Some(credential),
             );
         }
-        let storage = new_http_storage(href, None, None)?;
-        let repo = Repository::open(storage)
-            .config(initial_config(model))
-            .authorize_virtual_chunk_access(creds.clone())
-            .execute()
-            .await?;
-        // Icechunk 2.3's object_store S3 backend applies S3Options after
-        // credentials, so its persisted anonymous=false overrides Anonymous.
-        // Preserve explicit public access for the STAC-authorized containers;
-        // never fall back to host AWS credentials or EC2 metadata.
-        let mut config = repo.config().clone();
-        public_config(&mut config, &creds);
-        let repo = repo.reopen(Some(config), None).await?;
-        let version = if let Some(p) = pin {
-            VersionInfo::SnapshotId(
-                p["snapshot_id"]
-                    .as_str()
-                    .context("Missing snapshot")?
-                    .try_into()
-                    .map_err(anyhow::Error::msg)?,
-            )
+        let cache = REPOSITORIES.get_or_init(|| tokio::sync::Mutex::new(HashMap::new()));
+        let cache_key = format!("{product}:{href}");
+        let cached = cache.lock().await.get(&cache_key).cloned();
+        let repo = if let Some(repo) = cached {
+            repo
+        } else {
+            let storage = new_http_storage(href, None, None)?;
+            let repo = Repository::open(storage)
+                .config(initial_config(model))
+                .authorize_virtual_chunk_access(creds.clone())
+                .execute()
+                .await?;
+            // Icechunk 2.3's object_store S3 backend applies S3Options after
+            // credentials, so its persisted anonymous=false overrides Anonymous.
+            // Preserve explicit public access for the STAC-authorized containers;
+            // never fall back to host AWS credentials or EC2 metadata.
+            let mut config = repo.config().clone();
+            public_config(&mut config, &creds);
+            let repo = Arc::new(repo.reopen(Some(config), None).await?);
+            let mut cache = cache.lock().await;
+            cache.retain(|key, _| !key.starts_with(&format!("{product}:")));
+            cache.insert(cache_key, repo.clone());
+            repo
+        };
+        let version = if let Some(snapshot) = pin.and_then(|p| p["snapshot_id"].as_str()) {
+            VersionInfo::SnapshotId(snapshot.try_into().map_err(anyhow::Error::msg)?)
         } else {
             VersionInfo::BranchTipRef("main".into())
         };
@@ -124,6 +135,28 @@ impl Source {
         }
         values.truncate(len);
         Ok(values)
+    }
+    pub async fn init_times(&self) -> Result<Vec<f64>> {
+        let values = self.coord("init_time").await?;
+        let m = self.meta("init_time").await?;
+        let units = m["attributes"]["units"]
+            .as_str()
+            .context("Missing init units")?;
+        let (unit, epoch) = units.split_once(" since ").context("Invalid init units")?;
+        let factor = match unit {
+            "seconds" => 1.,
+            "hours" => 3600.,
+            "nanoseconds" => 1e-9,
+            _ => bail!("Unsupported init time units"),
+        };
+        let epoch = epoch.replace(' ', "T");
+        let epoch = if epoch.len() == 10 {
+            format!("{epoch}T00:00:00")
+        } else {
+            epoch
+        };
+        let epoch = timestamp(&epoch)?;
+        Ok(values.into_iter().map(|v| epoch + v * factor).collect())
     }
 }
 pub(crate) fn initial_config(model: &str) -> icechunk::RepositoryConfig {
@@ -327,6 +360,31 @@ pub async fn fetch(
     metadata_only: bool,
     selected_leads: Option<Vec<u16>>,
 ) -> Result<Value> {
+    fetch_with(
+        model,
+        out,
+        offset,
+        pin,
+        metadata_only,
+        selected_leads,
+        FetchOptions::default(),
+    )
+    .await
+}
+#[derive(Default)]
+pub struct FetchOptions<'a> {
+    pub source: Option<&'a Source>,
+    pub dictionary: bool,
+}
+pub async fn fetch_with(
+    model: &str,
+    out: &Path,
+    offset: usize,
+    pin: Option<Value>,
+    metadata_only: bool,
+    selected_leads: Option<Vec<u16>>,
+    options: FetchOptions<'_>,
+) -> Result<Value> {
     fs::create_dir_all(out)?;
     anyhow::ensure!(offset > 0, "Run offset must be positive");
     let _lock = Lock::acquire(out, "fetch", true, true)?;
@@ -341,44 +399,25 @@ pub async fn fetch(
     let dictionary_mode = if existing {
         old.as_ref().is_some_and(crate::dictionary::staged)
     } else {
-        grid_relative(model)
+        options.dictionary || grid_relative(model)
     };
     if let Some(ref p) = old {
         anyhow::ensure!(
-            p["model"] == model && p["dataset"] == dataset(model)?,
+            p["model"] == model
+                && p["dataset"]
+                    .as_str()
+                    .is_some_and(|d| valid_dataset(model, d)),
             "Pinned metadata belongs to another model"
         );
     }
-    let src = Source::open(model, old.as_ref()).await?;
-    let init_values = src.coord("init_time").await?;
-    let init_meta = src.meta("init_time").await?;
-    let units = init_meta["attributes"]["units"]
-        .as_str()
-        .context("Missing init units")?;
-    let unit_seconds = if units.starts_with("seconds since ") {
-        1.
-    } else if units.starts_with("hours since ") {
-        3600.
-    } else if units.starts_with("nanoseconds since ") {
-        1e-9
+    let opened;
+    let src = if let Some(src) = options.source {
+        src
     } else {
-        bail!("Unsupported init time units {units}")
+        opened = Source::open(model, old.as_ref()).await?;
+        &opened
     };
-    let epoch = units
-        .split(" since ")
-        .nth(1)
-        .context("Missing epoch")?
-        .replace(' ', "T");
-    let epoch = if epoch.len() == 10 {
-        format!("{epoch}T00:00:00")
-    } else {
-        epoch
-    };
-    let epoch = timestamp(&epoch)?;
-    let init_seconds: Vec<f64> = init_values
-        .iter()
-        .map(|v| epoch + *v * unit_seconds)
-        .collect();
+    let init_seconds = src.init_times().await?;
     let init_index = if let Some(ref p) = old {
         let s = timestamp(p["init_time"].as_str().context("Missing pinned init")?)?;
         init_seconds
@@ -465,13 +504,20 @@ pub async fn fetch(
     for v in surface {
         metas.insert(v.to_owned(), src.meta(v).await?);
     }
-    let leads = selected_leads.unwrap_or_else(|| leads(model));
-    let mut meta = json!({"model":model,"dataset":dataset(model)?,"init_time":init_time,"snapshot_id":src.snapshot,"cells":ids.len(),"levels":levels,"leads":leads,"variables":variables,"surface_variables":surface,"grid":grid,"units":units,"coverage":"conus","spatial_shards":1,"shard_index":0,"workers":16,"zarr_concurrency":16,"open_seconds":start.elapsed().as_secs_f64(),"offline_cache":false});
+    let product = src.collection["id"]
+        .as_str()
+        .context("Missing collection id")?;
+    anyhow::ensure!(valid_dataset(model, product), "Collection identity differs");
+    let leads = selected_leads.unwrap_or_else(|| product_leads(model, product));
+    let mut meta = json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":src.snapshot,"cells":ids.len(),"levels":levels,"leads":leads,"variables":variables,"surface_variables":surface,"grid":grid,"units":units,"coverage":"conus","spatial_shards":1,"shard_index":0,"workers":16,"zarr_concurrency":16,"open_seconds":start.elapsed().as_secs_f64(),"offline_cache":false});
     if dictionary_mode {
         meta["staging"] = json!({"encoding":crate::dictionary::ENCODING,"complete":false});
     }
     if let Some(ref old) = old {
         for k in ["init_time", "snapshot_id", "cells", "levels"] {
+            if old.get(k).is_none() {
+                continue;
+            }
             anyhow::ensure!(
                 if k == "levels" {
                     numeric_array_eq(&old[k], &meta[k])
@@ -818,6 +864,166 @@ fn task(
         meta: m.clone(),
         key,
     })
+}
+
+pub struct AvailableRun {
+    pub pin: Value,
+    pub expected: Vec<u16>,
+    pub ready: Vec<u16>,
+    pub missing: usize,
+}
+pub struct Availability {
+    pub source: Arc<Source>,
+    pub runs: Vec<AvailableRun>,
+}
+pub async fn ready_hours<F, Fut>(
+    hours: Vec<(u16, Vec<String>)>,
+    exists: F,
+) -> Result<Vec<(u16, usize)>>
+where
+    F: Fn(String) -> Fut,
+    Fut: std::future::Future<Output = Result<bool>>,
+{
+    let mut missing: std::collections::BTreeMap<u16, usize> =
+        hours.iter().map(|(h, _)| (*h, 0)).collect();
+    let checks = stream::iter(
+        hours
+            .into_iter()
+            .flat_map(|(hour, keys)| keys.into_iter().map(move |key| (hour, key))),
+    )
+    .map(|(h, k)| {
+        let future = exists(k);
+        async move { Ok::<_, anyhow::Error>((h, future.await?)) }
+    })
+    .buffer_unordered(16)
+    .try_collect::<Vec<_>>()
+    .await?;
+    for (hour, present) in checks {
+        if !present {
+            *missing.get_mut(&hour).unwrap() += 1;
+        }
+    }
+    Ok(missing.into_iter().collect())
+}
+pub async fn availability(model: &str, product: &str, tracked: &[String]) -> Result<Availability> {
+    availability_filtered(model, product, tracked, &[], None).await
+}
+pub async fn availability_filtered(
+    model: &str,
+    product: &str,
+    tracked: &[String],
+    finished: &[String],
+    floor: Option<f64>,
+) -> Result<Availability> {
+    let source = Arc::new(Source::open(model, Some(&json!({"dataset":product}))).await?);
+    let times = source.init_times().await?;
+    let mut selected = times
+        .iter()
+        .enumerate()
+        .filter(|(_, t)| **t <= now())
+        .filter(|(_, t)| {
+            !(model == "hrrr" && product == HRRR_SHORT && (**t as i64).rem_euclid(21600) == 0)
+        })
+        .rev()
+        .take(3)
+        .map(|(i, t)| (i, *t))
+        .collect::<Vec<_>>();
+    for value in tracked {
+        let t = timestamp(value)?;
+        if let Some(i) = times.iter().position(|x| (*x - t).abs() < 0.001) {
+            if !selected.iter().any(|(j, _)| *j == i) {
+                selected.push((i, t));
+            }
+        }
+    }
+    let completed = finished
+        .iter()
+        .map(|v| timestamp(v))
+        .collect::<Result<Vec<_>>>()?;
+    selected.retain(|(_, t)| {
+        !completed.iter().any(|old| (old - t).abs() < 0.001) && floor.is_none_or(|old| *t > old)
+    });
+    if selected.is_empty() {
+        return Ok(Availability {
+            source,
+            runs: Vec::new(),
+        });
+    }
+    let lead_values = source.coord("lead_time").await?;
+    let lead_meta = source.meta("lead_time").await?;
+    let factor = match lead_meta["attributes"]["units"].as_str() {
+        Some("seconds") => 1. / 3600.,
+        Some("hours") => 1.,
+        Some("nanoseconds") => 1. / 3.6e12,
+        _ => bail!("Unsupported lead units"),
+    };
+    let source_leads = lead_values
+        .iter()
+        .map(|v| (*v * factor).round() as u16)
+        .collect::<Vec<_>>();
+    let pressures = source.coord("pressure_level/pressure_level").await?;
+    let levels = pressure_levels(model);
+    let mut metas = HashMap::new();
+    for name in variables(model)
+        .into_iter()
+        .map(|v| format!("pressure_level/{v}"))
+        .chain([
+            "temperature_2m".to_owned(),
+            "dew_point_temperature_2m".to_owned(),
+        ])
+    {
+        metas.insert(name.clone(), source.meta(&name).await?);
+    }
+    let expected = product_leads(model, product);
+    let mut runs = Vec::new();
+    for (init, t) in selected {
+        let mut hours = Vec::new();
+        for &hour in &expected {
+            let lead = source_leads
+                .iter()
+                .position(|v| *v == hour)
+                .context("Forecast axis changed")?;
+            let mut keys = Vec::new();
+            for (field, name) in variables(model).iter().enumerate() {
+                for (level, p) in levels.iter().enumerate() {
+                    let pressure = pressures
+                        .iter()
+                        .position(|v| *v == f64::from(*p))
+                        .context("Pressure axis changed")?;
+                    keys.push(
+                        task(
+                            field,
+                            Some(level),
+                            format!("pressure_level/{name}"),
+                            &metas,
+                            init,
+                            lead,
+                            Some(pressure),
+                        )?
+                        .key,
+                    );
+                }
+            }
+            for (field, name) in ["temperature_2m", "dew_point_temperature_2m"]
+                .iter()
+                .enumerate()
+            {
+                keys.push(task(field, None, (*name).to_owned(), &metas, init, lead, None)?.key);
+            }
+            hours.push((hour, keys));
+        }
+        let counts = ready_hours(hours, |key| {
+            let s = source.store.clone();
+            async move { Ok(s.exists(&key).await?) }
+        })
+        .await?;
+        let init_time = chrono::DateTime::from_timestamp(t as i64, 0)
+            .context("Invalid init")?
+            .format("%Y-%m-%dT%H:%M:%S%.9f")
+            .to_string();
+        runs.push(AvailableRun {pin:json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":source.snapshot}),expected:expected.clone(),ready:counts.iter().filter(|(_,n)|*n==0).map(|(h,_)|*h).collect(),missing:counts.iter().map(|(_,n)|n).sum()});
+    }
+    Ok(Availability { source, runs })
 }
 
 pub async fn probe(model: &str, pin: &Value) -> Result<Value> {

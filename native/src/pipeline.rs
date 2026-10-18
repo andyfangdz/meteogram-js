@@ -241,7 +241,21 @@ pub fn status(root: &Path) -> Result<Value> {
     let mut models = serde_json::Map::new();
     for (name, e) in &c.current {
         let m = read_json(descriptor(root, e)?.join("metadata.json"))?;
-        models.insert(name.clone(),json!({"revision":e.revision,"table":e.table,"storage":m.get("storage"),"freshness":freshness(&m)?,"storage_rows":db.scalar(&format!("SELECT count() FROM {}.{}",ident(&e.database)?,ident(&e.table)?))?}));
+        let scope = if partitioned(&m) {
+            format!(
+                " WHERE lead_hour IN ({})",
+                m["leads"]
+                    .as_array()
+                    .context("Leads")?
+                    .iter()
+                    .map(Value::to_string)
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )
+        } else {
+            String::new()
+        };
+        models.insert(name.clone(),json!({"revision":e.revision,"table":e.table,"storage":m.get("storage"),"freshness":freshness(&m)?,"progress":crate::runs::summary(root,e)?,"storage_rows":db.scalar(&format!("SELECT count() FROM {}.{}{scope}",ident(&e.database)?,ident(&e.table)?))?}));
     }
     Ok(json!({"catalog":c,"models":models}))
 }

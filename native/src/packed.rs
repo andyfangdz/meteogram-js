@@ -317,6 +317,7 @@ fn base64(bytes: &[u8]) -> String {
     }
     out
 }
+#[cfg(test)]
 pub fn verify_cells(
     db: &Db,
     database: &str,
@@ -324,10 +325,22 @@ pub fn verify_cells(
     ids: &[u32],
     tile_cells: usize,
 ) -> Result<()> {
+    verify_cells_scoped(db, database, table, ids, tile_cells, None)
+}
+pub fn verify_cells_scoped(
+    db: &Db,
+    database: &str,
+    table: &str,
+    ids: &[u32],
+    tile_cells: usize,
+    lead: Option<u16>,
+) -> Result<()> {
     ident(database)?;
     ident(table)?;
     let bytes = db.bytes(&format!(
-        "SELECT tile_id,cell_ids FROM {database}.{table} ORDER BY tile_id FORMAT RowBinary"
+        "SELECT tile_id,cell_ids FROM {database}.{table} {} ORDER BY tile_id FORMAT RowBinary",
+        lead.map(|h| format!("WHERE lead_hour={h}"))
+            .unwrap_or_default()
     ))?;
     let mut cursor = Cursor::new(bytes.as_slice());
     for (tile, expected) in ids.chunks(tile_cells).enumerate() {
@@ -354,6 +367,19 @@ pub fn verify_cells(
         "Unexpected tile rows"
     );
     Ok(())
+}
+pub fn append_lead_column(mut native: Vec<u8>, rows: usize, lead: u16) -> Result<Vec<u8>> {
+    anyhow::ensure!(
+        native.first().is_some_and(|n| *n < 127),
+        "Unexpected Native header"
+    );
+    native[0] += 1;
+    text(&mut native, "lead_hour");
+    text(&mut native, "UInt16");
+    for _ in 0..rows {
+        native.extend_from_slice(&lead.to_le_bytes());
+    }
+    Ok(native)
 }
 fn var(out: &mut Vec<u8>, mut n: usize) {
     while n >= 128 {

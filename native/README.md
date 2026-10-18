@@ -30,9 +30,10 @@ meteogram-native service \
 
 Keep state and large downloads outside the repository. The supervisor starts
 ClickHouse on loopback ports 18123/19000 and the API on loopback port 18080.
-It refuses occupied ports, restarts failed children and refreshes every six
-hours after a successful update, or 30 minutes after failure. `schedule.json`
-persists the next refresh across restarts. `service-status.json` records child
+It refuses occupied ports and restarts failed children. A persistent updater
+polls source availability every 60 seconds and ingests individual forecast hours
+as their required fields become available. `schedule.json` records polling
+progress across restarts. `service-status.json` records child
 PIDs. Stop the supervisor and its children with:
 
 ```sh
@@ -57,68 +58,91 @@ to loopback; it is for this local service.
 
 ```sh
 meteogram-native status --root "$HOME/.local/share/meteogram-native"
+# Perform one incremental poll; the supervisor already runs the persistent watch:
 meteogram-native update --root "$HOME/.local/share/meteogram-native"
-# Refresh only RRFS, keeping the other published models:
 meteogram-native update --root "$HOME/.local/share/meteogram-native" --models rrfs
+meteogram-native watch --root "$HOME/.local/share/meteogram-native" --poll-seconds 60
 meteogram-native rollback --root "$HOME/.local/share/meteogram-native" --model hrrr
 meteogram-native gc --root "$HOME/.local/share/meteogram-native"
 
 curl --noproxy '*' --compressed \
   'http://127.0.0.1:18080/forecast?model=hrrr&lat=41.013&lon=-74.027'
 curl --noproxy '*' 'http://127.0.0.1:18080/health'
+curl --noproxy '*' 'http://127.0.0.1:18080/runs?model=hrrr'
+# Select a complete backup while the default serves the newest partial:
+curl --noproxy '*' --compressed \
+  'http://127.0.0.1:18080/forecast?model=hrrr&lat=41.013&lon=-74.027&run=latest_complete'
 ```
 
-The updater pins a single Icechunk snapshot and initialization per candidate.
-It tries the latest initialization, then the preceding one when the newest is
-incomplete. It skips acquisition if a fresh current forecast is already as new.
-Before downloading forecast maps, it checks every required chunk reference in
-that pinned snapshot, with at most 16 checks in flight. A missing reference
-rejects the candidate immediately; `preflight.json` records the result. Existing
-references can still point to unavailable or invalid source objects, so the
-download, decode and full validation gates remain required.
-The default update includes HRRR, GFS, AIFS and RRFS. RRFS retains 85 hourly
-leads through 84 hours. HRRR retains 49 hourly leads through 48 hours;
-GFS retains hourly leads through
-120 hours then three-hour leads through 180; AIFS retains six-hour leads through
-180. The retained region is 24–50°N, 125–66°W on each native grid.
+The updater checks fresh immutable Icechunk snapshots on each poll. Availability
+checks read references without downloading whole-map weather payloads, with at
+most 16 checks in flight. An hour is ready only when every required pressure and
+surface map is referenced. Missing hours do not block other ready hours, and
+already published hours are skipped. References can still point to unavailable
+or invalid objects, so download, decode and full validation remain required.
+Each acquired hour pins its initialization and snapshot; `lead_sources` in the
+API response identifies those per-hour snapshots.
+
+The default update includes HRRR, GFS, AIFS and RRFS. HRRR combines the hourly
+18-hour product (19 leads) with the 48-hour product (49 leads) for 00/06/12/18 UTC
+initializations. RRFS retains 85 hourly leads through 84 hours. GFS retains
+hourly leads through 120 hours then three-hour leads through 180; AIFS retains
+six-hour leads through 180. The region is 24–50°N, 125–66°W on each native grid.
 
 RRFS uses `noaa-rrfs-forecast-84-hour-virtual`, with the same retained 1,638,757
 cells and 30 pressure levels (1000–275 hPa) as HRRR. Both retain geopotential
 height, temperature, grid-relative wind U/V, relative humidity and dew point,
-plus 2 m temperature and dew point. The source's RRFS manifest cache is too small
-to retain the eight required arrays together. Set its bounded eight-million-
-reference cache at initial repository open, with weather payload caching
-disabled; Icechunk 2.3's `reopen` shares the original caches. Other models retain
-their existing cache settings.
+plus 2 m temperature and dew point. RRFS needs a bounded eight-million-reference
+cache at initial Icechunk repository open, with weather payload caching disabled;
+Icechunk 2.3's `reopen` shares the original caches. Repositories persist across
+polls while each poll opens a fresh immutable source session.
 
-Freshness requires HRRR age ≤24 hours and ≥12 hours of forecast remaining;
-RRFS requires age ≤24 hours and ≥48 hours remaining;
-GFS/AIFS require age ≤48 hours and ≥72 hours remaining. Publication additionally
-requires the expected complete source schema, all cells and leads, finite
-values, exact cell IDs and sampled bit-exact staged/database values. Failed
-candidates are discarded without changing the published catalog.
+For complete forecasts, freshness requires HRRR age ≤24 hours and ≥12 hours of
+forecast remaining; RRFS requires age ≤24 hours and ≥48 hours remaining;
+GFS/AIFS require age ≤48 hours and ≥72 hours remaining. Partial forecasts use
+the same age limit while explicitly reporting available/missing leads and
+remaining horizon. A new run becomes the default as soon as its first hour
+passes validation. `forecast_complete` distinguishes it from a complete run.
+Publication requires the expected source schema, every retained cell for the
+published hour, finite values, exact cell IDs and sampled bit-exact
+staged/database values. Failed work leaves published hours intact and resumes
+from durable staging on the next poll.
 
-At most two model extractors run during initial acquisition; subsequently one
-extractor overlaps one loader. Each extractor has at most 16 map reads/decodes
-in flight. Full model admission budgets plus a 20 GiB free-space reserve are
-checked before starting concurrent work. Individual source acquisition has a
-45-minute timeout. A single updater owns `update.lock` throughout recovery,
-acquisition, loading and publication.
+Incremental work permits two regional extractors (HRRR/RRFS) and one global
+extractor (GFS/AIFS), with one hour at a time per model and at most 16 map reads
+per extractor. A poll stops starting hours after its work budget, then drains
+active hours. `watch.lock` prevents duplicate pollers; `update.lock` covers each
+poll's recovery, acquisition, loading and publication. Source staging keeps its
+20 GiB free-space floor. Explicit `update --batch` (also selected by `--pin-root`)
+preserves the older complete-run benchmark mode and its whole-run admission
+budgets. The normal default is incremental ingestion.
 
-Catalog replacement is atomic and fsynced. Readers hold a shared advisory
-catalog lock through their database query. Publication and garbage collection
-hold the exclusive lock. The service retains current and previous model
-revisions; retired revisions have a ten-minute grace period. Garbage collection
-only drops tables explicitly owned by the service. Crash recovery discards
-unpublished candidates and starts new unique tables.
+Catalog replacement is atomic and fsynced. Readers hold a shared catalog lock
+through their database query; publication and garbage collection hold the
+exclusive lock. The service protects the two latest complete runs per model,
+plus the latest complete 48-hour HRRR run, counting overlap once. A partial run
+never replaces a complete backup. Up to three recent partial runs and the newest
+pending long HRRR run can be tracked separately. Retired manifests have a
+ten-minute grace period. Garbage collection follows per-hour descriptors and
+shared-table references and only drops explicitly owned service tables.
+Crash recovery resumes private per-hour journals; retrying an unpublished
+partition cannot change a published hour.
 
-For importing an existing complete benchmark table, `adopt` creates an
-independent ClickHouse clone, copies the metadata/coordinates, validates it and
-publishes it. It does not take ownership of the original table:
+`/runs?model=MODEL` lists current, building and complete runs and the long HRRR archive.
+`/forecast` defaults to the newest validated partial or complete run. Its `run`
+parameter also accepts `latest_complete`, `previous_complete` and HRRR's `long`.
+Explicit archive selection reports freshness even when stale; default selection
+continues to reject stale runs. `/health` reports complete-backup counts and
+whether the long HRRR archive is retained.
+
+For importing a complete benchmark table, `adopt` creates an independent clone,
+copies its descriptors, validates it and publishes it. It never takes ownership
+of the original table. Add `--retain-only` to archive an older complete run
+without changing the current selection:
 
 ```sh
 meteogram-native adopt --root "$SERVICE_ROOT" --source "$MODEL_DATA" \
-  --database meteogram_bench --table hrrr_256_zstd
+  --database meteogram_bench --table hrrr_256_zstd --retain-only
 ```
 
 ## Storage and query contract
@@ -127,8 +151,10 @@ The original physical format is `cell_profile_v1`: one row per native cell, with
 fields arranged as level/lead arrays and surface fields as lead arrays. Float32
 bits are stored losslessly as `Array(UInt32)` with T64 and Zstd (level 3 for
 HRRR, level 1 for GFS/AIFS); there is no
-quantization. New HRRR/RRFS acquisitions use the lossless dictionary/tile format
-described below; GFS/AIFS retain raw Float32 bits. All models have the same
+quantization. Legacy complete-run HRRR/RRFS acquisitions use the lossless dictionary/tile
+format described below; legacy GFS/AIFS batch defaults retain raw Float32 bits.
+New incremental acquisitions use exact UInt16 dictionaries and 256-cell tiles
+for all four models. All models have the same
 bounded 250-million-entry codebook allowance (1 GB decimal Float32 payload).
 The ARM build uses the NEON
 packing routine, finishing small groups
@@ -188,6 +214,23 @@ lane and walk palettes in slot order before constructing time rows; complete
 tile payloads are not transferred for a single-cell request. Full ingestion and
 standalone validation still inspect every stored lane.
 
+Incremental runs use `lead_partition_tiles_v1`: one shared table per model,
+dataset and initialization, partitioned by `(lead_hour, intDiv(tile_id,128))`.
+Each row stores 256 cells for one hour. A private single-hour table passes full
+validation before its spatial partitions are attached to the run table; another
+full check and staged samples precede atomic manifest publication. Readers query
+only the manifest's validated hours, in one database request per point. Parts
+attached before publication remain invisible to them. Published hours and their
+independent `values.dict.zst` books are immutable. The 250-million-entry allowance
+applies to the aggregate run, checked before publication and reader allocation.
+Grid files share SHA-256-addressed hard links. API readers reuse decoded books
+across manifest advances.
+
+Standalone audits of published data hold a shared catalog lock and validate
+through private descriptor copies. The existing marker remains readable until
+a successful replacement, so auditing cannot temporarily invalidate API reads.
+Each hour also retains its immutable staged-source validation proof.
+
 `prepare-store --raw-only` exports a complete local table as exact Float32
 staging without building palettes. It requires a fresh output directory and
 conflicts with `--raw-output`. For large dictionaries, `encode-stage` then
@@ -220,10 +263,11 @@ These explicit commands do not change the acquisition or scheduled-loader
 defaults.
 
 For a UInt16 source of at most 8 GiB, the loader can prefetch all input files
-inside the load clock when `MemAvailable >= input bytes + 12 GiB`; otherwise
+inside the load clock when `MemAvailable >= input bytes + 18 GiB`; otherwise
 it streams normally. It decodes checksum-checked, aligned staging frames
 directly into UInt16 tile words. The queue and reader buffers are bounded;
-consumed file pages receive discard hints. The server's 6 GiB limit is unchanged.
+consumed file pages receive discard hints. The server limit is 12 GiB (raised for concurrent incremental ingestion); the
+per-query limit remains 2 GiB.
 Packed loads release unused ClickHouse allocator pages initially and every
 four validated batches, keeping background logging below the same RSS cap.
 These releases and the final allocator purge are included in measured load time.
@@ -353,3 +397,6 @@ the projected point-query reader's measured latency tradeoff.
 The [complete RRFS ingestion](../docs/plans/2026-10-18-rrfs-ingestion.md) records
 all 85 leads, the uniform 1 GB codebook allowance, a 146.71-second validated
 load, independent audits and four-model service installation.
+
+The [incremental ingestion report](../docs/plans/2026-10-18-incremental-ingestion.md)
+describes per-hour publication, complete-run retention and live verification.

@@ -1,0 +1,24 @@
+{
+  "time": 1792353354.3807166,
+  "dropped_owned_tables": [
+    "gfs_run_a72fef868b5949e88a3cdd11a5a87a14",
+    "rrfs_retention_20261018_06"
+  ],
+  "removed_bootstrap_weather_bytes": 22125569023,
+  "production_references_protected": [
+    "aifs_20261018074734_12c3fcfe",
+    "aifs_20261018135757_414d1e3b",
+    "aifs_run_37c63455572948ed9882e8133c069d59",
+    "gfs_20261018072959_02449bca",
+    "gfs_20261018134756_7d24c140",
+    "gfs_run_c678d640f1514b5cbe5901b173f1cec7",
+    "hrrr_20261018073354_ac063ce1",
+    "hrrr_20261018134756_c90afbd3",
+    "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe",
+    "hrrr_run_b1743a72644e40d682391cc7cffdb8a1",
+    "rrfs_20261018190636_ef01686e",
+    "rrfs_20261018194905_261f6559",
+    "rrfs_run_bc0db782261546759f0edff7d583361c"
+  ],
+  "bootstrap_descriptor_and_codebook_preserved": true
+}

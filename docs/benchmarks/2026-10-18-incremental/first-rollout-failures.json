@@ -1,0 +1,22 @@
+[
+  {
+    "detail": {
+      "error": "ClickHouse 500 Internal Server Error: Code: 241. DB::Exception: (total) memory limit exceeded: would use 574.56 MiB (attempt to allocate chunk of 0.00 B), current RSS: 6.00 GiB, maximum: 6.00 GiB. OvercommitTracker decision: Memory overcommit has not freed enough memory. Untracked memory across all threads: -8.47 MiB: While executing AggregatingTransform. (MEMORY_LIMIT_EXCEEDED) (version 26.9.20.23 (official build))\n",
+      "init_time": "2026-10-18T19:00:00.000000000",
+      "lead": 0,
+      "model": "hrrr"
+    },
+    "phase": "lead_failed",
+    "time": 1792353141.660003
+  },
+  {
+    "detail": {
+      "error": "ClickHouse 500 Internal Server Error: Code: 241. DB::Exception: (total) memory limit exceeded: would use 490.92 MiB (attempt to allocate chunk of 0.00 B), current RSS: 7.67 GiB, maximum: 6.00 GiB. Untracked memory across all threads: -10.65 MiB. (MEMORY_LIMIT_EXCEEDED)\n",
+      "init_time": "2026-10-18T18:00:00.000000000",
+      "lead": 3,
+      "model": "hrrr"
+    },
+    "phase": "lead_failed",
+    "time": 1792353232.4471045
+  }
+]

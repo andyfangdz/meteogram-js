@@ -289,6 +289,19 @@ impl Dictionary {
         Ok(())
     }
     pub fn load(dir: &Path, m: &Value) -> Result<Option<Self>> {
+        Self::load_impl(dir, m, true, MAX_DICTIONARY_ENTRIES)
+    }
+    pub fn load_values_budget(dir: &Path, m: &Value, budget: usize) -> Result<Option<Self>> {
+        Self::load_impl(dir, m, false, budget)
+    }
+    pub fn entry_count(&self) -> Result<usize> {
+        let mut count = 0;
+        for palette in self.fields.iter().flatten() {
+            count_entries(&mut count, palette.len())?;
+        }
+        Ok(count)
+    }
+    fn load_impl(dir: &Path, m: &Value, with_cells: bool, budget: usize) -> Result<Option<Self>> {
         let Some(meta) = info(m) else {
             return Ok(None);
         };
@@ -329,6 +342,7 @@ impl Dictionary {
             for _ in 0..width {
                 let n = u32read(&mut reader)? as usize;
                 count_entries(&mut entries, n)?;
+                anyhow::ensure!(entries <= budget, "Run exceeds aggregate codebook budget");
                 anyhow::ensure!(n > 0 && n <= nc, "Dictionary palette/budget");
                 let mut palette = Vec::with_capacity(n);
                 for _ in 0..n {
@@ -340,9 +354,13 @@ impl Dictionary {
         }
         let mut tail = [0u8; 1];
         anyhow::ensure!(reader.read(&mut tail)? == 0, "Trailing dictionary data");
+        anyhow::ensure!(
+            meta["entries"].as_u64().is_none_or(|n| n == entries as u64),
+            "Dictionary entry count differs"
+        );
         let mut dictionary = Self::new(result);
         dictionary.validate(m)?;
-        if crate::packed::tiled(m) {
+        if with_cells && crate::packed::tiled(m) {
             anyhow::ensure!(crate::packed::valid_layout(m), "Unknown packed layout");
             let cells = crate::stage::load_cells(dir)?;
             let ids = cells.get("cell_id").context("Missing packed cell IDs")?;

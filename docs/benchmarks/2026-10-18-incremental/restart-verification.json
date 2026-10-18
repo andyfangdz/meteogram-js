@@ -1,0 +1,128 @@
+{
+  "time": 1792353755.2803419,
+  "success": true,
+  "installed_binary_sha256": "5b36c3fbbb42a0fe97ffe2b0d124e97b12146b2965dad271c17993a4f5ee373e",
+  "post_restart_poll": {
+    "completed_leads": 7,
+    "failures": [],
+    "implementation": "rust",
+    "incremental": true,
+    "started": 1792353667.0692737,
+    "time": 1792353721.5499504
+  },
+  "run_checks": [
+    {
+      "model": "aifs",
+      "dataset": "ecmwf-aifs-single-forecast-virtual",
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "before_leads": 23,
+      "after_leads": 26,
+      "preserved_books": 23,
+      "table": "aifs_run_37c63455572948ed9882e8133c069d59",
+      "published_partition_rows_unique": true
+    },
+    {
+      "model": "gfs",
+      "dataset": "noaa-gfs-forecast-virtual",
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "before_leads": 21,
+      "after_leads": 23,
+      "preserved_books": 21,
+      "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7",
+      "published_partition_rows_unique": true
+    },
+    {
+      "model": "hrrr",
+      "dataset": "noaa-hrrr-forecast-18-hour-virtual",
+      "init_time": "2026-10-18T19:00:00.000000000",
+      "before_leads": 4,
+      "after_leads": 4,
+      "preserved_books": 4,
+      "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1",
+      "published_partition_rows_unique": true
+    },
+    {
+      "model": "rrfs",
+      "dataset": "noaa-rrfs-forecast-84-hour-virtual",
+      "init_time": "2026-10-18T18:00:00.000000000",
+      "before_leads": 14,
+      "after_leads": 15,
+      "preserved_books": 14,
+      "table": "rrfs_run_bc0db782261546759f0edff7d583361c",
+      "published_partition_rows_unique": true
+    },
+    {
+      "model": "hrrr",
+      "dataset": "noaa-hrrr-forecast-48-hour-virtual",
+      "init_time": "2026-10-18T18:00:00.000000000",
+      "before_leads": 14,
+      "after_leads": 16,
+      "preserved_books": 14,
+      "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe",
+      "published_partition_rows_unique": true
+    }
+  ],
+  "retention_complete_runs_per_model": {
+    "aifs": 2,
+    "gfs": 2,
+    "hrrr": 2,
+    "rrfs": 2
+  },
+  "long_hrrr_revision": "hrrr_20261018134756_c90afbd3",
+  "long_overlap_distinct_runs": 2,
+  "health": {
+    "models": {
+      "aifs": {
+        "age_hours": 8.043,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "partial": true,
+        "remaining_hours": 141.957,
+        "retention_satisfied": true
+      },
+      "gfs": {
+        "age_hours": 8.043,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "partial": true,
+        "remaining_hours": 13.957,
+        "retention_satisfied": true
+      },
+      "hrrr": {
+        "age_hours": 1.043,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T19:00:00.000000000",
+        "long_run_retained": true,
+        "max_age_hours": 24,
+        "min_remaining_hours": 12,
+        "partial": true,
+        "remaining_hours": 2.957,
+        "retention_satisfied": true
+      },
+      "rrfs": {
+        "age_hours": 2.043,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 48,
+        "partial": true,
+        "remaining_hours": 11.957,
+        "retention_satisfied": true
+      }
+    },
+    "native_fields": true
+  },
+  "database_queries_since_restart": {
+    "completed_queries": 2392,
+    "errors": 0,
+    "max_tracked_query_memory": 40094402
+  }
+}

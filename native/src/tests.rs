@@ -189,6 +189,282 @@ fn metadata(model: &str, age: i64) -> Value {
     let init = chrono::Utc::now() - chrono::Duration::hours(age);
     json!({"model":model,"dataset":dataset(model).unwrap(),"init_time":init.format("%Y-%m-%dT%H:%M:%S").to_string(),"snapshot_id":"test_snapshot","coverage":"conus","cells":if grid_relative(model){1638757}else{24885},"spatial_shards":1,"levels":if model=="aifs"{vec![1000,925,850,700,600,500,400,300]}else{(275..1001).step_by(25).rev().collect()},"leads":leads(model),"variables":variables(model),"surface_variables":["temperature_2m","dew_point_temperature_2m"]})
 }
+#[tokio::test]
+async fn incremental_readiness_requires_every_field_but_not_previous_hours() {
+    let hours = vec![
+        (0, vec!["0/t".into(), "0/w".into()]),
+        (1, vec!["1/t".into(), "1/w".into()]),
+        (2, vec!["2/t".into(), "2/w".into()]),
+    ];
+    let counts = crate::source::ready_hours(hours.clone(), |key| async move { Ok(key != "1/w") })
+        .await
+        .unwrap();
+    assert_eq!(counts, vec![(0, 0), (1, 1), (2, 0)]);
+    assert_eq!(
+        crate::source::ready_hours(hours, |_| async { Ok(true) })
+            .await
+            .unwrap(),
+        vec![(0, 0), (1, 0), (2, 0)]
+    );
+}
+#[test]
+fn hourly_hrrr_is_complete_only_at_its_declared_horizon() {
+    let mut m = metadata("hrrr", 1);
+    m["dataset"] = json!(HRRR_SHORT);
+    m["init_time"] = json!("2026-10-18T13:00:00");
+    m["leads"] = json!((0..19).collect::<Vec<_>>());
+    check_metadata(&m).unwrap();
+    assert!(complete(&m).unwrap());
+    m["leads"] = json!([0, 2]);
+    assert!(check_metadata(&m).is_err());
+    check_segment_metadata(&m).unwrap();
+    assert!(!complete(&m).unwrap());
+    m["init_time"] = json!("2026-10-18T12:00:00");
+    assert!(check_segment_metadata(&m).is_err());
+    m["dataset"] = json!(dataset("hrrr").unwrap());
+    m["leads"] = json!((0..19).collect::<Vec<_>>());
+    assert!(!complete(&m).unwrap());
+    assert!(check_metadata(&m).is_err());
+}
+fn archived_fixture(root: &Path, model: &str, product: &str, init: i64) -> Entry {
+    let (p, mut e) = candidate(root, model).unwrap();
+    e.owned = false;
+    let mut m = metadata(model, 1);
+    m["dataset"] = json!(product);
+    m["leads"] = json!(product_leads(model, product));
+    m["init_time"] = json!(chrono::DateTime::from_timestamp(init, 0)
+        .unwrap()
+        .format("%Y-%m-%dT%H:%M:%S")
+        .to_string());
+    atomic(p.join("entry.json"), &e).unwrap();
+    atomic(p.join("metadata.json"), &m).unwrap();
+    atomic(p.join("validated.json"),&json!({"database":e.database,"table":e.table,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"]})).unwrap();
+    crate::runs::publish(root, model, e.clone(), false, true).unwrap();
+    e
+}
+#[test]
+fn retention_keeps_two_complete_runs_and_deduplicates_hrrr_long() {
+    let root = tempfile::tempdir().unwrap();
+    let base = (now() as i64).div_euclid(21600) * 21600 - 21600;
+    let long = archived_fixture(root.path(), "hrrr", dataset("hrrr").unwrap(), base);
+    archived_fixture(root.path(), "hrrr", HRRR_SHORT, base + 3600);
+    let c = catalog(root.path()).unwrap();
+    assert_eq!(c.complete_runs["hrrr"].len(), 2);
+    assert_eq!(crate::runs::direct(&c, false).len(), 2);
+    archived_fixture(root.path(), "hrrr", HRRR_SHORT, base + 7200);
+    let c = catalog(root.path()).unwrap();
+    assert_eq!(c.complete_runs["hrrr"].len(), 2);
+    assert_eq!(c.hrrr_long, Some(long));
+    assert_eq!(crate::runs::direct(&c, false).len(), 3);
+    let next = archived_fixture(root.path(), "hrrr", dataset("hrrr").unwrap(), base + 21600);
+    let c = catalog(root.path()).unwrap();
+    assert_eq!(c.hrrr_long, Some(next));
+    assert_eq!(crate::runs::direct(&c, false).len(), 2);
+    assert!(c.complete_runs["hrrr"].iter().all(|e| complete(
+        &read_json(descriptor(root.path(), e).unwrap().join("metadata.json")).unwrap()
+    )
+    .unwrap()));
+}
+#[test]
+fn lead_book_reader_enforces_remaining_run_budget_before_allocation() {
+    let root = tempfile::tempdir().unwrap();
+    let mut m = json!({"cells":2,"leads":[0],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
+    let d = crate::dictionary::Dictionary::new(vec![vec![vec![0, 1f32.to_bits()]]; 3]);
+    let info = d.save(root.path(), &m).unwrap();
+    m["staging"] =
+        json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
+    assert_eq!(
+        crate::dictionary::Dictionary::load_values_budget(root.path(), &m, 6)
+            .unwrap()
+            .unwrap()
+            .entry_count()
+            .unwrap(),
+        6
+    );
+    assert!(
+        crate::dictionary::Dictionary::load_values_budget(root.path(), &m, 5)
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("aggregate codebook budget")
+    );
+}
+fn incremental_value(cell: usize, level: usize, field: usize, lead: u16) -> f32 {
+    if cell == 0 && level == 0 && field == 0 && lead == 0 {
+        -0.
+    } else {
+        (cell % 17) as f32 + level as f32 * 0.25 + field as f32 * 2. + f32::from(lead) * 0.125
+    }
+}
+#[test]
+#[ignore = "requires the isolated loopback ClickHouse server"]
+fn incremental_database_publication_recovers_without_duplicates_or_losing_prior_hours() {
+    let root = tempfile::tempdir().unwrap();
+    let db = Db::new().unwrap();
+    let table = format!("rust_test_incremental_{}", uuid::Uuid::new_v4().simple());
+    let mut private_tables = Vec::new();
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let base = now() as i64 - 3600;
+        for age in [18, 12] {
+            archived_fixture(
+                root.path(),
+                "gfs",
+                dataset("gfs").unwrap(),
+                base - age * 3600,
+            );
+        }
+        let nc = 24885usize;
+        let nl = 30;
+        let nf = 6;
+        let ys = (0..105).map(|i| 24. + i as f64 * 0.25).collect::<Vec<_>>();
+        let xs = (0..237)
+            .map(|i| -125. + i as f64 * 0.25)
+            .collect::<Vec<_>>();
+        let ids = (0..nc as u32).collect::<Vec<_>>();
+        let lat = (0..nc).map(|i| ys[i / 237]).collect::<Vec<_>>();
+        let lon = (0..nc).map(|i| xs[i % 237]).collect::<Vec<_>>();
+        let mut latest = None;
+        for lead in [0u16, 2] {
+            let raw = root.path().join(format!("raw{lead}"));
+            fs::create_dir(&raw).unwrap();
+            let mut m = metadata("gfs", 1);
+            m["leads"] = json!([lead]);
+            m["init_time"] = json!(chrono::DateTime::from_timestamp(base, 0)
+                .unwrap()
+                .format("%Y-%m-%dT%H:%M:%S")
+                .to_string());
+            m["snapshot_id"] = json!(format!("test_snapshot_{lead}"));
+            m["grid"] = json!({"kind":"latlon","latitude":ys,"longitude":xs,"native_cells":nc,"conus_cells":nc});
+            m["units"] = json!({});
+            atomic(raw.join("metadata.json"), &m).unwrap();
+            crate::stage::save_cells(&raw, &ids, &lat, &lon).unwrap();
+            let p = (0..nc * nl * nf)
+                .map(|i| incremental_value(i / (nl * nf), (i / nf) % nl, i % nf, lead))
+                .collect::<Vec<_>>();
+            let s = (0..nc * 2)
+                .map(|i| incremental_value(i / 2, 0, nf + i % 2, lead))
+                .collect::<Vec<_>>();
+            crate::stage::write(&raw.join(format!("lead-{lead:03}.npy")), &[nc, nl, nf], &p)
+                .unwrap();
+            crate::stage::write(&raw.join(format!("surface-{lead:03}.npy")), &[nc, 2], &s).unwrap();
+            let (path, entry) = candidate(&root.path().join("incoming"), "gfs").unwrap();
+            fs::remove_dir_all(&path).unwrap();
+            crate::prepare::encode_stage(&raw, &path).unwrap();
+            atomic(path.join("entry.json"), &entry).unwrap();
+            private_tables.push(entry.table.clone());
+            store::load_lead(root.path(), &path, &entry.table, lead).unwrap();
+            if lead == 2 {
+                let before = fs::read(root.path().join("catalog.json")).unwrap();
+                assert!(crate::incremental::attach_lead(
+                    root.path(),
+                    "gfs",
+                    &path,
+                    &entry,
+                    &table,
+                    Some("after_attach")
+                )
+                .is_err());
+                assert_eq!(fs::read(root.path().join("catalog.json")).unwrap(), before);
+                let (status, v) = crate::api::test_forecast(
+                    root.path(),
+                    [("model", "gfs"), ("lat", "41"), ("lon", "-74")]
+                        .into_iter()
+                        .map(|(k, v)| (k.to_owned(), v.to_owned()))
+                        .collect(),
+                );
+                assert_eq!(status, axum::http::StatusCode::OK);
+                assert_eq!(v["available_leads"], json!([0]));
+                assert_eq!(v["rows"].as_array().unwrap().len(), 1);
+                assert_eq!(v["forecast_complete"], false);
+            }
+            let e =
+                crate::incremental::attach_lead(root.path(), "gfs", &path, &entry, &table, None)
+                    .unwrap();
+            let duplicate =
+                crate::incremental::attach_lead(root.path(), "gfs", &path, &entry, &table, None)
+                    .unwrap();
+            assert_eq!(e, duplicate);
+            assert_eq!(catalog(root.path()).unwrap().complete_runs["gfs"].len(), 2);
+            store::discard(root.path(), &path).unwrap();
+            latest = Some(e);
+        }
+        let e = latest.unwrap();
+        store::collect(root.path(), 0.).unwrap();
+        let m = read_json(descriptor(root.path(), &e).unwrap().join("metadata.json")).unwrap();
+        store::validate(
+            &descriptor(root.path(), &e).unwrap(),
+            &e.table,
+            DATABASE,
+            false,
+        )
+        .unwrap();
+        let reader = crate::runs::Reader::load(root.path(), &e, &m).unwrap();
+        for i in [0, nc / 2, nc - 1, 16320] {
+            let (rows, _) = reader.profile(&db, &e, &m, ids[i]).unwrap();
+            assert_eq!(rows.len(), 2);
+            for (t, lead) in [0u16, 2].iter().enumerate() {
+                for field in 0..nf {
+                    for (level, value) in rows[t][field + 1].as_array().unwrap().iter().enumerate()
+                    {
+                        assert_eq!(
+                            (value.as_f64().unwrap() as f32).to_bits(),
+                            incremental_value(i, level, field, *lead).to_bits()
+                        );
+                    }
+                }
+                for field in 0..2 {
+                    assert_eq!(
+                        (rows[t][nf + field + 1].as_f64().unwrap() as f32).to_bits(),
+                        incremental_value(i, 0, nf + field, *lead).to_bits()
+                    );
+                }
+            }
+        }
+        assert_eq!(
+            db.scalar(&format!("SELECT count() FROM meteogram_native.{table}"))
+                .unwrap(),
+            2 * nc.div_ceil(256) as u64
+        );
+        let (status, v) = crate::api::test_forecast(
+            root.path(),
+            [("model", "gfs"), ("lat", "41"), ("lon", "-74")]
+                .into_iter()
+                .map(|(k, v)| (k.to_owned(), v.to_owned()))
+                .collect(),
+        );
+        assert_eq!(status, axum::http::StatusCode::OK);
+        assert_eq!(v["available_leads"], json!([0, 2]));
+        assert!(v["missing_leads"].as_array().unwrap().contains(&json!(1)));
+        assert_eq!(v["lead_sources"].as_array().unwrap().len(), 2);
+        // Legacy aliases or rollback can point at partial runs. Neither
+        // complete-only selector may silently return one without an archive.
+        let mut legacy = catalog(root.path()).unwrap();
+        legacy.complete_runs.clear();
+        legacy.previous.insert("gfs".to_owned(), e);
+        atomic(root.path().join("catalog.json"), &legacy).unwrap();
+        for run in ["latest_complete", "previous_complete"] {
+            let (status, _) = crate::api::test_forecast(
+                root.path(),
+                [
+                    ("model", "gfs"),
+                    ("lat", "41"),
+                    ("lon", "-74"),
+                    ("run", run),
+                ]
+                .into_iter()
+                .map(|(k, v)| (k.to_owned(), v.to_owned()))
+                .collect(),
+            );
+            assert_eq!(status, axum::http::StatusCode::SERVICE_UNAVAILABLE);
+        }
+    }));
+    for name in private_tables.into_iter().chain([table]) {
+        let _ = db.command(&format!(
+            "DROP TABLE IF EXISTS meteogram_native.{name} SYNC"
+        ));
+    }
+    assert!(result.is_ok());
+}
 #[test]
 fn rrfs_has_its_own_complete_horizon_and_freshness_policy() {
     assert_eq!(leads("rrfs"), (0..=84).collect::<Vec<_>>());
@@ -666,7 +942,13 @@ fn garbage_collection_respects_ownership_and_live_references() {
             owned,
             retired_at: Some(0.),
         };
-        fs::create_dir_all(descriptor(root.path(), &e).unwrap()).unwrap();
+        let p = descriptor(root.path(), &e).unwrap();
+        fs::create_dir_all(&p).unwrap();
+        atomic(
+            p.join("metadata.json"),
+            &json!({"storage":{"layout":"cell_profile_v1"}}),
+        )
+        .unwrap();
         entries.push(e);
     }
     let mut c = Catalog::default();

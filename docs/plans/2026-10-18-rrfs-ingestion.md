@@ -148,7 +148,7 @@ The final executable is installed at `$HOME/.local/bin/meteogram-native` and the
 local supervisor is running with all four models. Catalog generation 21→22 adds
 the owned revision `rrfs_20261018190636_ef01686e`; the three existing current
 entries are identical. The existing six-hour schedule is retained, with the next
-update due 2026-10-18 19:19:29 UTC. Its default update command includes RRFS;
+update due 2026-10-18 19:59:29 UTC. Its default update command includes RRFS;
 this task did not wait for that future scheduled acquisition.
 
 Before publication, a private four-model API preview passed full database

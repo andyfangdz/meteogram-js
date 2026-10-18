@@ -97,6 +97,12 @@ pub struct Catalog {
     pub current: BTreeMap<String, Entry>,
     pub previous: BTreeMap<String, Entry>,
     pub retired: Vec<Entry>,
+    #[serde(default)]
+    pub complete_runs: BTreeMap<String, Vec<Entry>>,
+    #[serde(default)]
+    pub building: BTreeMap<String, Vec<Entry>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hrrr_long: Option<Entry>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub published_at: Option<f64>,
 }
@@ -108,6 +114,9 @@ impl Default for Catalog {
             current: BTreeMap::new(),
             previous: BTreeMap::new(),
             retired: vec![],
+            complete_runs: BTreeMap::new(),
+            building: BTreeMap::new(),
+            hrrr_long: None,
             published_at: None,
         }
     }
@@ -183,6 +192,30 @@ pub fn dataset(model: &str) -> Result<&'static str> {
         _ => bail!("Unknown model"),
     })
 }
+pub const HRRR_SHORT: &str = "noaa-hrrr-forecast-18-hour-virtual";
+pub fn valid_dataset(model: &str, product: &str) -> bool {
+    dataset(model).is_ok_and(|expected| expected == product)
+        || (model == "hrrr" && product == HRRR_SHORT)
+}
+pub fn product_leads(model: &str, product: &str) -> Vec<u16> {
+    if model == "hrrr" && product == HRRR_SHORT {
+        (0..19).collect()
+    } else {
+        leads(model)
+    }
+}
+pub fn partitioned(m: &Value) -> bool {
+    m["storage"]["layout"] == "lead_partition_tiles_v1"
+}
+pub fn expected_leads(m: &Value) -> Result<Vec<u16>> {
+    let model = m["model"].as_str().context("Missing model")?;
+    let product = m["dataset"].as_str().context("Missing dataset")?;
+    anyhow::ensure!(valid_dataset(model, product), "Unsupported source product");
+    Ok(product_leads(model, product))
+}
+pub fn complete(m: &Value) -> Result<bool> {
+    Ok(m["leads"] == json!(expected_leads(m)?))
+}
 pub fn grid_relative(model: &str) -> bool {
     matches!(model, "hrrr" | "rrfs")
 }
@@ -196,6 +229,7 @@ pub fn freshness(m: &Value) -> Result<Value> {
         .and_then(Value::as_f64)
         .context("Empty leads")?
         - age;
+    let partial = partitioned(m) && !complete(m)?;
     let (max_age, min_remaining) = match model {
         "hrrr" => (24., 12.),
         "rrfs" => (24., 48.),
@@ -203,22 +237,48 @@ pub fn freshness(m: &Value) -> Result<Value> {
     };
     let round = |x: f64| (x * 1000.).round() / 1000.;
     Ok(
-        json!({"init_time":m["init_time"],"available":(-1. ..=max_age).contains(&age)&&remaining>=min_remaining,"age_hours":round(age),"remaining_hours":round(remaining),"max_age_hours":max_age as u32,"min_remaining_hours":min_remaining as u32}),
+        json!({"init_time":m["init_time"],"available":(-1. ..=max_age).contains(&age)&&(partial||remaining>=min_remaining),"partial":partial,"age_hours":round(age),"remaining_hours":round(remaining),"max_age_hours":max_age as u32,"min_remaining_hours":min_remaining as u32}),
     )
 }
 pub fn check_metadata(m: &Value) -> Result<()> {
-    let model = m["model"].as_str().context("Missing model")?;
-    dataset(model)?;
-    let levels: Vec<u16> = if model == "aifs" {
+    check_schema(m, partitioned(m))
+}
+pub fn check_segment_metadata(m: &Value) -> Result<()> {
+    check_schema(m, true)
+}
+pub fn pressure_levels(model: &str) -> Vec<u16> {
+    if model == "aifs" {
         vec![1000, 925, 850, 700, 600, 500, 400, 300]
     } else {
         (275..1001).step_by(25).rev().collect()
-    };
-    if m["dataset"] != dataset(model)?
+    }
+}
+fn check_schema(m: &Value, partial: bool) -> Result<()> {
+    let model = m["model"].as_str().context("Missing model")?;
+    dataset(model)?;
+    let levels = pressure_levels(model);
+    let expected = expected_leads(m)?;
+    anyhow::ensure!(
+        model != "hrrr"
+            || m["dataset"] != HRRR_SHORT
+            || (timestamp(m["init_time"].as_str().context("Missing init")?)? as i64)
+                .rem_euclid(21600)
+                != 0,
+        "Six-hour HRRR cycles require the complete 48-hour product"
+    );
+    let actual: Vec<u16> =
+        serde_json::from_value(m["leads"].clone()).context("Malformed forecast hours")?;
+    let valid_hours = !actual.is_empty()
+        && actual.windows(2).all(|w| w[0] < w[1])
+        && actual.iter().all(|h| expected.contains(h))
+        && (partial || actual == expected);
+    if !m["dataset"]
+        .as_str()
+        .is_some_and(|d| valid_dataset(model, d))
         || m["coverage"] != "conus"
         || m["spatial_shards"] != 1
         || m["cells"].as_u64() != Some(if grid_relative(model) { 1638757 } else { 24885 })
-        || m["leads"] != json!(leads(model))
+        || !valid_hours
         || !numeric_array_eq(&m["levels"], &json!(levels))
         || m["variables"] != json!(variables(model))
         || m["surface_variables"] != json!(["temperature_2m", "dew_point_temperature_2m"])
@@ -226,6 +286,15 @@ pub fn check_metadata(m: &Value) -> Result<()> {
         bail!("Source schema/coverage changed");
     }
     if let Some(s) = m.get("storage") {
+        if partitioned(m) {
+            anyhow::ensure!(
+                s["version"] == 1
+                    && s["expected_leads"] == json!(expected)
+                    && s["complete"] == json!(actual == expected),
+                "Invalid incremental run manifest"
+            );
+            return Ok(());
+        }
         crate::dictionary::index_bytes(m)?;
         if crate::packed::tiled(m) {
             anyhow::ensure!(
@@ -264,44 +333,7 @@ pub fn numeric_array_eq(a: &Value, b: &Value) -> bool {
     }
 }
 pub fn publish(root: &Path, model: &str, e: Entry, rollback: bool) -> Result<Catalog> {
-    let path = descriptor(root, &e)?;
-    let m = read_json(path.join("metadata.json"))?;
-    check_metadata(&m)?;
-    let v = read_json(path.join("validated.json"))?;
-    if v["table"] != e.table
-        || v["database"] != e.database
-        || m["model"] != model
-        || v["init_time"] != m["init_time"]
-        || v["snapshot_id"] != m["snapshot_id"]
-        || v.get("storage").unwrap_or(&Value::Null) != m.get("storage").unwrap_or(&Value::Null)
-        || freshness(&m)?["available"] != true
-    {
-        bail!("Candidate lacks matching, fresh validation");
-    }
-    let _guard = Lock::acquire(root, "catalog", true, false)?;
-    let mut c = catalog(root)?;
-    if let Some(old) = c.current.get(model) {
-        let om = read_json(descriptor(root, old)?.join("metadata.json"))?;
-        if !rollback
-            && timestamp(m["init_time"].as_str().unwrap())?
-                <= timestamp(om["init_time"].as_str().unwrap())?
-        {
-            bail!("Publication must advance initialization");
-        }
-    }
-    if let Some(mut prev) = c.previous.remove(model) {
-        if prev.revision != e.revision {
-            prev.retired_at = Some(now());
-            c.retired.push(prev);
-        }
-    }
-    if let Some(old) = c.current.insert(model.to_owned(), e) {
-        c.previous.insert(model.to_owned(), old);
-    }
-    c.generation += 1;
-    c.published_at = Some(now());
-    atomic(root.join("catalog.json"), &c)?;
-    Ok(c)
+    crate::runs::publish(root, model, e, rollback, false)
 }
 pub fn disk_guard(root: &Path, extra: u64) -> Result<u64> {
     let free = fs2::available_space(root)?;

@@ -246,6 +246,19 @@ pub fn load_with_layout(
     workers: Option<usize>,
     packed: bool,
 ) -> Result<Value> {
+    load_impl(root, path, table, workers, packed, None)
+}
+pub fn load_lead(root: &Path, path: &Path, table: &str, lead: u16) -> Result<Value> {
+    load_impl(root, path, table, None, true, Some(lead))
+}
+fn load_impl(
+    root: &Path,
+    path: &Path,
+    table: &str,
+    workers: Option<usize>,
+    packed: bool,
+    partition_lead: Option<u16>,
+) -> Result<Value> {
     ident(table)?;
     let started = Instant::now();
     let mut m = read_json(path.join("metadata.json"))?;
@@ -265,6 +278,10 @@ pub fn load_with_layout(
     let nf = m["variables"].as_array().context("Fields")?.len();
     let leads = m["leads"].as_array().context("Leads")?;
     let nt = leads.len();
+    anyhow::ensure!(
+        partition_lead.is_none_or(|h| leads.as_slice() == [json!(h)]),
+        "A partition must contain exactly its forecast hour"
+    );
     anyhow::ensure!(nt > 0 && nl > 0 && nf > 0, "Empty forecast axes");
     anyhow::ensure!(
         m["surface_variables"].as_array().map(Vec::len) == Some(2),
@@ -343,11 +360,11 @@ pub fn load_with_layout(
                 .map(|kb| kb * 1024)
         })
     });
-    // Keep both the 6 GiB database cap and a 4 GiB client + 2 GiB margin free.
+    // Reserve the 12 GiB database cap plus a 4 GiB client and 2 GiB margin.
     // Large/raw inputs and smaller hosts retain the original streaming path.
     let prefetch = index16
         && input_bytes <= 8 * 1024u64.pow(3)
-        && memory_available.is_some_and(|available| available >= input_bytes + 12 * 1024u64.pow(3));
+        && memory_available.is_some_and(|available| available >= input_bytes + 18 * 1024u64.pow(3));
     if prefetch {
         let mut buffer = vec![0u8; 1024 * 1024];
         for array in profiles.iter().chain(&surfaces) {
@@ -376,6 +393,9 @@ pub fn load_with_layout(
     if tiled {
         columns.push("cell_ids Array(UInt32)".to_owned());
     }
+    if partition_lead.is_some() {
+        columns.push("lead_hour UInt16".to_owned());
+    }
     let compression = if regional && !index16 {
         "ZSTD(3)"
     } else {
@@ -395,7 +415,17 @@ pub fn load_with_layout(
         32768
     };
     let granularity = if tiled { 1 } else { 4 };
-    db.command(&format!("CREATE TABLE {DATABASE}.{table} ({}) ENGINE=MergeTree PARTITION BY (revision_id,intDiv({key},{partition})) ORDER BY {key} SETTINGS index_granularity={granularity},index_granularity_bytes=0,old_parts_lifetime=60",columns.join(",")))?;
+    let partition_key = if partition_lead.is_some() {
+        format!("(lead_hour,intDiv({key},{partition}))")
+    } else {
+        format!("(revision_id,intDiv({key},{partition}))")
+    };
+    let compression_block = if partition_lead.is_some() {
+        ",min_compress_block_size=32768,max_compress_block_size=65536"
+    } else {
+        ""
+    };
+    db.command(&format!("CREATE TABLE {DATABASE}.{table} ({}) ENGINE=MergeTree PARTITION BY {partition_key} ORDER BY {key} SETTINGS index_granularity={granularity},index_granularity_bytes=0,old_parts_lifetime=60{compression_block}",columns.join(",")))?;
     let mut merges = CandidateMerges::pause(&db, table)?;
     m["storage"] = json!({"layout":"cell_profile_v1","axes":"level_lead","encoding":"float32_bits","codec":"t64","compression":compression,"index_granularity":4,"writer":"rust_native"});
     if dictionary.is_some() {
@@ -412,6 +442,10 @@ pub fn load_with_layout(
         m["storage"]["codec"] = json!("delta");
         m["storage"]["delta_bytes"] = json!(2);
         m["storage"]["index_granularity"] = json!(granularity);
+    }
+    if let Some(lead) = partition_lead {
+        m["storage"]["partitioned_lead"] = json!(true);
+        m["storage"]["lead_hour"] = json!(lead);
     }
     atomic(path.join("metadata.json"), &m)?;
     let batch = match m["model"].as_str() {
@@ -662,6 +696,15 @@ pub fn load_with_layout(
                             drop(cols);
                             body
                         };
+                        let body = if let Some(lead) = partition_lead {
+                            crate::packed::append_lead_column(
+                                body,
+                                c.div_ceil(crate::packed::CELLS),
+                                lead,
+                            )?
+                        } else {
+                            body
+                        };
                         let mut job = (start, c, body);
                         loop {
                             if cancelled.load(Ordering::Relaxed) {
@@ -735,7 +778,7 @@ pub fn load_with_layout(
                         let done = completed.fetch_add(c,Ordering::Relaxed)+c;
                         // Large Native blocks leave allocator pages resident after
                         // their queries finish. Release unused pages periodically
-                        // so background logging keeps headroom under the 6 GiB cap.
+                        // so background logging retains server memory headroom.
                         let batches = completed_batches.fetch_add(1,Ordering::Relaxed)+1;
                         if tiled && batches.is_multiple_of(4) {
                             let purge = Instant::now();
@@ -821,6 +864,46 @@ pub fn load_with_layout(
     Ok(evidence)
 }
 pub fn validate(path: &Path, table: &str, database: &str, staged: bool) -> Result<Value> {
+    let scope = path
+        .parent()
+        .filter(|p| p.file_name().is_some_and(|n| n == "revisions"))
+        .and_then(Path::parent);
+    if let Some(root) = scope {
+        let _guard = Lock::acquire(root, "catalog", false, false)?;
+        let c = catalog(root)?;
+        let name = path.file_name().context("Revision")?.to_string_lossy();
+        if crate::runs::references(root, &c, true)?
+            .iter()
+            .any(|e| e.revision == name)
+        {
+            // Audit immutable published descriptors in a private workspace.
+            // Their existing marker remains readable until its atomic refresh.
+            let audit = root
+                .join("audits")
+                .join(uuid::Uuid::new_v4().simple().to_string());
+            fs::create_dir_all(&audit)?;
+            let result = (|| -> Result<Value> {
+                for name in [
+                    "metadata.json",
+                    "cells.bin.zst",
+                    "cells.npz",
+                    "values.dict.zst",
+                ] {
+                    let src = path.join(name);
+                    if src.exists() {
+                        fs::hard_link(src, audit.join(name))?;
+                    }
+                }
+                validate_impl(&audit, table, database, staged, None, None)
+            })();
+            let cleanup = fs::remove_dir_all(&audit);
+            let evidence = result?;
+            cleanup?;
+            atomic(path.join("validated.json"), &evidence)?;
+            return Ok(evidence);
+        }
+        return validate_impl(path, table, database, staged, None, None);
+    }
     validate_impl(path, table, database, staged, None, None)
 }
 fn validate_impl(
@@ -838,6 +921,31 @@ fn validate_impl(
         fs::remove_file(&marker)?;
     }
     let m = read_json(path.join("metadata.json"))?;
+    if partitioned(&m) {
+        let e = Entry {
+            revision: path
+                .file_name()
+                .context("Revision")?
+                .to_string_lossy()
+                .into_owned(),
+            database: database.to_owned(),
+            table: table.to_owned(),
+            owned: true,
+            retired_at: None,
+        };
+        let evidence = crate::runs::validate_manifest(crate::runs::root_for(path)?, &e, &m, true)?;
+        atomic(marker, &evidence)?;
+        return Ok(evidence);
+    }
+    let partition_lead = m["storage"]["lead_hour"]
+        .as_u64()
+        .map(|h| u16::try_from(h).context("Invalid lead partition"))
+        .transpose()?;
+    let from = if let Some(lead) = partition_lead {
+        format!("(SELECT * FROM {database}.{table} WHERE lead_hour={lead})")
+    } else {
+        format!("{database}.{table}")
+    };
     let cell_ids = ids(path)?;
     let nc = cell_ids.len();
     anyhow::ensure!(
@@ -859,7 +967,7 @@ fn validate_impl(
     };
     let profile = m["storage"]["layout"] == "cell_profile_v1" || tiled;
     let db = Db::new()?;
-    let storage_rows = db.scalar(&format!("SELECT count() FROM {database}.{table}"))?;
+    let storage_rows = db.scalar(&format!("SELECT count() FROM {from}"))?;
     anyhow::ensure!(
         storage_rows
             == if tiled {
@@ -872,10 +980,17 @@ fn validate_impl(
         "Wrong physical row count"
     );
     if tiled {
-        crate::packed::verify_cells(&db, database, table, &cell_ids, tile_cells)?;
+        crate::packed::verify_cells_scoped(
+            &db,
+            database,
+            table,
+            &cell_ids,
+            tile_cells,
+            partition_lead,
+        )?;
     } else {
         let actual = db.bytes(&format!(
-            "SELECT {}cell_id FROM {database}.{table} {}ORDER BY cell_id FORMAT RowBinary",
+            "SELECT {}cell_id FROM {from} {}ORDER BY cell_id FORMAT RowBinary",
             if profile { "" } else { "DISTINCT " },
             ""
         ))?;
@@ -886,6 +1001,10 @@ fn validate_impl(
         );
     }
     let mut checks = vec!["revision_id != 1".to_owned()];
+    if let Some(lead) = partition_lead {
+        anyhow::ensure!(m["leads"] == json!([lead]), "Partition lead differs");
+        checks.push(format!("lead_hour!={lead}"));
+    }
     if tiled {
         checks.push(tile_cell_count_check(&m)?);
     }
@@ -908,6 +1027,12 @@ fn validate_impl(
             types.get("tile_id").map(String::as_str) == Some("UInt32")
                 && types.get("cell_ids").map(String::as_str) == Some("Array(UInt32)"),
             "Wrong packed key/ID type"
+        );
+    }
+    if partition_lead.is_some() {
+        anyhow::ensure!(
+            types.get("lead_hour").map(String::as_str) == Some("UInt16"),
+            "Wrong lead key type"
         );
     }
     for (f, name) in names.iter().enumerate() {
@@ -970,7 +1095,7 @@ fn validate_impl(
         for check in scans {
             anyhow::ensure!(
                 db.scalar(&format!(
-                    "SELECT count() FROM {database}.{table} WHERE {check} SETTINGS max_threads={threads},max_block_size={block},compile_expressions=1,min_count_to_compile_expression=0"
+                    "SELECT count() FROM {from} WHERE {check} SETTINGS max_threads={threads},max_block_size={block},compile_expressions=1,min_count_to_compile_expression=0"
                 ))? == 0,
                 "Malformed/non-finite database values"
             );
@@ -983,9 +1108,11 @@ fn validate_impl(
             let hi = lo + 32768;
             let cells =
                 cell_ids.partition_point(|id| *id < hi) - cell_ids.partition_point(|id| *id < lo);
-            anyhow::ensure!(db.scalar(&format!("SELECT uniqExact((cell_id,lead_hour)) FROM {database}.{table} WHERE cell_id>={lo} AND cell_id<{hi}"))? == (cells * nt) as u64, "Duplicate/missing legacy cell/lead keys in range {range}");
+            anyhow::ensure!(db.scalar(&format!("SELECT uniqExact((cell_id,lead_hour)) FROM {from} WHERE cell_id>={lo} AND cell_id<{hi}"))? == (cells * nt) as u64, "Duplicate/missing legacy cell/lead keys in range {range}");
         }
-        let counts=db.json(&format!("SELECT lead_hour,count() AS n FROM {database}.{table} GROUP BY lead_hour ORDER BY lead_hour"))?;
+        let counts = db.json(&format!(
+            "SELECT lead_hour,count() AS n FROM {from} GROUP BY lead_hour ORDER BY lead_hour"
+        ))?;
         anyhow::ensure!(
             counts.len() == nt
                 && counts
@@ -1096,20 +1223,35 @@ type HashTypes = std::collections::HashMap<String, String>;
 pub fn collect(root: &Path, grace: f64) -> Result<()> {
     let _l = Lock::acquire(root, "catalog", true, false)?;
     let mut c = catalog(root)?;
-    let keep: std::collections::HashSet<_> = c
-        .current
-        .values()
-        .chain(c.previous.values())
+    let mut protected = c.clone();
+    protected
+        .retired
+        .retain(|e| now() - e.retired_at.unwrap_or_else(now) < grace);
+    let references = crate::runs::references(root, &protected, true)?;
+    let keep = references
+        .iter()
         .map(|e| e.revision.clone())
-        .collect();
+        .collect::<std::collections::HashSet<_>>();
+    let tables = references
+        .iter()
+        .map(|e| (e.database.clone(), e.table.clone()))
+        .collect::<std::collections::HashSet<_>>();
     let db = Db::new()?;
-    let mut pending = vec![];
+    let mut pending = Vec::new();
+    let mut dropped = std::collections::HashSet::new();
     for e in &c.retired {
-        if keep.contains(&e.revision) || now() - e.retired_at.unwrap_or(now()) < grace {
+        if keep.contains(&e.revision) {
             pending.push(e.clone());
             continue;
         }
-        if e.owned {
+        if e.owned
+            && !tables.contains(&(e.database.clone(), e.table.clone()))
+            && dropped.insert((e.database.clone(), e.table.clone()))
+        {
+            anyhow::ensure!(
+                e.database == DATABASE,
+                "Retention cannot delete tables outside its database"
+            );
             db.command(&format!(
                 "DROP TABLE IF EXISTS {}.{} SYNC",
                 ident(&e.database)?,
@@ -1131,12 +1273,8 @@ pub fn discard(root: &Path, path: &Path) -> Result<()> {
         .file_name()
         .context("No revision name")?
         .to_string_lossy();
-    if c.current
-        .values()
-        .chain(c.previous.values())
-        .chain(c.retired.iter())
-        .any(|e| e.revision == name)
-    {
+    let references = crate::runs::references(root, &c, true)?;
+    if references.iter().any(|e| e.revision == name) {
         return Ok(());
     }
     if path.join("discarded.json").exists() {
@@ -1147,7 +1285,15 @@ pub fn discard(root: &Path, path: &Path) -> Result<()> {
         return Ok(());
     }
     let e: Entry = serde_json::from_slice(&fs::read(path.join("entry.json"))?)?;
-    if e.owned {
+    if e.owned
+        && !references
+            .iter()
+            .any(|other| other.database == e.database && other.table == e.table)
+    {
+        anyhow::ensure!(
+            e.database == DATABASE,
+            "Discard cannot delete tables outside its database"
+        );
         Db::new()?.command(&format!(
             "DROP TABLE IF EXISTS {}.{} SYNC",
             ident(&e.database)?,
@@ -1155,7 +1301,7 @@ pub fn discard(root: &Path, path: &Path) -> Result<()> {
         ))?;
     }
     clean_workspace(path)?;
-    for name in ["cells.npz", "cells.bin.zst"] {
+    for name in ["cells.npz", "cells.bin.zst", "values.dict.zst"] {
         let cells = path.join(name);
         if cells.exists() {
             fs::remove_file(cells)?;

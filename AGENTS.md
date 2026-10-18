@@ -328,7 +328,9 @@ Server-side cookie reading can fail on Edge. The `cookieReadSuccess` flag trigge
 
 ## Dynamical migration and native forecast service
 
-The Next.js provider still uses Open-Meteo. The separate home-server native
+The Next.js provider still uses Open-Meteo. Current incremental operation and
+verification are documented in `docs/plans/2026-10-18-incremental-ingestion.md`.
+The separate home-server native
 service now lives in `native/`, with one Rust/Cargo application for source reads,
 loading, validation, publication, retention, HTTP serving and supervision. Read
 `native/README.md` for current commands. The former Python tools were retired;
@@ -336,8 +338,8 @@ commit `5f4ae08` and earlier commits preserve their historical implementations.
 Do not put whole-map virtual Zarr reads in page requests: arbitrary CONUS
 coordinates are served from the retained local grid.
 
-The native service supports HRRR, GFS, AIFS and RRFS. Default scheduled updates
-include all four; `update --models rrfs` refreshes only RRFS. Its Dynamical source
+The native service supports HRRR, GFS, AIFS and RRFS. Default per-hour polling
+includes all four; `update --models rrfs` refreshes only RRFS. Its Dynamical source
 is `noaa-rrfs-forecast-84-hour-virtual`: 85 hourly leads through 84 hours,
 1,638,757 retained CONUS cells, 30 pressure levels from 1000 down to 275 hPa,
 the same six pressure fields and two surface fields as HRRR. RRFS and HRRR use
@@ -399,7 +401,9 @@ ownership and must not be deleted by production retention.
 | Native spherical HRRR projection and nearest-cell resolution | `native/src/grid.rs` |
 | Buffered parallel staging reads/Native insertion and validation/GC | `native/src/store.rs` |
 | Bit-exact cache-tiled NEON/portable packing and Native block encoding | `native/src/pack.rs` |
-| Async acquisition overlap, recovery, update and rollback | `native/src/pipeline.rs` |
+| Legacy complete-run benchmark acquisition, update and rollback | `native/src/pipeline.rs` |
+| Fresh source availability polling, durable per-hour recovery and partition attachment | `native/src/incremental.rs` |
+| Immutable per-hour manifests/books, shared-table reader and complete-run retention | `native/src/runs.rs` |
 | ClickHouse HTTP/RowBinary access and legacy/raw-bit/dictionary/tile readers | `native/src/db.rs` |
 | Loopback forecast API and health | `native/src/api.rs` |
 | ClickHouse/API/updater supervision and persisted schedule | `native/src/service.rs` |
@@ -414,9 +418,42 @@ State lives in `~/.local/share/meteogram-native`; service tables use
 `meteogram_native`. One updater owns `update.lock` throughout recovery/builds.
 Readers hold the shared catalog lock through their database query;
 publication/GC hold the exclusive lock. Catalog replacement is atomic and
-fsynced. Each candidate has a unique immutable table. Keep current/previous
-revisions and a ten-minute retired grace period. GC drops only explicitly owned
-tables; adoption creates an independent validated clone of its source table.
+fsynced. The supervisor runs a persistent 60-second availability poller with
+`watch.lock`; each poll holds `update.lock`. Keep the two latest COMPLETE runs
+per model plus the latest complete 48-hour HRRR run, counting overlap once.
+Partial runs never displace complete backups. Catalog fields `complete_runs`,
+`building` and `hrrr_long` supplement the backward-compatible current/previous
+aliases. Retired manifests have a ten-minute grace period. GC follows all
+manifest/book/shared-table references and drops only explicitly owned tables.
+Adoption creates an independent validated clone; `adopt --retain-only` archives
+a complete run without selecting it as current.
+
+New incremental acquisitions for all four models use `lead_partition_tiles_v1`:
+one shared ClickHouse table per model/dataset/initialization, partitioned by
+`(lead_hour, intDiv(tile_id,128))`. Each row holds 256 cells for one hour, with
+exact UInt16 dictionaries. A private single-hour table passes full validation,
+then attaches its spatial partitions to the run table. A second full check and
+staged samples precede atomic publication of an immutable manifest. API queries
+must filter by that manifest's validated leads, so unfinished attached partitions
+cannot leak. Published hours never change. Child descriptors do not own the
+shared table; parent manifests do. Child `source-validation.json` preserves the
+original staged-source proof. Metadata hashes and source identities bind every
+book. The 250-million-entry codebook allowance is aggregate across the whole
+run and checked before allocation/publication. Coordinates share SHA-256 hard
+links; API caches reuse decoded books across manifest advances.
+
+Full audits of published data must preserve its existing validation marker until
+success. `store::validate` holds a shared catalog lock, validates a private
+hard-linked descriptor copy and atomically replaces the marker on success.
+Never remove a published marker while an audit is running.
+
+HRRR includes `noaa-hrrr-forecast-18-hour-virtual` for hourly short runs and the
+48-hour product for 00/06/12/18 UTC. Those six-hour cycles must satisfy the full
+49-lead schema before counting as complete. `/forecast` defaults to the newest
+validated partial run and exposes completion/available/missing leads and per-hour
+source snapshots. Explicit `run=latest_complete`, `previous_complete` or `long`
+selects archives and reports their freshness even if stale. `/runs?model=MODEL` lists these
+retention roles; `/health` reports backup counts and long-run retention.
 
 Raw-bit revisions use `cell_profile_v1`: one physical row per native cell, full
 pressure profiles arranged as level/lead arrays, surface profiles as lead arrays,
@@ -429,14 +466,20 @@ compares ALL sorted cell IDs, physical types, array lengths and finite bits,
 plus complete bit-exact staged samples. Keep physical cell rows distinct from
 logical cell/lead rows in reports. Do not enable quantization or fast-math.
 
-The updater pins source snapshots/initializations, verifies complete schema and
-freshness, and tries the latest then the preceding initialization.
-Before forecast-map downloads, all required chunk references are checked in the
-pinned Icechunk manifests (16 concurrent checks); `preflight.json` records missing
-references. This does not guarantee the referenced payload objects are readable;
-preserve download/decode/full-data gates. At most two extractors run initially,
-then one extractor overlaps one loader. Each extractor
-has at most 16 map tasks. HRRR/RRFS loading uses three raw-bit or two packed-tile
+The normal updater checks fresh immutable Icechunk snapshots every poll, with
+repository manifest caches retained across polls. Every required pressure and
+surface map must be referenced before an hour is queued; missing hours do not
+block other ready hours. Availability never downloads whole-map payloads.
+Each hour pins its own snapshot and initialization, fully validates all retained
+cells, then publishes independently. Preserve download/decode/full-data gates:
+references alone do not prove payload availability. Completed hours are skipped;
+private `incoming/state` journals and staging permit retry after interruption.
+Incremental concurrency allows two regional (HRRR/RRFS) extractors plus one global
+(GFS/AIFS), one hour at a time per model, with at most 16 map tasks per extractor.
+The server budget is 12 GiB for concurrent incremental work; the per-query cap
+remains 2 GiB.
+`update --batch` or `--pin-root` explicitly selects the old whole-run benchmark
+workflow and its admission budgets; it is no longer the service default. HRRR/RRFS loading uses three raw-bit or two packed-tile
 reusable-buffer readers and four raw-bit or six packed-tile load workers
 connected by a bounded
 queue; other models default to
@@ -496,8 +539,9 @@ the reader's old per-field accounting while retaining bounded compact storage;
 do not restore all-lead lookup tables or remove the budgets. Version/checksum/
 hash/finite checks and exact per-slot database bounds remain mandatory.
 Full GFS codebooks above the old field cap require the new reader before
-publication; the format tag stays `MGDICT01`. Acquisition/scheduling defaults
-remain unchanged; use the explicit preparation/load commands for experiments.
+publication; the format tag stays `MGDICT01`. Explicit preparation/load commands
+remain available for whole-run experiments; incremental acquisition uses per-hour
+dictionaries for all four models.
 `sort-stage` losslessly sorts palettes and remaps staged indices for experiments.
 Direct HRRR acquisition sorts each map's palette in Float32 total order. Typed
 UInt16 arrays use indexed staging version 2: spatial slot-major wrapping deltas,
@@ -506,7 +550,7 @@ and still accept version 1 Float32/UInt32 staging. Keep partial-block, random-re
 delta-wrap, overflow, checksum and legacy-format checks when changing this codec.
 For UInt16 inputs of at most 8 GiB, the loader can sequentially prefetch the
 immutable weather files **inside the load clock** before starting DB writes.
-This requires `MemAvailable >= input bytes + 12 GiB` for the unchanged 6 GiB
+This requires `MemAvailable >= input bytes + 18 GiB` for the current 12 GiB
 database cap, 4 GiB client budget and 2 GiB margin; otherwise it streams normally.
 Every frame still receives CRC/shape/decode checks and every stored index is
 validated. Consumed pages are discarded. Legacy UInt16 profile tables use T64/Zstd level 1;
@@ -549,17 +593,18 @@ deployment evidence are in
 stored-value checks but exclude source acquisition/staging. Raw-bit HRRR loads
 retain 4,096-cell batches; HRRR packed loads use 16,384-cell batches and two
 readers/queued blocks; non-tiled HRRR UInt16 loads use 8,192-cell batches.
-`load --packed` opts additional UInt16 models into 256-cell tiles; normal
-acquisition/scheduled loads still use raw bits for GFS/AIFS and one worker.
+`load --packed` opts additional UInt16 models into 256-cell tiles in standalone
+loads; legacy batch GFS/AIFS defaults use raw bits and one worker. Incremental
+acquisition uses exact per-hour dictionaries and 256-cell tiles for all models.
 Experimental packed GFS uses 4,096 cells to align with staging frames; raw GFS
 retains 2,048 and AIFS retains 4,096. Keep the default HRRR behavior unchanged.
 Packed loads purge unused ClickHouse allocator pages initially and after each
 four validated batches, as well as before final validation. This keeps
-background logging below the unchanged 6 GiB RSS cap; all purge time is included
-in the load clock. Do not replace these releases by raising the memory limit.
-Preserve the existing memory limits: a raw-bit
-8,192-cell/four-writer experiment
-exceeded the 6 GiB server limit and was rejected.
+background logging bounded; all purge time is included in the load clock.
+Keep these releases with the current 12 GiB server budget. The earlier raw-bit
+8,192-cell/four-writer experiment exceeded the then-current 6 GiB server limit
+and was rejected. The server budget was subsequently raised with user approval
+for concurrent incremental ingestion; the 2 GiB query cap remains unchanged.
 The subsequent full 12Z HRRR loads finished in 50.21 and 53.70 seconds with the
 same frozen binary, all validation included, using the lossless 256-cell layout
 and four active-insert permits. Evidence and installation details are in

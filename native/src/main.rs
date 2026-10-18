@@ -2,11 +2,13 @@ mod api;
 mod db;
 mod dictionary;
 mod grid;
+mod incremental;
 mod observe;
 mod pack;
 mod packed;
 mod pipeline;
 mod prepare;
+mod runs;
 mod service;
 mod source;
 mod stage;
@@ -110,6 +112,25 @@ enum Cmd {
         offsets: Vec<usize>,
         #[arg(long)]
         pin_root: Option<PathBuf>,
+        /// Explicit complete-run benchmark mode; normal updates are incremental.
+        #[arg(long)]
+        batch: bool,
+        #[arg(long, default_value_t = 50)]
+        work_seconds: u64,
+    },
+    Watch {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long, default_value_t = 60.)]
+        poll_seconds: f64,
+    },
+    Availability {
+        #[arg(long)]
+        model: String,
+        #[arg(long)]
+        product: Option<String>,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     Load {
         #[arg(long)]
@@ -161,8 +182,10 @@ enum Cmd {
         server_root: PathBuf,
         #[arg(long)]
         binary: PathBuf,
-        #[arg(long, default_value_t = 6.)]
-        interval_hours: f64,
+        #[arg(long)]
+        interval_hours: Option<f64>,
+        #[arg(long, default_value_t = 60.)]
+        poll_seconds: f64,
     },
     StartServer {
         #[arg(long)]
@@ -179,6 +202,9 @@ enum Cmd {
         database: String,
         #[arg(long)]
         table: String,
+        /// Retain a complete historical run without selecting it as latest.
+        #[arg(long)]
+        retain_only: bool,
     },
     Verify {
         #[arg(long)]
@@ -345,16 +371,35 @@ async fn main() -> Result<()> {
             models,
             offsets,
             pin_root,
+            batch,
+            work_seconds,
         } => {
             anyhow::ensure!(
                 models.iter().all(|s| state::MODELS.contains(&s.as_str()))
                     && offsets.iter().all(|o| *o > 0),
                 "Invalid models/offsets"
             );
-            let code = pipeline::update(root, models, offsets, pin_root).await?;
+            let code = if batch || pin_root.is_some() {
+                pipeline::update(root, models, offsets, pin_root).await?
+            } else {
+                incremental::poll(root, models, work_seconds).await?
+            };
             if code != 0 {
                 std::process::exit(code);
             }
+        }
+        Cmd::Watch { root, poll_seconds } => incremental::watch(root, poll_seconds).await?,
+        Cmd::Availability {
+            model,
+            product,
+            output: path,
+        } => {
+            let product = product.unwrap_or(state::dataset(&model)?.to_owned());
+            let result = source::availability(&model, &product, &[]).await?;
+            output(
+                &json!({"model":model,"dataset":product,"snapshot_id":result.source.snapshot,"payload_reads":0,"runs":result.runs.iter().map(|r|json!({"init_time":r.pin["init_time"],"expected_leads":r.expected,"ready_leads":r.ready,"missing_references":r.missing})).collect::<Vec<_>>()}),
+                path,
+            )?;
         }
         Cmd::Load {
             root,
@@ -409,13 +454,23 @@ async fn main() -> Result<()> {
             server_root,
             binary,
             interval_hours,
-        } => service::service(root, server_root, binary, interval_hours).await?,
+            poll_seconds,
+        } => {
+            service::service(
+                root,
+                server_root,
+                binary,
+                interval_hours.map(|h| h * 3600.).unwrap_or(poll_seconds),
+            )
+            .await?
+        }
         Cmd::StartServer { binary, work_dir } => service::start_server(&binary, &work_dir)?,
         Cmd::Adopt {
             root,
             source,
             database,
             table,
+            retain_only,
         } => {
             tokio::task::spawn_blocking(move || -> Result<()> {
                 let _l = state::Lock::acquire(&root, "update", true, true)?;
@@ -439,7 +494,7 @@ async fn main() -> Result<()> {
                     e.table
                 ))?;
                 store::validate(&p, &e.table, &e.database, false)?;
-                state::publish(&root, model, e, false)?;
+                runs::publish(&root, model, e, false, retain_only)?;
                 Ok(())
             })
             .await??

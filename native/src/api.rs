@@ -20,6 +20,7 @@ struct Model {
     lat: Vec<f64>,
     lon: Vec<f64>,
     dictionary: Option<crate::dictionary::Dictionary>,
+    books: BTreeMap<u16, Arc<crate::dictionary::Dictionary>>,
 }
 #[derive(Clone)]
 struct App {
@@ -27,8 +28,9 @@ struct App {
     db: Db,
     cache: Arc<Mutex<HashMap<String, Arc<Model>>>>,
     pool: Arc<tokio::sync::Semaphore>,
+    books: crate::runs::BookCache,
 }
-fn model(root: &Path, e: &Entry) -> Result<Model> {
+fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model> {
     let p = descriptor(root, e)?;
     let meta = read_json(p.join("metadata.json"))?;
     let mut arrays = crate::stage::load_cells(&p)?;
@@ -61,12 +63,18 @@ fn model(root: &Path, e: &Entry) -> Result<Model> {
     let lon = coords("longitude", &mut arrays)?;
     anyhow::ensure!(ids.windows(2).all(|w| w[0] < w[1]), "Unsorted cell ids");
     let dictionary = crate::dictionary::Dictionary::load(&p, &meta)?;
+    let books = if partitioned(&meta) {
+        crate::runs::load_books(root, e, &meta, Some(cache))?
+    } else {
+        BTreeMap::new()
+    };
     Ok(Model {
         meta,
         ids,
         lat,
         lon,
         dictionary,
+        books,
     })
 }
 fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
@@ -76,6 +84,11 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
         let lon: f64 = q.get("lon").context("Missing longitude")?.parse()?;
         anyhow::ensure!(
             MODELS.contains(&name.as_str())
+                && matches!(
+                    q.get("run").map(String::as_str).unwrap_or("latest"),
+                    "latest" | "latest_complete" | "previous_complete" | "long"
+                )
+                && (q.get("run").is_none_or(|v| v != "long") || name == "hrrr")
                 && lat.is_finite()
                 && lon.is_finite()
                 && (-90. ..=90.).contains(&lat)
@@ -91,22 +104,60 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
     let run = || -> Result<(StatusCode, Value)> {
         let _lock = Lock::acquire(&app.root, "catalog", false, false)?;
         let c = catalog(&app.root)?;
-        let e = c.current.get(&name).context("Model unavailable")?;
+        let e = match q.get("run").map(String::as_str).unwrap_or("latest") {
+            "latest_complete" => c
+                .complete_runs
+                .get(&name)
+                .and_then(|v| v.first())
+                .or_else(|| {
+                    c.current.get(&name).filter(|e| {
+                        descriptor(&app.root, e)
+                            .and_then(|p| read_json(p.join("metadata.json")))
+                            .and_then(|m| complete(&m))
+                            .unwrap_or(false)
+                    })
+                }),
+            "previous_complete" => {
+                c.complete_runs
+                    .get(&name)
+                    .and_then(|v| v.get(1))
+                    .or_else(|| {
+                        c.previous.get(&name).filter(|e| {
+                            descriptor(&app.root, e)
+                                .and_then(|p| read_json(p.join("metadata.json")))
+                                .and_then(|m| complete(&m))
+                                .unwrap_or(false)
+                        })
+                    })
+            }
+            "long" => c.hrrr_long.as_ref(),
+            _ => c.current.get(&name),
+        }
+        .context("Requested forecast run unavailable")?;
         let m = {
             let mut cache = app.cache.lock().unwrap();
             if !cache.contains_key(&e.revision) {
-                cache.insert(e.revision.clone(), Arc::new(model(&app.root, e)?));
+                cache.insert(
+                    e.revision.clone(),
+                    Arc::new(model(&app.root, e, &app.books)?),
+                );
             }
             let m = cache[&e.revision].clone();
             cache.retain(|r, _| c.current.values().any(|e| &e.revision == r));
             m
         };
-        anyhow::ensure!(freshness(&m.meta)?["available"] == true, "Stale model");
+        let freshness = freshness(&m.meta)?;
+        if q.get("run").is_none_or(|r| r == "latest") {
+            anyhow::ensure!(freshness["available"] == true, "Stale model");
+        }
         let (cell, i) = match grid::resolve(&m.meta, &m.ids, lat, lon) {
             Ok(v) => v,
             Err(e) => return Ok((StatusCode::NOT_FOUND, json!({"error":e.to_string()}))),
         };
-        let (rows, elapsed) = if m.dictionary.is_some() {
+        let (rows, elapsed) = if partitioned(&m.meta) {
+            app.db
+                .profile_leads(&e.database, &e.table, &m.meta, cell, i, &m.books)?
+        } else if m.dictionary.is_some() {
             app.db.profile_with_dictionary(
                 &e.database,
                 &e.table,
@@ -119,10 +170,22 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
         };
         let mut fields = vec!["lead_hour".to_owned()];
         fields.extend(crate::state::fields(&m.meta));
-        Ok((
-            StatusCode::OK,
-            json!({"model":name,"dataset":m.meta["dataset"],"init_time":m.meta["init_time"],"snapshot_id":m.meta["snapshot_id"],"requested":{"latitude":lat,"longitude":lon},"grid":{"cell_id":cell,"latitude":m.lat[i],"longitude":m.lon[i]},"levels_hpa":m.meta["levels"],"units":m.meta["units"],"fields":fields,"rows":rows,"native_wind_frame":if grid_relative(&name){"grid-relative"}else{"earth-relative"},"query_ms":elapsed,"prototype":true,"revision":e.revision}),
-        ))
+        let expected = expected_leads(&m.meta)?;
+        let have: Vec<u16> = serde_json::from_value(m.meta["leads"].clone())?;
+        let missing = expected
+            .iter()
+            .filter(|h| !have.contains(h))
+            .copied()
+            .collect::<Vec<_>>();
+        let mut payload = json!({"model":name,"dataset":m.meta["dataset"],"init_time":m.meta["init_time"],"snapshot_id":m.meta["snapshot_id"],"requested":{"latitude":lat,"longitude":lon},"grid":{"cell_id":cell,"latitude":m.lat[i],"longitude":m.lon[i]},"levels_hpa":m.meta["levels"],"units":m.meta["units"],"fields":fields,"rows":rows,"native_wind_frame":if grid_relative(&name){"grid-relative"}else{"earth-relative"},"query_ms":elapsed,"prototype":true,"revision":e.revision,"forecast_complete":missing.is_empty(),"available_leads":have,"expected_leads":expected,"missing_leads":missing});
+        if partitioned(&m.meta) {
+            payload["lead_sources"] = json!(crate::runs::books(&m.meta)?
+                .iter()
+                .map(|b| json!({"lead":b.lead,"snapshot_id":b.snapshot_id}))
+                .collect::<Vec<_>>());
+        }
+        payload["freshness"] = freshness;
+        Ok((StatusCode::OK, payload))
     };
     run().unwrap_or((
         StatusCode::SERVICE_UNAVAILABLE,
@@ -174,13 +237,17 @@ async fn health(State(app): State<App>) -> (StatusCode, Json<Value>) {
             let c = catalog(&app.root)?;
             app.db.command("SELECT 1")?;
             let mut models = serde_json::Map::new();
-            for (name, e) in c.current {
-                models.insert(
-                    name,
-                    freshness(&read_json(
-                        descriptor(&app.root, &e)?.join("metadata.json"),
-                    )?)?,
-                );
+            for (name, e) in &c.current {
+                let mut status =
+                    freshness(&read_json(descriptor(&app.root, e)?.join("metadata.json"))?)?;
+                let count = c.complete_runs.get(name).map_or(0, Vec::len);
+                status["complete_runs_retained"] = json!(count);
+                status["retention_satisfied"] =
+                    json!(count >= 2 && (name != "hrrr" || c.hrrr_long.is_some()));
+                if name == "hrrr" {
+                    status["long_run_retained"] = json!(c.hrrr_long.is_some());
+                }
+                models.insert(name.clone(), status);
             }
             Ok(json!({"models":models,"native_fields":true}))
         };
@@ -214,13 +281,55 @@ pub async fn serve(root: PathBuf, port: u16) -> Result<()> {
         db,
         cache: Default::default(),
         pool: Arc::new(tokio::sync::Semaphore::new(4)),
+        books: Default::default(),
     };
     let router = Router::new()
         .route("/forecast", get(handle))
         .route("/health", get(health))
+        .route("/runs", get(list_runs))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, port)).await?;
     println!("Rust native forecast API listening on 127.0.0.1:{port}");
     axum::serve(listener, router).await?;
     Ok(())
+}
+async fn list_runs(
+    State(app): State<App>,
+    Query(q): Query<HashMap<String, String>>,
+) -> (StatusCode, Json<Value>) {
+    let Some(name) = q
+        .get("model")
+        .filter(|n| MODELS.contains(&n.as_str()))
+        .cloned()
+    else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error":"Invalid model"})),
+        );
+    };
+    tokio::task::spawn_blocking(move|| {
+        let run=||->Result<Value> {
+            let _lock=Lock::acquire(&app.root,"catalog",false,false)?;
+            let c=catalog(&app.root)?;
+            let latest=c.current.get(&name).map(|e|crate::runs::summary(&app.root,e)).transpose()?;
+            let complete=c.complete_runs.get(&name).into_iter().flatten().map(|e|crate::runs::summary(&app.root,e)).collect::<Result<Vec<_>>>()?;
+            let building=c.building.get(&name).into_iter().flatten().map(|e|crate::runs::summary(&app.root,e)).collect::<Result<Vec<_>>>()?;
+            let long=if name=="hrrr" {c.hrrr_long.as_ref().map(|e|crate::runs::summary(&app.root,e)).transpose()?}else{None};
+            Ok(json!({"model":name,"latest":latest,"complete_runs":complete,"building":building,"long_run":long}))
+        };
+        match run() {Ok(v)=>(StatusCode::OK,Json(v)),Err(_)=>(StatusCode::SERVICE_UNAVAILABLE,Json(json!({"error":"Run inventory unavailable"})))}
+    }).await.unwrap()
+}
+#[cfg(test)]
+pub(crate) fn test_forecast(root: &Path, query: HashMap<String, String>) -> (StatusCode, Value) {
+    forecast(
+        &App {
+            root: root.to_owned(),
+            db: Db::new().unwrap(),
+            cache: Default::default(),
+            pool: Arc::new(tokio::sync::Semaphore::new(4)),
+            books: Default::default(),
+        },
+        query,
+    )
 }
