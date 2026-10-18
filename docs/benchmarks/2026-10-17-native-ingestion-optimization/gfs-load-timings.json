@@ -1,0 +1,8 @@
+{
+  "gather_arrow_seconds": 11.200074654072523,
+  "insert_seconds": 14.10525687620975,
+  "validation_seconds": 2.562216904014349,
+  "total_seconds": 27.985314487013966,
+  "process_read_bytes": 2607767552,
+  "process_write_bytes": 12288
+}

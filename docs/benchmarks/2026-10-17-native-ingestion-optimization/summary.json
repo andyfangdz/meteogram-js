@@ -1,0 +1,219 @@
+{
+  "complete": {
+    "started": 1792290285.789899,
+    "ended": 1792291496.3134158,
+    "seconds": 1210.5235166549683,
+    "source_profile_comparisons": {
+      "hrrr": 100,
+      "gfs": 100,
+      "aifs": 100
+    },
+    "candidate_query_ms": {
+      "hrrr": {
+        "count": 100,
+        "min": 8.05896706879139,
+        "p50": 16.695564379915595,
+        "p95": 33.11928428011014,
+        "p99": 38.44862548867241,
+        "max": 39.55835709348321
+      },
+      "gfs": {
+        "count": 100,
+        "min": 8.714302908629179,
+        "p50": 9.756366023793817,
+        "p95": 10.663206374738365,
+        "p99": 13.039373198989795,
+        "max": 16.09699707478285
+      },
+      "aifs": {
+        "count": 100,
+        "min": 5.8866150211542845,
+        "p50": 6.796756875701249,
+        "p95": 7.6010034419596195,
+        "p99": 7.905445690266795,
+        "max": 9.19579085893929
+      }
+    },
+    "server_events_delta": {
+      "OSReadBytes": 33648697344,
+      "OSWriteBytes": 61331693568
+    }
+  },
+  "models": {
+    "hrrr": {
+      "phase_times": {
+        "select": 1792290285.8215148,
+        "fetch": 1792290285.8310685,
+        "staged": 1792290793.9774501,
+        "load": 1792290794.173162,
+        "published": 1792291457.4314327
+      },
+      "fetch_seconds": 508.1463816165924,
+      "load_publish_seconds": 663.258270740509,
+      "load_timings": {
+        "gather_arrow_seconds": 279.60564751690254,
+        "insert_seconds": 341.8651558046695,
+        "validation_seconds": 40.560942485928535,
+        "total_seconds": 662.4277936201543,
+        "process_read_bytes": 57180536832,
+        "process_write_bytes": 20142374912
+      },
+      "validation": {
+        "rows": 80299093,
+        "cell_id_span": 32768,
+        "ranges": 59,
+        "seconds": 5.385942985070869,
+        "table": "hrrr_20261018022445_c6b18181",
+        "database": "meteogram_native",
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "snapshot_id": "G2DVQ244H9B0DTPYSY80",
+        "samples": 10,
+        "staged_comparison": true,
+        "validated_at": 1792291457.2741802
+      },
+      "source": {
+        "grib_bytes": 6581884530,
+        "cpu_seconds": 933.9824343849998,
+        "map_retries": 0,
+        "process_write_bytes": 65057988608,
+        "seconds": 502.14589443965815
+      },
+      "table": {
+        "rows": 80299093,
+        "bytes": 33450929713,
+        "parts": 204,
+        "partitions": 59
+      }
+    },
+    "gfs": {
+      "phase_times": {
+        "select": 1792290794.3792753,
+        "fetch": 1792290794.386655,
+        "staged": 1792291398.5361204,
+        "load": 1792291458.0953295,
+        "published": 1792291486.40309
+      },
+      "fetch_seconds": 604.1494653224945,
+      "load_publish_seconds": 28.30776047706604,
+      "load_timings": {
+        "gather_arrow_seconds": 11.200074654072523,
+        "insert_seconds": 14.10525687620975,
+        "validation_seconds": 2.562216904014349,
+        "total_seconds": 27.985314487013966,
+        "process_read_bytes": 2607767552,
+        "process_write_bytes": 12288
+      },
+      "validation": {
+        "rows": 3508785,
+        "cell_id_span": 32768,
+        "ranges": 5,
+        "seconds": 0.38000841881148517,
+        "table": "gfs_20261018023314_7630fe39",
+        "database": "meteogram_native",
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+        "samples": 10,
+        "staged_comparison": true,
+        "validated_at": 1792291486.3495831
+      },
+      "source": {
+        "grib_bytes": 17531170214,
+        "cpu_seconds": 766.6331642820004,
+        "map_retries": 0,
+        "process_write_bytes": 20139069440,
+        "seconds": 589.7997598613147
+      },
+      "table": {
+        "rows": 3508785,
+        "bytes": 1749163856,
+        "parts": 9,
+        "partitions": 5
+      }
+    },
+    "aifs": {
+      "phase_times": {
+        "select": 1792291458.131812,
+        "fetch": 1792291458.136354,
+        "staged": 1792291494.1464076,
+        "load": 1792291494.1477191,
+        "published": 1792291496.1640322
+      },
+      "fetch_seconds": 36.010053634643555,
+      "load_publish_seconds": 2.016313076019287,
+      "load_timings": {
+        "gather_arrow_seconds": 0.06883841822855175,
+        "insert_seconds": 1.2377108370419592,
+        "validation_seconds": 0.6291364750359207,
+        "total_seconds": 1.9790771990083158,
+        "process_read_bytes": 516096,
+        "process_write_bytes": 4096
+      },
+      "validation": {
+        "rows": 771435,
+        "cell_id_span": 32768,
+        "ranges": 5,
+        "seconds": 0.13997678481973708,
+        "table": "aifs_20261018024418_bce922a9",
+        "database": "meteogram_native",
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "snapshot_id": "KGX0VQA3TPWZRWK9Q7G0",
+        "samples": 10,
+        "staged_comparison": true,
+        "validated_at": 1792291496.1264157
+      },
+      "source": {
+        "grib_bytes": 850290876,
+        "cpu_seconds": 35.328294044,
+        "map_retries": 0,
+        "process_write_bytes": 982732800,
+        "seconds": 31.45966604189016
+      },
+      "table": {
+        "rows": 771435,
+        "bytes": 101363979,
+        "parts": 11,
+        "partitions": 5
+      }
+    }
+  },
+  "resources_partial": {
+    "samples": 108,
+    "start": 1792290431.8063912,
+    "end": 1792291503.2953196,
+    "min_free_bytes": 236749758464,
+    "min_available_memory_bytes": 26367356928,
+    "max_cpu_percent": 54.2,
+    "peak_inactive_part_bytes": 13632666161
+  },
+  "http": {
+    "requests": 1704,
+    "errors": [],
+    "min_free_bytes": 236748660736,
+    "latency_ms": {
+      "hrrr": {
+        "count": 568,
+        "min": 48.30894712358713,
+        "p50": 62.55291402339935,
+        "p95": 82.649480109103,
+        "p99": 137.10277398349766,
+        "max": 397.03815104439855
+      },
+      "gfs": {
+        "count": 568,
+        "min": 46.133480966091156,
+        "p50": 63.56615945696831,
+        "p95": 82.22830039449035,
+        "p99": 120.22908895509363,
+        "max": 477.6533090043813
+      },
+      "aifs": {
+        "count": 568,
+        "min": 11.17849093861878,
+        "p50": 16.040695481933653,
+        "p95": 27.518607315141697,
+        "p99": 56.8948394735346,
+        "max": 469.94284889660776
+      }
+    }
+  }
+}

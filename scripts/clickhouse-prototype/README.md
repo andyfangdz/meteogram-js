@@ -296,6 +296,19 @@ must all be finite; a missing field/time fails the candidate, rather than fillin
 missing observations or shortening the forecast.
 
 Loading uses 4096-cell batches (1024 for GFS) and never replaces an existing table.
+New tables partition by `(revision_id, intDiv(cell_id, 32768))`, so background
+merges stay within bounded geographic groups. Arrow columns are filled directly
+from staged lead files, avoiding the intermediate combined field tensor.
+Each successful load records gather/Arrow, insertion, validation and total elapsed
+time in its revision's `load-timings.json`.
+
+The next model's source extraction can overlap the current model's load and
+validation. There is at most one extractor and one loader; publication remains
+serial and retains all validation gates. Before overlapping, the updater requires
+the sum of both models' admission budgets plus the 20 GiB reserve. If that check
+fails, it continues sequentially. Use `update --no-prefetch` to force sequential
+execution. A failed prefetch does not prevent other models from updating, and
+shutdown cancels and joins the extractor before releasing the updater lock.
 Validation checks total and bounded unique keys, exact per-lead row counts,
 pressure-array lengths and finite values over the entire table. Deterministic
 sample profiles must exactly match staged Float32 values. Only then is a
@@ -417,6 +430,7 @@ verify the startup dependency graph without starting services. See the dated dep
 ```bash
 "$NATIVE_PYTHON" scripts/clickhouse-prototype/test-serve.py
 TEST_NATIVE_DB=1 "$NATIVE_PYTHON" scripts/clickhouse-prototype/test-pipeline.py
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/test-ingestion.py
 "$NATIVE_PYTHON" scripts/clickhouse-prototype/verify-live-update.py \
   --output "$NATIVE_ROOT/live-update-verification.json"
 
@@ -435,4 +449,15 @@ opt-in DB test uses a clearly labeled tiny synthetic fixture in a uniquely named
 test table, checks exact round trips/corruption rejection and removes that table.
 The live observer uses real HTTP requests while genuine forecasts update; it
 records revisions, latency, errors and profile stability within each revision.
+
+For a full ingestion comparison, `benchmark-ingestion.py --source-root
+"$NATIVE_ROOT" --output /path/to/new/benchmark-directory` reacquires the current
+cycle's pinned source snapshots into a separate catalog. It exercises the same
+overlapped updater and all validation gates, compares 100 complete profiles per
+model with the serving database, and records HTTP availability and phase timings.
+It requires substantial temporary disk space and holds the serving updater lock
+until verification finishes. Metadata selection is pinned rather than timed as
+a live latest-cycle probe. It leaves its candidate tables for inspection; remove
+only those benchmark-owned tables after saving the evidence. The serving catalog
+is never replaced by this experiment.
 A successful all-model transition is distinct from a unit test or synthetic load.

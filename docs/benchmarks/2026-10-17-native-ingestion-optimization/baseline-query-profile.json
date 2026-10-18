@@ -1,0 +1,530 @@
+[
+  {
+    "query_prefix": "INSERT INTO meteogram_native.hrrr_20261018005542_c13c1f40 (`revision_id`, `cell_id`, `lead_hour`, `geopotential_height`, `temperature`, `wind_u`, `wind_v`, `rel",
+    "calls": 401,
+    "seconds": 305.529,
+    "max_ms": 1651,
+    "read_bytes": 7557120,
+    "write_bytes": 33502621696
+  },
+  {
+    "query_prefix": "SELECT count() FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE revision_id != 1 OR length(geopotential_height) != 30 OR arrayExists(x -> NOT isFinite(x",
+    "calls": 1,
+    "seconds": 62.168,
+    "max_ms": 62168,
+    "read_bytes": 33402888192,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(853528, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.763,
+    "max_ms": 763,
+    "read_bytes": 376832,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1607192, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.448,
+    "max_ms": 448,
+    "read_bytes": 98304,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1541656, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.387,
+    "max_ms": 387,
+    "read_bytes": 8192,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(984600, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.356,
+    "max_ms": 356,
+    "read_bytes": 425984,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(951832, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.347,
+    "max_ms": 347,
+    "read_bytes": 94208,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(689688, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.345,
+    "max_ms": 345,
+    "read_bytes": 159744,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1050136, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.329,
+    "max_ms": 329,
+    "read_bytes": 180224,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1312280, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.304,
+    "max_ms": 304,
+    "read_bytes": 151552,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(263704, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.304,
+    "max_ms": 304,
+    "read_bytes": 262144,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(755224, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.294,
+    "max_ms": 294,
+    "read_bytes": 159744,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(558616, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.278,
+    "max_ms": 278,
+    "read_bytes": 245760,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT lead_hour,count() FROM meteogram_native.hrrr_20261018005542_c13c1f40 GROUP BY lead_hour ORDER BY lead_hour\n FORMAT Native",
+    "calls": 1,
+    "seconds": 0.268,
+    "max_ms": 268,
+    "read_bytes": 155648,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1148440, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.25,
+    "max_ms": 250,
+    "read_bytes": 24576,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(722456, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.249,
+    "max_ms": 249,
+    "read_bytes": 118784,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1476120, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.246,
+    "max_ms": 246,
+    "read_bytes": 253952,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1377816, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.244,
+    "max_ms": 244,
+    "read_bytes": 147456,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1443352, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.221,
+    "max_ms": 221,
+    "read_bytes": 143360,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(591384, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.219,
+    "max_ms": 219,
+    "read_bytes": 147456,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT lead_hour, geopotential_height, temperature, wind_u, wind_v, relative_humidity, dew_point_temperature, temperature_2m, dew_point_temperature_2m FROM mete",
+    "calls": 11,
+    "seconds": 0.217,
+    "max_ms": 41,
+    "read_bytes": 8814592,
+    "write_bytes": 405504
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(493080, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.217,
+    "max_ms": 217,
+    "read_bytes": 20480,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(296472, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.198,
+    "max_ms": 198,
+    "read_bytes": 212992,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(919064, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.197,
+    "max_ms": 197,
+    "read_bytes": 208896,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1574424, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.195,
+    "max_ms": 195,
+    "read_bytes": 69632,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(329240, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.194,
+    "max_ms": 194,
+    "read_bytes": 184320,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1017368, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.181,
+    "max_ms": 181,
+    "read_bytes": 126976,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1345048, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.16,
+    "max_ms": 160,
+    "read_bytes": 102400,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(427544, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.149,
+    "max_ms": 149,
+    "read_bytes": 438272,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1279512, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.134,
+    "max_ms": 134,
+    "read_bytes": 65536,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(886296, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.132,
+    "max_ms": 132,
+    "read_bytes": 106496,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(394776, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.118,
+    "max_ms": 118,
+    "read_bytes": 69632,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1181208, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.117,
+    "max_ms": 117,
+    "read_bytes": 90112,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(656920, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.112,
+    "max_ms": 112,
+    "read_bytes": 20480,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1639960, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.112,
+    "max_ms": 112,
+    "read_bytes": 57344,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(624152, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.111,
+    "max_ms": 111,
+    "read_bytes": 65536,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "INSERT INTO meteogram_native.hrrr_20261018005542_c13c1f40 (revision_id, cell_id, lead_hour, geopotential_height, temperature, wind_u, wind_v, relative_humidity,",
+    "calls": 1,
+    "seconds": 0.111,
+    "max_ms": 111,
+    "read_bytes": 450560,
+    "write_bytes": 7016448
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(820760, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.106,
+    "max_ms": 106,
+    "read_bytes": 24576,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(362008, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.101,
+    "max_ms": 101,
+    "read_bytes": 4096,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(198168, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.099,
+    "max_ms": 99,
+    "read_bytes": 8192,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1410584, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.099,
+    "max_ms": 99,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(787992, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.097,
+    "max_ms": 97,
+    "read_bytes": 4096,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1082904, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.097,
+    "max_ms": 97,
+    "read_bytes": 192512,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1672728, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.094,
+    "max_ms": 94,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(525848, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.093,
+    "max_ms": 93,
+    "read_bytes": 24576,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(460312, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.092,
+    "max_ms": 92,
+    "read_bytes": 69632,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1213976, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.092,
+    "max_ms": 92,
+    "read_bytes": 192512,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1246744, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.091,
+    "max_ms": 91,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1508888, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.091,
+    "max_ms": 91,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1115672, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.09,
+    "max_ms": 90,
+    "read_bytes": 69632,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(230936, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.089,
+    "max_ms": 89,
+    "read_bytes": 32768,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1705496, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.088,
+    "max_ms": 88,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1738264, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.084,
+    "max_ms": 84,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1771032, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.084,
+    "max_ms": 84,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(165400, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.083,
+    "max_ms": 83,
+    "read_bytes": 106496,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1803800, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.077,
+    "max_ms": 77,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(132632, 'UInt32')) AND (cell_id ",
+    "calls": 1,
+    "seconds": 0.069,
+    "max_ms": 69,
+    "read_bytes": 225280,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1836568, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.066,
+    "max_ms": 66,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(99864, 'UInt32')) AND (cell_id <",
+    "calls": 1,
+    "seconds": 0.063,
+    "max_ms": 63,
+    "read_bytes": 69632,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(67096, 'UInt32')) AND (cell_id <",
+    "calls": 1,
+    "seconds": 0.062,
+    "max_ms": 62,
+    "read_bytes": 24576,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1560, 'UInt32')) AND (cell_id < ",
+    "calls": 1,
+    "seconds": 0.053,
+    "max_ms": 53,
+    "read_bytes": 430080,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1869336, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.05,
+    "max_ms": 50,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(34328, 'UInt32')) AND (cell_id <",
+    "calls": 1,
+    "seconds": 0.046,
+    "max_ms": 46,
+    "read_bytes": 311296,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "CREATE TABLE meteogram_native.hrrr_20261018005542_c13c1f40 (revision_id UInt32,cell_id UInt32,lead_hour UInt16,geopotential_height Array(Float32) CODEC(ZSTD(1))",
+    "calls": 1,
+    "seconds": 0.012,
+    "max_ms": 12,
+    "read_bytes": 0,
+    "write_bytes": 8192
+  },
+  {
+    "query_prefix": "SELECT count(), uniqExact(tuple(cell_id, lead_hour)) FROM meteogram_native.hrrr_20261018005542_c13c1f40 WHERE (cell_id >= _CAST(1902104, 'UInt32')) AND (cell_id",
+    "calls": 1,
+    "seconds": 0.006,
+    "max_ms": 6,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  },
+  {
+    "query_prefix": "SELECT count() FROM meteogram_native.hrrr_20261018005542_c13c1f40\n FORMAT Native",
+    "calls": 1,
+    "seconds": 0.002,
+    "max_ms": 2,
+    "read_bytes": 0,
+    "write_bytes": 4096
+  }
+]

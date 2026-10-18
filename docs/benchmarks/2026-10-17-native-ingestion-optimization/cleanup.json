@@ -1,0 +1,14 @@
+{
+  "time": 1792291642.7520607,
+  "removed_tables": [
+    "hrrr_20261018022445_c6b18181",
+    "gfs_20261018023314_7630fe39",
+    "aifs_20261018024418_bce922a9"
+  ],
+  "sample_arrays_removed": 98,
+  "sample_array_bytes": 2337812736,
+  "free_bytes_before": 329552793600,
+  "free_bytes_after": 370056392704,
+  "serving_catalog_unchanged": true,
+  "note": "Experiment catalog and metadata retained for evidence; candidate tables and sample arrays removed after verification. Serving current/previous tables preserved."
+}

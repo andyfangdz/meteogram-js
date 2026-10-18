@@ -411,6 +411,23 @@ installation, ownership and host commands. `test-pipeline.py` and
 `verify-live-update.py` verify operational correctness and real update continuity.
 `verify-service.py` checks retained rows/HTTP state and can explicitly exercise a
 database restart; separate child process groups preserve the supervisor.
+The updater can prefetch the next model while loading/validating the current
+model, with one source process and one loader at most. It reserves the combined
+model disk budgets before overlapping; `update --no-prefetch` forces sequential
+work. Cancellation joins the fetch worker before releasing `update.lock`.
+New tables partition by revision and 32,768-cell ID groups to bound merge work;
+the loader fills Arrow column buffers directly and writes `load-timings.json`.
+`test-ingestion.py` checks overlap, disk fallback, failures and cancellation.
+`benchmark-ingestion.py` replays a pinned serving cycle into a separate catalog,
+checks complete profiles against the serving tables, and measures API availability
+without changing the serving catalog. It holds the serving updater lock during
+the experiment; use an empty output directory and explicitly clean up its tables
+after preserving results.
+Measured optimization results and verification are in
+`docs/plans/2026-10-17-native-ingestion-optimization.md`: the pinned full cycle
+took 20m11s, versus the earlier 35m04s live update (which included a rejected
+source candidate). Do not describe the isolated build's HTTP availability check
+as a live publication-lock latency test.
 The app still uses Open-Meteo; native fields are not yet the application's
 meteorologically normalized provider. Public serving is not configured.
 

@@ -1,0 +1,45 @@
+{
+  "started": 1792291643.0662196,
+  "restart_requested": false,
+  "retained_rows": {
+    "current/hrrr": 80299093,
+    "current/gfs": 3508785,
+    "current/aifs": 771435,
+    "previous/hrrr": 80299093,
+    "previous/gfs": 3508785,
+    "previous/aifs": 771435
+  },
+  "query_log_ttl_days": 7,
+  "ended": 1792291643.2623963,
+  "catalog_preserved": true,
+  "schedule_preserved": true,
+  "health": {
+    "models": {
+      "hrrr": {
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "available": true,
+        "age_hours": 8.79,
+        "remaining_hours": 39.21,
+        "max_age_hours": 24,
+        "min_remaining_hours": 12
+      },
+      "gfs": {
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "available": true,
+        "age_hours": 8.79,
+        "remaining_hours": 171.21,
+        "max_age_hours": 48,
+        "min_remaining_hours": 72
+      },
+      "aifs": {
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "available": true,
+        "age_hours": 8.79,
+        "remaining_hours": 171.21,
+        "max_age_hours": 48,
+        "min_remaining_hours": 72
+      }
+    },
+    "native_fields": true
+  }
+}

@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
+import psutil
 import pyarrow as pa
 from benchmark import client, query_profile, validate_keys
 
@@ -199,6 +200,10 @@ def load(root, path, table):
     fields = meta["variables"]
     ground_fields = meta["surface_variables"]
     levels = len(meta["levels"])
+    started = time.perf_counter()
+    timings = {"gather_arrow_seconds": 0.0, "insert_seconds": 0.0}
+    process = psutil.Process()
+    io_before = process.io_counters()
     c = client()
     try:
         c.command(f"CREATE DATABASE IF NOT EXISTS {DATABASE}")
@@ -207,17 +212,36 @@ def load(root, path, table):
         columns += [f"{identifier(v)} Float32 CODEC(ZSTD(1))" for v in ground_fields]
         # No DROP/IF NOT EXISTS: a unique candidate is either new or rejected.
         c.command(
-            f"CREATE TABLE {DATABASE}.{table} ({','.join(columns)}) ENGINE=MergeTree PARTITION BY revision_id ORDER BY (cell_id,lead_hour) SETTINGS index_granularity=256,index_granularity_bytes=0,old_parts_lifetime=60"
+            f"CREATE TABLE {DATABASE}.{table} ({','.join(columns)}) ENGINE=MergeTree PARTITION BY (revision_id,intDiv(cell_id,32768)) ORDER BY (cell_id,lead_hour) SETTINGS index_granularity=256,index_granularity_bytes=0,old_parts_lifetime=60"
         )
         batch = 1024 if meta["model"] == "gfs" else 4096
         for start in range(0, len(ids), batch):
             disk_guard(root)
+            gather_started = time.perf_counter()
             end = min(len(ids), start + batch)
-            block = np.stack([p[start:end] for p in profiles], axis=1)
-            ground = np.stack([p[start:end] for p in surfaces], axis=1)
-            if not np.isfinite(block).all() or not np.isfinite(ground).all():
-                raise ValueError("Non-finite staged values")
             rows = (end - start) * len(leads)
+            # Fill Arrow's final contiguous column buffers directly. Stacking
+            # cell/lead/level/field first and then copying every field doubles
+            # the large intermediate allocation and memory traffic.
+            buffers = [
+                np.empty((end - start, len(leads), levels), dtype=np.float32)
+                for _ in fields
+            ]
+            ground_buffers = [
+                np.empty((end - start, len(leads)), dtype=np.float32)
+                for _ in ground_fields
+            ]
+            for lead_index, (profile, surface) in enumerate(
+                zip(profiles, surfaces, strict=True)
+            ):
+                block = profile[start:end]
+                ground = surface[start:end]
+                if not np.isfinite(block).all() or not np.isfinite(ground).all():
+                    raise ValueError("Non-finite staged values")
+                for field_index, buffer in enumerate(buffers):
+                    buffer[:, lead_index, :] = block[:, :, field_index]
+                for field_index, buffer in enumerate(ground_buffers):
+                    buffer[:, lead_index] = ground[:, field_index]
             data = {
                 "revision_id": pa.array(np.ones(rows, dtype=np.uint32)),
                 "cell_id": pa.array(np.repeat(ids[start:end], len(leads))),
@@ -225,16 +249,20 @@ def load(root, path, table):
                     np.tile(np.asarray(leads, dtype=np.uint16), end - start)
                 ),
             }
-            for i, name in enumerate(fields):
+            for name, buffer in zip(fields, buffers, strict=True):
                 data[name] = pa.FixedSizeListArray.from_arrays(
-                    pa.array(np.ascontiguousarray(block[:, :, :, i]).reshape(-1)),
+                    pa.array(buffer.reshape(-1)),
                     levels,
                 )
-            for i, name in enumerate(ground_fields):
-                data[name] = pa.array(np.ascontiguousarray(ground[:, :, i]).reshape(-1))
+            for name, buffer in zip(ground_fields, ground_buffers, strict=True):
+                data[name] = pa.array(buffer.reshape(-1))
+            timings["gather_arrow_seconds"] += time.perf_counter() - gather_started
+            insert_started = time.perf_counter()
             c.insert_arrow(
                 f"{DATABASE}.{table}", pa.table(data), settings={"max_threads": 2}
             )
+            timings["insert_seconds"] += time.perf_counter() - insert_started
+            del data, buffers, ground_buffers, buffer
             if start % (batch * 10) == 0:
                 print(
                     json.dumps(
@@ -247,7 +275,18 @@ def load(root, path, table):
                     ),
                     flush=True,
                 )
-        return validate(path, table, DATABASE, staged=True)
+        validation_started = time.perf_counter()
+        result = validate(path, table, DATABASE, staged=True)
+        timings.update(
+            validation_seconds=time.perf_counter() - validation_started,
+            total_seconds=time.perf_counter() - started,
+            process_read_bytes=process.io_counters().read_bytes - io_before.read_bytes,
+            process_write_bytes=process.io_counters().write_bytes
+            - io_before.write_bytes,
+            io_scope="Updater process counters; may include reaped prefetched extractor children",
+        )
+        atomic_json(path / "load-timings.json", timings)
+        return result
     finally:
         c.close()
 

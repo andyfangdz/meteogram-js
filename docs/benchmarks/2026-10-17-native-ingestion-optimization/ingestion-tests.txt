@@ -1,0 +1,36 @@
+{"time": 1792290771.5133336, "phase": "prefetch_deferred", "model": "gfs", "reason": "disk_budget"}
+{"time": 1792290771.5135112, "phase": "load", "model": "hrrr"}
+{"time": 1792290771.5136144, "phase": "published", "model": "hrrr", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "hrrr"}
+{"time": 1792290771.513911, "phase": "prefetch_deferred", "model": "aifs", "reason": "disk_budget"}
+{"time": 1792290771.5139792, "phase": "load", "model": "gfs"}
+{"time": 1792290771.5140405, "phase": "published", "model": "gfs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "gfs"}
+{"time": 1792290771.514149, "phase": "load", "model": "aifs"}
+{"time": 1792290771.514212, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792290771.530768, "phase": "load", "model": "hrrr"}
+{"time": 1792290771.5310023, "phase": "published", "model": "hrrr", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "hrrr"}
+{"time": 1792290771.5349348, "phase": "load", "model": "aifs"}
+{"time": 1792290771.5350807, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792290771.547996, "phase": "load", "model": "hrrr"}
+{"time": 1792290771.5482724, "phase": "failed", "model": "hrrr", "revision": "hrrr", "error": "validation failed"}
+{"time": 1792290771.5576851, "phase": "load", "model": "gfs"}
+{"time": 1792290771.557901, "phase": "published", "model": "gfs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "gfs"}
+{"time": 1792290771.5589604, "phase": "load", "model": "aifs"}
+{"time": 1792290771.5590587, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792290771.5687058, "phase": "load", "model": "hrrr"}
+{"time": 1792290771.5689106, "phase": "published", "model": "hrrr", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "hrrr"}
+{"time": 1792290771.5691302, "phase": "load", "model": "gfs"}
+{"time": 1792290771.5692835, "phase": "published", "model": "gfs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "gfs"}
+{"time": 1792290771.5694327, "phase": "load", "model": "aifs"}
+{"time": 1792290771.5694973, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792290771.5796838, "phase": "load", "model": "hrrr"}
+.{"time": 1792290771.5905793, "phase": "select", "model": "hrrr", "revision": "hrrr_20261018023251_91c3f82f", "offset": 1}
+{"time": 1792290771.5912821, "phase": "fetch", "model": "hrrr", "init_time": "2026-10-18T00:00:00"}
+{"time": 1792290771.5914905, "phase": "failed", "model": "hrrr", "revision": "hrrr_20261018023251_91c3f82f", "error": "Missing source values: try an older complete run"}
+{"time": 1792290771.6070347, "phase": "select", "model": "hrrr", "revision": "hrrr_20261018023251_86023f6c", "offset": 2}
+{"time": 1792290771.6074903, "phase": "fetch", "model": "hrrr", "init_time": "2026-10-18T00:00:00"}
+{"time": 1792290771.6076713, "phase": "staged", "model": "hrrr", "revision": "hrrr_20261018023251_86023f6c"}
+.
+----------------------------------------------------------------------
+Ran 6 tests in 0.097s
+
+OK

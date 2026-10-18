@@ -1,5 +1,10 @@
 # Native forecast pipeline on the home server
 
+Follow-up: [measured ingestion optimization](2026-10-17-native-ingestion-optimization.md)
+reduced a pinned full-cycle build to 20m11s through bounded merges, direct column
+buffers and overlapping the next model's acquisition with loading. The original
+deployment measurements below remain the baseline.
+
 Implemented a local native-field ingestion/query service on the same ARM host as
 the [full-resident benchmark](2026-10-17-clickhouse-home-resident.md). The code is
 in the writable checkout at `~/.local/share/meteogram-benchmark/repo`, on

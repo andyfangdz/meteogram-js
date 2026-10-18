@@ -1,0 +1,259 @@
+{
+  "passed": true,
+  "profiles": 42,
+  "requests": 84,
+  "results": [
+    {
+      "model": "hrrr",
+      "lat": 33.6407,
+      "lon": -84.4277,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 47.45,
+      "lon": -122.31,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 25.79,
+      "lon": -80.29,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 39.85,
+      "lon": -104.67,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 49.99870527918694,
+      "lon": -69.94576534654809,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 48.524049168597074,
+      "lon": -102.4793319415922,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 43.99114119412698,
+      "lon": -81.52704979163528,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 43.15266693277076,
+      "lon": -98.79639595814757,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 39.89362973303855,
+      "lon": -81.75112820798618,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 39.46459159423583,
+      "lon": -85.55779666320146,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 31.890303300525144,
+      "lon": -91.88260188550194,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 27.46964227938606,
+      "lon": -111.02563209240567,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 25.532453593526764,
+      "lon": -118.72914174227877,
+      "leads": 49
+    },
+    {
+      "model": "hrrr",
+      "lat": 24.002274157586132,
+      "lon": -88.95581746244328,
+      "leads": 49
+    },
+    {
+      "model": "gfs",
+      "lat": 33.6407,
+      "lon": -84.4277,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 47.45,
+      "lon": -122.31,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 25.79,
+      "lon": -80.29,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 39.85,
+      "lon": -104.67,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 50.0,
+      "lon": -125.0,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 48.0,
+      "lon": -84.5,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 44.5,
+      "lon": -102.25,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 42.75,
+      "lon": -96.25,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 40.5,
+      "lon": -98.5,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 39.75,
+      "lon": -70.25,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 31.25,
+      "lon": -105.75,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 27.25,
+      "lon": -113.75,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 26.75,
+      "lon": -76.0,
+      "leads": 141
+    },
+    {
+      "model": "gfs",
+      "lat": 24.0,
+      "lon": -66.0,
+      "leads": 141
+    },
+    {
+      "model": "aifs",
+      "lat": 33.6407,
+      "lon": -84.4277,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 47.45,
+      "lon": -122.31,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 25.79,
+      "lon": -80.29,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 39.85,
+      "lon": -104.67,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 50.0,
+      "lon": -125.0,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 48.0,
+      "lon": -84.5,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 44.5,
+      "lon": -102.25,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 42.75,
+      "lon": -96.25,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 40.5,
+      "lon": -98.5,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 39.75,
+      "lon": -70.25,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 31.25,
+      "lon": -105.75,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 27.25,
+      "lon": -113.75,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 26.75,
+      "lon": -76.0,
+      "leads": 31
+    },
+    {
+      "model": "aifs",
+      "lat": 24.0,
+      "lon": -66.0,
+      "leads": 31
+    }
+  ]
+}

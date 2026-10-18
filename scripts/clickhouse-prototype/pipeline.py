@@ -7,8 +7,10 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from benchmark import client
@@ -34,19 +36,21 @@ from native_store import (
 )
 
 SCRIPTS = Path(__file__).resolve().parent
+EVENT_LOCK = threading.Lock()
 
 
 def event(root, **value):
     value = {"time": time.time(), **value}
-    print(json.dumps(value), flush=True)
-    path = root / "events.jsonl"
-    if path.exists() and path.stat().st_size > 20 * 1024**2:
-        path.replace(root / "events-previous.jsonl")
-    with path.open("a") as out:
-        out.write(json.dumps(value) + "\n")
+    with EVENT_LOCK:
+        print(json.dumps(value), flush=True)
+        path = root / "events.jsonl"
+        if path.exists() and path.stat().st_size > 20 * 1024**2:
+            path.replace(root / "events-previous.jsonl")
+        with path.open("a") as out:
+            out.write(json.dumps(value) + "\n")
 
 
-def run_fetch(root, path, model, offset, metadata_only=False):
+def run_fetch(root, path, model, offset, metadata_only=False, cancelled=None):
     command = [
         sys.executable,
         "-u",
@@ -77,6 +81,8 @@ def run_fetch(root, path, model, offset, metadata_only=False):
         started = time.monotonic()
         try:
             while child.poll() is None:
+                if cancelled is not None and cancelled.is_set():
+                    raise InterruptedError("Update cancelled")
                 disk_guard(root)
                 if time.monotonic() - started > 2700:
                     raise TimeoutError("Source extraction exceeded 45 minutes")
@@ -205,44 +211,107 @@ def isolate_imports(root):
             )
 
 
-def update(root, models, offsets):
+def prepare(root, model, offsets, cancelled):
+    """Pin and stage one model; publication remains on the updater thread."""
+    errors = []
+    for offset in offsets:
+        if cancelled.is_set():
+            raise InterruptedError("Update cancelled")
+        path, entry = candidate(root, model)
+        try:
+            event(root, phase="select", model=model, revision=path.name, offset=offset)
+            run_fetch(
+                root, path, model, offset, metadata_only=True, cancelled=cancelled
+            )
+            meta = json.loads((path / "metadata.json").read_text())
+            check_metadata(meta)
+            active = catalog(root)["current"].get(model)
+            if active:
+                old = json.loads(
+                    (descriptor_path(root, active) / "metadata.json").read_text()
+                )
+                if timestamp(meta["init_time"]) <= timestamp(old["init_time"]):
+                    if not freshness(old)["available"]:
+                        raise ValueError(
+                            "No newer source and the current forecast is stale"
+                        )
+                    event(
+                        root,
+                        phase="unchanged",
+                        model=model,
+                        init_time=meta["init_time"],
+                    )
+                    discard(root, path)
+                    return None
+            if not freshness(meta)["available"]:
+                raise ValueError("Selected source fails freshness/horizon policy")
+            disk_guard(root, ADMISSION[model])
+            event(root, phase="fetch", model=model, init_time=meta["init_time"])
+            run_fetch(root, path, model, offset, cancelled=cancelled)
+            # Reject incomplete source values here so offset fallback still
+            # happens before the loader and a prefetched candidate is usable.
+            for lead in meta["leads"]:
+                report = json.loads((path / f"lead-{lead:03d}.json").read_text())
+                if not report["fields"] or any(
+                    field["finite"] != field["total"]
+                    for field in report["fields"].values()
+                ):
+                    raise ValueError("Missing source values: try an older complete run")
+            event(root, phase="staged", model=model, revision=path.name)
+            return path, entry, meta
+        except Exception as error:
+            event(
+                root, phase="failed", model=model, revision=path.name, error=str(error)
+            )
+            atomic_json(
+                path / "failed.json", {"time": time.time(), "error": str(error)}
+            )
+            discard(root, path)
+            if cancelled.is_set():
+                raise
+            errors.append(str(error))
+    raise RuntimeError("; ".join(errors))
+
+
+def update(root, models, offsets, prefetch=True):
     collect(root)
     recover(root)
+    started = time.time()
     failures = []
-    for model in models:
-        errors = []
-        for offset in offsets:
-            path, entry = candidate(root, model)
+    cancelled = threading.Event()
+    pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="source-prefetch")
+    future = None
+    try:
+        for index, model in enumerate(models):
             try:
-                event(
-                    root, phase="select", model=model, revision=path.name, offset=offset
+                pending, future = future, None
+                prepared = (
+                    pending.result()
+                    if pending
+                    else prepare(root, model, offsets, cancelled)
                 )
-                run_fetch(root, path, model, offset, metadata_only=True)
-                meta = json.loads((path / "metadata.json").read_text())
-                check_metadata(meta)
-                active = catalog(root)["current"].get(model)
-                if active:
-                    old = json.loads(
-                        (descriptor_path(root, active) / "metadata.json").read_text()
+            except Exception as error:  # noqa: BLE001 -- another model can still advance
+                failures.append({"model": model, "error": str(error)})
+                continue
+            if prepared is None:
+                continue
+            path, entry, meta = prepared
+            # At most one fetch and one loader. Reserve BOTH full model budgets
+            # before overlap; fall back to sequential work on tighter disks.
+            if prefetch and index + 1 < len(models):
+                next_model = models[index + 1]
+                try:
+                    disk_guard(root, ADMISSION[model] + ADMISSION[next_model])
+                except OSError:
+                    event(
+                        root,
+                        phase="prefetch_deferred",
+                        model=next_model,
+                        reason="disk_budget",
                     )
-                    if timestamp(meta["init_time"]) <= timestamp(old["init_time"]):
-                        if not freshness(old)["available"]:
-                            raise ValueError(
-                                "No newer source and the current forecast is stale"
-                            )
-                        event(
-                            root,
-                            phase="unchanged",
-                            model=model,
-                            init_time=meta["init_time"],
-                        )
-                        discard(root, path)
-                        break
-                if not freshness(meta)["available"]:
-                    raise ValueError("Selected source fails freshness/horizon policy")
-                disk_guard(root, ADMISSION[model])
-                event(root, phase="fetch", model=model, init_time=meta["init_time"])
-                run_fetch(root, path, model, offset)
+                else:
+                    future = pool.submit(prepare, root, next_model, offsets, cancelled)
+            try:
                 event(root, phase="load", model=model)
                 load(root, path, entry["table"])
                 state = publish(root, model, entry)
@@ -255,8 +324,7 @@ def update(root, models, offsets):
                     revision=path.name,
                 )
                 clean_workspace(path)
-                break
-            except Exception as error:  # noqa: BLE001 -- preserve serving revision at job boundary
+            except Exception as error:  # noqa: BLE001 -- failed candidates never publish
                 event(
                     root,
                     phase="failed",
@@ -268,11 +336,20 @@ def update(root, models, offsets):
                     path / "failed.json", {"time": time.time(), "error": str(error)}
                 )
                 discard(root, path)
-                errors.append(str(error))
-        else:
-            failures.append({"model": model, "errors": errors})
+                failures.append({"model": model, "error": str(error)})
+    finally:
+        cancelled.set()
+        pool.shutdown(wait=True, cancel_futures=True)
     collect(root)
-    atomic_json(root / "last-update.json", {"time": time.time(), "failures": failures})
+    atomic_json(
+        root / "last-update.json",
+        {
+            "started": started,
+            "time": time.time(),
+            "failures": failures,
+            "prefetch": prefetch,
+        },
+    )
     return 1 if failures else 0
 
 
@@ -289,6 +366,7 @@ def main():
     updater = sub.add_parser("update")
     updater.add_argument("--models", default=",".join(MODELS))
     updater.add_argument("--offsets", default="1,2")
+    updater.add_argument("--no-prefetch", action="store_true")
     rollback = sub.add_parser("rollback")
     rollback.add_argument("--model", choices=MODELS, required=True)
     sub.add_parser("gc")
@@ -336,12 +414,13 @@ def main():
             offsets = [int(value) for value in args.offsets.split(",")]
             if (
                 not models
+                or len(set(models)) != len(models)
                 or any(model not in MODELS for model in models)
                 or not offsets
                 or min(offsets) < 1
             ):
                 p.error("Invalid models or offsets")
-            sys.exit(update(root, models, offsets))
+            sys.exit(update(root, models, offsets, prefetch=not args.no_prefetch))
         elif args.command == "isolate-imports":
             isolate_imports(root)
         elif args.command == "rollback":
