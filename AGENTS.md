@@ -366,9 +366,9 @@ ownership and must not be deleted by production retention.
 | CLI and operational commands | `native/src/main.rs` |
 | Catalog, locks, freshness/schema policy, durable files, legacy NPY/NPZ decoding | `native/src/state.rs` |
 | Indexed checksummed Zstd staging, compressed coordinate index, legacy conversion | `native/src/stage.rs` |
-| Lossless per-field/level/lead palettes, versioned/hash-bound codebook I/O | `native/src/dictionary.rs` |
+| Lossless per-field/level/lead palettes, bounded/versioned/hash-bound codebook I/O | `native/src/dictionary.rs` |
 | UInt128 words packing eight indices, 256-cell Native tiles and complete lane/ID validation | `native/src/packed.rs` |
-| Bounded preparation from an immutable local profile table (diagnostic/offline) | `native/src/prepare.rs` |
+| Raw export, mapwise dictionary preparation and palette sorting (diagnostic/offline) | `native/src/prepare.rs` |
 | Pinned Icechunk manifest preflight, source reads, Zarr codecs, regional gathering | `native/src/source.rs` |
 | Native spherical HRRR projection and nearest-cell resolution | `native/src/grid.rs` |
 | Buffered parallel staging reads/Native insertion and validation/GC | `native/src/store.rs` |
@@ -455,10 +455,22 @@ performance claims require complete measured loads; acquisition and preparation
 remain outside the load clock.
 `prepare-store --raw-only` exports the complete exact Float32 input without
 constructing palettes, and conflicts with `--raw-output`. It retains source
-coverage/shape/finite checks. Preserve the existing 32-million-entry **per-field**
-palette budget, summed across all level/lead slots, separately from UInt16's
-per-slot bound. The full 06Z GFS geopotential field exceeded that budget; do not
-silently raise it or describe its partial export as a completed benchmark.
+coverage/shape/finite checks. The legacy all-slots `FieldBuilder` retains its
+32-million-entry **per-field hash-table** budget; the original full 06Z GFS
+export exceeded it. Preserve that failed measurement as historical evidence.
+`encode-stage` is the bounded raw-staging-to-dictionary path: one spatial map's
+lookup table at a time, sorted exact Float32 palettes, UInt16 v2 frames, no
+quantization. Its raw/output lead matrices are each capped at 1 GiB and cell
+count at two million; reject oversized inputs rather than thinning axes/cells.
+Each palette must fit UInt16. Final codebooks/readers use a separate aggregate
+128-million-entry limit (512 MB Float32 payload) and 65,536 total palette slots.
+Check these limits and overflow **before reader allocation**. This replaces
+the reader's old per-field accounting while retaining bounded compact storage;
+do not restore all-lead lookup tables or remove the budgets. Version/checksum/
+hash/finite checks and exact per-slot database bounds remain mandatory.
+Full GFS codebooks above the old field cap require the new reader before
+publication; the format tag stays `MGDICT01`. Acquisition/scheduling defaults
+remain unchanged; use the explicit preparation/load commands for experiments.
 `sort-stage` losslessly sorts palettes and remaps staged indices for experiments.
 Direct HRRR acquisition sorts each map's palette in Float32 total order. Typed
 UInt16 arrays use indexed staging version 2: spatial slot-major wrapping deltas,
@@ -488,6 +500,12 @@ single-cell API decoding, all-lane corruption tests and legacy profile readers.
 Readers also accept the earlier 8- and 64-cell tile formats. Physical array widths
 include all words per slot; checks must cover every group. Full bound queries
 use an explicit 2 MiB SQL limit.
+Point queries project one eight-lane UInt128 word per slot in ClickHouse before
+returning RowBinary, rather than transferring an entire tile. They also return
+each original array length; verify it against the full stored width before
+decoding the requested lane. Preserve this check even when a malformed unused
+word group would not change the projected profile length. Decode dictionary
+profiles in slot order before building time rows, retaining exact index bounds.
 When every input is UInt16 staging v2, the tile loader decodes complete aligned
 frames directly to their `[block][slot][cell]` UInt16 layout and copies adjacent
 cells into UInt128 words. It does not widen or transpose the whole forecast.
@@ -529,6 +547,13 @@ audits and warm complete-profile queries. Four workers improved median GFS
 5.75→10.24 ms. GFS dictionary preparation hit the unchanged palette budget;
 no full GFS dictionary/tile timing was measured. No binary/default changes were
 deployed for that benchmark.
+The subsequent `docs/plans/2026-10-18-gfs-dictionary.md` records successful full
+GFS conversion through `encode-stage` (310 MiB peak encoder RSS), complete
+638,598,870-value roundtrip proofs, and new reader measurements. Dictionary
+profiles use 863,886,648 bytes including their book (43.9% below raw), with
+10.19 ms warm query p95 versus 8.85 ms raw. Packed tiles use 770,938,895 bytes
+but 27.03 ms p95 even after projection. Keep those tradeoffs separate from the
+earlier failed all-slots-builder experiment. No service defaults were switched.
 Packing completes small cell tiles across all leads to reuse output cache lines.
 Encoded maps are evicted only after both staged arrays are synced and the lead
 checkpoint is durable. Resume prunes any already-checkpointed maps and retains

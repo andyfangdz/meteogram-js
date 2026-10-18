@@ -163,12 +163,40 @@ last tile. Report physical tile rows separately from logical cells and
 cell/lead rows. This grouping reduces storage without averaging spatial cells.
 The reader accepts 8-, 64- and 256-cell tiles, UInt16/UInt32 dictionary profiles,
 and raw-bit profiles. SQL bound queries have an explicit 2 MiB parser limit.
+Point queries return only the requested eight-lane word per slot, plus each
+original stored array length for full-shape validation. They decode that cell's
+lane and walk palettes in slot order before constructing time rows; complete
+tile payloads are not transferred for a single-cell request. Full ingestion and
+standalone validation still inspect every stored lane.
 
 `prepare-store --raw-only` exports a complete local table as exact Float32
 staging without building palettes. It requires a fresh output directory and
-conflicts with `--raw-output`. The normal dictionary exporter retains the
-32-million-entry limit per field; this is a sum across all level/lead slots,
-separate from each slot's UInt16 limit. Preparation is outside loader timing.
+conflicts with `--raw-output`. For large dictionaries, `encode-stage` then
+builds sorted UInt16 palettes one spatial map at a time, releasing each lookup
+table before processing the next map. Input/output lead matrices are each
+bounded to 1 GiB, with at most two million cells. An individual palette must
+fit UInt16; no quantization or truncation is used.
+
+Compact codebooks have an aggregate limit of 128 million Float32 entries
+(512 MB payload) and 65,536 slots across all fields. These bounds also apply
+before allocation in the reader. The legacy `prepare-store` dictionary builder
+retains its stricter 32-million-entry **per-field hash-table** guard and is not
+the bounded path for full GFS. Preparation is outside loader timing.
+
+```sh
+meteogram-native prepare-store --raw-only --source "$PINNED_DESCRIPTOR" \
+  --table "$IMMUTABLE_SOURCE_TABLE" --output "$RAW_STAGE"
+meteogram-native encode-stage --source "$RAW_STAGE" --output "$DICTIONARY_STAGE"
+meteogram-native load --root "$BENCH_ROOT" --data "$DICTIONARY_STAGE" \
+  --table "$FRESH_CANDIDATE_TABLE" --workers 4
+# Add --packed to the load command to measure 256-cell tiles instead of profiles.
+```
+
+Use fresh output directories/tables. The codebook format remains `MGDICT01`,
+but GFS codebooks above the old per-field reader limit require this upgraded
+reader before publication. Existing HRRR/AIFS dictionaries remain readable.
+These explicit commands do not change the acquisition or scheduled-loader
+defaults.
 
 For a UInt16 source of at most 8 GiB, the loader can prefetch all input files
 inside the load clock when `MemAvailable >= input bytes + 12 GiB`; otherwise
@@ -291,3 +319,7 @@ AIFS tiles saved 40.8% of database-plus-codebook storage but increased warm
 profile-query p95 from 5.75 to 10.24 ms. Full GFS dictionary preparation exceeded
 the existing palette budget. These are isolated measurements; the installed
 binary and service defaults were left unchanged.
+The [bounded GFS dictionary follow-up](../docs/plans/2026-10-18-gfs-dictionary.md)
+records a complete successful mapwise conversion at 310 MiB peak encoding RSS,
+full-value roundtrip proofs, 43.9% storage savings for dictionary profiles, and
+the projected point-query reader's measured latency tradeoff.

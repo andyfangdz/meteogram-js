@@ -1,0 +1,24 @@
+{
+  "cells": 24885,
+  "coded_stage_bytes": 560047776,
+  "dictionary": {
+    "encoded_bytes": 169063408,
+    "entries": 61092751,
+    "file": "values.dict.zst",
+    "sha256": "a818327068f2f0de154b31bec99c85f1a33057a09dc6c91744aa5fa91ffbdbbf",
+    "version": 1
+  },
+  "fields": 6,
+  "index_type": "UInt16",
+  "leads": 141,
+  "levels": 30,
+  "logical_rows": 3508785,
+  "lookup_lifetime": "one_spatial_map",
+  "matrix_bytes": 17917200,
+  "max_cells": 2000000,
+  "max_matrix_bytes": 1073741824,
+  "max_palette_entries": 13956,
+  "seconds": 24.770179959,
+  "source_preparation_not_loader_timing": true,
+  "whole_codebook_entry_budget": 128000000
+}

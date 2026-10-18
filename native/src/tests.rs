@@ -436,20 +436,8 @@ fn database_native_roundtrip_and_corruption_gate() {
             .enumerate()
             .all(|(i, v)| v.to_bits() == bits[i % bits.len()]));
         let gfs = root.path().join("experimental_gfs");
-        fs::create_dir(&gfs).unwrap();
-        for entry in fs::read_dir(&coded_dir).unwrap() {
-            let entry = entry.unwrap();
-            let name = entry.file_name();
-            let text = name.to_string_lossy();
-            if text.starts_with("lead-")
-                || text.starts_with("surface-")
-                || text == "cells.bin.zst"
-                || text == "values.dict.zst"
-            {
-                fs::hard_link(entry.path(), gfs.join(&name)).unwrap();
-            }
-        }
-        let mut gfs_metadata = coded_meta.clone();
+        crate::prepare::encode_stage(&raw_only, &gfs).unwrap();
+        let mut gfs_metadata = read_json(gfs.join("metadata.json")).unwrap();
         gfs_metadata["model"] = json!("gfs");
         atomic(gfs.join("metadata.json"), &gfs_metadata).unwrap();
         let gfs_table = format!("{table}_gfs_packed");
@@ -460,6 +448,22 @@ fn database_native_roundtrip_and_corruption_gate() {
             cells.div_ceil(crate::packed::CELLS)
         );
         store::validate(&gfs, &gfs_table, DATABASE, true).unwrap();
+        let gfs_metadata = read_json(gfs.join("metadata.json")).unwrap();
+        let gfs_dictionary = crate::dictionary::Dictionary::load(&gfs, &gfs_metadata)
+            .unwrap()
+            .unwrap();
+        // Removing a different word group still leaves this cell's projected
+        // words intact. The original-length prefix must catch that corruption.
+        db.command(&format!("ALTER TABLE {DATABASE}.{gfs_table} UPDATE temperature=arrayPopBack(temperature) WHERE tile_id=0 SETTINGS mutations_sync=2")).unwrap();
+        assert!(db
+            .profile_with_dictionary(
+                DATABASE,
+                &gfs_table,
+                &gfs_metadata,
+                ids[0],
+                Some(&gfs_dictionary)
+            )
+            .is_err());
         db.command(&format!("DROP TABLE {DATABASE}.{gfs_table} SYNC"))
             .unwrap();
         let book = coded_dir.join("values.dict.zst");

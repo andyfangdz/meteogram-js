@@ -1,0 +1,18 @@
+{
+  "cells": 24885,
+  "coded_stage_bytes": null,
+  "dictionary": null,
+  "dictionary_encode_seconds": 0.341702968,
+  "init_time": "2026-10-18T06:00:00.000000000",
+  "logical_rows": 3508785,
+  "raw_bytes": 2554395480,
+  "raw_only": true,
+  "read_seconds": 6.144848671,
+  "seconds": 15.897018669,
+  "snapshot_id": "C1ZJYPP8XXY76JW0RQSG",
+  "source_database": "meteogram_native",
+  "source_preparation_not_loader_timing": true,
+  "source_table": "bench_gfs_dict_source_20261018_06",
+  "stage_bytes": 1656893197,
+  "stage_seconds": 6.210183893
+}

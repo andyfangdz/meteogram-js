@@ -1,0 +1,38 @@
+{
+  "time": 1792346605.216,
+  "owned_tables": [
+    "bench_gfs_dict_source_20261018_06",
+    "bench_gfs_dict_v2_raw_r3",
+    "bench_gfs_dict_v2_packed_r1",
+    "bench_gfs_dict_v2_profile_r3",
+    "bench_gfs_dict_v2_profile_r2",
+    "bench_gfs_dict_v2_packed_r3",
+    "bench_gfs_dict_v2_raw_r2",
+    "bench_gfs_dict_v2_profile_r1",
+    "bench_gfs_dict_v2_raw_r1",
+    "bench_gfs_dict_v2_packed_r2",
+    "bench_gfs_dict_raw_r3",
+    "bench_gfs_dict_packed_r1",
+    "bench_gfs_dict_profile_r3",
+    "bench_gfs_dict_profile_r2",
+    "bench_gfs_dict_packed_r3",
+    "bench_gfs_dict_raw_r2",
+    "bench_gfs_dict_profile_r1",
+    "bench_gfs_dict_raw_r1",
+    "bench_gfs_dict_packed_r2"
+  ],
+  "protected_tables": [
+    "meteogram_bench.aifs_256_zstd",
+    "meteogram_bench.gfs_256_zstd",
+    "meteogram_bench.hrrr_256_zstd",
+    "meteogram_native.aifs_20261018012917_143ac186",
+    "meteogram_native.aifs_20261018074734_12c3fcfe",
+    "meteogram_native.aifs_20261018135757_414d1e3b",
+    "meteogram_native.gfs_20261018011859_19e2797e",
+    "meteogram_native.gfs_20261018072959_02449bca",
+    "meteogram_native.gfs_20261018134756_7d24c140",
+    "meteogram_native.hrrr_20261018005542_c13c1f40",
+    "meteogram_native.hrrr_20261018073354_ac063ce1",
+    "meteogram_native.hrrr_20261018134756_c90afbd3"
+  ]
+}

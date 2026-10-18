@@ -133,7 +133,19 @@ impl Db {
             None
         };
         let profile = m["storage"]["layout"] == "cell_profile_v1" || tiled;
-        let cols = fs.join(",");
+        let groups = if tiled {
+            tile_cells / crate::packed::LANES
+        } else {
+            1
+        };
+        let cols = if let Some(point) = point {
+            let group = (point % tile_cells) / crate::packed::LANES;
+            // Return only this cell's eight-lane word per slot, while retaining
+            // each original array length so malformed tiles still fail closed.
+            fs.iter().map(|f|format!("length({f}),arrayMap(i -> {f}[i],range(toUInt64({}),length({f})+toUInt64(1),toUInt64({groups})))",group+1)).collect::<Vec<_>>().join(",")
+        } else {
+            fs.join(",")
+        };
         let q = if let Some(point) = point {
             format!("SELECT cell_ids,{cols} FROM {database}.{table} PREWHERE tile_id={} LIMIT 2 FORMAT RowBinary",point/tile_cells)
         } else if profile {
@@ -149,6 +161,8 @@ impl Db {
         let nl = m["levels"].as_array().context("Missing levels")?.len();
         let leads = m["leads"].as_array().context("Missing leads")?;
         let nt = leads.len();
+        let pressure_width = nl.checked_mul(nt).context("Profile width overflow")?;
+        let level_lead = m["storage"]["axes"] == "level_lead";
         let bit = m["storage"]["encoding"] == "float32_bits";
         let mut rows = vec![];
         if profile {
@@ -164,12 +178,28 @@ impl Db {
                 0
             };
             let mut arrays = vec![];
-            for _ in &fs {
-                arrays.push(if tiled {
-                    packed_array(&mut c, lane, tile_cells / crate::packed::LANES)?
+            for (f, _) in fs.iter().enumerate() {
+                let width = if f < nf { pressure_width } else { nt };
+                let mut values = if tiled {
+                    let mut length = [0u8; 8];
+                    c.read_exact(&mut length)?;
+                    anyhow::ensure!(
+                        u64::from_le_bytes(length) == (width * groups) as u64,
+                        "Malformed original tile length"
+                    );
+                    packed_array(&mut c, lane % crate::packed::LANES, 1)?
                 } else {
                     array(&mut c, crate::dictionary::index_bytes(m)?)?
-                });
+                };
+                anyhow::ensure!(values.len() == width, "Malformed profile length");
+                if let Some(dictionary) = dictionary {
+                    // Walk slot metadata sequentially before constructing JSON;
+                    // do not interleave sparse palette lookups with row building.
+                    for (slot, value) in values.iter_mut().enumerate() {
+                        *value = dictionary.value(f, slot, *value)?;
+                    }
+                }
+                arrays.push(values);
             }
             if c.position() != bytes.len() as u64 {
                 bail!("Duplicate cell profile");
@@ -177,40 +207,26 @@ impl Db {
             for (t, lead) in leads.iter().enumerate() {
                 let mut row = vec![lead.clone()];
                 for (f, a) in arrays.iter().enumerate() {
-                    let width = if f < nf { nl * nt } else { nt };
-                    if a.len() != width {
-                        bail!("Malformed profile length");
-                    }
-                    let value = |i: usize| -> Result<Value> {
-                        let bits = if let Some(dictionary) = dictionary {
-                            dictionary.value(f, i, a[i])?
-                        } else {
-                            a[i]
-                        };
+                    let value = |i: usize| -> Value {
+                        let bits = a[i];
                         let v = if bit {
                             f32::from_bits(bits)
                         } else {
                             f32::from_le_bytes(bits.to_le_bytes())
                         };
                         if v.is_finite() {
-                            Ok(json!(v as f64))
+                            json!(v as f64)
                         } else {
-                            Ok(Value::Null)
+                            Value::Null
                         }
                     };
                     if f < nf {
                         let vals = (0..nl)
-                            .map(|l| {
-                                value(if m["storage"]["axes"] == "level_lead" {
-                                    l * nt + t
-                                } else {
-                                    t * nl + l
-                                })
-                            })
-                            .collect::<Result<Vec<_>>>()?;
+                            .map(|l| value(if level_lead { l * nt + t } else { t * nl + l }))
+                            .collect::<Vec<_>>();
                         row.push(Value::Array(vals));
                     } else {
-                        row.push(value(t)?);
+                        row.push(value(t));
                     }
                 }
                 rows.push(Value::Array(row));

@@ -1,0 +1,12 @@
+{"database":"meteogram_bench","table":"aifs_256_zstd","rows":771435}
+{"database":"meteogram_bench","table":"gfs_256_zstd","rows":3508785}
+{"database":"meteogram_bench","table":"hrrr_256_zstd","rows":80299093}
+{"database":"meteogram_native","table":"aifs_20261018012917_143ac186","rows":771435}
+{"database":"meteogram_native","table":"aifs_20261018074734_12c3fcfe","rows":24885}
+{"database":"meteogram_native","table":"aifs_20261018135757_414d1e3b","rows":24885}
+{"database":"meteogram_native","table":"gfs_20261018011859_19e2797e","rows":3508785}
+{"database":"meteogram_native","table":"gfs_20261018072959_02449bca","rows":24885}
+{"database":"meteogram_native","table":"gfs_20261018134756_7d24c140","rows":24885}
+{"database":"meteogram_native","table":"hrrr_20261018005542_c13c1f40","rows":80299093}
+{"database":"meteogram_native","table":"hrrr_20261018073354_ac063ce1","rows":1638757}
+{"database":"meteogram_native","table":"hrrr_20261018134756_c90afbd3","rows":1638757}

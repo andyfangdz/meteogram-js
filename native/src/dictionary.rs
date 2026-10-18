@@ -7,7 +7,7 @@ use std::{
     collections::HashMap,
     fs::{self, File},
     hash::{BuildHasherDefault, Hasher},
-    io::{BufReader, Read, Write},
+    io::{BufReader, BufWriter, Read, Write},
     os::unix::fs::FileExt,
     path::Path,
 };
@@ -15,6 +15,21 @@ use std::{
 pub const ENCODING: &str = "float32_dictionary_v1";
 const FILE: &str = "values.dict.zst";
 const MAX_FIELD_ENTRIES: usize = 32_000_000;
+// Lookup builders retain hash tables as well as values. Finished codebooks do
+// not: bound their aggregate Float32 payload to 512 MB across every field.
+pub(crate) const MAX_DICTIONARY_ENTRIES: usize = 128_000_000;
+const MAX_DICTIONARY_SLOTS: usize = 65_536;
+pub(crate) fn count_entries(total: &mut usize, added: usize) -> Result<()> {
+    let next = total
+        .checked_add(added)
+        .context("Dictionary entry overflow")?;
+    anyhow::ensure!(
+        next <= MAX_DICTIONARY_ENTRIES,
+        "Dictionary exceeds bounded whole-codebook budget"
+    );
+    *total = next;
+    Ok(())
+}
 #[derive(Default)]
 pub struct WordHasher(u64);
 impl Hasher for WordHasher {
@@ -120,9 +135,19 @@ pub fn widths(m: &Value) -> Result<Vec<usize>> {
     let nl = m["levels"].as_array().context("Levels")?.len();
     let nf = m["variables"].as_array().context("Variables")?.len();
     anyhow::ensure!(nt > 0 && nl > 0 && nf > 0, "Empty dictionary axes");
-    Ok((0..fields(m).len())
-        .map(|f| if f < nf { nl * nt } else { nt })
-        .collect())
+    let pressure_width = nl.checked_mul(nt).context("Dictionary width overflow")?;
+    let widths: Vec<_> = (0..fields(m).len())
+        .map(|f| if f < nf { pressure_width } else { nt })
+        .collect();
+    let slots = widths
+        .iter()
+        .try_fold(0usize, |sum, n| sum.checked_add(*n))
+        .context("Dictionary slot overflow")?;
+    anyhow::ensure!(
+        slots <= MAX_DICTIONARY_SLOTS,
+        "Dictionary exceeds bounded slot budget"
+    );
+    Ok(widths)
 }
 pub fn encoded(m: &Value) -> bool {
     m["storage"]["encoding"] == ENCODING
@@ -216,6 +241,8 @@ impl Dictionary {
         let tmp = dir.join("values.dict.zst.tmp");
         let mut encoder = zstd::stream::write::Encoder::new(File::create(&tmp)?, 1)?;
         encoder.include_checksum(true)?;
+        // Batch the small header/word writes before entering the Zstd encoder.
+        let mut encoder = BufWriter::with_capacity(65536, encoder);
         encoder.write_all(b"MGDICT01")?;
         encoder.write_all(&(self.fields.len() as u32).to_le_bytes())?;
         for field in &self.fields {
@@ -227,7 +254,11 @@ impl Dictionary {
                 }
             }
         }
-        encoder.finish()?.sync_all()?;
+        encoder
+            .into_inner()
+            .map_err(|e| e.into_error())?
+            .finish()?
+            .sync_all()?;
         fs::rename(tmp, dir.join(FILE))?;
         File::open(dir)?.sync_all()?;
         Ok(
@@ -241,13 +272,11 @@ impl Dictionary {
             "Dictionary field count"
         );
         let nc = m["cells"].as_u64().context("Cells")? as usize;
+        let mut entries = 0;
         for (field, width) in self.fields.iter().zip(expected) {
-            anyhow::ensure!(
-                field.len() == width
-                    && field.iter().map(Vec::len).sum::<usize>() <= MAX_FIELD_ENTRIES,
-                "Dictionary width/budget"
-            );
+            anyhow::ensure!(field.len() == width, "Dictionary width");
             for palette in field {
+                count_entries(&mut entries, palette.len())?;
                 anyhow::ensure!(
                     !palette.is_empty()
                         && palette.len() <= nc
@@ -289,20 +318,17 @@ impl Dictionary {
         );
         let nc = m["cells"].as_u64().context("Cells")? as usize;
         let mut result = Vec::new();
+        let mut entries = 0;
         for width in expected {
             anyhow::ensure!(
                 u32read(&mut reader)? as usize == width,
                 "Dictionary field width"
             );
             let mut field = Vec::new();
-            let mut entries = 0;
             for _ in 0..width {
                 let n = u32read(&mut reader)? as usize;
-                entries += n;
-                anyhow::ensure!(
-                    n > 0 && n <= nc && entries <= MAX_FIELD_ENTRIES,
-                    "Dictionary palette/budget"
-                );
+                count_entries(&mut entries, n)?;
+                anyhow::ensure!(n > 0 && n <= nc, "Dictionary palette/budget");
                 let mut palette = Vec::with_capacity(n);
                 for _ in 0..n {
                     palette.push(u32read(&mut reader)?);
@@ -358,6 +384,36 @@ pub fn inspect(dir: &Path) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn compact_book_budget_is_global_and_checked_before_allocation() -> Result<()> {
+        let mut entries = 0;
+        // A compact field can exceed the hash-builder budget without retaining
+        // its lookup tables. The aggregate codebook still has a strict cap.
+        count_entries(&mut entries, MAX_FIELD_ENTRIES + 1)?;
+        let remaining = MAX_DICTIONARY_ENTRIES - entries;
+        count_entries(&mut entries, remaining)?;
+        assert!(count_entries(&mut entries, 1).is_err());
+        assert_eq!(entries, MAX_DICTIONARY_ENTRIES);
+        let mut overflow = usize::MAX;
+        assert!(count_entries(&mut overflow, 1).is_err());
+        let too_many_slots = json!({"leads":vec![0;65536],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
+        assert!(widths(&too_many_slots).is_err());
+        let temp = tempfile::tempdir()?;
+        let path = temp.path().join(FILE);
+        let mut encoder = zstd::stream::write::Encoder::new(File::create(&path)?, 1)?;
+        encoder.include_checksum(true)?;
+        encoder.write_all(b"MGDICT01")?;
+        encoder.write_all(&3u32.to_le_bytes())?;
+        encoder.write_all(&1u32.to_le_bytes())?;
+        encoder.write_all(&((MAX_DICTIONARY_ENTRIES + 1) as u32).to_le_bytes())?;
+        encoder.finish()?;
+        let m = json!({"cells":MAX_DICTIONARY_ENTRIES+1,"leads":[0],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"],"staging":{"encoding":ENCODING,"dictionary":{"file":FILE,"version":1,"sha256":file_hash(&path)?}}});
+        let error = Dictionary::load(temp.path(), &m)
+            .err()
+            .context("Budget was not rejected")?;
+        assert!(error.to_string().contains("whole-codebook budget"));
+        Ok(())
+    }
     #[test]
     fn sorted_spatial_codes_preserve_zero_signs_subnormals_and_extremes() -> Result<()> {
         let bits = [

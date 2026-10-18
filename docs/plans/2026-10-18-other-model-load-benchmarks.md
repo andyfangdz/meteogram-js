@@ -182,3 +182,8 @@ The benchmark did not restart or replace the running service. The new
 `load --packed` and `prepare-store --raw-only` options are explicit investigation
 tools; normal GFS/AIFS acquisition and scheduled loading still use raw bits and
 one load worker.
+
+The subsequent [bounded GFS dictionary implementation](2026-10-18-gfs-dictionary.md)
+resolves the preparation limit with mapwise encoding and a separate compact-book
+budget. It records complete successful GFS dictionary/profile/tile measurements;
+the failed preparation above remains the result of this earlier experiment.

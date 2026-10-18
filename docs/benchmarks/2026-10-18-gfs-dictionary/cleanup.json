@@ -1,0 +1,10 @@
+{
+  "time": 1792346609.746,
+  "dropped_owned_tables": 19,
+  "removed_weather_files": 3384,
+  "deduplicated_codebooks": 6,
+  "remaining_experiment_tables": 0,
+  "protected_tables": 12,
+  "protected_rows_unchanged": true,
+  "retained_codebook_sha256": "a818327068f2f0de154b31bec99c85f1a33057a09dc6c91744aa5fa91ffbdbbf"
+}

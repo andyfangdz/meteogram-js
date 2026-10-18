@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "compared_layouts": [
+    "profile",
+    "packed"
+  ],
+  "files_per_layout": 565,
+  "weather_payloads_per_layout": 282,
+  "weather_index_files_per_layout": 282,
+  "coordinate_files_per_layout": 1,
+  "cells": 24885,
+  "leads": 141,
+  "levels": 30,
+  "pressure_fields": 6,
+  "surface_fields": 2,
+  "float32_values_per_layout": 638598870,
+  "mismatches": 0,
+  "comparison": "SHA-256 equality of every deterministic Float32 stage payload/index and native coordinate file recovered from each complete loaded dictionary table"
+}

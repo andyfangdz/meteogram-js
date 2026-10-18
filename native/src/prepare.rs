@@ -15,6 +15,121 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
     time::Instant,
 };
+
+/// Unlike FieldBuilder, this retains only one spatial map's lookup table.
+/// Raw input and output matrices are each limited to 1 GiB, independently of
+/// the 512 MB compact codebook limit. No forecast axis or native cell is cut.
+pub fn encode_stage(source: &Path, out: &Path) -> Result<Value> {
+    anyhow::ensure!(!out.exists(), "Preparation needs a fresh output directory");
+    let started = Instant::now();
+    let mut m = read_json(source.join("metadata.json"))?;
+    anyhow::ensure!(
+        !crate::dictionary::staged(&m) && !crate::dictionary::encoded(&m),
+        "Mapwise encoding requires raw Float32 staging"
+    );
+    let nc = usize::try_from(m["cells"].as_u64().context("Cells")?)?;
+    let nl = m["levels"].as_array().context("Levels")?.len();
+    let nf = m["variables"].as_array().context("Fields")?.len();
+    let leads = m["leads"].as_array().context("Leads")?.clone();
+    let nt = leads.len();
+    anyhow::ensure!(
+        nc > 0
+            && nc <= 2_000_000
+            && nl > 0
+            && nf > 0
+            && nt > 0
+            && m["surface_variables"].as_array().map(Vec::len) == Some(2),
+        "Mapwise staging axes/cell budget"
+    );
+    let stride = nl.checked_mul(nf).context("Staging stride overflow")?;
+    let matrix_bytes = nc
+        .checked_mul(stride.max(2))
+        .and_then(|n| n.checked_mul(4))
+        .context("Staging matrix overflow")?;
+    anyhow::ensure!(
+        matrix_bytes <= 1 << 30,
+        "Mapwise staging matrix exceeds 1 GiB budget"
+    );
+    let cells = stage::load_cells(source)?;
+    let ids = &cells["cell_id"].bytes;
+    anyhow::ensure!(
+        ids.len() == nc * 4
+            && ids
+                .as_chunks::<4>()
+                .0
+                .windows(2)
+                .all(|p| u32::from_le_bytes(p[0]) < u32::from_le_bytes(p[1])),
+        "Source cell order/coverage"
+    );
+    let mut palettes: Vec<Vec<Vec<u32>>> = crate::dictionary::widths(&m)?
+        .into_iter()
+        .map(|width| vec![Vec::new(); width])
+        .collect();
+    fs::create_dir_all(out)?;
+    stage::copy_cells(source, out)?;
+    m.as_object_mut()
+        .context("Metadata object")?
+        .remove("storage");
+    m["staging"] =
+        json!({"encoding":ENCODING,"palette_order":"float32_total_order","complete":false});
+    atomic(out.join("metadata.json"), &m)?;
+    let mut entries = 0;
+    let mut encoded_bytes = 0u64;
+    let mut max_palette = 0;
+    for (t, lead) in leads.iter().enumerate() {
+        disk_guard(out, 0)?;
+        let lead = lead.as_u64().context("Invalid lead")?;
+        for (prefix, shape, width) in [
+            ("lead", vec![nc, nl, nf], stride),
+            ("surface", vec![nc, 2], 2),
+        ] {
+            let name = format!("{prefix}-{lead:03}.npy");
+            let input = stage::Array::open_as(&source.join(&name), &shape, "float32_le")?;
+            let mut values = vec![0f32; nc * width];
+            input.read_into(0, &mut values)?;
+            let mut codes = vec![0u32; values.len()];
+            for slot in 0..width {
+                let spatial = (0..nc).map(|cell| values[cell * width + slot]).collect();
+                let (map_codes, palette) = crate::dictionary::encode_spatial(spatial)?;
+                anyhow::ensure!(
+                    palette.len() <= 65536,
+                    "Spatial palette exceeds UInt16; retain raw storage"
+                );
+                crate::dictionary::count_entries(&mut entries, palette.len())?;
+                max_palette = max_palette.max(palette.len());
+                for (cell, code) in map_codes.into_iter().enumerate() {
+                    codes[cell * width + slot] = code.to_bits();
+                }
+                let (f, position) = if prefix == "lead" {
+                    (slot % nf, (slot / nf) * nt + t)
+                } else {
+                    (nf + slot, t)
+                };
+                palettes[f][position] = palette;
+            }
+            drop(values);
+            let mut writer = BlockWriter::new(&out.join(&name), &shape, "uint16_le")?;
+            for chunk in codes.chunks(stage::BLOCK_CELLS * width) {
+                writer.append(chunk)?;
+            }
+            encoded_bytes += writer.finish()?["encoded_bytes"]
+                .as_u64()
+                .context("Stage bytes")?;
+        }
+        println!(
+            "{}",
+            json!({"phase":"mapwise_dictionary","lead":lead,"leads_complete":t+1,"leads":nt,"entries":entries,"seconds":started.elapsed().as_secs_f64()})
+        );
+    }
+    let info = Dictionary::new(palettes).save(out, &m)?;
+    m["staging"]["dictionary"] = info.clone();
+    m["staging"]["complete"] = json!(true);
+    atomic(out.join("metadata.json"), &m)?;
+    let report = json!({"cells":nc,"leads":nt,"levels":nl,"fields":nf,"logical_rows":nc*nt,"dictionary":info,"coded_stage_bytes":encoded_bytes,"index_type":"UInt16","max_palette_entries":max_palette,"whole_codebook_entry_budget":crate::dictionary::MAX_DICTIONARY_ENTRIES,"matrix_bytes":matrix_bytes,"max_matrix_bytes":1u64<<30,"max_cells":2_000_000,"lookup_lifetime":"one_spatial_map","seconds":started.elapsed().as_secs_f64(),"source_preparation_not_loader_timing":true});
+    atomic(out.join("preparation.json"), &report)?;
+    Ok(report)
+}
+
 pub fn sorted_stage(source: &Path, out: &Path) -> Result<Value> {
     anyhow::ensure!(!out.exists(), "Preparation needs a fresh output directory");
     let started = Instant::now();
@@ -373,4 +488,110 @@ pub fn from_store_with_mode(
     let report = json!({"source_database":database,"source_table":table,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"],"cells":nc,"logical_rows":nc*nt,"raw_bytes":raw_bytes,"stage_bytes":encoded_bytes,"coded_stage_bytes":if raw_only {None}else{Some(encoded_bytes)},"raw_only":raw_only,"dictionary":info,"read_seconds":read_seconds,"dictionary_encode_seconds":encode_seconds,"stage_seconds":stage_seconds,"seconds":started.elapsed().as_secs_f64(),"source_preparation_not_loader_timing":true});
     atomic(out.join("preparation.json"), &report)?;
     Ok(report)
+}
+
+#[cfg(test)]
+mod mapwise_tests {
+    use super::*;
+    #[test]
+    fn mapwise_codes_preserve_every_bit_axis_and_partial_frame() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        let raw = temp.path().join("raw");
+        fs::create_dir(&raw)?;
+        let nc = 4099;
+        let ids: Vec<_> = (0..nc as u32).map(|c| c * 3 + 11).collect();
+        stage::save_cells(&raw, &ids, &vec![41.; nc], &vec![-74.; nc])?;
+        let m = json!({"model":"gfs","cells":nc,"leads":[0,3,9],"levels":[1000,500],"variables":["temperature","wind_u"],"surface_variables":["temperature_2m","dew_point_temperature_2m"],"staging":{"encoding":"float32_bits"}});
+        atomic(raw.join("metadata.json"), &m)?;
+        let bits = [
+            0, 0x80000000, 1, 0x80000001, 0x7f7fffff, 0xff7fffff, 0x3f812345,
+        ];
+        for (t, lead) in [0, 3, 9].iter().enumerate() {
+            for (prefix, shape, width) in [("lead", vec![nc, 2, 2], 4), ("surface", vec![nc, 2], 2)]
+            {
+                let values: Vec<_> = (0..nc * width)
+                    .map(|i| f32::from_bits(bits[(i + t) % bits.len()]))
+                    .collect();
+                stage::write(
+                    &raw.join(format!("{prefix}-{lead:03}.npy")),
+                    &shape,
+                    &values,
+                )?;
+            }
+        }
+        let coded = temp.path().join("coded");
+        let report = encode_stage(&raw, &coded)?;
+        assert_eq!(report["lookup_lifetime"], "one_spatial_map");
+        let meta = read_json(coded.join("metadata.json"))?;
+        assert_eq!(meta["staging"]["complete"], true);
+        let dictionary = Dictionary::load(&coded, &meta)?.context("Missing dictionary")?;
+        for field in &dictionary.fields {
+            for palette in field {
+                assert!(palette.windows(2).all(|v| f32::from_bits(v[0])
+                    .total_cmp(&f32::from_bits(v[1]))
+                    .is_lt()));
+            }
+        }
+        for (t, lead) in [0, 3, 9].iter().enumerate() {
+            for (prefix, shape, width) in [("lead", vec![nc, 2, 2], 4), ("surface", vec![nc, 2], 2)]
+            {
+                let file = stage::Array::open_as(
+                    &coded.join(format!("{prefix}-{lead:03}.npy")),
+                    &shape,
+                    "uint32_le",
+                )?;
+                assert!(file.short_codes());
+                let mut codes = vec![0f32; nc * width];
+                file.read_into(0, &mut codes)?;
+                for (i, code) in codes.iter().enumerate() {
+                    let slot = i % width;
+                    let (f, position) = if prefix == "lead" {
+                        (slot % 2, (slot / 2) * 3 + t)
+                    } else {
+                        (2 + slot, t)
+                    };
+                    assert_eq!(
+                        dictionary.value(f, position, code.to_bits())?,
+                        bits[(i + t) % bits.len()]
+                    );
+                }
+            }
+        }
+        assert_eq!(
+            stage::load_cells(&raw)?["cell_id"].bytes,
+            stage::load_cells(&coded)?["cell_id"].bytes
+        );
+        Ok(())
+    }
+    #[test]
+    fn mapwise_rejects_nonfinite_wide_palettes_and_oversized_matrices() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        for (name, nc) in [("nonfinite", 3), ("wide", 65537)] {
+            let raw = temp.path().join(name);
+            fs::create_dir(&raw)?;
+            let ids: Vec<_> = (0..nc as u32).collect();
+            stage::save_cells(&raw, &ids, &vec![41.; nc], &vec![-74.; nc])?;
+            let m = json!({"cells":nc,"leads":[0],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
+            atomic(raw.join("metadata.json"), &m)?;
+            let mut values: Vec<_> = (1..=nc as u32).map(f32::from_bits).collect();
+            if name == "nonfinite" {
+                values[1] = f32::NAN;
+            }
+            stage::write(&raw.join("lead-000.npy"), &[nc, 1, 1], &values)?;
+            let out = temp.path().join(format!("{name}_out"));
+            assert!(encode_stage(&raw, &out).is_err());
+            assert_eq!(
+                read_json(out.join("metadata.json"))?["staging"]["complete"],
+                false
+            );
+            assert!(!out.join("values.dict.zst").exists());
+        }
+        let raw = temp.path().join("oversized");
+        fs::create_dir(&raw)?;
+        let m = json!({"cells":2_000_000,"leads":[0],"levels":vec![1000;1024],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
+        atomic(raw.join("metadata.json"), &m)?;
+        let error = encode_stage(&raw, &temp.path().join("oversized_out")).unwrap_err();
+        assert!(error.to_string().contains("matrix exceeds"));
+        Ok(())
+    }
 }

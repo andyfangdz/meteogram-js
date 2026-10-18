@@ -28,6 +28,13 @@ struct Cli {
 }
 #[derive(Subcommand)]
 enum Cmd {
+    /// Build exact UInt16 palettes one spatial map at a time from raw staging.
+    EncodeStage {
+        #[arg(long)]
+        source: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     SortStage {
         #[arg(long)]
         source: PathBuf,
@@ -250,6 +257,13 @@ fn output(value: &serde_json::Value, path: Option<PathBuf>) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     match Cli::parse().command {
+        Cmd::EncodeStage {
+            source,
+            output: target,
+        } => output(
+            &tokio::task::spawn_blocking(move || prepare::encode_stage(&source, &target)).await??,
+            None,
+        )?,
         Cmd::SortStage {
             source,
             output: target,
