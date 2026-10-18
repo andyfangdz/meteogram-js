@@ -1,0 +1,817 @@
+{
+  "models": {
+    "hrrr": {
+      "snapshot_id": "MDGYCWNK87AP9GNYDSDG",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "cells": 1638757,
+      "times": 49,
+      "levels": 30,
+      "rows": 80299093,
+      "source_open_seconds": 2.0018388291355222,
+      "seconds": 488.2552263382822,
+      "cpu_seconds": 952.471515746,
+      "grib_bytes": 6586336566,
+      "chunks": 8918,
+      "decode_seconds": 209.9821657682769,
+      "network_rx_bytes": 6860261286,
+      "staged_value_bytes": 58457739704,
+      "process_write_bytes": 65062408192,
+      "map_retries": 0,
+      "source_peak_rss_bytes": 3846778880,
+      "source_cache_downloaded_bytes": 6586336566,
+      "fields": {
+        "geopotential_height": {
+          "finite": 2408972790,
+          "total": 2408972790,
+          "max_float32_error": 0.00048828125
+        },
+        "temperature": {
+          "finite": 2408972790,
+          "total": 2408972790,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "wind_u": {
+          "finite": 2408972790,
+          "total": 2408972790,
+          "max_float32_error": 1.9073486328125e-06
+        },
+        "wind_v": {
+          "finite": 2408972790,
+          "total": 2408972790,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "relative_humidity": {
+          "finite": 2408972790,
+          "total": 2408972790,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "dew_point_temperature": {
+          "finite": 2408972790,
+          "total": 2408972790,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "temperature_2m": {
+          "finite": 80299093,
+          "total": 80299093,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "dew_point_temperature_2m": {
+          "finite": 80299093,
+          "total": 80299093,
+          "max_float32_error": 1.5258789289873675e-06
+        }
+      },
+      "resident_storage": {
+        "rows": 80299093,
+        "bytes_on_disk": 33597227056,
+        "data_compressed_bytes": 33589812583,
+        "data_uncompressed_bytes": 63115087098,
+        "marks_bytes": 6897928,
+        "active_parts": 5
+      },
+      "ingestion": {
+        "seconds": 664.6675066170283,
+        "transpose_seconds": 313.3563198118936,
+        "arrow_construction_seconds": 19.101942453999072,
+        "insert_call_seconds": 332.1414446630515,
+        "rows_per_second": 120810.92004737817,
+        "arrow_bytes": 59260730634,
+        "batches": 401,
+        "server_cpu_seconds": 1289.71,
+        "client_cpu_seconds": 219.468518921,
+        "server_write_bytes": 109491531776,
+        "sampled_server_peak_rss_bytes": 2170376192,
+        "queries_during_ingest_ms": {
+          "count": 10293,
+          "min": 7.995730964466929,
+          "p50": 13.025033986195922,
+          "p95": 17.0044775120914,
+          "p99": 41.53649813495576,
+          "max": 1018.6436029616743
+        },
+        "queries_during_ingest_errors": [],
+        "merge_wait_seconds": 60.41991151403636
+      },
+      "queries": {
+        "warm": {
+          "latency_ms": {
+            "count": 300,
+            "min": 9.268590016290545,
+            "p50": 17.76765799149871,
+            "p95": 24.973003438208256,
+            "p99": 29.552869515027847,
+            "max": 37.97494503669441
+          },
+          "read_rows": {
+            "count": 300,
+            "min": 256.0,
+            "p50": 256.0,
+            "p95": 512.0,
+            "p99": 512.0,
+            "max": 512.0
+          },
+          "read_bytes": {
+            "count": 300,
+            "min": 40948.0,
+            "p50": 201216.0,
+            "p95": 402432.0,
+            "p99": 402432.0,
+            "max": 402432.0
+          }
+        },
+        "direct_io": {
+          "latency_ms": {
+            "count": 30,
+            "min": 14.653866877779365,
+            "p50": 17.140655079856515,
+            "p95": 27.24523540819063,
+            "p99": 32.83421472413466,
+            "max": 34.58140091970563
+          },
+          "read_rows": {
+            "count": 30,
+            "min": 256.0,
+            "p50": 256.0,
+            "p95": 512.0,
+            "p99": 512.0,
+            "max": 512.0
+          },
+          "read_bytes": {
+            "count": 30,
+            "min": 44060.0,
+            "p50": 201216.0,
+            "p95": 402432.0,
+            "p99": 402432.0,
+            "max": 402432.0
+          }
+        },
+        "four_clients": {
+          "latency_ms": {
+            "count": 300,
+            "min": 7.602415047585964,
+            "p50": 9.24281042534858,
+            "p95": 12.64060656540096,
+            "p99": 14.311713096685706,
+            "max": 15.179571928456426
+          },
+          "requests_per_second": 323.811232654536
+        },
+        "example_payload": {
+          "json_bytes": 165069,
+          "gzip_bytes": 65689
+        }
+      },
+      "resident_queries": {
+        "warmup_queries": 300,
+        "warm": {
+          "count": 300,
+          "min": 7.535557029768825,
+          "p50": 8.522571064531803,
+          "p95": 11.022873863112181,
+          "p99": 12.027714319992809,
+          "max": 13.393218163400888
+        },
+        "direct_io": {
+          "count": 30,
+          "min": 16.258927062153816,
+          "p50": 27.782383025623858,
+          "p95": 39.39939788542688,
+          "p99": 47.65283037209884,
+          "max": 50.954185193404555
+        },
+        "four_clients": {
+          "latency_ms": {
+            "count": 300,
+            "min": 7.178958039730787,
+            "p50": 10.238303453661501,
+            "p95": 14.211779425386341,
+            "p99": 15.825182329863296,
+            "max": 18.811263144016266
+          },
+          "requests_per_second": 319.8861686939832
+        }
+      },
+      "api_clients": {
+        "1": {
+          "latency_ms": {
+            "count": 100,
+            "min": 67.32810800895095,
+            "p50": 73.68423696607351,
+            "p95": 84.8374662338756,
+            "p99": 86.91919069271535,
+            "max": 87.98220800235868
+          },
+          "requests_per_second": 13.29935081448648,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 100,
+            "min": 64599.0,
+            "p50": 65907.0,
+            "p95": 66580.1,
+            "p99": 66715.01,
+            "max": 66716.0
+          }
+        },
+        "4": {
+          "latency_ms": {
+            "count": 300,
+            "min": 83.4177709184587,
+            "p50": 130.30489394441247,
+            "p95": 159.27475973730907,
+            "p99": 187.45265267789355,
+            "max": 239.34332001954317
+          },
+          "requests_per_second": 30.601604866854434,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 300,
+            "min": 64599.0,
+            "p50": 65907.0,
+            "p95": 66580.1,
+            "p99": 66716.0,
+            "max": 66717.0
+          }
+        }
+      },
+      "staging_compressed_bytes": 29473922489,
+      "staging_encode_seconds": 160.88724942924455,
+      "staging_decode_seconds": 56.47797001595609
+    },
+    "gfs": {
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "cells": 24885,
+      "times": 141,
+      "levels": 30,
+      "rows": 3508785,
+      "source_open_seconds": 2.13451563520357,
+      "seconds": 573.5443274613936,
+      "cpu_seconds": 767.5436474139998,
+      "grib_bytes": 17423727100,
+      "chunks": 25662,
+      "decode_seconds": 407.6156017065514,
+      "network_rx_bytes": 18102808347,
+      "staged_value_bytes": 2554395480,
+      "process_write_bytes": 20031746048,
+      "map_retries": 0,
+      "source_peak_rss_bytes": 908877824,
+      "source_cache_downloaded_bytes": 17423727100,
+      "fields": {
+        "cloud_cover": {
+          "finite": 105263550,
+          "total": 105263550,
+          "max_float32_error": 3.051757815342171e-06
+        },
+        "geopotential_height": {
+          "finite": 105263550,
+          "total": 105263550,
+          "max_float32_error": 0.00046875000043655746
+        },
+        "temperature": {
+          "finite": 105263550,
+          "total": 105263550,
+          "max_float32_error": 1.8310547034161573e-06
+        },
+        "wind_u": {
+          "finite": 105263550,
+          "total": 105263550,
+          "max_float32_error": 3.051757815342171e-06
+        },
+        "wind_v": {
+          "finite": 105263550,
+          "total": 105263550,
+          "max_float32_error": 3.051757815342171e-06
+        },
+        "relative_humidity": {
+          "finite": 105263550,
+          "total": 105263550,
+          "max_float32_error": 3.051757815342171e-06
+        },
+        "temperature_2m": {
+          "finite": 3508785,
+          "total": 3508785,
+          "max_float32_error": 1.8310547034161573e-06
+        },
+        "dew_point_temperature_2m": {
+          "finite": 3508785,
+          "total": 3508785,
+          "max_float32_error": 9.155273801297881e-07
+        }
+      },
+      "resident_storage": {
+        "rows": 3508785,
+        "bytes_on_disk": 1747092552,
+        "data_compressed_bytes": 1746694472,
+        "data_uncompressed_bytes": 2757905010,
+        "marks_bytes": 297337,
+        "active_parts": 5
+      },
+      "ingestion": {
+        "seconds": 17.082042790949345,
+        "transpose_seconds": 3.267271711025387,
+        "arrow_construction_seconds": 0.9202221794985235,
+        "insert_call_seconds": 12.888517963467166,
+        "rows_per_second": 205407.8099991106,
+        "arrow_bytes": 2589483330,
+        "batches": 25,
+        "server_cpu_seconds": 26.140000000000004,
+        "client_cpu_seconds": 6.535805686,
+        "server_write_bytes": 3090636800,
+        "sampled_server_peak_rss_bytes": 2235592704,
+        "queries_during_ingest_ms": {
+          "count": 253,
+          "min": 8.965859189629555,
+          "p50": 13.885278953239322,
+          "p95": 16.780215781182047,
+          "p99": 19.844877431169134,
+          "max": 33.64931303076446
+        },
+        "queries_during_ingest_errors": [],
+        "merge_wait_seconds": 3.0264216540381312
+      },
+      "queries": {
+        "warm": {
+          "latency_ms": {
+            "count": 300,
+            "min": 8.316563908010721,
+            "p50": 9.488726500421762,
+            "p95": 13.47332367440686,
+            "p99": 20.205934161785965,
+            "max": 25.9395451284945
+          },
+          "read_rows": {
+            "count": 300,
+            "min": 256.0,
+            "p50": 512.0,
+            "p95": 512.0,
+            "p99": 512.0,
+            "max": 512.0
+          },
+          "read_bytes": {
+            "count": 300,
+            "min": 201216.0,
+            "p50": 402432.0,
+            "p95": 402432.0,
+            "p99": 402432.0,
+            "max": 402432.0
+          }
+        },
+        "direct_io": {
+          "latency_ms": {
+            "count": 30,
+            "min": 15.751864993944764,
+            "p50": 31.314232503063977,
+            "p95": 48.32901357440276,
+            "p99": 52.162444069981575,
+            "max": 52.33844509348273
+          },
+          "read_rows": {
+            "count": 30,
+            "min": 256.0,
+            "p50": 256.0,
+            "p95": 512.0,
+            "p99": 512.0,
+            "max": 512.0
+          },
+          "read_bytes": {
+            "count": 30,
+            "min": 201216.0,
+            "p50": 201216.0,
+            "p95": 402432.0,
+            "p99": 402432.0,
+            "max": 402432.0
+          }
+        },
+        "four_clients": {
+          "latency_ms": {
+            "count": 300,
+            "min": 8.023869013413787,
+            "p50": 11.536032427102327,
+            "p95": 17.09671140415594,
+            "p99": 32.043172677513205,
+            "max": 41.13315208815038
+          },
+          "requests_per_second": 275.788348677726
+        },
+        "example_payload": {
+          "json_bytes": 401418,
+          "gzip_bytes": 145899
+        }
+      },
+      "resident_queries": {
+        "warmup_queries": 300,
+        "warm": {
+          "count": 300,
+          "min": 8.429945213720202,
+          "p50": 13.346970546990633,
+          "p95": 15.89697590097785,
+          "p99": 16.89634983194985,
+          "max": 25.295720901340246
+        },
+        "direct_io": {
+          "count": 30,
+          "min": 13.851063093170524,
+          "p50": 24.08296102657914,
+          "p95": 33.31158012151718,
+          "p99": 34.374647580552846,
+          "max": 34.75176705978811
+        },
+        "four_clients": {
+          "latency_ms": {
+            "count": 300,
+            "min": 7.635448127985001,
+            "p50": 11.187638039700687,
+            "p95": 15.918204712215815,
+            "p99": 28.356987209990617,
+            "max": 30.15170688740909
+          },
+          "requests_per_second": 280.08321297579477
+        }
+      },
+      "api_clients": {
+        "1": {
+          "latency_ms": {
+            "count": 100,
+            "min": 48.58053894713521,
+            "p50": 57.911044103093445,
+            "p95": 70.63525236444548,
+            "p99": 72.04666933743283,
+            "max": 72.79604603536427
+          },
+          "requests_per_second": 16.643880611775142,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 100,
+            "min": 145887.0,
+            "p50": 148455.5,
+            "p95": 151625.0,
+            "p99": 151626.0,
+            "max": 151626.0
+          }
+        },
+        "4": {
+          "latency_ms": {
+            "count": 300,
+            "min": 49.58851612173021,
+            "p50": 100.17193655949086,
+            "p95": 136.81138169486076,
+            "p99": 150.81540522398427,
+            "max": 162.9365449771285
+          },
+          "requests_per_second": 39.432496734522495,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 300,
+            "min": 145888.0,
+            "p50": 148272.5,
+            "p95": 151624.0,
+            "p99": 151626.01,
+            "max": 151628.0
+          }
+        }
+      },
+      "staging_compressed_bytes": 1643571651,
+      "staging_encode_seconds": 5.492578137665987,
+      "staging_decode_seconds": 2.358557577477768
+    },
+    "aifs": {
+      "snapshot_id": "KGX0VQA3TPWZRWK9Q7G0",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "cells": 24885,
+      "times": 31,
+      "levels": 8,
+      "rows": 771435,
+      "source_open_seconds": 2.69801853899844,
+      "seconds": 30.20828928332776,
+      "cpu_seconds": 35.51698982,
+      "grib_bytes": 849324211,
+      "chunks": 1302,
+      "decode_seconds": 17.952075922628865,
+      "network_rx_bytes": 895090766,
+      "staged_value_bytes": 129601080,
+      "process_write_bytes": 981794816,
+      "map_retries": 0,
+      "source_peak_rss_bytes": 763387904,
+      "source_cache_downloaded_bytes": 849324211,
+      "fields": {
+        "geopotential_height": {
+          "finite": 6171480,
+          "total": 6171480,
+          "max_float32_error": 0.00048827876162249595
+        },
+        "temperature": {
+          "finite": 6171480,
+          "total": 6171480,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "wind_u": {
+          "finite": 6171480,
+          "total": 6171480,
+          "max_float32_error": 3.814697265625e-06
+        },
+        "wind_v": {
+          "finite": 6171480,
+          "total": 6171480,
+          "max_float32_error": 0
+        },
+        "specific_humidity": {
+          "finite": 6171480,
+          "total": 6171480,
+          "max_float32_error": 5.802576197311282e-10
+        },
+        "temperature_2m": {
+          "finite": 771435,
+          "total": 771435,
+          "max_float32_error": 1.5258789289873675e-06
+        },
+        "dew_point_temperature_2m": {
+          "finite": 771435,
+          "total": 771435,
+          "max_float32_error": 3.8146970382513246e-07
+        }
+      },
+      "resident_storage": {
+        "rows": 771435,
+        "bytes_on_disk": 101167340,
+        "data_compressed_bytes": 101084832,
+        "data_uncompressed_bytes": 168172830,
+        "marks_bytes": 49404,
+        "active_parts": 2
+      },
+      "ingestion": {
+        "seconds": 1.4333581139799207,
+        "transpose_seconds": 0.0594590709079057,
+        "arrow_construction_seconds": 0.1978648011572659,
+        "insert_call_seconds": 1.1726524094119668,
+        "rows_per_second": 538201.1602515732,
+        "arrow_bytes": 137315430,
+        "batches": 7,
+        "server_cpu_seconds": 1.3900000000000077,
+        "client_cpu_seconds": 0.64001843,
+        "server_write_bytes": 106500096,
+        "sampled_server_peak_rss_bytes": 1362010112,
+        "queries_during_ingest_ms": {
+          "count": 17,
+          "min": 7.588002132251859,
+          "p50": 10.834319051355124,
+          "p95": 12.149094976484776,
+          "p99": 12.63704065233469,
+          "max": 12.759027071297169
+        },
+        "queries_during_ingest_errors": [],
+        "merge_wait_seconds": 2.017453453037888
+      },
+      "queries": {
+        "warm": {
+          "latency_ms": {
+            "count": 300,
+            "min": 5.6415770668536425,
+            "p50": 6.678145960904658,
+            "p95": 9.315398032777011,
+            "p99": 10.291077808942644,
+            "max": 11.447001015767455
+          },
+          "read_rows": {
+            "count": 300,
+            "min": 256.0,
+            "p50": 256.0,
+            "p95": 512.0,
+            "p99": 512.0,
+            "max": 512.0
+          },
+          "read_bytes": {
+            "count": 300,
+            "min": 8768.0,
+            "p50": 55808.0,
+            "p95": 111616.0,
+            "p99": 111616.0,
+            "max": 111616.0
+          }
+        },
+        "direct_io": {
+          "latency_ms": {
+            "count": 30,
+            "min": 11.074881069362164,
+            "p50": 21.60332805942744,
+            "p95": 36.886411008890704,
+            "p99": 40.871743191964924,
+            "max": 41.73661512322724
+          },
+          "read_rows": {
+            "count": 30,
+            "min": 256.0,
+            "p50": 256.0,
+            "p95": 512.0,
+            "p99": 512.0,
+            "max": 512.0
+          },
+          "read_bytes": {
+            "count": 30,
+            "min": 9398.0,
+            "p50": 55808.0,
+            "p95": 111616.0,
+            "p99": 111616.0,
+            "max": 111616.0
+          }
+        },
+        "four_clients": {
+          "latency_ms": {
+            "count": 300,
+            "min": 5.480021005496383,
+            "p50": 8.132535498589277,
+            "p95": 12.12382985977456,
+            "p99": 14.366388479247687,
+            "max": 15.958573902025819
+          },
+          "requests_per_second": 380.9635660045124
+        },
+        "example_payload": {
+          "json_bytes": 24892,
+          "gzip_bytes": 10819
+        }
+      },
+      "resident_queries": {
+        "warmup_queries": 300,
+        "warm": {
+          "count": 300,
+          "min": 7.462434936314821,
+          "p50": 9.396595996804535,
+          "p95": 11.200878559611738,
+          "p99": 11.931410152465105,
+          "max": 12.23165518604219
+        },
+        "direct_io": {
+          "count": 30,
+          "min": 9.750460973009467,
+          "p50": 14.90226702298969,
+          "p95": 25.001851050183173,
+          "p99": 30.773336605634547,
+          "max": 33.01335289143026
+        },
+        "four_clients": {
+          "latency_ms": {
+            "count": 300,
+            "min": 5.530801136046648,
+            "p50": 8.635170990601182,
+            "p95": 11.957921215798706,
+            "p99": 13.491962086409327,
+            "max": 14.876851113513112
+          },
+          "requests_per_second": 373.71289631560325
+        }
+      },
+      "api_clients": {
+        "1": {
+          "latency_ms": {
+            "count": 100,
+            "min": 15.173505060374737,
+            "p50": 17.898985533975065,
+            "p95": 19.62818040046841,
+            "p99": 20.54988316260279,
+            "max": 22.245852975174785
+          },
+          "requests_per_second": 56.051525237634344,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 100,
+            "min": 11048.0,
+            "p50": 11235.0,
+            "p95": 11444.05,
+            "p99": 11446.0,
+            "max": 11446.0
+          }
+        },
+        "4": {
+          "latency_ms": {
+            "count": 300,
+            "min": 12.036037864163518,
+            "p50": 21.935059339739382,
+            "p95": 28.86155169690028,
+            "p99": 31.779394363984466,
+            "max": 33.668896881863475
+          },
+          "requests_per_second": 179.46354805692832,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 300,
+            "min": 11048.0,
+            "p50": 11234.0,
+            "p95": 11444.0,
+            "p99": 11446.0,
+            "max": 11446.0
+          }
+        }
+      },
+      "staging_compressed_bytes": 85898033,
+      "staging_encode_seconds": 0.42026120028458536,
+      "staging_decode_seconds": 0.15133276139385998
+    }
+  },
+  "assumptions": {
+    "runs_per_day": 4,
+    "days_per_month": 30,
+    "reserve_bytes": 21474836480,
+    "two_retained_plus_new_build_cycles": 3,
+    "merge_allowance_cycles": 1,
+    "electricity_is_scenario_not_metered": true
+  },
+  "telemetry": {
+    "sample_count": 2238,
+    "server_attempt_write_deltas": {
+      "initial": 124863242240,
+      "1792280998.1467237": 4034277376
+    },
+    "first_unix": 1792279167.0584915,
+    "last_unix": 1792281466.9193892,
+    "minimum_free_bytes": 262463954944,
+    "sampled_disk_growth_bytes": 171949420544,
+    "sampled_server_peak_rss_bytes": 2229415936,
+    "sampled_sum_children_peak_rss_bytes": 25534771200,
+    "minimum_host_available_memory_bytes": 25827418112,
+    "server_process_write_delta_bytes": 128897519616,
+    "host_nvme_write_delta_bytes": 211717296128,
+    "limitations": "One-second samples. Initial separately launched HRRR extractor is absent from child telemetry; per-lead RSS/CPU/write measurements cover it. Host disk counters include unrelated activity and exclude the initial HRRR interval before telemetry began. Summed child RSS double-counts shared/mapped pages; no NAND-write measurement.",
+    "observed_inactive_parts_peak_bytes": 73411333874,
+    "parts_samples_start_unix": 1792280108.3897219
+  },
+  "capacity_scenarios": {
+    "single_cycle_resident_bytes": 35445486948,
+    "raw_staging_bytes": 61141736264,
+    "compressed_staging_bytes": 31203392173,
+    "source_payload_cache_bytes": 24859387877,
+    "raw_staging_two_retained_new_build_merge_cache_reserve_bytes": 249257908413,
+    "compressed_staging_two_retained_new_build_merge_cache_reserve_bytes": 219319564322,
+    "raw_staging_with_observed_obsolete_parts_bytes": 322669242287,
+    "compressed_staging_with_observed_obsolete_parts_bytes": 292730898196,
+    "limitations": "Capacity arithmetic, not a measured second-cycle publication/retention test. The conservative variants additionally budget the observed inactive-part peak separately from a full-cycle merge-output allowance. Includes one new source cache, not old caches; excludes OS, environment, logs and source metadata. Compressed staging is measured codec output, not the implemented writer."
+  },
+  "monthly_scenarios": {
+    "successful_source_payload_bytes": 2983126545240,
+    "source_payload_plus_10_percent_bytes": 3281439199764,
+    "source_payload_plus_20_percent_bytes": 3579751854288,
+    "raw_staging_logical_bytes": 7337008351680,
+    "source_process_write_bytes": 10329113886720,
+    "server_ingestion_process_write_bytes": 13522640240640,
+    "server_whole_experiment_process_write_bytes": 15467702353920,
+    "source_plus_server_logical_write_bytes": 25796816240640,
+    "electricity": [
+      {
+        "continuous_incremental_watts": 5,
+        "kwh_per_month": 3.6,
+        "usd_at_0_15_per_kwh": 0.54,
+        "usd_at_0_25_per_kwh": 0.9,
+        "usd_at_0_30_per_kwh": 1.08
+      },
+      {
+        "continuous_incremental_watts": 10,
+        "kwh_per_month": 7.2,
+        "usd_at_0_15_per_kwh": 1.08,
+        "usd_at_0_25_per_kwh": 1.8,
+        "usd_at_0_30_per_kwh": 2.16
+      },
+      {
+        "continuous_incremental_watts": 20,
+        "kwh_per_month": 14.4,
+        "usd_at_0_15_per_kwh": 2.16,
+        "usd_at_0_25_per_kwh": 3.6,
+        "usd_at_0_30_per_kwh": 4.32
+      },
+      {
+        "continuous_incremental_watts": 30,
+        "kwh_per_month": 21.6,
+        "usd_at_0_15_per_kwh": 3.24,
+        "usd_at_0_25_per_kwh": 5.4,
+        "usd_at_0_30_per_kwh": 6.48
+      },
+      {
+        "continuous_incremental_watts": 40,
+        "kwh_per_month": 28.8,
+        "usd_at_0_15_per_kwh": 4.32,
+        "usd_at_0_25_per_kwh": 7.2,
+        "usd_at_0_30_per_kwh": 8.64
+      },
+      {
+        "continuous_incremental_watts": 80,
+        "kwh_per_month": 57.6,
+        "usd_at_0_15_per_kwh": 8.64,
+        "usd_at_0_25_per_kwh": 14.4,
+        "usd_at_0_30_per_kwh": 17.28
+      }
+    ],
+    "limitations": "120 comparable complete cycles; source bytes exclude metadata/protocol/failed transfers. 10%/20% are allowances, not measured retry overhead. Process writes are logical Linux counters, not SSD endurance. Power and tariffs are scenarios, not measurements or quoted prices."
+  },
+  "timing": {
+    "source_fetch_decode_stage_seconds": 1092.0078430830035,
+    "source_cpu_seconds": 1755.5321529799999,
+    "load_seconds": 683.1829075219575,
+    "fetch_plus_load_seconds": 1775.190750604961,
+    "experiment": {
+      "elapsed_seconds": 2300.1164536476135,
+      "final_attempt_seconds": 469.021071434021,
+      "completed_unix": 1792281467.167796
+    },
+    "limitations": "Source timers overlap download/decode/gather/write and exclude dataset-open time. Summed decode wall time is not CPU time. Experiment includes validation, codec tests and API load tests; neither timing proves production update availability.",
+    "from_initial_acquisition_log_creation_seconds": 2361.16779589653,
+    "initial_hrrr_open_seconds": 4.0990110780112445
+  }
+}

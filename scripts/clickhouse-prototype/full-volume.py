@@ -162,7 +162,7 @@ def main():
                     "--layouts",
                     "256_zstd",
                     "--batch-cells",
-                    4096,
+                    1024 if model == "gfs" else 4096,
                     "--queries",
                     120,
                     "--read-during-ingest",

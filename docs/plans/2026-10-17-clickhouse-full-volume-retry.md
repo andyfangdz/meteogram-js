@@ -1,5 +1,9 @@
 # Full-volume retry: full CONUS geography, incomplete forecast horizon
 
+**Later home benchmark completed:** [full-resident HRRR/GFS/AIFS results](2026-10-17-clickhouse-home-resident.md)
+now replace the full-run projections and outstanding acquisition limits in this
+historical report. The original sample measurements below are preserved.
+
 **The complete forecast-volume retry remains blocked by the workspace's outbound
 tunnel.** Access briefly recovered on October 17, then HTTP 503 failures returned
 for Dynamical, both other model catalogs, and an unrelated control site. Five

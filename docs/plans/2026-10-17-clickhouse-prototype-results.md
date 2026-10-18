@@ -1,5 +1,9 @@
 # ClickHouse prototype: measured results and home-server estimates
 
+**Later home benchmark completed:** [full-resident HRRR/GFS/AIFS results](2026-10-17-clickhouse-home-resident.md)
+now replace the full-run projections and outstanding acquisition limits in this
+historical report. The original sample measurements below are preserved.
+
 **Later retry:** the [full-volume retry report](2026-10-17-clickhouse-full-volume-retry.md)
 adds measured full-CONUS coverage for two HRRR times: 3.28 million rows, 1.207 GiB,
 31.13-second load, and 6.85 ms warm-query p95. The network failed again before

@@ -139,6 +139,7 @@ def main():
         "run_id": run_id,
         "model": metadata["model"],
         "init_time": metadata["init_time"],
+        "snapshot_id": metadata["snapshot_id"],
         "cells": len(ids),
         "leads": leads,
         "levels": metadata["levels"],
@@ -218,11 +219,15 @@ def main():
         max_server_rss = 0
         arrow_bytes = 0
         batches = 0
+        transpose_seconds = arrow_seconds = insert_seconds = 0.0
         for start in range(0, len(ids), args.batch_cells):
             end = min(len(ids), start + args.batch_cells)
             # Bounded transpose: cell, lead, pressure, variable.
+            stage_started = time.perf_counter()
             block = np.stack([p[start:end] for p in profiles], axis=1)
             ground = np.stack([p[start:end] for p in surfaces], axis=1)
+            transpose_seconds += time.perf_counter() - stage_started
+            stage_started = time.perf_counter()
             rows = (end - start) * len(leads)
             data = {
                 "revision_id": pa.array(np.full(rows, 1, dtype=np.uint32)),
@@ -244,11 +249,14 @@ def main():
                 )
             arrow = pa.table(data)
             arrow_bytes += arrow.nbytes
+            arrow_seconds += time.perf_counter() - stage_started
+            stage_started = time.perf_counter()
             c.insert_arrow(
                 f"{DATABASE}.{table}",
                 arrow,
                 settings={"max_threads": 2, "log_comment": f"{tag}_insert"},
             )
+            insert_seconds += time.perf_counter() - stage_started
             batches += 1
             if batches == 1 and not first_table and args.read_during_ingest:
                 reader_thread = threading.Thread(
@@ -280,6 +288,9 @@ def main():
             reader_thread.join()
         loaded = {
             "seconds": ingestion_seconds,
+            "transpose_seconds": transpose_seconds,
+            "arrow_construction_seconds": arrow_seconds,
+            "insert_call_seconds": insert_seconds,
             "rows_per_second": len(ids) * len(leads) / ingestion_seconds,
             "arrow_bytes": arrow_bytes,
             "batches": batches,

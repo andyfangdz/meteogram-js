@@ -11,6 +11,10 @@ For a fresh home Linux machine, start with the
 portable setup, full-resident acquisition commands and the remaining acceptance
 checks; historical `/workspace/` paths below describe the original cloud host.
 
+The [completed home ARM benchmark](../../docs/plans/2026-10-17-clickhouse-home-resident.md)
+records all three full resident models, query verification, the GFS batch-size
+correction, and revised capacity/write estimates.
+
 ## Reproduce
 
 Python 3.12 and Linux are required. The measured server is ClickHouse
@@ -193,3 +197,70 @@ replay was:
 The [retry report](../../docs/plans/2026-10-17-clickhouse-full-volume-retry.md)
 separates this completed two-time regional benchmark from the still-incomplete
 49-time experiment. The app's provider is unchanged.
+
+## Full-resident host runner
+
+`resident-run.py` runs the three full-CONUS extractions and loads sequentially,
+retains all three `256_zstd` tables together, measures staging compression, and
+runs `verify-api.py`. It launches its isolated ClickHouse child in the same
+process namespace as the benchmarks, which is required in sandboxes where each
+shell invocation sees different PIDs. Use a dedicated server directory and free
+loopback ports 18123, 19000 and 18080. It stops its server after the experiment;
+restart `start-server.py` and `serve.py` to inspect the retained data later.
+
+```bash
+"$BENCH_PYTHON" scripts/clickhouse-prototype/resident-run.py \
+  --root "$BENCH_RUN" --server-root "$BENCH_ROOT" \
+  --binary "$BENCH_ROOT/clickhouse"
+```
+
+The runner records one-second process RSS/CPU/I/O and host disk counters in
+`telemetry.jsonl`, and each command's elapsed time/exit status in `phases.jsonl`.
+It terminates the active job if free space falls below 20 GiB. Use a fresh root
+for a fresh cycle; rerunning resumes source checkpoints but rebuilds benchmark
+tables. It waits for an existing extractor's advisory lock before resuming that
+model. This is a single-cycle benchmark, not atomic publication or a retention
+service. Host disk counters include other host activity and do not measure NAND
+write amplification. The runner's process telemetry excludes separately launched
+extractors; their per-lead reports still record peak RSS, CPU and writes.
+
+`verify-api.py` starts a temporary local API and checks the complete time/level/
+field arrays against staging at city, random and edge cells for every model.
+It also checks source identity, coordinate selection, invalid/outside requests,
+null conversion, gzip size, and one/four-client loopback latency. Run it while
+the isolated database is available:
+
+```bash
+"$BENCH_PYTHON" scripts/clickhouse-prototype/verify-api.py \
+  --data-root "$BENCH_RUN" --output "$BENCH_RUN/api-verification.json"
+```
+
+After `complete.json` exists, generate the arithmetic worksheet:
+
+```bash
+"$BENCH_PYTHON" scripts/clickhouse-prototype/summarize-run.py \
+  --root "$BENCH_RUN" --output "$BENCH_RUN/summary.json"
+```
+
+Its capacity scenarios include two retained cycles, a new build, a merge
+allowance, one source-payload cache and 20 GiB reserve. They are not a measured
+multi-cycle peak. The monthly scenarios assume 120 comparable cycles and label
+power, tariffs and retry allowances separately from measurements.
+
+The resident runner uses 4,096-cell inserts for HRRR/AIFS and 1,024 for GFS.
+The 141-time GFS selection exceeded the 2 GiB query limit at 4,096 cells on the
+home ARM host. After a later-model failure, preserve verified earlier tables:
+
+```bash
+"$BENCH_PYTHON" scripts/clickhouse-prototype/resident-run.py \
+  --root "$BENCH_RUN" --server-root "$BENCH_ROOT" \
+  --binary "$BENCH_ROOT/clickhouse" --models gfs,aifs
+```
+
+Omitted models must have matching benchmark/source metadata; their stored row
+and unique-key counts are revalidated before resuming. Source checkpoints are
+reused; selected model tables are rebuilt. Logs and host restart records are
+preserved, and telemetry identifies server attempts because process counters
+reset on restart. The final verifier also rechecks whole-table cell counts,
+per-lead row counts and pressure-array lengths and runs database latency tests
+with an explicit warm-up pass after all three models are resident.

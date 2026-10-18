@@ -1,0 +1,8 @@
+{
+  "model": "KBG40ZNS512G BG4A KIOXIA",
+  "sectors_512_bytes": 1000215216,
+  "rotational": 0,
+  "filesystem": "ext4",
+  "device": "nvme0n1p2",
+  "block_device_access": "not exposed in command sandbox"
+}

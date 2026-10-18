@@ -331,8 +331,13 @@ Server-side cookie reading can fail on Edge. The `cookieReadSuccess` flag trigge
 For continuation on the user's home Linux machine, read
 `docs/plans/dynamical-home-agent-handoff.md` first. The branch
 `codex/dynamical-clickhouse-handoff` packages the prototype and evidence, not the
-large source cache or database. The next goal is a fresh, full-resident CONUS
-HRRR/GFS/AIFS benchmark on that host, followed by measured operating estimates.
+large source cache or database. The full-resident CONUS HRRR/GFS/AIFS cycle is now
+complete on the home ARM host;
+see `docs/plans/2026-10-17-clickhouse-home-resident.md` and its evidence bundle.
+It contains 84,579,313 verified rows in 33.01 GiB. Measured temporary obsolete
+parts and logical writes make the old 300 GB/low-write projections optimistic.
+Next work is staging/merge/retention optimization and a measured second-cycle
+atomic-publication test using the retained regional tables.
 
 `scripts/probe-dynamical.py` is a standalone `uv` script for bounded live reads
 from Dynamical's GFS, HRRR and AIFS virtual Zarr/Icechunk datasets. See
@@ -366,6 +371,20 @@ was loaded for **two times**, with evidence in
 49-time/GFS/AIFS acquisition. The runner's planned eight spatial batches are not
 a completed full-volume or full-resident benchmark; it drops completed HRRR
 batches to fit workspace disk. Preserve this distinction in future reports.
+
+The home full-resident workflow is now automated by
+`scripts/clickhouse-prototype/resident-run.py`. It launches the isolated server
+and benchmark children in one PID namespace, retains all three model tables,
+records per-second resource telemetry, and enforces a 20 GiB free-space reserve.
+The native-profile API rejects requested coordinates outside the retained CONUS
+rectangle before nearest-cell selection, and permits only micrometre-scale
+projection round-off at native grid bounds (`test-serve.py` regression tests).
+`verify-api.py` compares complete HTTP profiles with staged arrays at city,
+random and edge cells and measures one/four-client latency. `summarize-run.py`
+requires the completion marker and derives explicitly labeled capacity and
+monthly-cost scenarios from the recorded measurements. These scripts do not
+implement atomic publication or production retention. See the prototype README
+for commands and the dated host report for measured results.
 
 ## Development Tips
 

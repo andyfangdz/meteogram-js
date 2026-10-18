@@ -1,0 +1,264 @@
+{
+  "started_unix": 1792280998.1467237,
+  "uname": [
+    "Linux",
+    "andy-Windows-Dev-Kit-2023",
+    "7.0.0-34-generic",
+    "#34-Ubuntu SMP PREEMPT_DYNAMIC Wed Sep  2 14:34:54 UTC 2026",
+    "aarch64"
+  ],
+  "cpu_count": 8,
+  "memory": {
+    "total": 32376442880,
+    "available": 30779285504,
+    "percent": 4.9,
+    "used": 1597157376,
+    "free": 4377493504,
+    "active": 22270005248,
+    "inactive": 4489695232,
+    "buffers": 46542848,
+    "cached": 26772316160,
+    "shared": 26451968,
+    "slab": 923529216
+  },
+  "disk": {
+    "total": 501809635328,
+    "used": 168988196864,
+    "free": 307255635968
+  },
+  "python": "3.12.15 (main, Oct 14 2026, 01:04:59) [Clang 23.1.3 ]",
+  "source_commit": "4d33beb252075a4c2f6929bf455e4b50c746ee87",
+  "disk_counters": {
+    "loop0": {
+      "read_count": 105,
+      "write_count": 0,
+      "read_bytes": 1054720,
+      "write_bytes": 0,
+      "read_time": 9,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 9
+    },
+    "loop1": {
+      "read_count": 14,
+      "write_count": 0,
+      "read_bytes": 17408,
+      "write_bytes": 0,
+      "read_time": 0,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 1
+    },
+    "loop2": {
+      "read_count": 44,
+      "write_count": 0,
+      "read_bytes": 358400,
+      "write_bytes": 0,
+      "read_time": 5,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 5
+    },
+    "loop3": {
+      "read_count": 51,
+      "write_count": 0,
+      "read_bytes": 702464,
+      "write_bytes": 0,
+      "read_time": 7,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 7
+    },
+    "loop4": {
+      "read_count": 487,
+      "write_count": 0,
+      "read_bytes": 5098496,
+      "write_bytes": 0,
+      "read_time": 85,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 87
+    },
+    "loop5": {
+      "read_count": 362,
+      "write_count": 0,
+      "read_bytes": 3701760,
+      "write_bytes": 0,
+      "read_time": 51,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 52
+    },
+    "loop6": {
+      "read_count": 178,
+      "write_count": 0,
+      "read_bytes": 993280,
+      "write_bytes": 0,
+      "read_time": 12,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 10
+    },
+    "loop7": {
+      "read_count": 58,
+      "write_count": 0,
+      "read_bytes": 716800,
+      "write_bytes": 0,
+      "read_time": 13,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 13
+    },
+    "nvme0n1": {
+      "read_count": 935619,
+      "write_count": 2245431,
+      "read_bytes": 105858898944,
+      "write_bytes": 277550404608,
+      "read_time": 1653209,
+      "write_time": 8871132,
+      "read_merged_count": 75794,
+      "write_merged_count": 1631237,
+      "busy_time": 1784012
+    },
+    "nvme0n1p1": {
+      "read_count": 337,
+      "write_count": 2,
+      "read_bytes": 15259648,
+      "write_bytes": 1024,
+      "read_time": 35,
+      "write_time": 0,
+      "read_merged_count": 4082,
+      "write_merged_count": 0,
+      "busy_time": 51
+    },
+    "nvme0n1p2": {
+      "read_count": 934646,
+      "write_count": 2245427,
+      "read_bytes": 105835353088,
+      "write_bytes": 277550403584,
+      "read_time": 1653127,
+      "write_time": 8871131,
+      "read_merged_count": 71712,
+      "write_merged_count": 1631237,
+      "busy_time": 1900997
+    },
+    "loop8": {
+      "read_count": 82,
+      "write_count": 0,
+      "read_bytes": 1959936,
+      "write_bytes": 0,
+      "read_time": 26,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 29
+    },
+    "loop9": {
+      "read_count": 42,
+      "write_count": 0,
+      "read_bytes": 357376,
+      "write_bytes": 0,
+      "read_time": 3,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 3
+    },
+    "loop10": {
+      "read_count": 232,
+      "write_count": 0,
+      "read_bytes": 6372352,
+      "write_bytes": 0,
+      "read_time": 88,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 80
+    },
+    "loop11": {
+      "read_count": 53,
+      "write_count": 0,
+      "read_bytes": 704512,
+      "write_bytes": 0,
+      "read_time": 7,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 10
+    },
+    "loop13": {
+      "read_count": 31,
+      "write_count": 0,
+      "read_bytes": 185344,
+      "write_bytes": 0,
+      "read_time": 4,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 5
+    },
+    "loop12": {
+      "read_count": 769,
+      "write_count": 0,
+      "read_bytes": 26270720,
+      "write_bytes": 0,
+      "read_time": 373,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 357
+    },
+    "loop14": {
+      "read_count": 455,
+      "write_count": 0,
+      "read_bytes": 3271680,
+      "write_bytes": 0,
+      "read_time": 26,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 26
+    },
+    "loop15": {
+      "read_count": 172,
+      "write_count": 0,
+      "read_bytes": 5629952,
+      "write_bytes": 0,
+      "read_time": 36,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 42
+    },
+    "loop16": {
+      "read_count": 587,
+      "write_count": 0,
+      "read_bytes": 19895296,
+      "write_bytes": 0,
+      "read_time": 151,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 138
+    },
+    "loop17": {
+      "read_count": 65,
+      "write_count": 0,
+      "read_bytes": 714752,
+      "write_bytes": 0,
+      "read_time": 6,
+      "write_time": 0,
+      "read_merged_count": 0,
+      "write_merged_count": 0,
+      "busy_time": 6
+    }
+  }
+}

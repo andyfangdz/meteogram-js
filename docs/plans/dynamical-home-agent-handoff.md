@@ -3,6 +3,13 @@
 Branch: `codex/dynamical-clickhouse-handoff` in
 <https://github.com/andyfangdz/meteogram-js>.
 
+**Completion update, October 17:** the [home full-resident report](2026-10-17-clickhouse-home-resident.md)
+now records a completed HRRR/GFS/AIFS cycle and arbitrary-location checks. Its
+measured storage/write/cost findings supersede the earlier projections below.
+The remaining production work is a second-cycle atomic-publication/retention
+test and reducing staging/merge overhead. The commands below remain reproduction
+instructions; the GFS batch size has been corrected from the host measurement.
+
 ## Your assignment
 
 Finish the **actual full-volume acquisition and ClickHouse benchmark on this
@@ -180,7 +187,7 @@ BENCH_AIFS_LEADS=$("$BENCH_PYTHON" -c \
 "$BENCH_PYTHON" -u scripts/clickhouse-prototype/benchmark.py \
   --data "$BENCH_RUN/gfs" --output "$BENCH_RUN/gfs-benchmark.json" \
   --server-pid "$BENCH_SERVER_PID" --layouts 256_zstd \
-  --batch-cells 4096 --queries 300 --read-during-ingest \
+  --batch-cells 1024 --queries 300 --read-during-ingest \
   > "$BENCH_RUN/gfs-benchmark.log" 2>&1
 
 "$BENCH_PYTHON" -u scripts/clickhouse-prototype/fetch.py \
@@ -194,6 +201,11 @@ BENCH_AIFS_LEADS=$("$BENCH_PYTHON" -c \
   --batch-cells 4096 --queries 300 --read-during-ingest \
   > "$BENCH_RUN/aifs-benchmark.log" 2>&1
 ```
+
+Use 1,024-cell inserts for the 141-time GFS selection. The home ARM run found
+that 4,096 cells exceeded the configured 2 GiB query-memory limit while parsing
+Arrow; HRRR's 49-time 4,096-cell inserts succeeded. Batch by forecast volume,
+not by cell count alone.
 
 Expected selections for the currently inspected source grids:
 

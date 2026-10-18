@@ -20,10 +20,20 @@ from pyproj import CRS, Transformer
 
 def resolve(model, lat, lon):
     grid = model["metadata"]["grid"]
+    if model["metadata"].get("coverage") == "conus" and not (
+        24 <= lat <= 50 and -125 <= lon <= -66
+    ):
+        raise LookupError("Outside the retained region")
     if grid["kind"] == "projected":
         x, y = model["projection"].transform(lon, lat)
         xs, ys = np.asarray(grid["x"]), np.asarray(grid["y"])
-        if not (xs.min() <= x <= xs.max() and ys.min() <= y <= ys.max()):
+        # A native edge cell can round-trip through lon/lat a few nanometres
+        # beyond the projected coordinate bound. Permit numerical noise only.
+        tolerance = 1e-6
+        if not (
+            xs.min() - tolerance <= x <= xs.max() + tolerance
+            and ys.min() - tolerance <= y <= ys.max() + tolerance
+        ):
             raise LookupError("Outside the native model domain")
         cell = int(np.abs(ys - y).argmin()) * len(xs) + int(np.abs(xs - x).argmin())
     else:
