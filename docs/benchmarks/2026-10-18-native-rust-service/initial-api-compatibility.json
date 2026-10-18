@@ -1,0 +1,228 @@
+{
+  "full_database_validation": false,
+  "gzip_bytes": 11346,
+  "health": {
+    "models": {
+      "aifs": {
+        "age_hours": 10.324,
+        "available": true,
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 169.676
+      },
+      "gfs": {
+        "age_hours": 10.324,
+        "available": true,
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 169.676
+      },
+      "hrrr": {
+        "age_hours": 10.324,
+        "available": true,
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 12,
+        "remaining_hours": 37.676
+      }
+    },
+    "native_fields": true
+  },
+  "invalid_inputs": 4,
+  "outside_region": 3,
+  "profiles": [
+    {
+      "cell_id": 282664,
+      "compared": true,
+      "latitude": 41.013,
+      "longitude": -74.027,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 305520,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -120.0,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 288300,
+      "compared": true,
+      "latitude": 40.0,
+      "longitude": -105.0,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 305612,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -97.0,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 230620,
+      "compared": true,
+      "latitude": 50.0,
+      "longitude": -125.0,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 380616,
+      "compared": true,
+      "latitude": 24.0,
+      "longitude": -66.0,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 305618,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -95.5,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 281020,
+      "compared": true,
+      "latitude": 41.25,
+      "longitude": -125.0,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 252220,
+      "compared": true,
+      "latitude": 46.25,
+      "longitude": -125.0,
+      "model": "aifs"
+    },
+    {
+      "cell_id": 282664,
+      "compared": true,
+      "latitude": 41.013,
+      "longitude": -74.027,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 305520,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -120.0,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 288300,
+      "compared": true,
+      "latitude": 40.0,
+      "longitude": -105.0,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 305612,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -97.0,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 230620,
+      "compared": true,
+      "latitude": 50.0,
+      "longitude": -125.0,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 380616,
+      "compared": true,
+      "latitude": 24.0,
+      "longitude": -66.0,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 305618,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -95.5,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 281020,
+      "compared": true,
+      "latitude": 41.25,
+      "longitude": -125.0,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 252220,
+      "compared": true,
+      "latitude": 46.25,
+      "longitude": -125.0,
+      "model": "gfs"
+    },
+    {
+      "cell_id": 634797,
+      "compared": true,
+      "latitude": 41.013,
+      "longitude": -74.027,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 905137,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -120.0,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 837221,
+      "compared": true,
+      "latitude": 40.0,
+      "longitude": -105.0,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 1051530,
+      "compared": true,
+      "latitude": 37.0,
+      "longitude": -97.0,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 1560,
+      "compared": true,
+      "latitude": 49.99870527918694,
+      "longitude": -69.94576534654809,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 1904539,
+      "compared": true,
+      "latitude": 24.002274157586132,
+      "longitude": -88.95581746244328,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 1021285,
+      "compared": true,
+      "latitude": 36.854790114523865,
+      "longitude": -85.57539176200294,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 733746,
+      "compared": true,
+      "latitude": 39.56150593001015,
+      "longitude": -74.38129510451668,
+      "model": "hrrr"
+    },
+    {
+      "cell_id": 389057,
+      "compared": true,
+      "latitude": 45.88935115428077,
+      "longitude": -113.9638130433631,
+      "model": "hrrr"
+    }
+  ],
+  "success": true,
+  "time": 1792297168.1512144
+}

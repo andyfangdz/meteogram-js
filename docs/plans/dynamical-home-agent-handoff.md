@@ -3,6 +3,13 @@
 Branch: `codex/dynamical-clickhouse-handoff` in
 <https://github.com/andyfangdz/meteogram-js>.
 
+**Current runtime, October 18:** the service is now entirely Rust. Start with
+the [native service guide](../../native/README.md) and
+[full Rust migration report](2026-10-18-native-rust-service.md). The Python
+commands below are historical; their code remains in commit `5f4ae08` and earlier
+history. Publication, retention and rollback have since been implemented and
+verified on the host.
+
 **Completion update, October 17:** the [home full-resident report](2026-10-17-clickhouse-home-resident.md)
 now records a completed HRRR/GFS/AIFS cycle and arbitrary-location checks. Its
 measured storage/write/cost findings supersede the earlier projections below.

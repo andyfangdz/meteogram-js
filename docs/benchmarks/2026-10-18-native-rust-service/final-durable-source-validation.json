@@ -1,0 +1,19 @@
+{
+  "database": "meteogram_native",
+  "init_time": "2026-10-17T18:00:00.000000000",
+  "rows": 24885,
+  "samples": 10,
+  "snapshot_id": "KGX0VQA3TPWZRWK9Q7G0",
+  "staged_comparison": true,
+  "storage": {
+    "axes": "level_lead",
+    "codec": "t64",
+    "encoding": "float32_bits",
+    "index_granularity": 4,
+    "layout": "cell_profile_v1",
+    "writer": "rust_native"
+  },
+  "storage_rows": 24885,
+  "table": "rust_port_durable_aifs_20261018",
+  "validated_at": 1792298385.393727
+}

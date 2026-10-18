@@ -1,0 +1,92 @@
+{
+  "catalog": {
+    "current": {
+      "aifs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "aifs_20261018012917_143ac186",
+        "table": "aifs_20261018012917_143ac186"
+      },
+      "gfs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "gfs_20261018011859_19e2797e",
+        "table": "gfs_20261018011859_19e2797e"
+      },
+      "hrrr": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "hrrr_20261018005542_c13c1f40",
+        "table": "hrrr_20261018005542_c13c1f40"
+      }
+    },
+    "generation": 15,
+    "previous": {
+      "aifs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "aifs_20261018013225_0f88f7b8",
+        "table": "aifs_20261018013225_0f88f7b8"
+      },
+      "gfs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "gfs_20261018013223_864282c8",
+        "table": "gfs_20261018013223_864282c8"
+      },
+      "hrrr": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "hrrr_20261018013136_f14ebb9d",
+        "table": "hrrr_20261018013136_f14ebb9d"
+      }
+    },
+    "published_at": 1792287219.5882738,
+    "retired": [],
+    "version": 1
+  },
+  "models": {
+    "aifs": {
+      "freshness": {
+        "age_hours": 10.917,
+        "available": true,
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 169.083
+      },
+      "revision": "aifs_20261018012917_143ac186",
+      "storage": null,
+      "storage_rows": 771435,
+      "table": "aifs_20261018012917_143ac186"
+    },
+    "gfs": {
+      "freshness": {
+        "age_hours": 10.917,
+        "available": true,
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 169.083
+      },
+      "revision": "gfs_20261018011859_19e2797e",
+      "storage": null,
+      "storage_rows": 3508785,
+      "table": "gfs_20261018011859_19e2797e"
+    },
+    "hrrr": {
+      "freshness": {
+        "age_hours": 10.917,
+        "available": true,
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 12,
+        "remaining_hours": 37.083
+      },
+      "revision": "hrrr_20261018005542_c13c1f40",
+      "storage": null,
+      "storage_rows": 80299093,
+      "table": "hrrr_20261018005542_c13c1f40"
+    }
+  }
+}

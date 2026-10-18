@@ -1,0 +1,427 @@
+{
+  "pressure_level/wind_v": {
+    "attributes": {
+      "_FillValue": "AAAAAAAA+H8=",
+      "coordinates": "expected_forecast_length spatial_ref valid_time",
+      "long_name": "V component of wind",
+      "short_name": "v",
+      "standard_name": "northward_wind",
+      "step_type": "instant",
+      "units": "m s-1"
+    },
+    "chunk_grid": {
+      "configuration": {
+        "chunk_shape": [
+          1,
+          1,
+          721,
+          1440,
+          1
+        ]
+      },
+      "name": "regular"
+    },
+    "chunk_key_encoding": {
+      "configuration": {
+        "separator": "/"
+      },
+      "name": "default"
+    },
+    "codecs": [
+      {
+        "configuration": {
+          "adjust_longitude_range": true,
+          "north_up": true,
+          "var": "v"
+        },
+        "name": "gribberish"
+      }
+    ],
+    "data_type": "float64",
+    "dimension_names": [
+      "init_time",
+      "lead_time",
+      "latitude",
+      "longitude",
+      "pressure_level"
+    ],
+    "fill_value": "NaN",
+    "node_type": "array",
+    "shape": [
+      3720,
+      61,
+      721,
+      1440,
+      14
+    ],
+    "storage_transformers": [],
+    "zarr_format": 3
+  },
+  "pressure_level/wind_u": {
+    "attributes": {
+      "_FillValue": "AAAAAAAA+H8=",
+      "coordinates": "expected_forecast_length spatial_ref valid_time",
+      "long_name": "U component of wind",
+      "short_name": "u",
+      "standard_name": "eastward_wind",
+      "step_type": "instant",
+      "units": "m s-1"
+    },
+    "chunk_grid": {
+      "configuration": {
+        "chunk_shape": [
+          1,
+          1,
+          721,
+          1440,
+          1
+        ]
+      },
+      "name": "regular"
+    },
+    "chunk_key_encoding": {
+      "configuration": {
+        "separator": "/"
+      },
+      "name": "default"
+    },
+    "codecs": [
+      {
+        "configuration": {
+          "adjust_longitude_range": true,
+          "north_up": true,
+          "var": "u"
+        },
+        "name": "gribberish"
+      }
+    ],
+    "data_type": "float64",
+    "dimension_names": [
+      "init_time",
+      "lead_time",
+      "latitude",
+      "longitude",
+      "pressure_level"
+    ],
+    "fill_value": "NaN",
+    "node_type": "array",
+    "shape": [
+      3720,
+      61,
+      721,
+      1440,
+      14
+    ],
+    "storage_transformers": [],
+    "zarr_format": 3
+  },
+  "dew_point_temperature_2m": {
+    "attributes": {
+      "_FillValue": "AAAAAAAA+H8=",
+      "coordinates": "expected_forecast_length spatial_ref valid_time",
+      "long_name": "2 metre dewpoint temperature",
+      "short_name": "2d",
+      "standard_name": "dew_point_temperature",
+      "step_type": "instant",
+      "units": "degree_Celsius"
+    },
+    "chunk_grid": {
+      "configuration": {
+        "chunk_shape": [
+          1,
+          1,
+          721,
+          1440
+        ]
+      },
+      "name": "regular"
+    },
+    "chunk_key_encoding": {
+      "configuration": {
+        "separator": "/"
+      },
+      "name": "default"
+    },
+    "codecs": [
+      {
+        "configuration": {
+          "offset": -273.15
+        },
+        "name": "scale_offset"
+      },
+      {
+        "configuration": {
+          "adjust_longitude_range": true,
+          "north_up": true,
+          "var": "2d"
+        },
+        "name": "gribberish"
+      }
+    ],
+    "data_type": "float64",
+    "dimension_names": [
+      "init_time",
+      "lead_time",
+      "latitude",
+      "longitude"
+    ],
+    "fill_value": "NaN",
+    "node_type": "array",
+    "shape": [
+      3720,
+      61,
+      721,
+      1440
+    ],
+    "storage_transformers": [],
+    "zarr_format": 3
+  },
+  "pressure_level/specific_humidity": {
+    "attributes": {
+      "_FillValue": "AAAAAAAA+H8=",
+      "comment": "The source provides no 10 hPa level for this variable; that level is always NaN.",
+      "coordinates": "expected_forecast_length spatial_ref valid_time",
+      "long_name": "Specific humidity",
+      "short_name": "q",
+      "standard_name": "specific_humidity",
+      "step_type": "instant",
+      "units": "1"
+    },
+    "chunk_grid": {
+      "configuration": {
+        "chunk_shape": [
+          1,
+          1,
+          721,
+          1440,
+          1
+        ]
+      },
+      "name": "regular"
+    },
+    "chunk_key_encoding": {
+      "configuration": {
+        "separator": "/"
+      },
+      "name": "default"
+    },
+    "codecs": [
+      {
+        "configuration": {
+          "adjust_longitude_range": true,
+          "north_up": true,
+          "var": "q"
+        },
+        "name": "gribberish"
+      }
+    ],
+    "data_type": "float64",
+    "dimension_names": [
+      "init_time",
+      "lead_time",
+      "latitude",
+      "longitude",
+      "pressure_level"
+    ],
+    "fill_value": "NaN",
+    "node_type": "array",
+    "shape": [
+      3720,
+      61,
+      721,
+      1440,
+      14
+    ],
+    "storage_transformers": [],
+    "zarr_format": 3
+  },
+  "temperature_2m": {
+    "attributes": {
+      "_FillValue": "AAAAAAAA+H8=",
+      "coordinates": "expected_forecast_length spatial_ref valid_time",
+      "long_name": "2 metre temperature",
+      "short_name": "2t",
+      "standard_name": "air_temperature",
+      "step_type": "instant",
+      "units": "degree_Celsius"
+    },
+    "chunk_grid": {
+      "configuration": {
+        "chunk_shape": [
+          1,
+          1,
+          721,
+          1440
+        ]
+      },
+      "name": "regular"
+    },
+    "chunk_key_encoding": {
+      "configuration": {
+        "separator": "/"
+      },
+      "name": "default"
+    },
+    "codecs": [
+      {
+        "configuration": {
+          "offset": -273.15
+        },
+        "name": "scale_offset"
+      },
+      {
+        "configuration": {
+          "adjust_longitude_range": true,
+          "north_up": true,
+          "var": "2t"
+        },
+        "name": "gribberish"
+      }
+    ],
+    "data_type": "float64",
+    "dimension_names": [
+      "init_time",
+      "lead_time",
+      "latitude",
+      "longitude"
+    ],
+    "fill_value": "NaN",
+    "node_type": "array",
+    "shape": [
+      3720,
+      61,
+      721,
+      1440
+    ],
+    "storage_transformers": [],
+    "zarr_format": 3
+  },
+  "pressure_level/geopotential_height": {
+    "attributes": {
+      "_FillValue": "AAAAAAAA+H8=",
+      "coordinates": "expected_forecast_length spatial_ref valid_time",
+      "long_name": "Geopotential height",
+      "short_name": "gh",
+      "standard_name": "geopotential_height",
+      "step_type": "instant",
+      "units": "m"
+    },
+    "chunk_grid": {
+      "configuration": {
+        "chunk_shape": [
+          1,
+          1,
+          721,
+          1440,
+          1
+        ]
+      },
+      "name": "regular"
+    },
+    "chunk_key_encoding": {
+      "configuration": {
+        "separator": "/"
+      },
+      "name": "default"
+    },
+    "codecs": [
+      {
+        "configuration": {
+          "scale": 9.80665
+        },
+        "name": "scale_offset"
+      },
+      {
+        "configuration": {
+          "adjust_longitude_range": true,
+          "north_up": true,
+          "var": "z"
+        },
+        "name": "gribberish"
+      }
+    ],
+    "data_type": "float64",
+    "dimension_names": [
+      "init_time",
+      "lead_time",
+      "latitude",
+      "longitude",
+      "pressure_level"
+    ],
+    "fill_value": "NaN",
+    "node_type": "array",
+    "shape": [
+      3720,
+      61,
+      721,
+      1440,
+      14
+    ],
+    "storage_transformers": [],
+    "zarr_format": 3
+  },
+  "pressure_level/temperature": {
+    "attributes": {
+      "_FillValue": "AAAAAAAA+H8=",
+      "coordinates": "expected_forecast_length spatial_ref valid_time",
+      "long_name": "Temperature",
+      "short_name": "t",
+      "standard_name": "air_temperature",
+      "step_type": "instant",
+      "units": "degree_Celsius"
+    },
+    "chunk_grid": {
+      "configuration": {
+        "chunk_shape": [
+          1,
+          1,
+          721,
+          1440,
+          1
+        ]
+      },
+      "name": "regular"
+    },
+    "chunk_key_encoding": {
+      "configuration": {
+        "separator": "/"
+      },
+      "name": "default"
+    },
+    "codecs": [
+      {
+        "configuration": {
+          "offset": -273.15
+        },
+        "name": "scale_offset"
+      },
+      {
+        "configuration": {
+          "adjust_longitude_range": true,
+          "north_up": true,
+          "var": "t"
+        },
+        "name": "gribberish"
+      }
+    ],
+    "data_type": "float64",
+    "dimension_names": [
+      "init_time",
+      "lead_time",
+      "latitude",
+      "longitude",
+      "pressure_level"
+    ],
+    "fill_value": "NaN",
+    "node_type": "array",
+    "shape": [
+      3720,
+      61,
+      721,
+      1440,
+      14
+    ],
+    "storage_transformers": [],
+    "zarr_format": 3
+  }
+}

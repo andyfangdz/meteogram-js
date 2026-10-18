@@ -165,3 +165,7 @@ operation and compiler/fallback behavior. Format references:
 [ClickHouse Native](https://clickhouse.com/docs/reference/formats/Native),
 [compression guidance](https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/data-compression/compression-in-clickhouse.md),
 and [Rust ARM NEON](https://doc.rust-lang.org/core/arch/aarch64/fn.vtrn1q_f32.html).
+
+The subsequent [full Rust service migration](2026-10-18-native-rust-service.md)
+replaces Python acquisition, orchestration, serving and operational tooling.
+Current build/operation commands are in the [native service guide](../../native/README.md).

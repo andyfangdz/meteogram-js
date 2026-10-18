@@ -1,0 +1,15 @@
+{
+  "children": {
+    "api": {
+      "pid": 462,
+      "running": true
+    },
+    "clickhouse": {
+      "pid": 253,
+      "running": true
+    }
+  },
+  "implementation": "rust",
+  "next_update": 1792308597.8731244,
+  "time": 1792299252.0026386
+}

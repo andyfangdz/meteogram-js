@@ -326,138 +326,104 @@ Server-side cookie reading can fail on Edge. The `cookieReadSuccess` flag trigge
 
 ---
 
-## Dynamical migration investigation
+## Dynamical migration and native forecast service
 
-For continuation on the user's home Linux machine, read
-`docs/plans/dynamical-home-agent-handoff.md` first. The branch
-`codex/dynamical-clickhouse-handoff` packages the prototype and evidence, not the
-large source cache or database. The full-resident CONUS HRRR/GFS/AIFS cycle is now
-complete on the home ARM host;
-see `docs/plans/2026-10-17-clickhouse-home-resident.md` and its evidence bundle.
-It contains 84,579,313 verified rows in 33.01 GiB. Measured temporary obsolete
-parts and logical writes make the old 300 GB/low-write projections optimistic.
-Next work is staging/merge/retention optimization and a measured second-cycle
-atomic-publication test using the retained regional tables.
+The Next.js provider still uses Open-Meteo. The separate home-server native
+service now lives in `native/`, with one Rust/Cargo application for source reads,
+loading, validation, publication, retention, HTTP serving and supervision. Read
+`native/README.md` for current commands. The former Python tools were retired;
+commit `5f4ae08` and earlier commits preserve their historical implementations.
+Do not put whole-map virtual Zarr reads in page requests: arbitrary CONUS
+coordinates are served from the retained local grid.
 
-`scripts/probe-dynamical.py` is a standalone `uv` script for bounded live reads
-from Dynamical's GFS, HRRR and AIFS virtual Zarr/Icechunk datasets. See
-`docs/plans/2026-10-14-dynamical-migration.md` for verified field coverage and
-chunk-cost measurements. This is diagnostic tooling; the app still uses
-Open-Meteo. Do not put full virtual-profile reads into page requests: the source
-chunks span entire maps and require a background extraction/cache architecture.
-The budget-focused proposal is in
-`docs/plans/2026-10-16-dynamical-cost-design.md`. The current requirement is
-arbitrary CONUS coordinates on a home Linux server, designed in
-`docs/plans/2026-10-17-dynamical-arbitrary-locations.md`: retain the regional grid,
-query a local store, cache requested profiles, and retain Open-Meteo when
-coverage/freshness is insufficient. ClickHouse and point-oriented materialized
-Zarr need benchmarking. This supersedes the five-site/static-only design; no
-backend or provider switch is deployed.
+Historical evidence remains under `docs/plans/` and `docs/benchmarks/`:
 
-`scripts/clickhouse-prototype/` now contains the isolated local ClickHouse
-extractor, layout benchmark and native-profile HTTP API. It uses its own
-`meteogram_bench` database and stores large artifacts outside the repository.
-Measured results and explicit full-run estimates are in
-`docs/plans/2026-10-17-clickhouse-prototype-results.md`, with evidence under
-`docs/benchmarks/2026-10-17-clickhouse/`. The successful source sample covers four
-HRRR times and four spatial tiles; a workspace network failure prevented full-run
-and GFS/AIFS acquisition. Do not describe those projections as completed full-run
-benchmarks or the prototype API as the app's normalized meteorological provider.
+- `2026-10-14-dynamical-migration.md`: field coverage and source chunk costs.
+- `2026-10-17-clickhouse-full-volume-retry.md`: actual full-CONUS HRRR geography
+  for two times; its eight disk-bounded batches were not a completed full-resident
+  forecast benchmark.
+- `2026-10-17-clickhouse-home-resident.md`: the completed three-model home ARM
+  benchmark, 84,579,313 logical cell/lead rows in 33.01 GiB using the legacy layout.
+  Preserve its distinction between measured data and operating-cost scenarios.
+- `2026-10-17-native-pipeline-deployment.md`: actual publication/rollback/retention
+  deployment, including the observed ingestion-time HTTP tail-latency limitation.
+- `2026-10-17-native-ingestion-optimization.md`: 20m11s pinned full cycle.
+- `2026-10-18-native-rust-optimization.md`: the earlier mixed-language hot-path
+  optimization, 16m00s and 25.935 GB, plus the measured GFS query tradeoff.
+- `2026-10-18-native-rust-service.md`: the full Rust migration, fresh full-cycle
+  equivalence checks, legacy rollback, deployed supervisor and restart recovery.
 
-A later retry added a snapshot-scoped source cache, offline replay and a
-disk-bounded `full-volume.py` benchmark runner. Actual full-CONUS HRRR geography
-was loaded for **two times**, with evidence in
-`docs/plans/2026-10-17-clickhouse-full-volume-retry.md`. The network again blocked
-49-time/GFS/AIFS acquisition. The runner's planned eight spatial batches are not
-a completed full-volume or full-resident benchmark; it drops completed HRRR
-batches to fit workspace disk. Preserve this distinction in future reports.
+These older command examples describe their dated implementations. The original
+host handoff remains useful for historical context; it is not the current
+runtime setup guide. Large source caches, staging, database files and binaries
+stay outside Git. Original `meteogram_bench` tables are separate from service
+ownership and must not be deleted by production retention.
 
-The home full-resident workflow is now automated by
-`scripts/clickhouse-prototype/resident-run.py`. It launches the isolated server
-and benchmark children in one PID namespace, retains all three model tables,
-records per-second resource telemetry, and enforces a 20 GiB free-space reserve.
-The native-profile API rejects requested coordinates outside the retained CONUS
-rectangle before nearest-cell selection, and permits only micrometre-scale
-projection round-off at native grid bounds (`test-serve.py` regression tests).
-`verify-api.py` compares complete HTTP profiles with staged arrays at city,
-random and edge cells and measures one/four-client latency. `summarize-run.py`
-requires the completion marker and derives explicitly labeled capacity and
-monthly-cost scenarios from the recorded measurements. These scripts do not
-implement atomic publication or production retention. See the prototype README
-for commands and the dated host report for measured results.
+### Rust module map
 
-## Managed native forecast service
+| Purpose | File |
+|---------|------|
+| CLI and operational commands | `native/src/main.rs` |
+| Catalog, locks, freshness/schema policy, durable files, NPY/NPZ | `native/src/state.rs` |
+| Pinned Icechunk source reads, Zarr codecs, regional gathering | `native/src/source.rs` |
+| Native spherical HRRR projection and nearest-cell resolution | `native/src/grid.rs` |
+| Bounded staging transpose, Native insertion and validation/GC | `native/src/store.rs` |
+| Bit-exact NEON/portable packing and Native block encoding | `native/src/pack.rs` |
+| Async acquisition overlap, recovery, update and rollback | `native/src/pipeline.rs` |
+| ClickHouse HTTP/RowBinary access and both physical readers | `native/src/db.rs` |
+| Loopback forecast API and health | `native/src/api.rs` |
+| ClickHouse/API/updater supervision and persisted schedule | `native/src/service.rs` |
+| HTTP/data verification, query benchmarks, staging compression | `native/src/verify.rs` |
+| Fixed-point availability/content and resource observations | `native/src/observe.rs` |
+| Unit and real-database integration coverage | `native/src/tests.rs` |
+| Loopback database limits/query-log TTL and user unit | `native/server.xml`, `native/systemd/meteogram-native.service` |
 
-The home server now has a native-profile pipeline alongside the benchmark.
-`scripts/clickhouse-prototype/native_store.py` implements immutable revision
-loading, full-table validation, freshness gates, atomic catalog publication and
-retention. `pipeline.py` operates adoption/update/rollback/GC; `service.py`
-supervises local ClickHouse, `serve.py` and six-hour refresh jobs. `server.xml`
-sets a seven-day query-log TTL for ongoing operation. State lives in
-`~/.local/share/meteogram-native`, outside Git; service tables use
-`meteogram_native`. Adoption clones benchmark tables into independent
-service-owned snapshots; original benchmark artifacts are not automatically
-deleted. Never use the destructive benchmark loader against
-service tables or run a second server on its ports.
+### Service invariants
 
-Readers hold a shared catalog lock through their DB query. Publication/GC hold
-its exclusive lock, and one updater holds update.lock throughout builds and
-recovery. Preserve these invariants when changing data flow. The API accepts
-`--catalog-root` for managed revisions, caches native coordinate arrays, checks
-freshness on every forecast request and provides `/health`. `--data-root` remains
-the isolated benchmark mode. `fetch.py --metadata-only` pins source selection
-without downloading weather maps. See the prototype README for policies,
-installation, ownership and host commands. `test-pipeline.py` and
-`verify-live-update.py` verify operational correctness and real update continuity.
-`verify-service.py` checks retained rows/HTTP state and can explicitly exercise a
-database restart; separate child process groups preserve the supervisor.
-The updater starts the next model's source acquisition before waiting for the
-current source, reserving both complete model budgets plus 20 GiB. At most two
-extractors run during initial acquisition, then one extractor alongside one
-loader. `update --no-prefetch` forces sequential work. Cancellation joins the
-fetch worker before releasing `update.lock`.
+State lives in `~/.local/share/meteogram-native`; service tables use
+`meteogram_native`. One updater owns `update.lock` throughout recovery/builds.
+Readers hold the shared catalog lock through their database query;
+publication/GC hold the exclusive lock. Catalog replacement is atomic and
+fsynced. Each candidate has a unique immutable table. Keep current/previous
+revisions and a ten-minute retired grace period. GC drops only explicitly owned
+tables; adoption creates an independent validated clone of its source table.
 
-New managed revisions use `profile_store.py`: one physical row per native cell,
-with full forecasts stored as level/lead arrays. Float32 bit patterns are stored
-losslessly in UInt32 arrays using T64 + ZSTD(1); the HTTP reader reconstructs the
-original lead/pressure shape. Metadata `storage` explicitly versions layout,
-axes, encoding and writer, and is bound to the validation marker. Legacy
-cell/lead tables remain readable and rollback-compatible. Validation compares
-ALL sorted native cell IDs, physical column types, array lengths and finite bits,
-plus exact staged samples. Preserve the distinction between physical cell rows
-and logical cell/lead rows in reports and service verification.
+New revisions use `cell_profile_v1`: one physical row per native cell, full
+pressure profiles arranged as level/lead arrays, surface profiles as lead arrays,
+and exact Float32 bits in UInt32 arrays with T64 + ZSTD(1). Metadata explicitly
+versions layout, axes, encoding and writer and is bound to its validation marker.
+The API also reads legacy cell/lead tables, including rollback to them. Validation
+compares ALL sorted cell IDs, physical types, array lengths and finite bits,
+plus complete bit-exact staged samples. Keep physical cell rows distinct from
+logical cell/lead rows in reports. Do not enable quantization or fast-math.
 
-`profile_pack.rs` implements the fused ARM NEON transpose/finite check and
-ClickHouse Native block encoder. `profile_pack.py` checks NumPy buffer contracts,
-loads a source/compiler-keyed shared library from `~/.cache/meteogram-native`, and
-keeps Rust-owned wire buffers alive through synchronous insertion. It builds with
-rustc (std only, no crate downloads); `METEOGRAM_RUSTC` can select the compiler.
-Without a compiler, NumPy packing/Arrow insertion is the portable fallback. Do
-not enable fast-math or quantization. `test-profile-pack.py` checks IEEE bit
-preservation, vector tails and non-finite rejection; `test-pipeline.py` covers
-both storage generations, including encoded non-finite database corruption.
-Packing runs one batch ahead of insertion with bounded buffers; phase work times
-overlap, so use total elapsed time for comparisons. Deploy/reload the new API
-reader before publishing profile revisions; an existing Python process retains
-its imported legacy reader until restarted.
-`test-ingestion.py` checks early overlap, disk fallback, failures and cancellation.
+The updater pins source snapshots/initializations, verifies complete schema and
+freshness, and tries the latest then the preceding initialization. At most two
+extractors run initially, then one extractor overlaps one loader. Each extractor
+has at most 16 map tasks; packing runs one bounded batch ahead of insertion.
+Admission reserves both full model budgets plus 20 GiB. Preserve those bounds.
+Phase work times overlap; compare total elapsed times rather than adding work
+counters. The public S3 configuration explicitly retains anonymous access for
+STAC-authorized containers; do not let persisted S3 options enable host-credential
+or EC2 metadata lookup.
 
-`benchmark-ingestion.py` replays a pinned serving cycle into a separate catalog,
-checks complete profiles against serving tables, and measures API availability
-without replacing the serving catalog. It holds both updater locks during the
-experiment; use an empty output directory and explicitly clean up its tables
-after preserving results. The first measured optimization is documented in
-`docs/plans/2026-10-17-native-ingestion-optimization.md` (20m11s pinned full cycle).
-Do not describe an isolated build's HTTP availability check as a live
-publication-lock latency test.
-The latest measured implementation is documented in
-`docs/plans/2026-10-18-native-rust-optimization.md`: 16m00s for the same pinned
-cycle and 25.935 GB resident data. The running API reader was reloaded and verified
-against both formats; new revisions use Rust packing/Native writing. Existing
-serving revisions remain legacy until replaced. GFS four-client query p95 is a
-measured tradeoff (22 ms versus 15 ms), not a universal query improvement.
-The app still uses Open-Meteo; native fields are not yet the application's
-meteorologically normalized provider. Public serving is not configured.
+HRRR native projection is spherical LCC as declared by its source. This is
+separate from the app's WGS84 geopotential-to-MSL conversion. The API rejects
+requested coordinates outside 24–50°N, 125–66°W before selection and permits only
+micrometre-scale projection round-off at native bounds. HTTP requests never
+start acquisition. `/health` checks freshness and database connectivity. Native
+HRRR winds remain grid-relative. Meteorological normalization, cloud estimates,
+terrain handling, fallback and public serving remain separate app integration
+work.
+
+Build/check with `cargo build --release --locked --manifest-path native/Cargo.toml`,
+`cargo test --locked --manifest-path native/Cargo.toml`, `cargo fmt --check` and
+`cargo clippy --all-targets -- -D warnings` (the latter two with the same manifest).
+Include ignored integration tests while the isolated database is running.
+`verify`, `compare-stores`, `benchmark` and `observe` provide current Rust
+verification commands. An isolated build's availability observations do not
+establish live publication-lock latency or a WAN service SLA. No Python runtime,
+virtual environment, external packing shared library or runtime compiler is used.
 
 ## Development Tips
 

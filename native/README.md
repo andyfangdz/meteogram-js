@@ -1,0 +1,184 @@
+# Native forecast service
+
+One Rust application owns source acquisition, staging, ClickHouse ingestion,
+validation, publication, retention, HTTP serving, scheduling and verification.
+Build and test it with Cargo. Python, a virtual environment, NumPy, Xarray and
+runtime compilation are not required. The binary uses Rust Icechunk 2.3.0 and
+Gribberish 1.8.4 directly. Cargo also builds the native codec dependencies.
+ClickHouse remains a separately installed database executable.
+
+The Next.js application's weather provider is still Open-Meteo. This service
+returns native model fields; it does not implement the application's
+meteorological adapter or expose a public endpoint.
+
+## Build and run
+
+Requires Linux, Rust 1.95 or newer, a C/C++ compiler, and an installed ClickHouse
+binary. The ARM host uses Rust 1.99.1 and ClickHouse 26.9.20.23. No CMake or Python
+build step is needed.
+
+```sh
+cargo +1.99.1 build --release --locked --manifest-path native/Cargo.toml
+cargo +1.99.1 test --locked --manifest-path native/Cargo.toml
+install -m 755 native/target/release/meteogram-native "$HOME/.local/bin/meteogram-native"
+
+meteogram-native service \
+  --root "$HOME/.local/share/meteogram-native" \
+  --server-root "$HOME/.local/share/meteogram-benchmark" \
+  --binary "$HOME/.local/share/meteogram-benchmark/clickhouse"
+```
+
+Keep state and large downloads outside the repository. The supervisor starts
+ClickHouse on loopback ports 18123/19000 and the API on loopback port 18080.
+It refuses occupied ports, restarts failed children and refreshes every six
+hours after a successful update, or 30 minutes after failure. `schedule.json`
+persists the next refresh across restarts. `service-status.json` records child
+PIDs. Stop the supervisor and its children with:
+
+```sh
+meteogram-native stop --root "$HOME/.local/share/meteogram-native"
+```
+
+Install `native/systemd/meteogram-native.service` as a user unit to have the
+service manager supervise the Rust process. On hosts with a working user bus:
+
+```sh
+mkdir -p "$HOME/.local/share/systemd/user"
+cp native/systemd/meteogram-native.service "$HOME/.local/share/systemd/user/"
+systemctl --user daemon-reload
+systemctl --user enable --now meteogram-native.service
+```
+
+A running direct supervisor must be stopped before starting the unit. The
+included ClickHouse configuration has an empty local password and binds only
+to loopback; it is for this local service.
+
+## Operate
+
+```sh
+meteogram-native status --root "$HOME/.local/share/meteogram-native"
+meteogram-native update --root "$HOME/.local/share/meteogram-native"
+meteogram-native rollback --root "$HOME/.local/share/meteogram-native" --model hrrr
+meteogram-native gc --root "$HOME/.local/share/meteogram-native"
+
+curl --noproxy '*' --compressed \
+  'http://127.0.0.1:18080/forecast?model=hrrr&lat=41.013&lon=-74.027'
+curl --noproxy '*' 'http://127.0.0.1:18080/health'
+```
+
+The updater pins a single Icechunk snapshot and initialization per candidate.
+It tries the latest initialization, then the preceding one when the newest is
+incomplete. It skips acquisition if a fresh current forecast is already as new.
+HRRR retains 49 hourly leads through 48 hours; GFS retains hourly leads through
+120 hours then three-hour leads through 180; AIFS retains six-hour leads through
+180. The retained region is 24–50°N, 125–66°W on each native grid.
+
+Freshness requires HRRR age ≤24 hours and ≥12 hours of forecast remaining;
+GFS/AIFS require age ≤48 hours and ≥72 hours remaining. Publication additionally
+requires the expected complete source schema, all cells and leads, finite
+values, exact cell IDs and sampled bit-exact staged/database values. Failed
+candidates are discarded without changing the published catalog.
+
+At most two model extractors run during initial acquisition; subsequently one
+extractor overlaps one loader. Each extractor has at most 16 map reads/decodes
+in flight. Full model admission budgets plus a 20 GiB free-space reserve are
+checked before starting concurrent work. Individual source acquisition has a
+45-minute timeout. A single updater owns `update.lock` throughout recovery,
+acquisition, loading and publication.
+
+Catalog replacement is atomic and fsynced. Readers hold a shared advisory
+catalog lock through their database query. Publication and garbage collection
+hold the exclusive lock. The service retains current and previous model
+revisions; retired revisions have a ten-minute grace period. Garbage collection
+only drops tables explicitly owned by the service. Crash recovery discards
+unpublished candidates and starts new unique tables.
+
+For importing an existing complete benchmark table, `adopt` creates an
+independent ClickHouse clone, copies the metadata/coordinates, validates it and
+publishes it. It does not take ownership of the original table:
+
+```sh
+meteogram-native adopt --root "$SERVICE_ROOT" --source "$MODEL_DATA" \
+  --database meteogram_bench --table hrrr_256_zstd
+```
+
+## Storage and query contract
+
+The physical format is `cell_profile_v1`: one row per native cell, with pressure
+fields arranged as level/lead arrays and surface fields as lead arrays. Float32
+bits are stored losslessly as `Array(UInt32) CODEC(T64,ZSTD(1))`; there is no
+quantization. The ARM build uses the NEON packing routine. A bounded producer
+packs the next batch while the current batch is encoded and inserted in
+ClickHouse Native format. Other architectures use the portable Rust path.
+
+The reader also supports the earlier one-row-per-cell/lead format, so existing
+current/previous tables need no migration. Both formats return the same JSON
+rows. The source wind frame remains explicit: HRRR grid-relative, GFS/AIFS
+earth-relative. Arbitrary coordinates select the nearest retained native cell;
+outside-region/domain requests return 404, malformed coordinates return 400,
+and stale/unavailable forecasts return 503. Requests never download source maps.
+`/health` checks model freshness and database connectivity. Responses support
+gzip and retain `Cache-Control: no-store`.
+
+Staging uses the existing `.npy`/`.npz` binary formats through Rust readers and
+writers; the formats do not require a Python runtime. Per-lead checkpoint
+reports make interrupted acquisitions resumable when staging remains intact.
+After publication, raw staging and source cache are removed; descriptors,
+coordinates and validation evidence remain. All service tables live in
+`meteogram_native`; historical `meteogram_bench` tables are separate.
+Staged files are synced before their durable checkpoint. Unreferenced failed
+revision metadata expires after seven days.
+
+## Verify and investigate
+
+```sh
+cargo fmt --check --manifest-path native/Cargo.toml
+cargo clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings
+# Include the three integration tests while the isolated database is running:
+cargo test --locked --manifest-path native/Cargo.toml -- --include-ignored
+
+meteogram-native verify --root "$SERVICE_ROOT" --full --output "$RESULTS/verify.json"
+meteogram-native benchmark --root "$SERVICE_ROOT" --count 300 --clients 4 \
+  --output "$RESULTS/queries.json"
+meteogram-native compare-stores --root "$CANDIDATE_ROOT" \
+  --reference-root "$SERVICE_ROOT" --samples 100 --output "$RESULTS/exact.json"
+meteogram-native check-api --root "$CANDIDATE_ROOT" --port 18082 \
+  --compare-url http://127.0.0.1:18080 --output "$RESULTS/candidate-http.json"
+```
+
+`check-api` owns a temporary API child and always stops it after verification.
+`verify` checks city/interior/edge HTTP profiles against the database, invalid and outside requests,
+gzip and optionally full database validation. `--compare-url` compares complete
+HTTP payloads with another running service, excluding revision/query duration
+and allowing <10⁻⁹-degree coordinate round-off. `compare-stores` checks every
+cell ID and coordinate, source identity/schema, and complete sampled forecasts
+against a second catalog. Weather values must match exactly. `benchmark` runs
+an explicit warmup then measures complete profile queries; these are loopback,
+filesystem-cache-enabled observations.
+
+For a new isolated full acquisition, pin metadata for each model under
+`$PINS/{hrrr,gfs,aifs}/metadata.json`, then:
+
+```sh
+meteogram-native update --root "$CANDIDATE_ROOT" --pin-root "$PINS"
+meteogram-native observe --until "$CANDIDATE_ROOT/last-update.json" \
+  --output "$RESULTS/http-during-ingest.json" --disk-root "$CANDIDATE_ROOT"
+```
+
+Run the observer alongside the update. It records one fixed point per model,
+checks immutable revision hashes, and samples free disk/host memory. It does
+not establish publication latency, WAN latency, power use or a service SLA.
+
+`fetch` supports `--metadata-only`, `--pin-metadata`, `--leads`, `--run-offset`
+and `--output`; it always retains full CONUS geography. `inspect MODEL` prints
+live Zarr metadata. `probe --model MODEL --pin-metadata FILE` resolves and
+downloads one actual GRIB map, decodes its codec pipeline and reports its size.
+`load`, `validate` and `staging-compression` expose the bounded loader, database
+gates and lossless staging compression measurement. Use unique candidate tables;
+never rebuild a serving table in place. `METEOGRAM_CLICKHOUSE_URL` can select a
+different loopback ClickHouse HTTP endpoint for isolated tests.
+
+The Python investigation tools were retired after the Rust migration. Their
+historical versions remain in commit `5f4ae08` and its predecessors, together
+with the dated benchmark reports. Historical command examples describe those
+versions; current operations use this application.

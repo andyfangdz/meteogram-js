@@ -39,3 +39,7 @@ next-env.d.ts
 find-an-approach.github.io
 .playwright-mcp
 .claude/
+
+# Native forecast service build artifacts and local state
+/native/target/
+/native/.local/
