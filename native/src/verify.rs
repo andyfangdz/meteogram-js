@@ -3,6 +3,86 @@ use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{fs, path::Path, time::Instant};
+pub fn benchmark_pack(cells: usize, leads: usize, repeats: usize) -> Result<Value> {
+    anyhow::ensure!(
+        (1..=8192).contains(&cells) && (1..=141).contains(&leads) && (1..=100).contains(&repeats),
+        "Invalid packing benchmark size"
+    );
+    let (levels, fields) = (30, 6);
+    let source: Vec<Vec<f32>> = (0..leads)
+        .map(|time| {
+            (0..cells * levels * fields)
+                .map(|i| {
+                    f32::from_bits(0x3f000000 | (((i * 31 + time * 8191) as u32) & 0x007fffff))
+                })
+                .collect()
+        })
+        .collect();
+    let pointers: Vec<_> = source.iter().map(|v| v.as_ptr()).collect();
+    let mut expected = vec![0f32; cells * levels * fields * leads];
+    unsafe {
+        crate::pack::pack_tiled::<{ usize::MAX }>(
+            pointers.as_ptr(),
+            expected.as_mut_ptr(),
+            cells,
+            levels,
+            fields,
+            leads,
+        );
+    }
+    let mut actual = vec![0f32; expected.len()];
+    type Kernel = unsafe fn(*const *const f32, *mut f32, usize, usize, usize, usize) -> i32;
+    let kernels: [(usize, Kernel); 6] = [
+        (cells, crate::pack::pack_tiled::<{ usize::MAX }>),
+        (8, crate::pack::pack_tiled::<8>),
+        (16, crate::pack::pack_tiled::<16>),
+        (32, crate::pack::pack_tiled::<32>),
+        (64, crate::pack::pack_tiled::<64>),
+        (128, crate::pack::pack_tiled::<128>),
+    ];
+    let mut measurements: Vec<Vec<f64>> = vec![vec![]; kernels.len()];
+    for round in 0..=repeats {
+        // Rotate order to avoid giving one kernel every first or last turn.
+        for k in 0..kernels.len() {
+            let i = (k + round) % kernels.len();
+            let t = Instant::now();
+            let bad = unsafe {
+                kernels[i].1(
+                    pointers.as_ptr(),
+                    actual.as_mut_ptr(),
+                    cells,
+                    levels,
+                    fields,
+                    leads,
+                )
+            };
+            let seconds = t.elapsed().as_secs_f64();
+            anyhow::ensure!(
+                bad == 0
+                    && actual
+                        .iter()
+                        .zip(&expected)
+                        .all(|(a, b)| a.to_bits() == b.to_bits()),
+                "Packing benchmark mismatch"
+            );
+            std::hint::black_box(&actual);
+            if round > 0 {
+                measurements[i].push(seconds);
+            }
+        }
+    }
+    let results: Vec<_> = kernels
+        .iter()
+        .zip(measurements)
+        .map(|((tile, _), mut seconds)| {
+            seconds.sort_by(f64::total_cmp);
+            json!({"tile_cells":tile,"seconds":seconds,"median_seconds":seconds[seconds.len()/2]})
+        })
+        .collect();
+    Ok(
+        json!({"cells":cells,"leads":leads,"levels":levels,"fields":fields,"repeats":repeats,"value_bytes":expected.len()*4,"all_bits_equal":true,"results":results,"kind":"resident synthetic packing only; no source or database I/O"}),
+    )
+}
 fn equivalent(a: &Value, b: &Value, key: &str) -> bool {
     if matches!(key, "query_ms" | "revision") {
         return true;

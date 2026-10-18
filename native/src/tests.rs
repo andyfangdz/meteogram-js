@@ -13,7 +13,7 @@ fn simd_preserves_every_float_bit_including_tails() {
     for f in [2, 5, 6] {
         for l in [1, 3, 4, 8, 30] {
             for t in [1, 3, 4, 7, 49, 141] {
-                let c = 3;
+                let c = 35;
                 let patterns = [
                     0u32, 0x80000000, 1, 0x007fffff, 0x7f7fffff, 0xff7fffff, 0x3f812345,
                 ];
@@ -66,6 +66,84 @@ fn simd_rejects_nonfinite_in_all_tail_positions() {
             }
         }
     }
+}
+#[test]
+fn simd_rejects_nonfinite_across_cell_tiles() {
+    for cell in [0, 15, 16, 31, 32, 34] {
+        for time in [0, 3, 4, 48] {
+            let (c, l, f, t) = (35, 30, 6, 49);
+            let mut source = vec![vec![1f32; c * l * f]; t];
+            source[time][(cell * l + 29) * f + 5] = f32::NAN;
+            let pointers: Vec<_> = source.iter().map(|v| v.as_ptr()).collect();
+            let mut output = vec![0f32; c * l * f * t];
+            assert_ne!(
+                unsafe { pack::pack_neon(pointers.as_ptr(), output.as_mut_ptr(), c, l, f, t) },
+                0
+            );
+        }
+    }
+}
+#[tokio::test]
+async fn preflight_checks_late_missing_chunks_and_propagates_errors() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let checked = AtomicUsize::new(0);
+    let active = AtomicUsize::new(0);
+    let peak = AtomicUsize::new(0);
+    let keys: Vec<_> = (0..100).map(|i| format!("chunk/{i:03}")).collect();
+    let report = crate::source::check_references(keys.clone(), |key| {
+        checked.fetch_add(1, Ordering::Relaxed);
+        let active = &active;
+        let peak = &peak;
+        async move {
+            peak.fetch_max(
+                active.fetch_add(1, Ordering::Relaxed) + 1,
+                Ordering::Relaxed,
+            );
+            tokio::task::yield_now().await;
+            active.fetch_sub(1, Ordering::Relaxed);
+            Ok(key != "chunk/099")
+        }
+    })
+    .await
+    .unwrap();
+    assert_eq!(checked.load(Ordering::Relaxed), 100);
+    assert!((2..=16).contains(&peak.load(Ordering::Relaxed)));
+    assert_eq!(report["complete"], false);
+    assert_eq!(report["missing_count"], 1);
+    assert_eq!(report["missing_examples"], json!(["chunk/099"]));
+    let report = crate::source::check_references(keys.clone(), |_| async { Ok(true) })
+        .await
+        .unwrap();
+    assert_eq!(report["complete"], true);
+    assert_eq!(report["chunks"], 100);
+    assert!(crate::source::check_references(keys, |_| async {
+        anyhow::bail!("manifest unavailable")
+    })
+    .await
+    .is_err());
+}
+#[test]
+fn cache_pruning_keeps_uncheckpointed_maps_and_is_resumable() {
+    let root = tempfile::tempdir().unwrap();
+    let keys: Vec<String> = ["temperature/c/0/0", "wind/c/0/0", "temperature/c/0/1"]
+        .into_iter()
+        .map(String::from)
+        .collect();
+    for key in &keys {
+        let path = crate::source::cache_path(root.path(), key);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, b"encoded map").unwrap();
+    }
+    assert_eq!(
+        crate::source::prune_checkpointed_cache(root.path(), &keys[..2]).unwrap(),
+        22
+    );
+    assert!(crate::source::cache_path(root.path(), &keys[2]).exists());
+    assert!(!crate::source::cache_path(root.path(), &keys[0]).exists());
+    assert_eq!(
+        crate::source::prune_checkpointed_cache(root.path(), &keys[..2]).unwrap(),
+        0
+    );
 }
 #[test]
 fn numpy_cells_roundtrip_without_python() {
@@ -219,33 +297,41 @@ fn database_native_roundtrip_and_corruption_gate() {
     let root = tempfile::tempdir().unwrap();
     let db = Db::new().unwrap();
     let table = format!("rust_test_{}", uuid::Uuid::new_v4().simple());
-    let ids = [11, 22, 33, 44, 55];
-    save_cells(&root.path().join("cells.npz"), &ids, &[41.; 5], &[-74.; 5]).unwrap();
-    let m = json!({"model":"aifs","init_time":"2026-10-17T18:00:00","snapshot_id":"test","coverage":"conus","cells":5,"levels":[1000,500],"leads":[0,6,12],"variables":["temperature","wind_u"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
+    // Cross the loader's 4,096-cell boundary, including a short final batch.
+    let cells = 4101;
+    let ids: Vec<_> = (1..=cells as u32).map(|i| i * 11).collect();
+    save_cells(
+        &root.path().join("cells.npz"),
+        &ids,
+        &vec![41.; cells],
+        &vec![-74.; cells],
+    )
+    .unwrap();
+    let m = json!({"model":"aifs","init_time":"2026-10-17T18:00:00","snapshot_id":"test","coverage":"conus","cells":cells,"levels":[1000,500],"leads":[0,6,12],"variables":["temperature","wind_u"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
     atomic(root.path().join("metadata.json"), &m).unwrap();
     let bits = [0u32, 0x80000000, 1, 0x7f7fffff, 0xff7fffff, 0x3f812345];
     for (t, lead) in [0, 6, 12].iter().enumerate() {
-        let p: Vec<u8> = (0..20)
+        let p: Vec<u8> = (0..cells * 4)
             .flat_map(|i| bits[(i + t) % bits.len()].to_le_bytes())
             .collect();
-        let g: Vec<u8> = (0..10)
+        let g: Vec<u8> = (0..cells * 2)
             .flat_map(|i| bits[(i + t) % bits.len()].to_le_bytes())
             .collect();
         fs::write(
             root.path().join(format!("lead-{lead:03}.npy")),
-            npy_bytes("<f4", &[5, 2, 2], &p),
+            npy_bytes("<f4", &[cells, 2, 2], &p),
         )
         .unwrap();
         fs::write(
             root.path().join(format!("surface-{lead:03}.npy")),
-            npy_bytes("<f4", &[5, 2], &g),
+            npy_bytes("<f4", &[cells, 2], &g),
         )
         .unwrap();
     }
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let v = store::load(root.path(), root.path(), &table).unwrap();
-        assert_eq!(v["rows"], 15);
-        assert_eq!(v["storage_rows"], 5);
+        assert_eq!(v["rows"], cells * 3);
+        assert_eq!(v["storage_rows"], cells);
         let clone = format!("{table}_clone");
         db.command(&format!(
             "CREATE TABLE meteogram_native.{clone} CLONE AS meteogram_native.{table}"

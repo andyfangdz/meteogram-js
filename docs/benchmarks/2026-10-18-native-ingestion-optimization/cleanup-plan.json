@@ -1,0 +1,82 @@
+{
+  "protected": [
+    {
+      "database": "meteogram_native",
+      "table": "aifs_20261018074734_12c3fcfe"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "gfs_20261018072959_02449bca"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "hrrr_20261018073354_ac063ce1"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "aifs_20261018012917_143ac186"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "gfs_20261018011859_19e2797e"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "hrrr_20261018005542_c13c1f40"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "hrrr_20261018013136_f14ebb9d"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "gfs_20261018013223_864282c8"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "aifs_20261018013225_0f88f7b8"
+    },
+    {
+      "database": "meteogram_bench",
+      "table": "aifs_256_zstd"
+    },
+    {
+      "database": "meteogram_bench",
+      "table": "gfs_256_zstd"
+    },
+    {
+      "database": "meteogram_bench",
+      "table": "hrrr_256_zstd"
+    }
+  ],
+  "drop": [
+    {
+      "database": "meteogram_native",
+      "table": "tiling_baseline_hrrr_20261018"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "tiling_candidate_hrrr_20261018"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "tiling_candidate_gfs_20261018"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "tiling_candidate_aifs_20261018"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "tiling_prefetch_hrrr_20261018"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "tiling_prefetch_gfs_20261018"
+    },
+    {
+      "database": "meteogram_native",
+      "table": "tiling_prefetch_aifs_20261018"
+    }
+  ]
+}

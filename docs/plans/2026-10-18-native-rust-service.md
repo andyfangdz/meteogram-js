@@ -155,3 +155,6 @@ and staging compression use the Rust CLI documented in `native/README.md`.
 Evidence is stored under
 [`docs/benchmarks/2026-10-18-native-rust-service/`](../benchmarks/2026-10-18-native-rust-service/).
 Large datasets, caches, database files and binaries remain outside Git.
+
+Subsequent ingestion experiments and source/cache improvements are measured
+in the [ingestion optimization report](2026-10-18-native-ingestion-optimization.md).

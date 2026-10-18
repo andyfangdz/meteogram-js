@@ -365,15 +365,15 @@ ownership and must not be deleted by production retention.
 |---------|------|
 | CLI and operational commands | `native/src/main.rs` |
 | Catalog, locks, freshness/schema policy, durable files, NPY/NPZ | `native/src/state.rs` |
-| Pinned Icechunk source reads, Zarr codecs, regional gathering | `native/src/source.rs` |
+| Pinned Icechunk manifest preflight, source reads, Zarr codecs, regional gathering | `native/src/source.rs` |
 | Native spherical HRRR projection and nearest-cell resolution | `native/src/grid.rs` |
 | Bounded staging transpose, Native insertion and validation/GC | `native/src/store.rs` |
-| Bit-exact NEON/portable packing and Native block encoding | `native/src/pack.rs` |
+| Bit-exact cache-tiled NEON/portable packing and Native block encoding | `native/src/pack.rs` |
 | Async acquisition overlap, recovery, update and rollback | `native/src/pipeline.rs` |
 | ClickHouse HTTP/RowBinary access and both physical readers | `native/src/db.rs` |
 | Loopback forecast API and health | `native/src/api.rs` |
 | ClickHouse/API/updater supervision and persisted schedule | `native/src/service.rs` |
-| HTTP/data verification, query benchmarks, staging compression | `native/src/verify.rs` |
+| HTTP/data verification, query/packing benchmarks, staging compression | `native/src/verify.rs` |
 | Fixed-point availability/content and resource observations | `native/src/observe.rs` |
 | Unit and real-database integration coverage | `native/src/tests.rs` |
 | Loopback database limits/query-log TTL and user unit | `native/server.xml`, `native/systemd/meteogram-native.service` |
@@ -398,9 +398,17 @@ plus complete bit-exact staged samples. Keep physical cell rows distinct from
 logical cell/lead rows in reports. Do not enable quantization or fast-math.
 
 The updater pins source snapshots/initializations, verifies complete schema and
-freshness, and tries the latest then the preceding initialization. At most two
-extractors run initially, then one extractor overlaps one loader. Each extractor
+freshness, and tries the latest then the preceding initialization.
+Before forecast-map downloads, all required chunk references are checked in the
+pinned Icechunk manifests (16 concurrent checks); `preflight.json` records missing
+references. This does not guarantee the referenced payload objects are readable;
+preserve download/decode/full-data gates. At most two extractors run initially,
+then one extractor overlaps one loader. Each extractor
 has at most 16 map tasks; packing runs one bounded batch ahead of insertion.
+Packing completes small cell tiles across all leads to reuse output cache lines.
+Encoded maps are evicted only after both staged arrays are synced and the lead
+checkpoint is durable. Resume prunes any already-checkpointed maps and retains
+unfinished leads; do not require a complete encoded-map cache for recovery.
 Admission reserves both full model budgets plus 20 GiB. Preserve those bounds.
 Phase work times overlap; compare total elapsed times rather than adding work
 counters. The public S3 configuration explicitly retains anonymous access for
@@ -424,6 +432,11 @@ Include ignored integration tests while the isolated database is running.
 verification commands. An isolated build's availability observations do not
 establish live publication-lock latency or a WAN service SLA. No Python runtime,
 virtual environment, external packing shared library or runtime compiler is used.
+
+The subsequent packing, source-preflight and temporary-cache measurements are in
+`docs/plans/2026-10-18-native-ingestion-optimization.md`. Keep resident kernel
+timings distinct from complete load and refresh times. Cache eviction reduces
+temporary retention; it does not avoid the initial map download/cache write.
 
 ## Development Tips
 

@@ -15,7 +15,7 @@ use std::{
     collections::HashMap,
     fs::{self, File},
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc,
@@ -260,9 +260,27 @@ struct Task {
     meta: Value,
     key: String,
 }
-async fn cached(store: &Store, dir: &Path, key: &str, bytes: &AtomicU64) -> Result<Vec<u8>> {
+pub(crate) fn cache_path(dir: &Path, key: &str) -> PathBuf {
     let digest = format!("{:x}", Sha256::digest(key));
-    let p = dir.join(&digest[..2]).join(&digest);
+    dir.join(&digest[..2]).join(&digest)
+}
+pub(crate) fn prune_checkpointed_cache(dir: &Path, keys: &[String]) -> Result<u64> {
+    let mut removed = 0;
+    for key in keys {
+        let path = cache_path(dir, key);
+        match fs::metadata(&path) {
+            Ok(metadata) => {
+                fs::remove_file(path)?;
+                removed += metadata.len();
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.into()),
+        }
+    }
+    Ok(removed)
+}
+async fn cached(store: &Store, dir: &Path, key: &str, bytes: &AtomicU64) -> Result<Vec<u8>> {
+    let p = cache_path(dir, key);
     if p.exists() {
         return Ok(fs::read(p)?);
     }
@@ -453,30 +471,17 @@ pub async fn fetch(
     if metadata_only {
         return Ok(meta);
     }
-    let cache = out.join("source-cache");
-    fs::create_dir_all(&cache)?;
-    let ids = Arc::new(ids);
-    let bytes = Arc::new(AtomicU64::new(0));
-    for lead in leads {
-        let report = out.join(format!("lead-{lead:03}.json"));
-        if report.exists() {
-            anyhow::ensure!(
-                out.join(format!("lead-{lead:03}.npy")).exists()
-                    && out.join(format!("surface-{lead:03}.npy")).exists(),
-                "Completed arrays removed; use fresh extraction"
-            );
-            continue;
-        }
-        let before = bytes.load(Ordering::Relaxed);
-        let started = Instant::now();
+    // Resolve references in the pinned Icechunk manifests before downloading
+    // any whole-map payload. Incomplete recent runs otherwise fail minutes in.
+    let mut by_lead = vec![];
+    for lead in &leads {
         let ti = source_leads
             .iter()
-            .position(|v| *v == lead)
+            .position(|v| v == lead)
             .context("Lead unavailable")?;
         let mut tasks = vec![];
         for (field, v) in variables.iter().enumerate() {
             for (level, p) in levels.iter().enumerate() {
-                let name = format!("pressure_level/{v}");
                 let pi = pressure
                     .iter()
                     .position(|x| *x == *p as f64)
@@ -484,7 +489,7 @@ pub async fn fetch(
                 tasks.push(task(
                     field,
                     Some(level),
-                    name,
+                    format!("pressure_level/{v}"),
                     &metas,
                     init_index,
                     ti,
@@ -503,6 +508,41 @@ pub async fn fetch(
                 None,
             )?);
         }
+        by_lead.push((*lead, tasks));
+    }
+    let keys = by_lead
+        .iter()
+        .flat_map(|(_, tasks)| tasks.iter().map(|t| t.key.clone()))
+        .collect();
+    let references = check_references(keys, |key| {
+        let store = src.store.clone();
+        async move { Ok(store.exists(&key).await?) }
+    })
+    .await?;
+    atomic(out.join("preflight.json"), &references)?;
+    anyhow::ensure!(
+        references["complete"] == true,
+        "Incomplete source references: {}",
+        references
+    );
+    let cache = out.join("source-cache");
+    fs::create_dir_all(&cache)?;
+    let ids = Arc::new(ids);
+    let bytes = Arc::new(AtomicU64::new(0));
+    for (lead, tasks) in by_lead {
+        let completed_keys: Vec<_> = tasks.iter().map(|t| t.key.clone()).collect();
+        let report = out.join(format!("lead-{lead:03}.json"));
+        if report.exists() {
+            anyhow::ensure!(
+                out.join(format!("lead-{lead:03}.npy")).exists()
+                    && out.join(format!("surface-{lead:03}.npy")).exists(),
+                "Completed arrays removed; use fresh extraction"
+            );
+            prune_checkpointed_cache(&cache, &completed_keys)?;
+            continue;
+        }
+        let before = bytes.load(Ordering::Relaxed);
+        let started = Instant::now();
         let results = stream::iter(tasks)
             .map(|t| {
                 let store = src.store.clone();
@@ -560,11 +600,37 @@ pub async fn fetch(
             out.join(format!("surface-{lead:03}.npy")),
             npy_bytes("<f4", &[nc, 2], raw(&ground)),
         )?;
-        let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true});
+        let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"source_cache_policy":"uncheckpointed_leads_only"});
         atomic(&report, &stats)?;
+        // The synced staged arrays and durable checkpoint now replace these
+        // encoded maps for resume. Retain only a partially acquired lead.
+        prune_checkpointed_cache(&cache, &completed_keys)?;
         println!("{stats}");
     }
     Ok(meta)
+}
+pub(crate) async fn check_references<F, Fut>(keys: Vec<String>, exists: F) -> Result<Value>
+where
+    F: Fn(String) -> Fut,
+    Fut: std::future::Future<Output = Result<bool>>,
+{
+    let started = Instant::now();
+    let count = keys.len();
+    let mut missing = stream::iter(keys)
+        .map(|key| {
+            let checked = exists(key.clone());
+            async move { Ok::<_, anyhow::Error>(if checked.await? { None } else { Some(key) }) }
+        })
+        .buffer_unordered(16)
+        .try_collect::<Vec<_>>()
+        .await?
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    missing.sort();
+    Ok(
+        json!({"chunks":count,"missing_count":missing.len(),"missing_examples":missing.iter().take(8).collect::<Vec<_>>(),"complete":missing.is_empty(),"seconds":started.elapsed().as_secs_f64(),"payload_reads":0}),
+    )
 }
 fn write_stage(path: impl AsRef<Path>, bytes: Vec<u8>) -> Result<()> {
     let mut f = File::create(path)?;

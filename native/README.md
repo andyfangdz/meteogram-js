@@ -69,6 +69,11 @@ curl --noproxy '*' 'http://127.0.0.1:18080/health'
 The updater pins a single Icechunk snapshot and initialization per candidate.
 It tries the latest initialization, then the preceding one when the newest is
 incomplete. It skips acquisition if a fresh current forecast is already as new.
+Before downloading forecast maps, it checks every required chunk reference in
+that pinned snapshot, with at most 16 checks in flight. A missing reference
+rejects the candidate immediately; `preflight.json` records the result. Existing
+references can still point to unavailable or invalid source objects, so the
+download, decode and full validation gates remain required.
 HRRR retains 49 hourly leads through 48 hours; GFS retains hourly leads through
 120 hours then three-hour leads through 180; AIFS retains six-hour leads through
 180. The retained region is 24–50°N, 125–66°W on each native grid.
@@ -107,7 +112,8 @@ meteogram-native adopt --root "$SERVICE_ROOT" --source "$MODEL_DATA" \
 The physical format is `cell_profile_v1`: one row per native cell, with pressure
 fields arranged as level/lead arrays and surface fields as lead arrays. Float32
 bits are stored losslessly as `Array(UInt32) CODEC(T64,ZSTD(1))`; there is no
-quantization. The ARM build uses the NEON packing routine. A bounded producer
+quantization. The ARM build uses the NEON packing routine, finishing small groups
+of cells across all leads to keep output profiles in CPU cache. A bounded producer
 packs the next batch while the current batch is encoded and inserted in
 ClickHouse Native format. Other architectures use the portable Rust path.
 
@@ -123,7 +129,11 @@ gzip and retain `Cache-Control: no-store`.
 Staging uses the existing `.npy`/`.npz` binary formats through Rust readers and
 writers; the formats do not require a Python runtime. Per-lead checkpoint
 reports make interrupted acquisitions resumable when staging remains intact.
-After publication, raw staging and source cache are removed; descriptors,
+Encoded source maps are removed only after both staged files are synced and the
+lead checkpoint is durable. The cache retains unfinished leads; a resume also
+prunes maps left behind after a checkpoint. Completed leads resume from staging,
+so a complete encoded-map archive is not retained. After publication, raw staging
+and remaining source cache are removed; descriptors,
 coordinates and validation evidence remain. All service tables live in
 `meteogram_native`; historical `meteogram_bench` tables are separate.
 Staged files are synced before their durable checkpoint. Unreferenced failed
@@ -140,6 +150,8 @@ cargo test --locked --manifest-path native/Cargo.toml -- --include-ignored
 meteogram-native verify --root "$SERVICE_ROOT" --full --output "$RESULTS/verify.json"
 meteogram-native benchmark --root "$SERVICE_ROOT" --count 300 --clients 4 \
   --output "$RESULTS/queries.json"
+meteogram-native benchmark-pack --cells 4096 --leads 49 --repeats 5 \
+  --output "$RESULTS/packing.json"
 meteogram-native compare-stores --root "$CANDIDATE_ROOT" \
   --reference-root "$SERVICE_ROOT" --samples 100 --output "$RESULTS/exact.json"
 meteogram-native check-api --root "$CANDIDATE_ROOT" --port 18082 \
@@ -155,6 +167,11 @@ cell ID and coordinate, source identity/schema, and complete sampled forecasts
 against a second catalog. Weather values must match exactly. `benchmark` runs
 an explicit warmup then measures complete profile queries; these are loopback,
 filesystem-cache-enabled observations.
+
+`benchmark-pack` compares the original lead-first traversal with several cell
+tile sizes, using identical resident synthetic inputs, a warmup and rotating
+execution order. It checks every output bit. These timings isolate packing;
+they do not measure acquisition, staging I/O or a complete refresh.
 
 For a new isolated full acquisition, pin metadata for each model under
 `$PINS/{hrrr,gfs,aifs}/metadata.json`, then:
@@ -182,3 +199,6 @@ The Python investigation tools were retired after the Rust migration. Their
 historical versions remain in commit `5f4ae08` and its predecessors, together
 with the dated benchmark reports. Historical command examples describe those
 versions; current operations use this application.
+
+The measured packing, source-preflight and cache changes are documented in
+the [ingestion optimization report](../docs/plans/2026-10-18-native-ingestion-optimization.md).

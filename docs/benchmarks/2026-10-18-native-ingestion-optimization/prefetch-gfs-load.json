@@ -1,0 +1,13 @@
+{
+  "encode_seconds": 0.4811800110000001,
+  "input_prefetch": "next_batch_linux_willneed",
+  "insert_seconds": 9.305532926,
+  "logical_rows": 3508785,
+  "pack_seconds": 2.003033914,
+  "pack_wait_seconds": 0.28848951800000006,
+  "prefetch_advice_failures": 0,
+  "storage_rows": 24885,
+  "total_insert_seconds": 10.106690379,
+  "total_seconds": 11.948140848,
+  "validation_seconds": 1.655001381
+}

@@ -1,0 +1,17 @@
+{
+  "chunks": 8918,
+  "complete": false,
+  "missing_count": 3272,
+  "missing_examples": [
+    "dew_point_temperature_2m/c/12075/33/0/0",
+    "dew_point_temperature_2m/c/12075/34/0/0",
+    "dew_point_temperature_2m/c/12075/35/0/0",
+    "dew_point_temperature_2m/c/12075/36/0/0",
+    "dew_point_temperature_2m/c/12075/37/0/0",
+    "dew_point_temperature_2m/c/12075/38/0/0",
+    "dew_point_temperature_2m/c/12075/39/0/0",
+    "dew_point_temperature_2m/c/12075/40/0/0"
+  ],
+  "payload_reads": 0,
+  "seconds": 1.462754024
+}

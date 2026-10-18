@@ -90,6 +90,22 @@ pub unsafe extern "C" fn pack_neon(
     f: usize,
     t: usize,
 ) -> i32 {
+    pack_tiled::<16>(source, out, c, l, f, t)
+}
+
+/// Keep a small group of output profiles in cache while visiting every lead.
+/// TILE >= c reproduces the original lead-first traversal for measurement.
+/// # Safety
+/// Same buffer contract as pack_scalar; TILE must be positive.
+pub unsafe fn pack_tiled<const TILE: usize>(
+    source: *const *const f32,
+    out: *mut f32,
+    c: usize,
+    l: usize,
+    f: usize,
+    t: usize,
+) -> i32 {
+    assert!(TILE > 0);
     #[cfg(not(target_arch = "aarch64"))]
     {
         return pack_scalar(source, out, c, l, f, t);
@@ -97,66 +113,69 @@ pub unsafe extern "C" fn pack_neon(
     #[cfg(target_arch = "aarch64")]
     {
         let mut good = vdupq_n_u32(u32::MAX);
-        let mut time = 0;
-        while time + 4 <= t {
-            for cell in 0..c {
-                let mut level = 0;
-                if f == 6 {
-                    while level + 4 <= l {
-                        let columns = [
-                            six_columns((*source.add(time)).add((cell * l + level) * 6)),
-                            six_columns((*source.add(time + 1)).add((cell * l + level) * 6)),
-                            six_columns((*source.add(time + 2)).add((cell * l + level) * 6)),
-                            six_columns((*source.add(time + 3)).add((cell * l + level) * 6)),
-                        ];
-                        for (field, _) in columns[0].iter().enumerate() {
-                            let values = transpose4(
-                                columns[0][field],
-                                columns[1][field],
-                                columns[2][field],
-                                columns[3][field],
-                            );
-                            for (k, v) in values.into_iter().enumerate() {
-                                good = vandq_u32(good, finite(v));
-                                vst1q_f32(
-                                    out.add(((field * c + cell) * l + level + k) * t + time),
-                                    v,
-                                );
-                            }
-                        }
-                        level += 4;
-                    }
-                }
-                while level < l {
-                    for field in 0..f {
-                        let i = (cell * l + level) * f + field;
-                        let values = [
-                            *(*source.add(time)).add(i),
-                            *(*source.add(time + 1)).add(i),
-                            *(*source.add(time + 2)).add(i),
-                            *(*source.add(time + 3)).add(i),
-                        ];
-                        let v = vld1q_f32(values.as_ptr());
-                        good = vandq_u32(good, finite(v));
-                        vst1q_f32(out.add(((field * c + cell) * l + level) * t + time), v);
-                    }
-                    level += 1;
-                }
-            }
-            time += 4;
-        }
         let mut bad = false;
-        while time < t {
-            for cell in 0..c {
-                for level in 0..l {
-                    for field in 0..f {
-                        let v = *(*source.add(time)).add((cell * l + level) * f + field);
-                        bad |= v.to_bits() & 0x7fffffff >= 0x7f800000;
-                        *out.add(((field * c + cell) * l + level) * t + time) = v;
+        for first in (0..c).step_by(TILE) {
+            let last = first.saturating_add(TILE).min(c);
+            let mut time = 0;
+            while time + 4 <= t {
+                for cell in first..last {
+                    let mut level = 0;
+                    if f == 6 {
+                        while level + 4 <= l {
+                            let columns = [
+                                six_columns((*source.add(time)).add((cell * l + level) * 6)),
+                                six_columns((*source.add(time + 1)).add((cell * l + level) * 6)),
+                                six_columns((*source.add(time + 2)).add((cell * l + level) * 6)),
+                                six_columns((*source.add(time + 3)).add((cell * l + level) * 6)),
+                            ];
+                            for (field, _) in columns[0].iter().enumerate() {
+                                let values = transpose4(
+                                    columns[0][field],
+                                    columns[1][field],
+                                    columns[2][field],
+                                    columns[3][field],
+                                );
+                                for (k, v) in values.into_iter().enumerate() {
+                                    good = vandq_u32(good, finite(v));
+                                    vst1q_f32(
+                                        out.add(((field * c + cell) * l + level + k) * t + time),
+                                        v,
+                                    );
+                                }
+                            }
+                            level += 4;
+                        }
+                    }
+                    while level < l {
+                        for field in 0..f {
+                            let i = (cell * l + level) * f + field;
+                            let values = [
+                                *(*source.add(time)).add(i),
+                                *(*source.add(time + 1)).add(i),
+                                *(*source.add(time + 2)).add(i),
+                                *(*source.add(time + 3)).add(i),
+                            ];
+                            let v = vld1q_f32(values.as_ptr());
+                            good = vandq_u32(good, finite(v));
+                            vst1q_f32(out.add(((field * c + cell) * l + level) * t + time), v);
+                        }
+                        level += 1;
                     }
                 }
+                time += 4;
             }
-            time += 1;
+            while time < t {
+                for cell in first..last {
+                    for level in 0..l {
+                        for field in 0..f {
+                            let v = *(*source.add(time)).add((cell * l + level) * f + field);
+                            bad |= v.to_bits() & 0x7fffffff >= 0x7f800000;
+                            *out.add(((field * c + cell) * l + level) * t + time) = v;
+                        }
+                    }
+                }
+                time += 1;
+            }
         }
         (bad || vminvq_u32(good) == 0) as i32
     }

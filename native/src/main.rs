@@ -173,6 +173,16 @@ enum Cmd {
         #[arg(long)]
         output: Option<PathBuf>,
     },
+    BenchmarkPack {
+        #[arg(long, default_value_t = 4096)]
+        cells: usize,
+        #[arg(long, default_value_t = 49)]
+        leads: usize,
+        #[arg(long, default_value_t = 5)]
+        repeats: usize,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
     CompareStores {
         #[arg(long)]
         root: PathBuf,
@@ -386,6 +396,16 @@ async fn main() -> Result<()> {
                 verify::compare_stores(&root, &reference_root, samples)
             })
             .await??,
+            path,
+        )?,
+        Cmd::BenchmarkPack {
+            cells,
+            leads,
+            repeats,
+            output: path,
+        } => output(
+            &tokio::task::spawn_blocking(move || verify::benchmark_pack(cells, leads, repeats))
+                .await??,
             path,
         )?,
         Cmd::StagingCompression { data, output: path } => output(
