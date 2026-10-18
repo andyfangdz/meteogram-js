@@ -697,6 +697,13 @@ verification clients load that same token. API wind rotation comes from the
 selected grid cell's actual source projection, never a hardcoded HRRR angle.
 
 The active public API hostname is `weather-api.andyfang.app`.
+The production domains `meteogram.vercel.app` and `meteogram.flyingclub.org`
+serve native HRRR/GFS/AIFS/RRFS through that endpoint. Both home units now run
+under `systemctl --user` and are enabled, with user lingering enabled. Use
+`systemctl --user stop` to stop a managed service; the native CLI stop request
+is for direct supervisors and a managed unit's Restart=always would restart it.
+Production browser/service evidence is recorded in
+`docs/plans/2026-10-18-native-site-integration.md`.
 Tunnel credentials/config live outside Git under
 `~/.local/share/meteogram-tunnel`; ingress only proxies loopback 18080, with a
 404 catchall. Database and metrics listeners remain local. The user units are

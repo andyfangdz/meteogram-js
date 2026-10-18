@@ -35,7 +35,7 @@ It refuses occupied ports and restarts failed children. A persistent updater
 polls source availability every 60 seconds and ingests individual forecast hours
 as their required fields become available. `schedule.json` records polling
 progress across restarts. `service-status.json` records child
-PIDs. Stop the supervisor and its children with:
+PIDs. Stop a directly launched supervisor and its children with:
 
 ```sh
 meteogram-native stop --root "$HOME/.local/share/meteogram-native"
@@ -50,6 +50,11 @@ cp native/systemd/meteogram-native.service "$HOME/.local/share/systemd/user/"
 systemctl --user daemon-reload
 systemctl --user enable --now meteogram-native.service
 ```
+
+On the current home host, both native and tunnel units are enabled and running,
+with user lingering enabled. Manage them with `systemctl --user status`,
+`restart` or `stop`. Use `systemctl --user stop meteogram-native.service` for a
+managed supervisor; the CLI stop request would trigger its automatic restart.
 
 A running direct supervisor must be stopped before starting the unit. The
 included ClickHouse configuration has an empty local password and binds only

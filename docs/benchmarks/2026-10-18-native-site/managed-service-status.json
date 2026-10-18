@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-10-18T20:41:05.383209+00:00",
+  "units": {
+    "meteogram-native.service": {
+      "Id": "meteogram-native.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled",
+      "NRestarts": "0"
+    },
+    "meteogram-tunnel.service": {
+      "Id": "meteogram-tunnel.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled",
+      "NRestarts": "0"
+    }
+  },
+  "linger": "yes",
+  "native_children": {
+    "api": {
+      "pid": 3539325,
+      "running": true
+    },
+    "clickhouse": {
+      "pid": 3539077,
+      "running": true
+    },
+    "update": {
+      "pid": 3539327,
+      "running": true
+    }
+  },
+  "http_checks_passed": true,
+  "reboot_tested": false
+}

@@ -1,9 +1,9 @@
 # Native forecast site integration — 2026-10-18
 
-The site now has a tested native forecast adapter and authenticated API path.
-The public Cloudflare path is verified, including all four charts. The
-new application commit is deployed to production. Production native
-activation still awaits the environment correction described below.
+The native forecast integration is live at `meteogram.vercel.app` and
+`meteogram.flyingclub.org`, using `weather-api.andyfang.app`. All four native
+models passed production browser checks. The home API, database, updater and
+tunnel now run under enabled user services. No host reboot was performed.
 
 ## Request path
 
@@ -87,30 +87,42 @@ errors. See `public-tunnel.json` and `browser-cloudflare.json` in the evidence
 directory. This checks browser → Next.js → public Cloudflare TLS → home API →
 ClickHouse → normalized chart; it does not establish the deployed Vercel flow.
 
-Commit `9684287` built successfully in the Vercel preview deployment
-`dpl_3YXtuQ1SDNUYcVecth4cjjU4awo3`. The user subsequently reported configuring
-the server environment variables. The connector cannot list their metadata
-(403), so the values/targets were not independently inspected. Deployment
-creation and protected-preview access were rejected with
-`MCP tool call requires approval, but approval policy is never`. The user promoted the tested application commit: production deployment
-`dpl_GDC6C4Gb7oRsuffbhojbodKwwbaC` is READY at `meteogram.vercel.app` and
-`meteogram.flyingclub.org`, running commit `9684287`.
+## Production verification and managed services
 
-The first production browser check stopped at HRRR: the page rendered
-Open-Meteo rather than native data. A separate public response inspection
-confirmed `provider: open-meteo, model: gfs_hrrr, fallback: false`. Given this
-commit's source selection, that indicates `METEOGRAM_API_URL` is absent or
-empty in the production runtime.
-No warning/error/fatal runtime logs were returned for this deployment in the
-checked ten-minute window. The user was asked to confirm **both** server
-variables target Production and redeploy with the corrected variables. Hosted
-native charts remain unverified until that correction. See
-`production-source-check.json` for the response evidence.
+Production deployment `dpl_3b88RLf36s3nW2XEzyaQGLDGSypK` is READY, running
+application commit `9684287`. Later branch commits update documentation and
+evidence only. The user configured both server variables for Production and
+redeployed through Vercel. The first production deployment had omitted the
+native URL; `initial-production-source-check.json` records that historical
+response. The current production evidence supersedes it.
 
-`meteogram-native.service` and `meteogram-tunnel.service` are installed in the
-user unit search path with `default.target.wants` links; the host already has
-user lingering enabled. Unit verification passed, apart from an unrelated
-system-provided `spice-vdagent` warning. The session cannot connect to the user
-service-manager bus, so the current processes remain direct instances and a
-managed restart/reboot has not been verified. Stop direct instances before
-starting the units to avoid occupied loopback ports.
+`browser-production.json` confirms HRRR, GFS, AIFS and RRFS each returned HTTP
+200 and rendered native chart cells with Dynamical source labels, without
+browser page errors. The checked HRRR, GFS and AIFS runs were complete; RRFS
+reported its current partial progress. `browser-production-interactions.json`
+confirms manual refresh through server-action POSTs on both public domains and
+a custom CONUS coordinate on the flyingclub domain. No browser receives the
+native API token.
+
+After the session's local permissions changed, access to the user service
+manager became available. Both units were enabled through `systemctl --user`.
+The direct native supervisor was stopped through its durable stop request,
+then `meteogram-native.service` was started. The direct tunnel wrapper was
+stopped before starting `meteogram-tunnel.service`. The old disconnected tunnel
+connector and temporary Next.js verification servers were stopped.
+
+`managed-service-status.json` records both units active/running and enabled,
+with user lingering enabled and all three native children (API, ClickHouse and
+incremental updater) running. The managed service passed 36 HTTP/profile checks;
+the tunnel had four ready connections, and authenticated public health showed
+all four models available. A further production RRFS browser check after the
+service transition passed with native data and no page errors. Unit startup and
+publication continuity were checked; a host reboot was not tested. Current
+operations use `systemctl --user status|restart|stop` for these units.
+
+The final runtime scan returned no native-route warnings/errors. It did return
+six error records for two requests to the separate Open-Meteo-only
+`/KCDW/ecmwf_ifs` route, reporting `Too many concurrent requests`. That route
+continues to depend on Open-Meteo and was not changed by this integration.
+`production-runtime-scan.json` records the window and request IDs; do not
+characterize the complete production log as error-free.
