@@ -1,0 +1,6 @@
+{
+  "fault": "Heartbeat destination changed to a directory",
+  "started": 1792287332.5409236,
+  "lock_released_at": 1792287334.5418673,
+  "cleanup_exited": true
+}

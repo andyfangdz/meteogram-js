@@ -161,6 +161,7 @@ def main():
     parser.add_argument("--cache-dir", type=Path)
     parser.add_argument("--pin-metadata", type=Path)
     parser.add_argument("--offline-cache", action="store_true")
+    parser.add_argument("--metadata-only", action="store_true")
     args = parser.parse_args()
     if not 0 <= args.shard_index < args.spatial_shards:
         parser.error("shard-index must be in [0, spatial-shards)")
@@ -281,6 +282,8 @@ def main():
             )
     metadata_path.write_text(json.dumps(metadata, indent=2))
     np.savez(args.output / "cells.npz", cell_id=ids, latitude=lat, longitude=lon)
+    if args.metadata_only:
+        return
     pressure = ds.sel(init_time=init)
     surface = root.sel(init_time=init)
     print(

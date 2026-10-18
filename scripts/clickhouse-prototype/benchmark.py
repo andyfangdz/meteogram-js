@@ -37,10 +37,12 @@ def distribution(values):
     }
 
 
-def query_profile(c, table, fields, cell, revision=1, direct=False, tag=""):
+def query_profile(
+    c, table, fields, cell, revision=1, direct=False, tag="", database=DATABASE
+):
     started = time.perf_counter()
     result = c.query(
-        f"SELECT lead_hour,{','.join(fields)} FROM {DATABASE}.{table} WHERE revision_id={{revision:UInt32}} AND cell_id={{cell:UInt32}} ORDER BY lead_hour",
+        f"SELECT lead_hour,{','.join(fields)} FROM {database}.{table} WHERE revision_id={{revision:UInt32}} AND cell_id={{cell:UInt32}} ORDER BY lead_hour",
         parameters={"revision": revision, "cell": int(cell)},
         settings={
             "max_threads": 2,
@@ -72,14 +74,14 @@ def table_stats(c, table):
     )
 
 
-def validate_keys(c, table, ids, lead_count, cell_span=32768):
+def validate_keys(c, table, ids, lead_count, cell_span=32768, database=DATABASE):
     """Check total and per-range unique-key counts with bounded memory.
 
     A single uniqExact over ~80 million HRRR keys can exceed the configured
     2 GiB query limit. Disjoint cell-ID ranges bound each aggregation instead.
     """
     expected_total = len(ids) * lead_count
-    total = int(c.query(f"SELECT count() FROM {DATABASE}.{table}").first_row[0])
+    total = int(c.query(f"SELECT count() FROM {database}.{table}").first_row[0])
     if total != expected_total:
         raise ValueError(f"Incorrect row count: {total}; expected {expected_total}")
     started = time.perf_counter()
@@ -90,7 +92,7 @@ def validate_keys(c, table, ids, lead_count, cell_span=32768):
             int(np.searchsorted(ids, upper) - np.searchsorted(ids, lower)) * lead_count
         )
         actual = c.query(
-            f"SELECT count(),uniqExact(tuple(cell_id,lead_hour)) FROM {DATABASE}.{table} "
+            f"SELECT count(),uniqExact(tuple(cell_id,lead_hour)) FROM {database}.{table} "
             "WHERE cell_id >= {lower:UInt32} AND cell_id < {upper:UInt32}",
             parameters={"lower": lower, "upper": upper},
         ).first_row

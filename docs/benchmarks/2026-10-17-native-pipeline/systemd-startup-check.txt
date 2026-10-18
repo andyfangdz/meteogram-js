@@ -1,0 +1,11 @@
+Command: /lib/systemd/systemd --user --test --unit=default.target
+Exit status: 0
+Filtered relevant output only:
+Fragment Path: /home/andy/.local/share/systemd/user/meteogram-native.service
+Action: meteogram-native.service -> start
+Wants: meteogram-native.service (origin-file)
+Action: meteogram-native.service -> start
+
+Unit syntax verification: passed (unrelated existing spice-vdagent unit warning).
+Live user manager access: failed, No data available.
+Reboot: not performed.

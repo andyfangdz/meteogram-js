@@ -386,6 +386,34 @@ monthly-cost scenarios from the recorded measurements. These scripts do not
 implement atomic publication or production retention. See the prototype README
 for commands and the dated host report for measured results.
 
+## Managed native forecast service
+
+The home server now has a native-profile pipeline alongside the benchmark.
+`scripts/clickhouse-prototype/native_store.py` implements immutable revision
+loading, full-table validation, freshness gates, atomic catalog publication and
+retention. `pipeline.py` operates adoption/update/rollback/GC; `service.py`
+supervises local ClickHouse, `serve.py` and six-hour refresh jobs. `server.xml`
+sets a seven-day query-log TTL for ongoing operation. State lives in
+`~/.local/share/meteogram-native`, outside Git; service tables use
+`meteogram_native`. Adoption clones benchmark tables into independent
+service-owned snapshots; original benchmark artifacts are not automatically
+deleted. Never use the destructive benchmark loader against
+service tables or run a second server on its ports.
+
+Readers hold a shared catalog lock through their DB query. Publication/GC hold
+its exclusive lock, and one updater holds update.lock throughout builds and
+recovery. Preserve these invariants when changing data flow. The API accepts
+`--catalog-root` for managed revisions, caches native coordinate arrays, checks
+freshness on every forecast request and provides `/health`. `--data-root` remains
+the isolated benchmark mode. `fetch.py --metadata-only` pins source selection
+without downloading weather maps. See the prototype README for policies,
+installation, ownership and host commands. `test-pipeline.py` and
+`verify-live-update.py` verify operational correctness and real update continuity.
+`verify-service.py` checks retained rows/HTTP state and can explicitly exercise a
+database restart; separate child process groups preserve the supervisor.
+The app still uses Open-Meteo; native fields are not yet the application's
+meteorologically normalized provider. Public serving is not configured.
+
 ## Development Tips
 
 1. **Use `yarn dev` liberally** — Hot reload catches many issues early

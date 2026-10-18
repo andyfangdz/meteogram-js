@@ -1,0 +1,145 @@
+{
+  "groups": [
+    {
+      "model": "hrrr",
+      "revision": "hrrr_20261018005348_82eb4dfe",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "requests": 635,
+      "first": 1792284924.9206583,
+      "last": 1792286337.068124
+    },
+    {
+      "model": "gfs",
+      "revision": "gfs_20261018005434_9b319f09",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "requests": 919,
+      "first": 1792284924.980184,
+      "last": 1792286954.6431482
+    },
+    {
+      "model": "aifs",
+      "revision": "aifs_20261018005436_c21fc592",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "requests": 938,
+      "first": 1792284925.0015469,
+      "last": 1792286995.5872917
+    },
+    {
+      "model": "hrrr",
+      "revision": "hrrr_20261018005542_c13c1f40",
+      "init_time": "2026-10-17T18:00:00.000000000",
+      "requests": 304,
+      "first": 1792286339.4259048,
+      "last": 1792286997.6610608
+    },
+    {
+      "model": "gfs",
+      "revision": "gfs_20261018011859_19e2797e",
+      "init_time": "2026-10-17T18:00:00.000000000",
+      "requests": 20,
+      "first": 1792286956.8028393,
+      "last": 1792286997.7360058
+    },
+    {
+      "model": "aifs",
+      "revision": "aifs_20261018012917_143ac186",
+      "init_time": "2026-10-17T18:00:00.000000000",
+      "requests": 1,
+      "first": 1792286997.7567263,
+      "last": 1792286997.7567263
+    }
+  ],
+  "slowest_requests": [
+    {
+      "time": 1792286193.173338,
+      "model": "gfs",
+      "revision": "gfs_20261018005434_9b319f09",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "leads": 141,
+      "ms": 9938.42493603006
+    },
+    {
+      "time": 1792285882.3233156,
+      "model": "gfs",
+      "revision": "gfs_20261018005434_9b319f09",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "leads": 141,
+      "ms": 4459.091744851321
+    },
+    {
+      "time": 1792286443.6019373,
+      "model": "gfs",
+      "revision": "gfs_20261018005434_9b319f09",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "leads": 141,
+      "ms": 2431.6624528728426
+    },
+    {
+      "time": 1792286327.5300548,
+      "model": "hrrr",
+      "revision": "hrrr_20261018005348_82eb4dfe",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "MDGYCWNK87AP9GNYDSDG",
+      "leads": 49,
+      "ms": 633.6928338278085
+    },
+    {
+      "time": 1792286054.050389,
+      "model": "gfs",
+      "revision": "gfs_20261018005434_9b319f09",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "leads": 141,
+      "ms": 525.4174591973424
+    },
+    {
+      "time": 1792286004.9958355,
+      "model": "gfs",
+      "revision": "gfs_20261018005434_9b319f09",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "leads": 141,
+      "ms": 476.0601988527924
+    },
+    {
+      "time": 1792285933.7688239,
+      "model": "hrrr",
+      "revision": "hrrr_20261018005348_82eb4dfe",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "MDGYCWNK87AP9GNYDSDG",
+      "leads": 49,
+      "ms": 442.8458421025425
+    },
+    {
+      "time": 1792286330.18354,
+      "model": "hrrr",
+      "revision": "hrrr_20261018005348_82eb4dfe",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "MDGYCWNK87AP9GNYDSDG",
+      "leads": 49,
+      "ms": 435.81257900223136
+    },
+    {
+      "time": 1792285971.2389205,
+      "model": "hrrr",
+      "revision": "hrrr_20261018005348_82eb4dfe",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "MDGYCWNK87AP9GNYDSDG",
+      "leads": 49,
+      "ms": 398.06418609805405
+    },
+    {
+      "time": 1792286330.5615625,
+      "model": "gfs",
+      "revision": "gfs_20261018005434_9b319f09",
+      "init_time": "2026-10-17T12:00:00.000000000",
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "leads": 141,
+      "ms": 378.01773310638964
+    }
+  ],
+  "full_observations": "/home/andy/.local/share/meteogram-native/live-update-verification-observations.json"
+}

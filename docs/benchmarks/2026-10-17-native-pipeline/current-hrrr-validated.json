@@ -1,0 +1,13 @@
+{
+  "rows": 80299093,
+  "cell_id_span": 32768,
+  "ranges": 59,
+  "seconds": 10.444506095023826,
+  "table": "hrrr_20261018005542_c13c1f40",
+  "database": "meteogram_native",
+  "init_time": "2026-10-17T18:00:00.000000000",
+  "snapshot_id": "G2DVQ244H9B0DTPYSY80",
+  "samples": 10,
+  "staged_comparison": true,
+  "validated_at": 1792286338.3064241
+}

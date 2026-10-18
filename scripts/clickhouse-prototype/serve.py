@@ -5,16 +5,19 @@ Out-of-sample locations return 404; they never trigger source downloads.
 """
 
 import argparse
+import contextlib
 import gzip
 import json
 import math
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from queue import Queue
 from urllib.parse import parse_qs, urlparse
 
 import numpy as np
-from benchmark import client, query_profile
+from benchmark import DATABASE, client, query_profile
+from native_store import catalog, descriptor_path, freshness, lock
 from pyproj import CRS, Transformer
 
 
@@ -60,9 +63,54 @@ def clean(value):
     return value
 
 
+def read_model(path, table, database=DATABASE):
+    meta = json.loads((path / "metadata.json").read_text())
+    with np.load(path / "cells.npz") as cells:
+        model = {
+            "metadata": meta,
+            "cells": {key: cells[key] for key in cells.files},
+            "table": table,
+            "database": database,
+        }
+    if meta["grid"]["kind"] == "projected":
+        model["projection"] = Transformer.from_crs(
+            "EPSG:4326", CRS.from_json_dict(meta["grid"]["crs"]), always_xy=True
+        )
+    return model
+
+
+class Registry:
+    def __init__(self, root):
+        self.root = root
+        self.cache = {}
+        self.mutex = threading.Lock()
+
+    @contextlib.contextmanager
+    def read(self):
+        # Keep the shared lock through the query; GC cannot remove its table.
+        with lock(self.root):
+            state = catalog(self.root)
+            with self.mutex:
+                models = {}
+                for name, entry in state["current"].items():
+                    revision = entry["revision"]
+                    if revision not in self.cache:
+                        self.cache[revision] = read_model(
+                            descriptor_path(self.root, entry),
+                            entry["table"],
+                            entry["database"],
+                        )
+                        self.cache[revision]["revision"] = revision
+                    models[name] = self.cache[revision]
+                self.cache = {model["revision"]: model for model in models.values()}
+            yield models
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--data-root", type=Path, required=True)
+    source = p.add_mutually_exclusive_group(required=True)
+    source.add_argument("--data-root", type=Path)
+    source.add_argument("--catalog-root", type=Path)
     p.add_argument(
         "--layout",
         choices=["256_zstd", "512_zstd", "8192_lz4", "256_lz4"],
@@ -71,21 +119,12 @@ def main():
     p.add_argument("--port", type=int, default=18080)
     args = p.parse_args()
     models = {}
-    for name in ["hrrr", "gfs", "aifs"]:
-        path = args.data_root / name
-        if not (path / "metadata.json").exists():
-            continue
-        meta = json.loads((path / "metadata.json").read_text())
-        model = {
-            "metadata": meta,
-            "cells": np.load(path / "cells.npz"),
-            "table": f"{name}_{args.layout}",
-        }
-        if meta["grid"]["kind"] == "projected":
-            model["projection"] = Transformer.from_crs(
-                "EPSG:4326", CRS.from_json_dict(meta["grid"]["crs"]), always_xy=True
-            )
-        models[name] = model
+    if args.data_root:
+        for name in ["hrrr", "gfs", "aifs"]:
+            path = args.data_root / name
+            if (path / "metadata.json").exists():
+                models[name] = read_model(path, f"{name}_{args.layout}")
+    registry = Registry(args.catalog_root) if args.catalog_root else None
     pool = Queue(maxsize=4)
     for _ in range(4):
         pool.put(client())
@@ -93,6 +132,32 @@ def main():
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             parsed = urlparse(self.path)
+            if parsed.path == "/health":
+                try:
+                    with (
+                        registry.read()
+                        if registry
+                        else contextlib.nullcontext(models) as active
+                    ):
+                        status = {
+                            name: freshness(model["metadata"])
+                            for name, model in active.items()
+                        }
+                        conn = pool.get(timeout=5)
+                        try:
+                            conn.command("SELECT 1")
+                        finally:
+                            pool.put(conn)
+                        healthy = len(status) == 3 and all(
+                            item["available"] for item in status.values()
+                        )
+                        self.respond(
+                            200 if healthy else 503,
+                            {"models": status, "native_fields": True},
+                        )
+                except Exception:  # noqa: BLE001 -- HTTP health boundary
+                    self.respond(503, {"error": "Native forecast service unavailable"})
+                return
             if parsed.path != "/forecast":
                 self.respond(404, {"error": "Use /forecast?model=hrrr&lat=41&lon=-74"})
                 return
@@ -100,26 +165,40 @@ def main():
                 params = parse_qs(parsed.query, strict_parsing=True)
                 name = params["model"][0]
                 lat, lon = float(params["lat"][0]), float(params["lon"][0])
-                if name not in models or not (
+                if name not in ("hrrr", "gfs", "aifs") or not (
                     math.isfinite(lat)
                     and math.isfinite(lon)
                     and -90 <= lat <= 90
                     and -180 <= lon <= 180
                 ):
                     raise ValueError("Invalid model or coordinates")
-                model = models[name]
-                cell, index = resolve(model, lat, lon)
-                meta = model["metadata"]
-                fields = meta["variables"] + meta["surface_variables"]
-                conn = pool.get(timeout=5)
-                try:
-                    result, elapsed = query_profile(
-                        conn, model["table"], fields, cell, tag="prototype_api"
-                    )
-                finally:
-                    pool.put(conn)
-                if len(result.result_rows) != len(meta["leads"]):
-                    raise RuntimeError("Incomplete stored profile")
+                with (
+                    registry.read()
+                    if registry
+                    else contextlib.nullcontext(models) as active
+                ):
+                    if name not in active:
+                        raise RuntimeError("No published forecast")
+                    model = active[name]
+                    if registry and not freshness(model["metadata"])["available"]:
+                        raise RuntimeError("Published forecast is stale")
+                    cell, index = resolve(model, lat, lon)
+                    meta = model["metadata"]
+                    fields = meta["variables"] + meta["surface_variables"]
+                    conn = pool.get(timeout=5)
+                    try:
+                        result, elapsed = query_profile(
+                            conn,
+                            model["table"],
+                            fields,
+                            cell,
+                            tag="native_api",
+                            database=model["database"],
+                        )
+                    finally:
+                        pool.put(conn)
+                    if [row[0] for row in result.result_rows] != meta["leads"]:
+                        raise RuntimeError("Incomplete stored profile")
                 body = {
                     "model": name,
                     "dataset": meta["dataset"],
@@ -140,6 +219,7 @@ def main():
                     else "earth-relative",
                     "query_ms": elapsed,
                     "prototype": True,
+                    "revision": model.get("revision"),
                 }
                 self.respond(200, body)
             except (ValueError, KeyError) as error:
@@ -148,7 +228,7 @@ def main():
                 self.respond(404, {"error": str(error)})
             except Exception:  # noqa: BLE001 -- HTTP boundary returns a bounded availability failure
                 self.respond(
-                    503, {"error": "Local prototype data temporarily unavailable"}
+                    503, {"error": "Local native forecast unavailable or stale"}
                 )
 
         def respond(self, status, body):
@@ -168,7 +248,7 @@ def main():
         def log_message(self, format, *args):
             pass
 
-    print(f"Prototype listening on 127.0.0.1:{args.port}", flush=True)
+    print(f"Native forecast API listening on 127.0.0.1:{args.port}", flush=True)
     ThreadingHTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
 
 

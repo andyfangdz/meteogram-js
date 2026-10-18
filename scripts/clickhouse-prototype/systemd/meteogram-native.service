@@ -1,0 +1,17 @@
+[Unit]
+Description=Local native CONUS forecast ingestion and query service
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/meteogram-benchmark/repo
+ExecStart=%h/.local/share/meteogram-benchmark/venv/bin/python -u %h/.local/share/meteogram-benchmark/repo/scripts/clickhouse-prototype/service.py --root %h/.local/share/meteogram-native --server-root %h/.local/share/meteogram-benchmark --binary %h/.local/share/meteogram-benchmark/clickhouse
+Restart=always
+RestartSec=15
+TimeoutStopSec=120
+KillMode=mixed
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

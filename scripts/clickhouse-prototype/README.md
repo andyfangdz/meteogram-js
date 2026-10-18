@@ -264,3 +264,175 @@ preserved, and telemetry identifies server attempts because process counters
 reset on restart. The final verifier also rechecks whole-table cell counts,
 per-lead row counts and pressure-array lengths and runs database latency tests
 with an explicit warm-up pass after all three models are resident.
+
+## Managed native forecast pipeline on the home server
+
+`service.py` runs the local ClickHouse server, native HTTP API and periodic
+updater. `pipeline.py` builds immutable per-model tables in `meteogram_native`;
+`native_store.py` owns the catalog, loader, validation, locking and retention.
+This is a native-source service, not the app's `CloudColumn` provider. The app
+continues to use Open-Meteo. HRRR winds are grid-relative; HRRR/AIFS clouds still
+require a meteorological derivation in an eventual application adapter.
+
+The installed host paths are:
+
+- Code: `~/.local/share/meteogram-benchmark/repo` (writable checkout).
+- Python/binary/database: `~/.local/share/meteogram-benchmark/`.
+- Catalog, revision metadata, schedules and operational logs:
+  `~/.local/share/meteogram-native/`.
+- API: `http://127.0.0.1:18080`; database HTTP/native ports 18123/19000.
+
+The service uses loopback only and does not configure a public gateway, TLS,
+remote access or a frontend provider switch.
+
+### Publication and read consistency
+
+Each candidate gets a unique directory and table. Extraction is pinned to one
+snapshot and initialization. A metadata-only probe rejects unchanged/older runs,
+unexpected field/level/grid coverage and stale runs before downloading maps.
+The updater tries the latest initialization, then the second latest if the first
+is incomplete. It retains all 49 HRRR, 141 GFS and 31 AIFS leads. Required values
+must all be finite; a missing field/time fails the candidate, rather than filling
+missing observations or shortening the forecast.
+
+Loading uses 4096-cell batches (1024 for GFS) and never replaces an existing table.
+Validation checks total and bounded unique keys, exact per-lead row counts,
+pressure-array lengths and finite values over the entire table. Deterministic
+sample profiles must exactly match staged Float32 values. Only then is a
+validation marker written and the catalog atomically replaced with file/directory
+fsync. Initialization must advance, except for an explicit rollback.
+
+Readers hold a shared `catalog.lock` from catalog selection through the DB read.
+Publication and garbage collection take its exclusive lock. A request therefore
+uses metadata, grid coordinates and rows from one revision, and a table cannot be
+deleted under an in-flight query. The API caches coordinate arrays per revision.
+Models publish independently, because their source schedules differ.
+
+Current and previous revisions are retained per model. Older service-owned tables
+are dropped after a ten-minute grace period, on the next GC/update. Adoption
+creates independent service-owned ClickHouse snapshots using `CLONE AS`;
+rebuilding a benchmark table cannot change the snapshot. Local immutable files
+are initially hard-linked, as described in [ClickHouse's cloning documentation](https://clickhouse.com/blog/table-cloning). Future merges can write new files.
+Original benchmark artifacts are outside automated service cleanup. The dated
+deployment report records this host's one-time reclamation of historical raw
+arrays/cache after verification; original tables and small evidence remain. Service-owned staging
+and encoded payload caches are removed after publication or candidate rejection;
+small metadata, source reports and logs remain. Unpublished crashed candidates are
+dropped on the next update and rebuilt in fresh tables. Discarded revision evidence
+expires after seven days. `update.lock` prevents overlapping writers and recovery
+from touching an active build.
+
+### Availability and scheduling
+
+`GET /health` returns 200 only when all three catalog models pass the freshness
+policy and ClickHouse responds. `/forecast?model=hrrr&lat=41&lon=-74` serves native
+profiles; invalid requests return 400, uncovered coordinates 404, and missing,
+stale or temporarily unavailable data 503. There is no upstream fetch on a request.
+
+Freshness uses actual remaining horizon as well as initialization age:
+
+| Model | Maximum initialization age | Minimum remaining horizon |
+| --- | ---: | ---: |
+| HRRR | 24 hours | 12 hours |
+| GFS / AIFS | 48 hours | 72 hours |
+
+A future initialization over one hour ahead is rejected. These are explicit
+initial operational policies, not evidence of a weather-product SLA. An app
+adapter must interpret 503 as a reason to use Open-Meteo.
+
+The supervisor starts an update on initial startup, waits six hours after a
+successful job, and retries failed jobs after 30 minutes. It persists the next
+scheduled time across restarts, restarts the API/ClickHouse after process exit,
+and terminates updater/API before the database on shutdown. Children use separate
+process groups so a database shutdown signal cannot stop the supervisor. ClickHouse recovery
+is followed by candidate recovery before the next job. Logs are kept locally;
+supervisor child logs rotate at 20 MiB on child starts, events rotate at 20 MiB,
+and database query logs have a seven-day TTL. This is not yet a remote
+alerting or hardened public HTTP service.
+
+Before each model, free space must exceed a 20 GiB reserve plus an additional
+210/35/5 GiB for HRRR/GFS/AIFS. Disk checks run during extraction and between load
+batches. These conservative admission budgets include merge/obsolete-part room;
+they are not maximum observed usage. New service tables use a 60-second obsolete
+part lifetime instead of accumulating the benchmark's default lifetime. Do not
+reduce the reservation without measuring subsequent update peaks.
+
+### Host commands
+
+From the writable checkout, using the installed Python:
+
+```bash
+NATIVE_PYTHON="$HOME/.local/share/meteogram-benchmark/venv/bin/python"
+NATIVE_ROOT="$HOME/.local/share/meteogram-native"
+
+# Inspect current / previous revisions and freshness.
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/pipeline.py --root "$NATIVE_ROOT" status
+curl --fail http://127.0.0.1:18080/health
+
+# Manual update, provided another update does not hold update.lock.
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/pipeline.py --root "$NATIVE_ROOT" update
+
+# Switch one model back to its still-fresh previous revision.
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/pipeline.py --root "$NATIVE_ROOT" rollback --model hrrr
+
+# Collect expired revisions and clean abandoned candidates.
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/pipeline.py --root "$NATIVE_ROOT" gc
+
+# Stop a directly launched supervisor (also stops its API/database/updater).
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/pipeline.py --root "$NATIVE_ROOT" stop
+
+# Run the supervisor directly, with no existing server on its ports.
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/service.py \
+  --root "$NATIVE_ROOT" \
+  --server-root "$HOME/.local/share/meteogram-benchmark" \
+  --binary "$HOME/.local/share/meteogram-benchmark/clickhouse"
+```
+
+Initial adoption uses `pipeline.py --root "$NATIVE_ROOT" adopt --benchmark-root
+"$BENCH_RUN"` with a completed benchmark. It validates the actual resident tables
+before publication, clones the database tables, and copies metadata/grid
+coordinates. Existing catalog models are not overwritten by adoption. The
+`isolate-imports` command migrates early borrowed catalog references into these
+independent snapshots without changing their forecast initialization.
+
+The supplied `systemd/meteogram-native.service` uses these host paths. Install it
+under `~/.local/share/systemd/user/` and enable it with a link in
+`default.target.wants/` (or `systemctl --user enable`). The host has user lingering
+enabled. From an ordinary host terminal with access to its user bus, use:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user start meteogram-native.service
+systemctl --user status meteogram-native.service
+```
+
+Stop any directly launched supervisor first with `pipeline.py --root "$NATIVE_ROOT" stop`: it deliberately refuses an already
+occupied ClickHouse port and holds `service.lock`. A disabled or inaccessible
+user bus prevents manager activation; a unit file alone does not prove the
+manager started the process. `systemd --user --test --unit=default.target` can
+verify the startup dependency graph without starting services. See the dated deployment report for actual status.
+
+### Verification
+
+```bash
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/test-serve.py
+TEST_NATIVE_DB=1 "$NATIVE_PYTHON" scripts/clickhouse-prototype/test-pipeline.py
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/verify-live-update.py \
+  --output "$NATIVE_ROOT/live-update-verification.json"
+
+# Check retained row counts, HTTP profiles, freshness and log retention.
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/verify-service.py --root "$NATIVE_ROOT"
+
+# Deliberately interrupt the local API to test automatic DB/API recovery.
+# Run only with an idle updater; catalog and schedule must survive unchanged.
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/verify-service.py \
+  --root "$NATIVE_ROOT" --restart-database
+```
+
+The unit tests cover publication, monotonicity, stale/incomplete candidates,
+reader locking, rollback, crash cleanup, retention and disk admission. The
+opt-in DB test uses a clearly labeled tiny synthetic fixture in a uniquely named
+test table, checks exact round trips/corruption rejection and removes that table.
+The live observer uses real HTTP requests while genuine forecasts update; it
+records revisions, latency, errors and profile stability within each revision.
+A successful all-model transition is distinct from a unit test or synthetic load.

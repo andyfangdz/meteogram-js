@@ -1,0 +1,13 @@
+{
+  "rows": 771435,
+  "cell_id_span": 32768,
+  "ranges": 5,
+  "seconds": 0.1083539929240942,
+  "table": "aifs_20261018013225_0f88f7b8",
+  "database": "meteogram_native",
+  "init_time": "2026-10-17T12:00:00.000000000",
+  "snapshot_id": "KGX0VQA3TPWZRWK9Q7G0",
+  "samples": 10,
+  "staged_comparison": false,
+  "validated_at": 1792287146.3255439
+}

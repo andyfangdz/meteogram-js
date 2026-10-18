@@ -267,3 +267,12 @@ resource time series, failure evidence and the [arithmetic worksheet](../benchma
 Validation also included Python compilation, Ruff checks, and the three boundary
 regression tests. The application code was unchanged; no frontend build was
 needed for these Python benchmark and documentation changes.
+
+
+### Follow-up: native service deployment
+
+The [subsequent native pipeline deployment](2026-10-17-native-pipeline-deployment.md)
+verified a genuine 18Z update while serving this 12Z cycle. After validation,
+the original raw staging and source cache were reclaimed (86.002 GB of file
+contents). Metadata, grid coordinates, small evidence and the original database
+tables remain; the service also holds independent snapshots for rollback.
