@@ -1,0 +1,10 @@
+{
+  "init_time": "2026-10-18T12:00:00.000000000",
+  "snapshot_id": "S77EM0FSR50Q18R443Z0",
+  "chunks": 15470,
+  "missing": [],
+  "seconds": 4.764653512043878,
+  "max_rss_kib": 362876,
+  "cache_reference_limit": 8000000,
+  "payload_reads": 0
+}

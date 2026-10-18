@@ -187,7 +187,39 @@ fn catalog_lock_drains_readers() {
 }
 fn metadata(model: &str, age: i64) -> Value {
     let init = chrono::Utc::now() - chrono::Duration::hours(age);
-    json!({"model":model,"dataset":dataset(model).unwrap(),"init_time":init.format("%Y-%m-%dT%H:%M:%S").to_string(),"snapshot_id":"test_snapshot","coverage":"conus","cells":if model=="hrrr"{1638757}else{24885},"spatial_shards":1,"levels":if model=="aifs"{vec![1000,925,850,700,600,500,400,300]}else{(275..1001).step_by(25).rev().collect()},"leads":leads(model),"variables":variables(model),"surface_variables":["temperature_2m","dew_point_temperature_2m"]})
+    json!({"model":model,"dataset":dataset(model).unwrap(),"init_time":init.format("%Y-%m-%dT%H:%M:%S").to_string(),"snapshot_id":"test_snapshot","coverage":"conus","cells":if grid_relative(model){1638757}else{24885},"spatial_shards":1,"levels":if model=="aifs"{vec![1000,925,850,700,600,500,400,300]}else{(275..1001).step_by(25).rev().collect()},"leads":leads(model),"variables":variables(model),"surface_variables":["temperature_2m","dew_point_temperature_2m"]})
+}
+#[test]
+fn rrfs_has_its_own_complete_horizon_and_freshness_policy() {
+    assert_eq!(leads("rrfs"), (0..=84).collect::<Vec<_>>());
+    assert_eq!(
+        dataset("rrfs").unwrap(),
+        "noaa-rrfs-forecast-84-hour-virtual"
+    );
+    assert!(grid_relative("rrfs"));
+    assert!(grid_relative("hrrr"));
+    assert!(!grid_relative("gfs"));
+    assert!(!grid_relative("aifs"));
+    assert_eq!(freshness(&metadata("rrfs", 23)).unwrap()["available"], true);
+    assert_eq!(
+        freshness(&metadata("rrfs", 25)).unwrap()["available"],
+        false
+    );
+    let mut incomplete = metadata("rrfs", 6);
+    incomplete["leads"] = json!(leads("hrrr"));
+    assert!(check_metadata(&incomplete).is_err());
+    incomplete["leads"] = json!([0, 48]);
+    assert_eq!(freshness(&incomplete).unwrap()["available"], false);
+}
+#[test]
+fn rrfs_manifest_cache_is_bounded_without_retaining_weather_payloads() {
+    let config = crate::source::initial_config("rrfs");
+    let cache = config.caching.unwrap();
+    assert_eq!(cache.num_chunk_refs, Some(8_000_000));
+    assert_eq!(cache.num_bytes_chunks, Some(0));
+    for model in ["hrrr", "gfs", "aifs"] {
+        assert!(crate::source::initial_config(model).caching.is_none());
+    }
 }
 fn candidate_fixture(root: &Path, age: i64) -> (std::path::PathBuf, Entry) {
     let (p, e) = candidate(root, "gfs").unwrap();
@@ -435,6 +467,21 @@ fn database_native_roundtrip_and_corruption_gate() {
             .iter()
             .enumerate()
             .all(|(i, v)| v.to_bits() == bits[i % bits.len()]));
+        let rrfs = root.path().join("rrfs");
+        crate::prepare::encode_stage(&raw_only, &rrfs).unwrap();
+        let mut rrfs_metadata = read_json(rrfs.join("metadata.json")).unwrap();
+        rrfs_metadata["model"] = json!("rrfs");
+        atomic(rrfs.join("metadata.json"), &rrfs_metadata).unwrap();
+        let rrfs_table = format!("{table}_rrfs");
+        let rrfs_result = store::load(root.path(), &rrfs, &rrfs_table).unwrap();
+        assert_eq!(rrfs_result["storage"]["layout"], "cell_tiles_v1");
+        assert_eq!(
+            rrfs_result["storage_rows"],
+            cells.div_ceil(crate::packed::CELLS)
+        );
+        store::validate(&rrfs, &rrfs_table, DATABASE, true).unwrap();
+        db.command(&format!("DROP TABLE {DATABASE}.{rrfs_table} SYNC"))
+            .unwrap();
         let gfs = root.path().join("experimental_gfs");
         crate::prepare::encode_stage(&raw_only, &gfs).unwrap();
         let mut gfs_metadata = read_json(gfs.join("metadata.json")).unwrap();

@@ -67,6 +67,7 @@ impl Source {
         }
         let storage = new_http_storage(href, None, None)?;
         let repo = Repository::open(storage)
+            .config(initial_config(model))
             .authorize_virtual_chunk_access(creds.clone())
             .execute()
             .await?;
@@ -124,6 +125,21 @@ impl Source {
         values.truncate(len);
         Ok(values)
     }
+}
+pub(crate) fn initial_config(model: &str) -> icechunk::RepositoryConfig {
+    let mut config = icechunk::RepositoryConfig::default();
+    if model == "rrfs" {
+        // RRFS persists a one-million-reference cache, which thrashes when
+        // cycling through the eight required arrays. Keep a bounded manifest
+        // cache, without caching weather payloads. Set this at initial open:
+        // Icechunk 2.3's reopen shares the original asset manager and caches.
+        config.caching = Some(icechunk::config::CachingConfig {
+            num_chunk_refs: Some(8_000_000),
+            num_bytes_chunks: Some(0),
+            ..Default::default()
+        });
+    }
+    config
 }
 pub(crate) fn public_config(
     config: &mut icechunk::RepositoryConfig,
@@ -321,8 +337,12 @@ pub async fn fetch(
     } else {
         pin
     };
-    let dictionary_mode =
-        model == "hrrr" && (!existing || old.as_ref().is_some_and(crate::dictionary::staged));
+    // Preserve the physical encoding when resuming, including legacy raw runs.
+    let dictionary_mode = if existing {
+        old.as_ref().is_some_and(crate::dictionary::staged)
+    } else {
+        grid_relative(model)
+    };
     if let Some(ref p) = old {
         anyhow::ensure!(
             p["model"] == model && p["dataset"] == dataset(model)?,
@@ -401,7 +421,7 @@ pub async fn fetch(
     let mut ids = vec![];
     let mut lat = vec![];
     let mut lon = vec![];
-    let grid = if model == "hrrr" {
+    let grid = if grid_relative(model) {
         let xs = src.coord("x").await?;
         let ys = src.coord("y").await?;
         let cf = src.meta("spatial_ref").await?;
@@ -539,18 +559,22 @@ pub async fn fetch(
         .collect();
     let nt = leads.len();
     let nf = variables.len();
+    let mut palette_entries = 0;
     fn merge_palettes(
         full: &mut [Vec<Vec<u32>>],
         partial: crate::dictionary::Dictionary,
         t: usize,
         nt: usize,
         nf: usize,
-    ) {
+        entries: &mut usize,
+    ) -> Result<()> {
         for (f, field) in partial.fields.into_iter().enumerate() {
             for (l, palette) in field.into_iter().enumerate() {
+                crate::dictionary::count_entries(entries, palette.len())?;
                 full[f][if f < nf { l * nt + t } else { t }] = palette;
             }
         }
+        Ok(())
     }
     for (time_index, (lead, tasks)) in by_lead.into_iter().enumerate() {
         let completed_keys: Vec<_> = tasks.iter().map(|t| t.key.clone()).collect();
@@ -572,7 +596,14 @@ pub async fn fetch(
                 );
                 let partial = crate::dictionary::Dictionary::load(&checkpoint, &partial_meta)?
                     .context("Missing palette checkpoint")?;
-                merge_palettes(&mut palettes, partial, time_index, nt, nf);
+                merge_palettes(
+                    &mut palettes,
+                    partial,
+                    time_index,
+                    nt,
+                    nf,
+                    &mut palette_entries,
+                )?;
             }
             prune_checkpointed_cache(&cache, &completed_keys)?;
             continue;
@@ -671,7 +702,14 @@ pub async fn fetch(
             partial_meta["staging"] =
                 json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
             atomic(checkpoint.join("metadata.json"), &partial_meta)?;
-            merge_palettes(&mut palettes, partial, time_index, nt, nf);
+            merge_palettes(
+                &mut palettes,
+                partial,
+                time_index,
+                nt,
+                nf,
+                &mut palette_entries,
+            )?;
         }
         File::open(out)?.sync_all()?;
         let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"profile_stage":profile_stage,"surface_stage":surface_stage,"source_cache_policy":"uncheckpointed_leads_only"});

@@ -1,0 +1,17 @@
+{
+  "time": 1792350773.6936293,
+  "success": true,
+  "existing_model_profiles_unchanged": 27,
+  "all_four_model_profiles_match_preview": 36,
+  "existing_model_catalog_entries_unchanged": true,
+  "all_four_models_healthy": true,
+  "published_rrfs": {
+    "revision": "rrfs_20261018190636_ef01686e",
+    "database": "meteogram_native",
+    "table": "rrfs_20261018190636_ef01686e",
+    "owned": true
+  },
+  "generation_before": 21,
+  "generation_after": 22,
+  "next_update": 1792353569.6086054
+}

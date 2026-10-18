@@ -1,0 +1,18 @@
+{
+  "started": 1792350755.141138,
+  "finished": 1792350759.2588165,
+  "first_unhealthy": 1792350757.713123,
+  "health_gap_seconds": 1.5456933975219727,
+  "final": {
+    "time": 1792350759.2588165,
+    "status": 200,
+    "models": [
+      "aifs",
+      "gfs",
+      "hrrr",
+      "rrfs"
+    ]
+  },
+  "samples": 40,
+  "scope": "Loopback health polling approximately every 100 ms through publication and planned supervisor restart; does not include cold first-forecast latency or WAN traffic"
+}

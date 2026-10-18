@@ -18,7 +18,7 @@ impl Lambert {
     pub fn from_crs(v: &Value) -> Result<Self> {
         let r = v["base_crs"]["datum"]["ellipsoid"]["radius"]
             .as_f64()
-            .context("Expected spherical HRRR projection")?;
+            .context("Expected spherical native projection")?;
         let ps = v["conversion"]["parameters"]
             .as_array()
             .context("Missing projection parameters")?;

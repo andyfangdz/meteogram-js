@@ -16,8 +16,9 @@ pub const ENCODING: &str = "float32_dictionary_v1";
 const FILE: &str = "values.dict.zst";
 const MAX_FIELD_ENTRIES: usize = 32_000_000;
 // Lookup builders retain hash tables as well as values. Finished codebooks do
-// not: bound their aggregate Float32 payload to 512 MB across every field.
-pub(crate) const MAX_DICTIONARY_ENTRIES: usize = 128_000_000;
+// not: uniformly bound their aggregate Float32 payload to 1 GB (decimal)
+// across every field, for every model.
+pub(crate) const MAX_DICTIONARY_ENTRIES: usize = 250_000_000;
 const MAX_DICTIONARY_SLOTS: usize = 65_536;
 pub(crate) fn count_entries(total: &mut usize, added: usize) -> Result<()> {
     let next = total
@@ -399,19 +400,26 @@ mod tests {
         let too_many_slots = json!({"leads":vec![0;65536],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
         assert!(widths(&too_many_slots).is_err());
         let temp = tempfile::tempdir()?;
-        let path = temp.path().join(FILE);
-        let mut encoder = zstd::stream::write::Encoder::new(File::create(&path)?, 1)?;
-        encoder.include_checksum(true)?;
-        encoder.write_all(b"MGDICT01")?;
-        encoder.write_all(&3u32.to_le_bytes())?;
-        encoder.write_all(&1u32.to_le_bytes())?;
-        encoder.write_all(&((MAX_DICTIONARY_ENTRIES + 1) as u32).to_le_bytes())?;
-        encoder.finish()?;
-        let m = json!({"cells":MAX_DICTIONARY_ENTRIES+1,"leads":[0],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"],"staging":{"encoding":ENCODING,"dictionary":{"file":FILE,"version":1,"sha256":file_hash(&path)?}}});
-        let error = Dictionary::load(temp.path(), &m)
-            .err()
-            .context("Budget was not rejected")?;
-        assert!(error.to_string().contains("whole-codebook budget"));
+        assert_eq!(MAX_DICTIONARY_ENTRIES * 4, 1_000_000_000);
+        for model in ["hrrr", "gfs", "aifs", "rrfs"] {
+            let budget = MAX_DICTIONARY_ENTRIES;
+            let mut entries = 0;
+            count_entries(&mut entries, budget)?;
+            assert!(count_entries(&mut entries, 1).is_err());
+            let path = temp.path().join(FILE);
+            let mut encoder = zstd::stream::write::Encoder::new(File::create(&path)?, 1)?;
+            encoder.include_checksum(true)?;
+            encoder.write_all(b"MGDICT01")?;
+            encoder.write_all(&3u32.to_le_bytes())?;
+            encoder.write_all(&1u32.to_le_bytes())?;
+            encoder.write_all(&((budget + 1) as u32).to_le_bytes())?;
+            encoder.finish()?;
+            let m = json!({"model":model,"cells":budget+1,"leads":[0],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"],"staging":{"encoding":ENCODING,"dictionary":{"file":FILE,"version":1,"sha256":file_hash(&path)?}}});
+            let error = Dictionary::load(temp.path(), &m)
+                .err()
+                .context("Budget was not rejected")?;
+            assert!(error.to_string().contains("whole-codebook budget"));
+        }
         Ok(())
     }
     #[test]

@@ -180,6 +180,12 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
             );
             anyhow::ensure!(
                 v["grid"]["cell_id"] == cell
+                    && v["native_wind_frame"]
+                        == if grid_relative(name) {
+                            "grid-relative"
+                        } else {
+                            "earth-relative"
+                        }
                     && v["init_time"] == meta["init_time"]
                     && v["snapshot_id"] == meta["snapshot_id"]
                     && v["rows"].as_array().context("No rows")?.len()
@@ -216,6 +222,7 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
         "/forecast?model=hrrr&lat=23.999999&lon=-74",
         "/forecast?model=gfs&lat=41&lon=-125.000001",
         "/forecast?model=aifs&lat=50.000001&lon=-74",
+        "/forecast?model=rrfs&lat=23.999999&lon=-74",
     ] {
         anyhow::ensure!(
             http.get(format!("{base}{path}")).send()?.status().as_u16() == 404,
@@ -238,7 +245,7 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
     let value: Value = serde_json::from_reader(&mut decoder)?;
     anyhow::ensure!(value["model"] == "aifs", "Gzip mismatch");
     Ok(
-        json!({"time":now(),"health":health,"profiles":checks,"invalid_inputs":4,"outside_region":3,"gzip_bytes":compressed.len(),"full_database_validation":full,"success":true}),
+        json!({"time":now(),"health":health,"profiles":checks,"invalid_inputs":4,"outside_region":4,"gzip_bytes":compressed.len(),"full_database_validation":full,"success":true}),
     )
 }
 pub fn benchmark(root: &Path, count: usize, clients: usize) -> Result<Value> {
@@ -337,6 +344,10 @@ pub fn compare_stores(root: &Path, reference: &Path, samples: usize) -> Result<V
     let _b = Lock::acquire(reference, "catalog", false, false)?;
     let c = catalog(root)?;
     let expected = catalog(reference)?;
+    anyhow::ensure!(
+        !c.current.is_empty() && c.current.keys().eq(expected.current.keys()),
+        "Comparison catalogs must contain the same nonempty model set"
+    );
     let db = Db::new()?;
     let mut models = serde_json::Map::new();
     for (name, e) in c.current {
@@ -422,7 +433,6 @@ pub fn compare_stores(root: &Path, reference: &Path, samples: usize) -> Result<V
         }
         models.insert(name,json!({"cells":ids.len(),"complete_profiles_exact":compared,"max_coordinate_error_degrees":max_error,"logical_rows":ids.len()*m["leads"].as_array().unwrap().len(),"storage_rows":db.scalar(&format!("SELECT count() FROM {}.{}",ident(&e.database)?,ident(&e.table)?))?}));
     }
-    anyhow::ensure!(models.len() == 3, "Not all three models completed");
     Ok(json!({"time":now(),"models":models,"success":true}))
 }
 

@@ -1,0 +1,18 @@
+{
+  "same_x": true,
+  "same_y": true,
+  "same_crs": true,
+  "conus_cells": 1638757,
+  "native_cells": 1905141,
+  "files": {
+    "hrrr": {
+      "bytes": 28381278,
+      "sha256": "4c1bc0196a1b89c04bc6c8e896966bc5e41a764183b31f6b6d0903f16bcbd49f"
+    },
+    "rrfs": {
+      "bytes": 28381278,
+      "sha256": "4c1bc0196a1b89c04bc6c8e896966bc5e41a764183b31f6b6d0903f16bcbd49f"
+    }
+  },
+  "same_cells_file": true
+}

@@ -11,7 +11,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-pub const MODELS: [&str; 3] = ["hrrr", "gfs", "aifs"];
+pub const MODELS: [&str; 4] = ["hrrr", "gfs", "aifs", "rrfs"];
 pub const DATABASE: &str = "meteogram_native";
 pub const RESERVE: u64 = 20 << 30;
 static EVENT_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -131,6 +131,7 @@ pub fn descriptor(root: &Path, e: &Entry) -> Result<PathBuf> {
 pub fn leads(model: &str) -> Vec<u16> {
     match model {
         "hrrr" => (0..49).collect(),
+        "rrfs" => (0..85).collect(),
         "gfs" => (0..121).chain((123..181).step_by(3)).collect(),
         "aifs" => (0..181).step_by(6).collect(),
         _ => vec![],
@@ -146,7 +147,7 @@ pub fn variables(model: &str) -> Vec<String> {
             "wind_v",
             "relative_humidity",
         ],
-        "hrrr" => vec![
+        "hrrr" | "rrfs" => vec![
             "geopotential_height",
             "temperature",
             "wind_u",
@@ -176,10 +177,14 @@ pub fn fields(m: &Value) -> Vec<String> {
 pub fn dataset(model: &str) -> Result<&'static str> {
     Ok(match model {
         "hrrr" => "noaa-hrrr-forecast-48-hour-virtual",
+        "rrfs" => "noaa-rrfs-forecast-84-hour-virtual",
         "gfs" => "noaa-gfs-forecast-virtual",
         "aifs" => "ecmwf-aifs-single-forecast-virtual",
         _ => bail!("Unknown model"),
     })
+}
+pub fn grid_relative(model: &str) -> bool {
+    matches!(model, "hrrr" | "rrfs")
 }
 pub fn freshness(m: &Value) -> Result<Value> {
     let model = m["model"].as_str().context("Model missing")?;
@@ -191,10 +196,10 @@ pub fn freshness(m: &Value) -> Result<Value> {
         .and_then(Value::as_f64)
         .context("Empty leads")?
         - age;
-    let (max_age, min_remaining) = if model == "hrrr" {
-        (24., 12.)
-    } else {
-        (48., 72.)
+    let (max_age, min_remaining) = match model {
+        "hrrr" => (24., 12.),
+        "rrfs" => (24., 48.),
+        _ => (48., 72.),
     };
     let round = |x: f64| (x * 1000.).round() / 1000.;
     Ok(
@@ -212,7 +217,7 @@ pub fn check_metadata(m: &Value) -> Result<()> {
     if m["dataset"] != dataset(model)?
         || m["coverage"] != "conus"
         || m["spatial_shards"] != 1
-        || m["cells"].as_u64() != Some(if model == "hrrr" { 1638757 } else { 24885 })
+        || m["cells"].as_u64() != Some(if grid_relative(model) { 1638757 } else { 24885 })
         || m["leads"] != json!(leads(model))
         || !numeric_array_eq(&m["levels"], &json!(levels))
         || m["variables"] != json!(variables(model))
@@ -311,6 +316,7 @@ pub fn disk_guard(root: &Path, extra: u64) -> Result<u64> {
 pub fn admission(model: &str) -> u64 {
     match model {
         "hrrr" => 210 << 30,
+        "rrfs" => 160 << 30,
         "gfs" => 35 << 30,
         _ => 5 << 30,
     }

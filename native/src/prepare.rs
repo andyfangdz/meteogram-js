@@ -18,7 +18,7 @@ use std::{
 
 /// Unlike FieldBuilder, this retains only one spatial map's lookup table.
 /// Raw input and output matrices are each limited to 1 GiB, independently of
-/// the 512 MB compact codebook limit. No forecast axis or native cell is cut.
+/// the uniform 1 GB compact codebook limit. No forecast axis or native cell is cut.
 pub fn encode_stage(source: &Path, out: &Path) -> Result<Value> {
     anyhow::ensure!(!out.exists(), "Preparation needs a fresh output directory");
     let started = Instant::now();

@@ -58,6 +58,8 @@ to loopback; it is for this local service.
 ```sh
 meteogram-native status --root "$HOME/.local/share/meteogram-native"
 meteogram-native update --root "$HOME/.local/share/meteogram-native"
+# Refresh only RRFS, keeping the other published models:
+meteogram-native update --root "$HOME/.local/share/meteogram-native" --models rrfs
 meteogram-native rollback --root "$HOME/.local/share/meteogram-native" --model hrrr
 meteogram-native gc --root "$HOME/.local/share/meteogram-native"
 
@@ -74,11 +76,23 @@ that pinned snapshot, with at most 16 checks in flight. A missing reference
 rejects the candidate immediately; `preflight.json` records the result. Existing
 references can still point to unavailable or invalid source objects, so the
 download, decode and full validation gates remain required.
-HRRR retains 49 hourly leads through 48 hours; GFS retains hourly leads through
+The default update includes HRRR, GFS, AIFS and RRFS. RRFS retains 85 hourly
+leads through 84 hours. HRRR retains 49 hourly leads through 48 hours;
+GFS retains hourly leads through
 120 hours then three-hour leads through 180; AIFS retains six-hour leads through
 180. The retained region is 24–50°N, 125–66°W on each native grid.
 
+RRFS uses `noaa-rrfs-forecast-84-hour-virtual`, with the same retained 1,638,757
+cells and 30 pressure levels (1000–275 hPa) as HRRR. Both retain geopotential
+height, temperature, grid-relative wind U/V, relative humidity and dew point,
+plus 2 m temperature and dew point. The source's RRFS manifest cache is too small
+to retain the eight required arrays together. Set its bounded eight-million-
+reference cache at initial repository open, with weather payload caching
+disabled; Icechunk 2.3's `reopen` shares the original caches. Other models retain
+their existing cache settings.
+
 Freshness requires HRRR age ≤24 hours and ≥12 hours of forecast remaining;
+RRFS requires age ≤24 hours and ≥48 hours remaining;
 GFS/AIFS require age ≤48 hours and ≥72 hours remaining. Publication additionally
 requires the expected complete source schema, all cells and leads, finite
 values, exact cell IDs and sampled bit-exact staged/database values. Failed
@@ -113,14 +127,19 @@ The original physical format is `cell_profile_v1`: one row per native cell, with
 fields arranged as level/lead arrays and surface fields as lead arrays. Float32
 bits are stored losslessly as `Array(UInt32)` with T64 and Zstd (level 3 for
 HRRR, level 1 for GFS/AIFS); there is no
-quantization. New HRRR acquisitions use the lossless dictionary/tile format
-described below; GFS/AIFS retain raw Float32 bits. The ARM build uses the NEON
+quantization. New HRRR/RRFS acquisitions use the lossless dictionary/tile format
+described below; GFS/AIFS retain raw Float32 bits. All models have the same
+bounded 250-million-entry codebook allowance (1 GB decimal Float32 payload).
+The ARM build uses the NEON
 packing routine, finishing small groups
 of cells across all leads to keep output profiles in CPU cache. Up to three
 readers reuse bounded input/packing buffers, read full cell batches, and feed a
 bounded queue of encoded ClickHouse Native blocks. Raw-bit HRRR uses four insert
 workers with 4,096-cell batches; packed HRRR uses six workers, two readers and
-16,384-cell batches, with at most four simultaneous inserts. GFS uses 2,048
+16,384-cell batches, with at most four simultaneous inserts. RRFS uses the same
+worker limits with 8,192-cell packed batches to bound its longer forecast's
+Native block size. Its legacy raw path uses four workers and 2,048-cell batches.
+GFS uses 2,048
 cells and AIFS 4,096. Other models
 default to one worker. `load --workers 1..6` selects an explicit
 insert worker count. `load --packed` explicitly enables experimental 256-cell
@@ -154,7 +173,7 @@ must be finite, and every stored index must fit its own slot's palette.
 Acquisition sorts palettes in Float32 total order and checkpoints them with
 each durable lead. Palette files must survive weather-staging cleanup.
 
-When all palettes fit UInt16, HRRR uses `cell_tiles_v1`: each row retains 256
+When all palettes fit UInt16, HRRR/RRFS use `cell_tiles_v1`: each row retains 256
 adjacent native cells, preserving their ordered original IDs. For each
 field/level/lead slot, 32 UInt128 words hold eight exact UInt16 indices each.
 `Delta(2)/Zstd(1)` compresses the lanes. Every lane in every word is checked
@@ -177,9 +196,10 @@ table before processing the next map. Input/output lead matrices are each
 bounded to 1 GiB, with at most two million cells. An individual palette must
 fit UInt16; no quantization or truncation is used.
 
-Compact codebooks have an aggregate limit of 128 million Float32 entries
-(512 MB payload) and 65,536 slots across all fields. These bounds also apply
-before allocation in the reader. The legacy `prepare-store` dictionary builder
+Compact codebooks have a uniform aggregate limit of 250 million Float32 entries
+(1,000,000,000 payload bytes) and 65,536 slots across all fields, for every model.
+These bounds apply during source checkpoint assembly and before
+allocation in the reader. The legacy `prepare-store` dictionary builder
 retains its stricter 32-million-entry **per-field hash-table** guard and is not
 the bounded path for full GFS. Preparation is outside loader timing.
 
@@ -193,8 +213,9 @@ meteogram-native load --root "$BENCH_ROOT" --data "$DICTIONARY_STAGE" \
 ```
 
 Use fresh output directories/tables. The codebook format remains `MGDICT01`,
-but GFS codebooks above the old per-field reader limit require this upgraded
-reader before publication. Existing HRRR/AIFS dictionaries remain readable.
+but GFS codebooks above the old per-field reader limit and RRFS codebooks above
+128 million entries require their upgraded readers before publication.
+Existing HRRR/AIFS dictionaries remain readable.
 These explicit commands do not change the acquisition or scheduled-loader
 defaults.
 
@@ -206,14 +227,18 @@ consumed file pages receive discard hints. The server's 6 GiB limit is unchanged
 Packed loads release unused ClickHouse allocator pages initially and every
 four validated batches, keeping background logging below the same RSS cap.
 These releases and the final allocator purge are included in measured load time.
+Independent packed-table audits scan one column at a time with two threads and
+one tile per block, preserving every check under the existing 2 GiB query limit
+even after parts are merged.
 
 The reader also supports the earlier one-row-per-cell/lead format, so existing
 current/previous tables need no migration. Both formats return the same JSON
-rows. The source wind frame remains explicit: HRRR grid-relative, GFS/AIFS
+rows. The source wind frame remains explicit: HRRR/RRFS grid-relative, GFS/AIFS
 earth-relative. Arbitrary coordinates select the nearest retained native cell;
 outside-region/domain requests return 404, malformed coordinates return 400,
 and stale/unavailable forecasts return 503. Requests never download source maps.
-`/health` checks model freshness and database connectivity. Responses support
+`/health` requires all four supported models to be fresh and checks database
+connectivity. Responses support
 gzip and retain `Cache-Control: no-store`.
 
 New weather staging uses `*.stage.zst` plus a versioned `*.stage.json` index.
@@ -266,7 +291,8 @@ meteogram-native convert-stage --source "$LEGACY_MODEL_DATA" \
 `verify` checks city/interior/edge HTTP profiles against the database, invalid and outside requests,
 gzip and optionally full database validation. `--compare-url` compares complete
 HTTP payloads with another running service, excluding revision/query duration
-and allowing <10⁻⁹-degree coordinate round-off. `compare-stores` checks every
+and allowing <10⁻⁹-degree coordinate round-off. `compare-stores` requires
+matching, nonempty model sets (including four-model catalogs) and checks every
 cell ID and coordinate, source identity/schema, and complete sampled forecasts
 against a second catalog. Weather values must match exactly. `benchmark` runs
 an explicit warmup then measures complete profile queries; these are loopback,
@@ -323,3 +349,7 @@ The [bounded GFS dictionary follow-up](../docs/plans/2026-10-18-gfs-dictionary.m
 records a complete successful mapwise conversion at 310 MiB peak encoding RSS,
 full-value roundtrip proofs, 43.9% storage savings for dictionary profiles, and
 the projected point-query reader's measured latency tradeoff.
+
+The [complete RRFS ingestion](../docs/plans/2026-10-18-rrfs-ingestion.md) records
+all 85 leads, the uniform 1 GB codebook allowance, a 146.71-second validated
+load, independent audits and four-model service installation.

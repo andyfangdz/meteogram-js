@@ -1,0 +1,106 @@
+{
+  "meta": [
+    {
+      "name": "database",
+      "type": "String"
+    },
+    {
+      "name": "name",
+      "type": "String"
+    },
+    {
+      "name": "total_rows",
+      "type": "Nullable(UInt64)"
+    },
+    {
+      "name": "total_bytes",
+      "type": "Nullable(UInt64)"
+    }
+  ],
+  "data": [
+    {
+      "database": "meteogram_bench",
+      "name": "aifs_256_zstd",
+      "total_rows": 771435,
+      "total_bytes": 101167340
+    },
+    {
+      "database": "meteogram_bench",
+      "name": "gfs_256_zstd",
+      "total_rows": 3508785,
+      "total_bytes": 1747092552
+    },
+    {
+      "database": "meteogram_bench",
+      "name": "hrrr_256_zstd",
+      "total_rows": 80299093,
+      "total_bytes": 33597227056
+    },
+    {
+      "database": "meteogram_native",
+      "name": "aifs_20261018012917_143ac186",
+      "total_rows": 771435,
+      "total_bytes": 101208049
+    },
+    {
+      "database": "meteogram_native",
+      "name": "aifs_20261018074734_12c3fcfe",
+      "total_rows": 24885,
+      "total_bytes": 72083755
+    },
+    {
+      "database": "meteogram_native",
+      "name": "aifs_20261018135757_414d1e3b",
+      "total_rows": 24885,
+      "total_bytes": 72243037
+    },
+    {
+      "database": "meteogram_native",
+      "name": "gfs_20261018011859_19e2797e",
+      "total_rows": 3508785,
+      "total_bytes": 1749176465
+    },
+    {
+      "database": "meteogram_native",
+      "name": "gfs_20261018072959_02449bca",
+      "total_rows": 24885,
+      "total_bytes": 1541250655
+    },
+    {
+      "database": "meteogram_native",
+      "name": "gfs_20261018134756_7d24c140",
+      "total_rows": 24885,
+      "total_bytes": 1539165379
+    },
+    {
+      "database": "meteogram_native",
+      "name": "hrrr_20261018005542_c13c1f40",
+      "total_rows": 80299093,
+      "total_bytes": 33445634350
+    },
+    {
+      "database": "meteogram_native",
+      "name": "hrrr_20261018073354_ac063ce1",
+      "total_rows": 1638757,
+      "total_bytes": 24268196425
+    },
+    {
+      "database": "meteogram_native",
+      "name": "hrrr_20261018134756_c90afbd3",
+      "total_rows": 1638757,
+      "total_bytes": 23576711779
+    },
+    {
+      "database": "meteogram_native",
+      "name": "rrfs_20261018190636_ef01686e",
+      "total_rows": 6402,
+      "total_bytes": 21807277418
+    }
+  ],
+  "rows": 13,
+  "statistics": {
+    "elapsed": 0.002917323,
+    "rows_read": 13,
+    "bytes_read": 962
+  }
+}

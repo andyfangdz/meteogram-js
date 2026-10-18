@@ -336,6 +336,32 @@ commit `5f4ae08` and earlier commits preserve their historical implementations.
 Do not put whole-map virtual Zarr reads in page requests: arbitrary CONUS
 coordinates are served from the retained local grid.
 
+The native service supports HRRR, GFS, AIFS and RRFS. Default scheduled updates
+include all four; `update --models rrfs` refreshes only RRFS. Its Dynamical source
+is `noaa-rrfs-forecast-84-hour-virtual`: 85 hourly leads through 84 hours,
+1,638,757 retained CONUS cells, 30 pressure levels from 1000 down to 275 hPa,
+the same six pressure fields and two surface fields as HRRR. RRFS and HRRR use
+their source-declared spherical LCC grid and retain grid-relative winds.
+RRFS freshness requires age ≤24 hours and at least 48 forecast hours remaining.
+Complete source schema/preflight and all existing publication gates apply.
+RRFS overrides the source's one-million-reference manifest cache with a bounded
+eight-million-reference cache at the initial repository open, with weather
+payload caching disabled. Icechunk 2.3 `reopen` shares its original asset manager;
+changing cache settings only there does not rebuild the cache.
+New RRFS runs use exact mapwise dictionaries and automatic 256-cell tiles when
+all palettes fit UInt16. At the user's request, every model now has the same
+bounded 250-million-entry codebook allowance (1,000,000,000 bytes of Float32
+payload). Both source checkpoint assembly and readers enforce this aggregate
+limit. Do not thin fields, levels, cells or times.
+Its 8,192-cell packed batches keep 85-lead Native blocks below HRRR's measured
+per-block byte budget. Admission reserves 160 GiB plus the shared 20 GiB floor.
+`/health` requires all four models. Independent packed-table audits scan one
+column at a time with two threads and one tile per block, including after
+background merges, so 85-lead arrays stay under the 2 GiB query cap;
+do not remove full palette/index/key checks to reduce memory. Complete first-run
+evidence is in `docs/plans/2026-10-18-rrfs-ingestion.md`.
+This adds native ingestion only; the Next.js model menu/provider is unchanged.
+
 Historical evidence remains under `docs/plans/` and `docs/benchmarks/`:
 
 - `2026-10-14-dynamical-migration.md`: field coverage and source chunk costs.
@@ -395,7 +421,7 @@ tables; adoption creates an independent validated clone of its source table.
 Raw-bit revisions use `cell_profile_v1`: one physical row per native cell, full
 pressure profiles arranged as level/lead arrays, surface profiles as lead arrays,
 and exact Float32 bits in UInt32 arrays with T64 + Zstd (level 3 for HRRR,
-level 1 for GFS/AIFS). New HRRR acquisitions use the lossless dictionary/tile
+level 1 for GFS/AIFS). New HRRR/RRFS acquisitions use the lossless dictionary/tile
 format detailed below. Metadata explicitly
 versions layout, axes, encoding and writer and is bound to its validation marker.
 The API also reads legacy cell/lead tables, including rollback to them. Validation
@@ -410,7 +436,7 @@ pinned Icechunk manifests (16 concurrent checks); `preflight.json` records missi
 references. This does not guarantee the referenced payload objects are readable;
 preserve download/decode/full-data gates. At most two extractors run initially,
 then one extractor overlaps one loader. Each extractor
-has at most 16 map tasks. HRRR loading uses three raw-bit or two packed-tile
+has at most 16 map tasks. HRRR/RRFS loading uses three raw-bit or two packed-tile
 reusable-buffer readers and four raw-bit or six packed-tile load workers
 connected by a bounded
 queue; other models default to
@@ -462,8 +488,9 @@ export exceeded it. Preserve that failed measurement as historical evidence.
 lookup table at a time, sorted exact Float32 palettes, UInt16 v2 frames, no
 quantization. Its raw/output lead matrices are each capped at 1 GiB and cell
 count at two million; reject oversized inputs rather than thinning axes/cells.
-Each palette must fit UInt16. Final codebooks/readers use a separate aggregate
-128-million-entry limit (512 MB Float32 payload) and 65,536 total palette slots.
+Each palette must fit UInt16. Final codebooks/readers use a separate uniform
+250-million-entry limit (1 GB decimal Float32 payload) and 65,536 total palette
+slots for every model.
 Check these limits and overflow **before reader allocation**. This replaces
 the reader's old per-field accounting while retaining bounded compact storage;
 do not restore all-lead lookup tables or remove the budgets. Version/checksum/
@@ -564,12 +591,12 @@ counters. The public S3 configuration explicitly retains anonymous access for
 STAC-authorized containers; do not let persisted S3 options enable host-credential
 or EC2 metadata lookup.
 
-HRRR native projection is spherical LCC as declared by its source. This is
+HRRR/RRFS native projection is spherical LCC as declared by the source. This is
 separate from the app's WGS84 geopotential-to-MSL conversion. The API rejects
 requested coordinates outside 24–50°N, 125–66°W before selection and permits only
 micrometre-scale projection round-off at native bounds. HTTP requests never
 start acquisition. `/health` checks freshness and database connectivity. Native
-HRRR winds remain grid-relative. Meteorological normalization, cloud estimates,
+HRRR/RRFS winds remain grid-relative. Meteorological normalization, cloud estimates,
 terrain handling, fallback and public serving remain separate app integration
 work.
 

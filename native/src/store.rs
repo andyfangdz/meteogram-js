@@ -296,13 +296,14 @@ pub fn load_with_layout(
         !packed || index16,
         "Packed loading requires UInt16 dictionaries"
     );
-    let tiled = index16 && (m["model"] == "hrrr" || packed);
+    let regional = m["model"].as_str().is_some_and(grid_relative);
+    let tiled = index16 && (regional || packed);
     let storage_rows = if tiled {
         nc.div_ceil(crate::packed::CELLS)
     } else {
         nc
     };
-    let workers = workers.unwrap_or(if m["model"] == "hrrr" {
+    let workers = workers.unwrap_or(if regional {
         if tiled {
             6
         } else {
@@ -375,7 +376,7 @@ pub fn load_with_layout(
     if tiled {
         columns.push("cell_ids Array(UInt32)".to_owned());
     }
-    let compression = if m["model"] == "hrrr" && !index16 {
+    let compression = if regional && !index16 {
         "ZSTD(3)"
     } else {
         "ZSTD(1)"
@@ -419,6 +420,11 @@ pub fn load_with_layout(
         Some("hrrr") if tiled => 16384,
         Some("hrrr") if index16 => 8192,
         Some("hrrr") => 4096,
+        // 85 leads versus HRRR's 49: keep each Native block below the
+        // measured HRRR byte budget and retain 4,096-cell frame alignment.
+        Some("rrfs") if tiled => 8192,
+        Some("rrfs") if index16 => 4096,
+        Some("rrfs") => 2048,
         _ => 4096,
     };
     #[derive(Default)]
@@ -951,13 +957,24 @@ fn validate_impl(
             "Incomplete in-memory range validation proof"
         );
     } else {
-        anyhow::ensure!(
-        db.scalar(&format!(
-            "SELECT count() FROM {database}.{table} WHERE {} SETTINGS max_threads=8,max_block_size={},compile_expressions=1,min_count_to_compile_expression=0",
-            checks.join(" OR "),if tiled {1024/tile_cells}else{1024}
-        ))? == 0,
-        "Malformed/non-finite database values"
-    );
+        // Every tile contains all leads/levels for 256 cells. Audit packed
+        // columns separately, with bounded parallelism and a one-tile block:
+        // reading all eight wide arrays together can exceed 2 GiB even when
+        // the original parts passed, after background merges change buffers.
+        let (threads, block) = if tiled { (2, 1) } else { (8, 1024) };
+        let scans = if tiled {
+            checks
+        } else {
+            vec![checks.join(" OR ")]
+        };
+        for check in scans {
+            anyhow::ensure!(
+                db.scalar(&format!(
+                    "SELECT count() FROM {database}.{table} WHERE {check} SETTINGS max_threads={threads},max_block_size={block},compile_expressions=1,min_count_to_compile_expression=0"
+                ))? == 0,
+                "Malformed/non-finite database values"
+            );
+        }
     }
     if !profile {
         // A global 80-million-key set exceeds the 2 GiB query budget.

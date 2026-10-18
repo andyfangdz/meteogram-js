@@ -104,7 +104,7 @@ enum Cmd {
     Update {
         #[arg(long)]
         root: PathBuf,
-        #[arg(long, value_delimiter = ',', default_value = "hrrr,gfs,aifs")]
+        #[arg(long, value_delimiter = ',', default_value = "hrrr,gfs,aifs,rrfs")]
         models: Vec<String>,
         #[arg(long, value_delimiter = ',', default_value = "1,2")]
         offsets: Vec<usize>,

@@ -121,7 +121,7 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
         fields.extend(crate::state::fields(&m.meta));
         Ok((
             StatusCode::OK,
-            json!({"model":name,"dataset":m.meta["dataset"],"init_time":m.meta["init_time"],"snapshot_id":m.meta["snapshot_id"],"requested":{"latitude":lat,"longitude":lon},"grid":{"cell_id":cell,"latitude":m.lat[i],"longitude":m.lon[i]},"levels_hpa":m.meta["levels"],"units":m.meta["units"],"fields":fields,"rows":rows,"native_wind_frame":if name=="hrrr"{"grid-relative"}else{"earth-relative"},"query_ms":elapsed,"prototype":true,"revision":e.revision}),
+            json!({"model":name,"dataset":m.meta["dataset"],"init_time":m.meta["init_time"],"snapshot_id":m.meta["snapshot_id"],"requested":{"latitude":lat,"longitude":lon},"grid":{"cell_id":cell,"latitude":m.lat[i],"longitude":m.lon[i]},"levels_hpa":m.meta["levels"],"units":m.meta["units"],"fields":fields,"rows":rows,"native_wind_frame":if grid_relative(&name){"grid-relative"}else{"earth-relative"},"query_ms":elapsed,"prototype":true,"revision":e.revision}),
         ))
     };
     run().unwrap_or((
@@ -186,12 +186,9 @@ async fn health(State(app): State<App>) -> (StatusCode, Json<Value>) {
         };
         match run() {
             Ok(v) => {
-                let good = v["models"].as_object().unwrap().len() == 3
-                    && v["models"]
-                        .as_object()
-                        .unwrap()
-                        .values()
-                        .all(|m| m["available"] == true);
+                let good = MODELS
+                    .iter()
+                    .all(|name| v["models"][*name]["available"] == true);
                 (
                     if good {
                         StatusCode::OK
