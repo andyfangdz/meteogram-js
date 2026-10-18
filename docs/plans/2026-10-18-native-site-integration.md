@@ -1,9 +1,9 @@
 # Native forecast site integration — 2026-10-18
 
 The site now has a tested native forecast adapter and authenticated API path.
-The public Cloudflare path is verified, including all four charts. Production
-activation still awaits the manual Vercel deployment described below; do not
-describe the public site as switched over yet.
+The public Cloudflare path is verified, including all four charts. The
+new application commit is deployed to production. Production native
+activation still awaits the environment correction described below.
 
 ## Request path
 
@@ -92,10 +92,20 @@ Commit `9684287` built successfully in the Vercel preview deployment
 the server environment variables. The connector cannot list their metadata
 (403), so the values/targets were not independently inspected. Deployment
 creation and protected-preview access were rejected with
-`MCP tool call requires approval, but approval policy is never`. The user was
-asked to promote that concrete tested commit through Vercel using the updated
-production variables. Hosted native charts still require verification after
-that action. No production deployment was made by this session.
+`MCP tool call requires approval, but approval policy is never`. The user promoted the tested application commit: production deployment
+`dpl_GDC6C4Gb7oRsuffbhojbodKwwbaC` is READY at `meteogram.vercel.app` and
+`meteogram.flyingclub.org`, running commit `9684287`.
+
+The first production browser check stopped at HRRR: the page rendered
+Open-Meteo rather than native data. A separate public response inspection
+confirmed `provider: open-meteo, model: gfs_hrrr, fallback: false`. Given this
+commit's source selection, that indicates `METEOGRAM_API_URL` is absent or
+empty in the production runtime.
+No warning/error/fatal runtime logs were returned for this deployment in the
+checked ten-minute window. The user was asked to confirm **both** server
+variables target Production and redeploy with the corrected variables. Hosted
+native charts remain unverified until that correction. See
+`production-source-check.json` for the response evidence.
 
 `meteogram-native.service` and `meteogram-tunnel.service` are installed in the
 user unit search path with `default.target.wants` links; the host already has
