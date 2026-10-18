@@ -1,6 +1,7 @@
 import { FEET_PER_METER } from "@/config/weather";
 import type {
   CloudColumn,
+  NativeCloudLayer,
   NativeWeatherModel,
   WeatherSource,
 } from "@/types/weather";
@@ -27,6 +28,19 @@ export interface NativeForecast {
   missing_leads: number[];
   forecast_complete: boolean;
   freshness: { available: boolean };
+  lead_sources?: { lead: number; snapshot_id: string }[];
+  native_clouds?: {
+    model_levels: number[];
+    fields: string[];
+    units: Record<string, string>;
+    available_leads: number[];
+    lead_sources: {
+      lead: number;
+      snapshot_id: string;
+      pressure_snapshot_id: string;
+    }[];
+    rows: [number, number[], number[], number[]][];
+  };
 }
 
 const regionalLevels = Array.from({ length: 30 }, (_, i) => 1000 - i * 25);
@@ -166,7 +180,114 @@ export function parseNativeForecast(
   ) {
     throw new Error("Unsupported native units or wind frame");
   }
+  validateNativeClouds(value, model);
   return value as unknown as NativeForecast;
+}
+
+/** Validate the optional 50-level supplement independently of pressure levels. */
+function validateNativeClouds(
+  value: Record<string, unknown>,
+  model: NativeWeatherModel,
+) {
+  const c = value.native_clouds;
+  if (c === undefined) return;
+  const leads = value.available_leads as number[];
+  if (
+    !record(c) ||
+    model !== "hrrr" ||
+    !same(
+      c.model_levels,
+      Array.from({ length: 50 }, (_, i) => i + 1),
+    ) ||
+    !Array.isArray(c.fields) ||
+    c.fields.join(",") !==
+      "lead_hour,fraction_of_cloud_cover,geopotential_height,pressure" ||
+    !record(c.units) ||
+    c.units.fraction_of_cloud_cover !== "1" ||
+    c.units.geopotential_height !== "m" ||
+    c.units.pressure !== "Pa" ||
+    !Array.isArray(c.available_leads) ||
+    !Array.isArray(c.rows) ||
+    !Array.isArray(c.lead_sources) ||
+    c.rows.length !== c.available_leads.length ||
+    c.lead_sources.length !== c.rows.length ||
+    c.available_leads.some(
+      (h, i, a) =>
+        !Number.isInteger(h) || !leads.includes(h) || (i > 0 && h <= a[i - 1]),
+    )
+  ) {
+    throw new Error("Invalid native cloud schema or hours");
+  }
+  const sources = value.lead_sources;
+  const cloudLeads = c.available_leads;
+  for (let i = 0; i < c.rows.length; i++) {
+    const row = c.rows[i];
+    const source = c.lead_sources[i];
+    const expectedSnapshot = Array.isArray(sources)
+      ? sources.find((s) => record(s) && s.lead === cloudLeads[i])?.snapshot_id
+      : value.snapshot_id;
+    if (
+      !record(source) ||
+      source.lead !== c.available_leads[i] ||
+      source.pressure_snapshot_id !== expectedSnapshot ||
+      typeof source.snapshot_id !== "string" ||
+      !source.snapshot_id ||
+      !Array.isArray(row) ||
+      row.length !== 4 ||
+      row[0] !== source.lead ||
+      row
+        .slice(1)
+        .some((v) => !Array.isArray(v) || v.length !== 50 || !v.every(finite))
+    ) {
+      throw new Error("Native cloud frame/source mismatch");
+    }
+    const [, cloud, height, pressure] = row as [
+      number,
+      number[],
+      number[],
+      number[],
+    ];
+    const ascending = height[1] > height[0];
+    if (
+      cloud.some((v) => v < 0 || v > 1) ||
+      pressure.some((v) => v <= 0) ||
+      height.some(
+        (v, l) =>
+          l > 0 &&
+          (ascending
+            ? v <= height[l - 1] || pressure[l] >= pressure[l - 1]
+            : v >= height[l - 1] || pressure[l] <= pressure[l - 1]),
+      )
+    ) {
+      throw new Error("Invalid native cloud fraction or vertical coordinates");
+    }
+  }
+}
+
+function nativeCloudLayers(
+  forecast: NativeForecast,
+  lead: number,
+): NativeCloudLayer[] | undefined {
+  const row = forecast.native_clouds?.rows.find((row) => row[0] === lead);
+  if (!row) return undefined;
+  const layers = forecast
+    .native_clouds!.model_levels.map((modelLevel, i) => ({
+      modelLevel,
+      hpa: row[3][i] / 100,
+      geopotentialFt: row[2][i] * FEET_PER_METER,
+      mslFt:
+        geopotentialToMsl(row[2][i], forecast.grid.latitude) * FEET_PER_METER,
+      cloudCoverage: row[1][i] * 100,
+    }))
+    .sort((a, b) => a.mslFt - b.mslFt);
+  return layers.map((layer, i) => ({
+    ...layer,
+    mslFtBottom: i > 0 ? (layers[i - 1].mslFt + layer.mslFt) / 2 : layer.mslFt,
+    mslFtTop:
+      i < layers.length - 1
+        ? (layers[i + 1].mslFt + layer.mslFt) / 2
+        : layer.mslFt,
+  }));
 }
 
 /** Source initialization timestamps without a suffix are explicitly UTC. */
@@ -247,6 +368,7 @@ export function nativeWind(u: number, v: number, rotationDegrees: number) {
 export function transformNativeForecast(
   forecast: NativeForecast,
   now = Date.now(),
+  options: { allowSparse?: boolean } = {},
 ): {
   data: CloudColumn[];
   source: WeatherSource;
@@ -309,8 +431,24 @@ export function transformNativeForecast(
     });
     if (cloud.length === 0)
       throw new Error("Native forecast contains no usable pressure levels");
+    const nativeLayers = nativeCloudLayers(forecast, lead);
+    if (nativeLayers) {
+      for (const cell of cloud) {
+        const nearest = nativeLayers.reduce((a, b) =>
+          Math.abs(a.mslFt - cell.mslFt) <= Math.abs(b.mslFt - cell.mslFt)
+            ? a
+            : b,
+        );
+        cell.cloudCoverage = nearest.cloudCoverage;
+      }
+    }
     return [
       {
+        nativeCloudLayers: nativeLayers,
+        initializedAt: new Date(init).toISOString(),
+        cloudMethod: (positions.has("cloud_cover") || nativeLayers
+          ? "model"
+          : "humidity-estimate") as "model" | "humidity-estimate",
         ...completeCloudColumn({
           date,
           cloud,
@@ -328,19 +466,37 @@ export function transformNativeForecast(
       },
     ];
   });
-  if (data.length < 2 || !data.some((d) => d.date.getTime() >= now)) {
+  if (
+    !options.allowSparse &&
+    (data.length < 2 || !data.some((d) => d.date.getTime() >= now))
+  ) {
     throw new Error("Native forecast has insufficient current/future hours");
   }
+  const nativeHours = data.filter((d) => d.nativeCloudLayers).length;
   return {
     data,
     source: {
       provider: "dynamical",
       model: forecast.model,
       initializedAt: new Date(init).toISOString(),
+      forecastLengthHours: forecast.expected_leads.at(-1),
       complete: forecast.forecast_complete,
       availableHours: forecast.available_leads.length,
       expectedHours: forecast.expected_leads.length,
-      cloudMethod: positions.has("cloud_cover") ? "model" : "humidity-estimate",
+      cloudMethod:
+        positions.has("cloud_cover") ||
+        (nativeHours > 0 && nativeHours === data.length)
+          ? "model"
+          : nativeHours > 0
+            ? "mixed"
+            : "humidity-estimate",
+      ...(nativeHours > 0
+        ? {
+            nativeCloudLevels: 50,
+            nativeCloudHours: nativeHours,
+            displayedHours: data.length,
+          }
+        : {}),
       cadenceMinutes,
     },
   };

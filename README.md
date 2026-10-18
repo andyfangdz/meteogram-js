@@ -119,8 +119,11 @@ actual source. Leaving the API URL unset preserves the Open-Meteo path.
 
 The adapter preserves native pressure levels and forecast times, including
 six-hour AIFS and the three-hour GFS tail. HRRR/RRFS grid winds are rotated to
-true bearings. GFS supplies cloud fraction; HRRR, RRFS and AIFS clouds are
-humidity estimates, identified above the chart. See
+true bearings. HRRR uses 50 native cloud layers at their model heights; GFS
+supplies pressure-level cloud fraction. RRFS and AIFS clouds are humidity
+estimates. The newest HRRR intervals overlay the latest complete 48-hour HRRR
+run. Other native models overlay the latest complete run. Colored run strips,
+initialization-change lines and tooltip timestamps identify each supplying run. See
 [native service setup](native/README.md) for authentication and Cloudflare Tunnel.
 
 ### Acknowledgments

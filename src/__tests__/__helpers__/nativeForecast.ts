@@ -87,3 +87,37 @@ export function nativeFixture(
     freshness: { available: true },
   };
 }
+
+export function withNativeClouds(
+  forecast = nativeFixture(),
+  leads = forecast.available_leads,
+) {
+  forecast.native_clouds = {
+    model_levels: Array.from({ length: 50 }, (_, i) => i + 1),
+    fields: [
+      "lead_hour",
+      "fraction_of_cloud_cover",
+      "geopotential_height",
+      "pressure",
+    ],
+    units: {
+      fraction_of_cloud_cover: "1",
+      geopotential_height: "m",
+      pressure: "Pa",
+    },
+    available_leads: [...leads],
+    lead_sources: leads.map((lead) => ({
+      lead,
+      snapshot_id: "cloud-snapshot",
+      pressure_snapshot_id: forecast.snapshot_id,
+    })),
+    // Source model level 1 is highest. Preserve its identity when sorting by height.
+    rows: leads.map((lead) => [
+      lead,
+      Array.from({ length: 50 }, (_, i) => (i === 49 ? 0 : 0.8)),
+      Array.from({ length: 50 }, (_, i) => 100 + (49 - i) * 200),
+      Array.from({ length: 50 }, (_, i) => 100000 - (49 - i) * 1500),
+    ]),
+  };
+  return forecast;
+}

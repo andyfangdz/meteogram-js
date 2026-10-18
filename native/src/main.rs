@@ -1,4 +1,5 @@
 mod api;
+mod clouds;
 mod db;
 mod dictionary;
 mod grid;
@@ -61,6 +62,19 @@ enum Cmd {
     InspectDictionary {
         #[arg(long)]
         data: PathBuf,
+    },
+    CloudAvailability {
+        #[arg(long, default_value = "noaa-hrrr-forecast-18-hour-virtual")]
+        product: String,
+    },
+    /// Add native clouds to immutable HRRR hourly descriptors without changing pressure data.
+    NativeClouds {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long, default_value = "latest")]
+        run: String,
+        #[arg(long, value_delimiter = ',')]
+        leads: Option<Vec<u16>>,
     },
     Inspect {
         model: String,
@@ -334,6 +348,12 @@ async fn main() -> Result<()> {
             &source::probe(&model, &state::read_json(pin_metadata)?).await?,
             None,
         )?,
+        Cmd::CloudAvailability { product } => {
+            output(&source::cloud_availability(&product).await?, None)?
+        }
+        Cmd::NativeClouds { root, run, leads } => {
+            output(&clouds::backfill(&root, &run, leads).await?, None)?
+        }
         Cmd::Inspect { model } => {
             let s = source::Source::open(&model, None).await?;
             println!("snapshot={}", s.snapshot);
@@ -347,6 +367,10 @@ async fn main() -> Result<()> {
                 "longitude",
                 "spatial_ref",
                 "pressure_level/temperature",
+                "model_level/model_level",
+                "model_level/fraction_of_cloud_cover",
+                "model_level/geopotential_height",
+                "model_level/pressure",
             ] {
                 match s.meta(n).await {
                     Ok(v) => println!("{n}: {v}"),

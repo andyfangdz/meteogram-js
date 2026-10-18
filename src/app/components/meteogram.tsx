@@ -3,7 +3,13 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { Group } from "@visx/group";
 import { AxisLeft } from "@visx/axis";
-import { CloudColumn, CloudCell, ParcelMode } from "../../types/weather";
+import {
+  CloudColumn,
+  CloudCell,
+  ParcelMode,
+  NativeCloudLayer,
+  HoveredCloud,
+} from "../../types/weather";
 import LoadingSkeleton from "./loading-skeleton";
 import TimeAxis from "./time-axis";
 import { WeatherModel } from "../../types/weather";
@@ -13,6 +19,7 @@ import CloudColumns from "./cloud-columns";
 import WeatherLines from "./weather-lines";
 import MeteogramTooltip from "./meteogram-tooltip";
 import PressureLines from "./pressure-lines";
+import RunBoundaries from "./run-boundaries";
 import HoverIndicators from "./hover-indicators";
 import { formatNumber } from "../../utils/meteogram";
 
@@ -66,15 +73,9 @@ const Meteogram = React.memo(function Meteogram({
   elevationFt,
 }: MeteogramProps) {
   // State
-  const [hoveredRect, setHoveredRect] = useState<{
-    date: Date;
-    cloudCell: CloudCell;
-  } | null>(null);
+  const [hoveredRect, setHoveredRect] = useState<HoveredCloud | null>(null);
 
-  const [frozenRect, setFrozenRect] = useState<{
-    date: Date;
-    cloudCell: CloudCell;
-  } | null>(null);
+  const [frozenRect, setFrozenRect] = useState<HoveredCloud | null>(null);
 
   // Memoized calculations
   const bounds = useMemo(() => {
@@ -154,22 +155,32 @@ const Meteogram = React.memo(function Meteogram({
 
   // Handlers
   const handleHover = useCallback(
-    (date: Date | null, cloudCell: CloudCell | null) => {
+    (
+      date: Date | null,
+      cloudCell: CloudCell | null,
+      nativeCloudLayer?: NativeCloudLayer,
+    ) => {
       if (date && cloudCell) {
-        setHoveredRect({ date, cloudCell });
+        const column = weatherData.find(
+          (c) => c.date.getTime() === date.getTime(),
+        );
+        setHoveredRect({
+          date,
+          cloudCell,
+          nativeCloudLayer,
+          initializedAt: column?.initializedAt,
+          sampleDate: column?.sampleDate,
+        });
       } else {
         setHoveredRect(null);
       }
     },
-    [],
+    [weatherData],
   );
 
-  const handleFreezeChange = useCallback(
-    (rect: { date: Date; cloudCell: CloudCell } | null) => {
-      setFrozenRect(rect);
-    },
-    [],
-  );
+  const handleFreezeChange = useCallback((rect: HoveredCloud | null) => {
+    setFrozenRect(rect);
+  }, []);
 
   // Early return for loading state
   if (isLoading || weatherData.length === 0) {
@@ -248,10 +259,17 @@ const Meteogram = React.memo(function Meteogram({
             pressureLevels={pressureLevels}
           />
         )}
+        <RunBoundaries
+          weatherData={weatherData}
+          dateScale={scales.dateScale}
+          xMax={bounds.xMax}
+          yMax={bounds.yMax}
+        />
         {(hoveredRect || frozenRect) && (
           <HoverIndicators
             date={(hoveredRect || frozenRect)!.date}
             cloudCell={(hoveredRect || frozenRect)!.cloudCell}
+            nativeCloudLayer={(hoveredRect || frozenRect)!.nativeCloudLayer}
             scales={scales}
             bounds={bounds}
           />
@@ -315,6 +333,9 @@ const Meteogram = React.memo(function Meteogram({
         <MeteogramTooltip
           date={(hoveredRect || frozenRect)!.date}
           cloudCell={(hoveredRect || frozenRect)!.cloudCell}
+          nativeCloudLayer={(hoveredRect || frozenRect)!.nativeCloudLayer}
+          initializedAt={(hoveredRect || frozenRect)!.initializedAt}
+          sampleDate={(hoveredRect || frozenRect)!.sampleDate}
           x={formatNumber(
             Math.min(
               scales.dateScale((hoveredRect || frozenRect)!.date) +
@@ -325,10 +346,19 @@ const Meteogram = React.memo(function Meteogram({
           )}
           y={formatNumber(
             Math.min(
-              scales.mslScale((hoveredRect || frozenRect)!.cloudCell.mslFtTop) +
+              scales.mslScale(
+                (
+                  (hoveredRect || frozenRect)!.nativeCloudLayer ??
+                  (hoveredRect || frozenRect)!.cloudCell
+                ).mslFtTop,
+              ) +
                 margin.top -
                 10,
-              bounds.yMax + margin.top - 290,
+              bounds.yMax +
+                margin.top -
+                ((hoveredRect || frozenRect)!.nativeCloudLayer ? 330 : 290) -
+                ((hoveredRect || frozenRect)!.initializedAt ? 20 : 0) -
+                ((hoveredRect || frozenRect)!.sampleDate ? 20 : 0),
             ),
           )}
           useLocalTime={useLocalTime}

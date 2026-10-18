@@ -1,0 +1,71 @@
+{
+  "success": true,
+  "binary_sha256": "8d70f7993a4869b9aa8e7367d96f4ea2916418fb2d9d00fd9fd292ef47138505",
+  "units": {
+    "meteogram-native.service": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled",
+      "MainPID": "3558470",
+      "NRestarts": "0"
+    },
+    "meteogram-tunnel.service": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled",
+      "MainPID": "3539387",
+      "NRestarts": "0"
+    }
+  },
+  "health": {
+    "models": {
+      "aifs": {
+        "age_hours": 9.962,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "partial": false,
+        "remaining_hours": 170.038,
+        "retention_satisfied": true
+      },
+      "gfs": {
+        "age_hours": 3.962,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "partial": true,
+        "remaining_hours": 34.038,
+        "retention_satisfied": true
+      },
+      "hrrr": {
+        "age_hours": 0.962,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T21:00:00.000000000",
+        "long_run_retained": true,
+        "max_age_hours": 24,
+        "min_remaining_hours": 12,
+        "partial": true,
+        "remaining_hours": 0.038,
+        "retention_satisfied": true
+      },
+      "rrfs": {
+        "age_hours": 3.962,
+        "available": true,
+        "complete_runs_retained": 2,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 48,
+        "partial": false,
+        "remaining_hours": 80.038,
+        "retention_satisfied": true
+      }
+    },
+    "native_fields": true
+  },
+  "installed_at_unix": 1792360664.7829723
+}

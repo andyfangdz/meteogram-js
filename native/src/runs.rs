@@ -93,6 +93,7 @@ pub fn validate_manifest(root: &Path, e: &Entry, m: &Value, full: bool) -> Resul
                 "Lead source schema or initialization differs: {key}"
             );
         }
+        crate::clouds::binding(&p, &cm)?;
         let proof = if full {
             crate::store::validate(&p, &e.table, &e.database, false)?
         } else {
@@ -371,6 +372,20 @@ pub fn publish(
     rollback: bool,
     retain_only: bool,
 ) -> Result<Catalog> {
+    publish_with(root, model, e, rollback, retain_only, None)
+}
+pub fn publish_cloud_upgrade(root: &Path, prior: &Entry, next: Entry) -> Result<Catalog> {
+    crate::clouds::check_upgrade(root, prior, &next)?;
+    publish_with(root, "hrrr", next, false, false, Some(prior))
+}
+fn publish_with(
+    root: &Path,
+    model: &str,
+    e: Entry,
+    rollback: bool,
+    retain_only: bool,
+    cloud_prior: Option<&Entry>,
+) -> Result<Catalog> {
     let p = descriptor(root, &e)?;
     let m = read_json(p.join("metadata.json"))?;
     check_metadata(&m)?;
@@ -394,8 +409,11 @@ pub fn publish(
                 let next = books(&m)?;
                 anyhow::ensure!(
                     e.table == old.table
-                        && next.len() > prior.len()
-                        && prior.iter().all(|b| next.contains(b)),
+                        && if let Some(expected) = cloud_prior {
+                            expected == old
+                        } else {
+                            next.len() > prior.len() && prior.iter().all(|b| next.contains(b))
+                        },
                     "Incremental publication must preserve and advance validated hours"
                 );
             } else if !partitioned(&m) {

@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "model": "hrrr",
+  "init_time": "2026-10-18T20:00:00.000000000",
+  "new_pressure_hours": [0],
+  "native_cloud_hours": [0],
+  "native_levels": 50,
+  "full_conus_cells": 1638757,
+  "independent_run_table": true,
+  "source_and_database_all_values_validated": true,
+  "native_cloud_files_survive_staging_cleanup": true
+}

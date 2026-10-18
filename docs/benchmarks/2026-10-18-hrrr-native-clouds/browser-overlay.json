@@ -1,0 +1,73 @@
+{
+  "success": true,
+  "apiOrigin": "https://weather-api.andyfang.app",
+  "expectedHrrrStart": "2026-10-18T21:00:00.000Z",
+  "expectedHrrrFinalSample": "2026-10-20T18:00:00.000Z",
+  "report": [
+    {
+      "model": "gfs_hrrr",
+      "source": "Dynamical · HRRR · Latest 2026-10-18 21:00 UTC (18 h run, partial 2/19) · Previous 2026-10-18 20:00 UTC (18 h run) · Base 2026-10-18 18:00 UTC (48 h run) · Native clouds (50 levels)",
+      "provider": "dynamical",
+      "columns": 46,
+      "nativeCells": 2300,
+      "boundaries": [
+        {
+          "date": "2026-10-18T23:00:00.000Z",
+          "from": "2026-10-18T21:00:00.000Z",
+          "to": "2026-10-18T20:00:00.000Z"
+        },
+        {
+          "date": "2026-10-19T15:00:00.000Z",
+          "from": "2026-10-18T20:00:00.000Z",
+          "to": "2026-10-18T18:00:00.000Z"
+        }
+      ],
+      "tooltips": [
+        "Time: 21:00:00 UTC\nInitialized: 2026-10-18 21:00 UTC\nNative cloud · model level 7\nPressure: 28.03 inHg (949.3 hPa)\nMSL Height: 2364 ft\nHeight Range: 2709 - 2059 ft\nCloud Cover: 0%\nAtmosphere at 950 hPa\nTemperature: 9.0308°C\nDew Point: -6.1019°C\nSpread (T-Td): 15.1327°C\nWind Speed: 2 kt\nWind Direction: 331.7107°\nELR: 2.33 °C/kft\nDALR 2.99 · MALR 1.61 · ISA 1.98 °C/kft",
+        "Time: 23:00:00 UTC\nInitialized: 2026-10-18 20:00 UTC\nNative cloud · model level 7\nPressure: 28.03 inHg (949.3 hPa)\nMSL Height: 2363 ft\nHeight Range: 2708 - 2059 ft\nCloud Cover: 0%\nAtmosphere at 950 hPa\nTemperature: 9.0003°C\nDew Point: -3.0877°C\nSpread (T-Td): 12.088°C\nWind Speed: 4 kt\nWind Direction: 326.4616°\nELR: 2.01 °C/kft\nDALR 2.99 · MALR 1.61 · ISA 1.98 °C/kft"
+      ],
+      "refreshStatus": 200
+    },
+    {
+      "model": "gfs_seamless",
+      "source": "Dynamical · GFS · Latest 2026-10-18 18:00 UTC (180 h run, partial 38/141) · Base 2026-10-18 12:00 UTC (180 h run)",
+      "provider": "dynamical",
+      "columns": 132,
+      "nativeCells": 0,
+      "boundaries": [
+        {
+          "date": "2026-10-20T03:00:00.000Z",
+          "from": "2026-10-18T18:00:00.000Z",
+          "to": "2026-10-18T12:00:00.000Z"
+        },
+        {
+          "date": "2026-10-20T04:00:00.000Z",
+          "from": "2026-10-18T12:00:00.000Z",
+          "to": "2026-10-18T18:00:00.000Z"
+        },
+        {
+          "date": "2026-10-20T09:00:00.000Z",
+          "from": "2026-10-18T18:00:00.000Z",
+          "to": "2026-10-18T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "model": "ecmwf_aifs025_single",
+      "source": "Dynamical · AIFS · Run 2026-10-18 12:00 UTC · Complete (31/31 forecast hours) · Clouds estimated from humidity",
+      "provider": "dynamical",
+      "columns": 30,
+      "nativeCells": 0,
+      "boundaries": []
+    },
+    {
+      "model": "rrfs",
+      "source": "Dynamical · RRFS · Run 2026-10-18 18:00 UTC · Complete (85/85 forecast hours) · Clouds estimated from humidity",
+      "provider": "dynamical",
+      "columns": 82,
+      "nativeCells": 0,
+      "boundaries": []
+    }
+  ],
+  "errors": []
+}

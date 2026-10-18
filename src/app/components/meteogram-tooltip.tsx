@@ -1,5 +1,5 @@
 import React from "react";
-import { CloudCell } from "../../types/weather";
+import { CloudCell, NativeCloudLayer } from "../../types/weather";
 import { hPaToInHg, kmhToKnots, formatNumber } from "../../utils/meteogram";
 import {
   getInstabilityColor,
@@ -13,6 +13,9 @@ import {
 interface MeteogramTooltipProps {
   date: Date;
   cloudCell: CloudCell;
+  nativeCloudLayer?: NativeCloudLayer;
+  initializedAt?: string;
+  sampleDate?: Date;
   x: number;
   y: number;
   useLocalTime: boolean;
@@ -22,11 +25,16 @@ interface MeteogramTooltipProps {
 const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
   date,
   cloudCell,
+  nativeCloudLayer,
+  initializedAt,
+  sampleDate,
   x,
   y,
   useLocalTime,
   frozen = false,
 }) => {
+  const cloud = nativeCloudLayer ?? cloudCell;
+  const heightLabel = nativeCloudLayer ? Math.round : formatNumber;
   const elr = cloudCell.lapseRateAboveCPerKm;
   const malr = cloudCell.malrCPerKm;
   const instability = cloudCell.instabilityKPerKm;
@@ -58,7 +66,11 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
       x={x}
       y={y}
       width="240"
-      height="280"
+      height={
+        (nativeCloudLayer ? 320 : 280) +
+        (initializedAt ? 20 : 0) +
+        (sampleDate ? 20 : 0)
+      }
       style={{
         pointerEvents: frozen ? "auto" : "none",
       }}
@@ -80,21 +92,35 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
             ? date.toLocaleTimeString()
             : date.toUTCString().split(" ")[4]
         } ${useLocalTime ? "Local" : "UTC"}`}</div>
-        {cloudCell.hpa != null && (
-          <div>{`Pressure: ${hPaToInHg(cloudCell.hpa)} inHg (${
-            cloudCell.hpa
+        {initializedAt && (
+          <div>{`Initialized: ${initializedAt.slice(0, 10)} ${initializedAt.slice(11, 16)} UTC`}</div>
+        )}
+        {sampleDate && (
+          <div>{`Native sample: ${sampleDate.toISOString().slice(0, 16).replace("T", " ")} UTC`}</div>
+        )}
+        {nativeCloudLayer && (
+          <div>{`Native cloud · model level ${nativeCloudLayer.modelLevel}`}</div>
+        )}
+        {cloud.hpa != null && (
+          <div>{`Pressure: ${hPaToInHg(cloud.hpa)} inHg (${
+            nativeCloudLayer ? cloud.hpa.toFixed(1) : cloud.hpa
           } hPa)`}</div>
         )}
-        {cloudCell.mslFt != null && (
-          <div>{`MSL Height: ${formatNumber(cloudCell.mslFt)} ft`}</div>
+        {cloud.mslFt != null && (
+          <div>{`MSL Height: ${heightLabel(cloud.mslFt)} ft`}</div>
         )}
-        {cloudCell.mslFtTop != null && cloudCell.mslFtBottom != null && (
-          <div>{`Height Range: ${formatNumber(cloudCell.mslFtTop)} - ${formatNumber(
-            cloudCell.mslFtBottom,
+        {cloud.mslFtTop != null && cloud.mslFtBottom != null && (
+          <div>{`Height Range: ${heightLabel(cloud.mslFtTop)} - ${heightLabel(
+            cloud.mslFtBottom,
           )} ft`}</div>
         )}
-        {cloudCell.cloudCoverage != null && (
-          <div>{`Cloud Cover: ${formatNumber(cloudCell.cloudCoverage)}%`}</div>
+        {cloud.cloudCoverage != null && (
+          <div>{`Cloud Cover: ${formatNumber(cloud.cloudCoverage)}%`}</div>
+        )}
+        {nativeCloudLayer && (
+          <div
+            style={{ marginTop: 4, fontWeight: 600 }}
+          >{`Atmosphere at ${cloudCell.hpa} hPa`}</div>
         )}
         {cloudCell.temperature != null && (
           <div>{`Temperature: ${formatNumber(cloudCell.temperature)}°C`}</div>

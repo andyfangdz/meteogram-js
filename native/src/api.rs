@@ -74,6 +74,7 @@ struct Model {
     lon: Vec<f64>,
     dictionary: Option<crate::dictionary::Dictionary>,
     books: BTreeMap<u16, Arc<crate::dictionary::Dictionary>>,
+    clouds: BTreeMap<u16, crate::clouds::Reader>,
 }
 #[derive(Clone)]
 struct App {
@@ -121,7 +122,9 @@ fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model
     } else {
         BTreeMap::new()
     };
+    let clouds = crate::clouds::readers(root, &meta)?;
     Ok(Model {
+        clouds,
         meta,
         ids,
         lat,
@@ -236,6 +239,9 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
                 .iter()
                 .map(|b| json!({"lead":b.lead,"snapshot_id":b.snapshot_id}))
                 .collect::<Vec<_>>());
+        }
+        if let Some(clouds) = crate::clouds::payload(&m.clouds, i)? {
+            payload["native_clouds"] = clouds;
         }
         payload["freshness"] = freshness;
         payload["wind_rotation_degrees"] = json!(if grid_relative(&name) {

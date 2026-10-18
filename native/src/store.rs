@@ -1301,7 +1301,13 @@ pub fn discard(root: &Path, path: &Path) -> Result<()> {
         ))?;
     }
     clean_workspace(path)?;
-    for name in ["cells.npz", "cells.bin.zst", "values.dict.zst"] {
+    for name in [
+        "cells.npz",
+        "cells.bin.zst",
+        "values.dict.zst",
+        "native-clouds.stage.zst",
+        "native-clouds.stage.json",
+    ] {
         let cells = path.join(name);
         if cells.exists() {
             fs::remove_file(cells)?;

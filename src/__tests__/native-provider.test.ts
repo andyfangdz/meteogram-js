@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { nativeFixture } from "./__helpers__/nativeForecast";
+import { nativeFixture, withNativeClouds } from "./__helpers__/nativeForecast";
 import { createFakeOpenMeteoResponse } from "./__helpers__/fakeOpenMeteo";
 import { MODEL_CONFIGS } from "@/config/weather";
 import { getWeatherData } from "@/app/actions/weather";
@@ -124,6 +124,47 @@ describe("server-side native weather provider", () => {
       fallback: true,
     });
     expect(openMeteo.mock.calls[0][1].models).toBe("gfs_seamless");
+  });
+
+  it("overlays the newest HRRR run on the complete 48-hour endpoint", async () => {
+    requests.mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.hostname === "api.open-meteo.com")
+        return { ok: true, json: async () => ({ elevation: [100] }) };
+      const isLong = url.searchParams.get("run") === "long";
+      const f = nativeFixture(
+        "hrrr",
+        isLong ? "2026-10-18T18:00:00" : "2026-10-18T19:00:00",
+      );
+      if (isLong) {
+        f.dataset = "noaa-hrrr-forecast-48-hour-virtual";
+        f.expected_leads = Array.from({ length: 49 }, (_, i) => i);
+      }
+      f.available_leads = [...f.expected_leads];
+      f.missing_leads = [];
+      f.forecast_complete = true;
+      const template = f.rows[0];
+      f.rows = f.available_leads.map((lead) => [lead, ...template.slice(1)]);
+      return { ok: true, json: async () => withNativeClouds(f) };
+    });
+    const result = await getWeatherData("gfs_hrrr", "KCDW");
+    const apiCalls = requests.mock.calls.filter(
+      ([input]) => new URL(String(input)).hostname === "weather.example.test",
+    );
+    expect(
+      apiCalls
+        .map(([input]) => new URL(String(input)).searchParams.get("run"))
+        .sort(),
+    ).toEqual(["latest", "latest_complete", "long"]);
+    expect(result.source.runs?.map((r) => r.forecastLengthHours)).toEqual([
+      18, 48,
+    ]);
+    expect(result.data[0].initializedAt).toBe("2026-10-18T19:00:00.000Z");
+    expect(result.data.at(-1)!.date.toISOString()).toBe(
+      "2026-10-20T18:00:00.000Z",
+    );
+    expect(result.data.at(-1)!.initializedAt).toBe("2026-10-18T18:00:00.000Z");
+    expect(JSON.stringify(result)).not.toContain(token);
   });
 
   it("rejects malformed coordinates before any network request", async () => {

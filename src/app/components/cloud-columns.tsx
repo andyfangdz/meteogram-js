@@ -1,6 +1,11 @@
 import React from "react";
 import { Group } from "@visx/group";
-import { CloudColumn, CloudCell } from "../../types/weather";
+import {
+  CloudColumn,
+  CloudCell,
+  NativeCloudLayer,
+  HoveredCloud,
+} from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
 import {
   getInstabilityColor,
@@ -28,9 +33,13 @@ interface CloudColumnsProps {
   showParcelBuoyancy: boolean;
   parcelProfiles: ParcelProfile[];
   model: WeatherModel;
-  frozenRect: { date: Date; cloudCell: CloudCell } | null;
-  onHover: (date: Date | null, cloudCell: CloudCell | null) => void;
-  onFreezeChange: (rect: { date: Date; cloudCell: CloudCell } | null) => void;
+  frozenRect: HoveredCloud | null;
+  onHover: (
+    date: Date | null,
+    cloudCell: CloudCell | null,
+    nativeCloudLayer?: NativeCloudLayer,
+  ) => void;
+  onFreezeChange: (rect: HoveredCloud | null) => void;
 }
 
 const CloudColumns: React.FC<CloudColumnsProps> = ({
@@ -92,9 +101,9 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   // to prevent these handlers from being recreated on every render.
   // Currently verified: meteogram.tsx memoizes both callbacks correctly.
   const handleMouseEnter = React.useCallback(
-    (date: Date, cloud: CloudCell) => {
+    (date: Date, cloud: CloudCell, nativeCloudLayer?: NativeCloudLayer) => {
       if (!frozenRect) {
-        onHover(date, cloud);
+        onHover(date, cloud, nativeCloudLayer);
       }
     },
     [frozenRect, onHover],
@@ -126,14 +135,19 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   );
 
   const handleClick = React.useCallback(
-    (date: Date, cloud: CloudCell, event: React.MouseEvent) => {
+    (
+      date: Date,
+      cloud: CloudCell,
+      event: React.MouseEvent,
+      nativeCloudLayer?: NativeCloudLayer,
+    ) => {
       if ((event.nativeEvent as PointerEvent).pointerType === "mouse") {
         if (frozenRect) {
           onFreezeChange(null);
-          onHover(date, cloud);
+          onHover(date, cloud, nativeCloudLayer);
         } else {
-          onFreezeChange({ date, cloudCell: cloud });
-          onHover(date, cloud);
+          onFreezeChange({ date, cloudCell: cloud, nativeCloudLayer });
+          onHover(date, cloud, nativeCloudLayer);
         }
       }
     },
@@ -152,7 +166,29 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             left={formatNumber(scales.dateScale(d.date))}
             className="cloud-column"
           >
-            {filteredClouds?.map((cloud) => {
+            {(d.nativeCloudLayers ?? filteredClouds).map((cloud) => {
+              const nativeLayer = "modelLevel" in cloud ? cloud : undefined;
+              const atmosphere = nativeLayer
+                ? d.cloud.reduce((a, b) =>
+                    Math.abs(a.mslFt - cloud.mslFt) <=
+                    Math.abs(b.mslFt - cloud.mslFt)
+                      ? a
+                      : b,
+                  )
+                : (cloud as CloudCell);
+              // Native model layers extend well above the displayed 20,000 ft.
+              const top = nativeLayer
+                ? Math.max(
+                    scales.mslScale(20_000),
+                    scales.mslScale(cloud.mslFtTop),
+                  )
+                : scales.mslScale(cloud.mslFtTop);
+              const bottom = nativeLayer
+                ? Math.min(
+                    scales.mslScale(0),
+                    scales.mslScale(cloud.mslFtBottom),
+                  )
+                : scales.mslScale(cloud.mslFtBottom);
               const coverage = clampCloudCoverageAt50Pct
                 ? Math.min(cloud.cloudCoverage, 50)
                 : cloud.cloudCoverage;
@@ -164,22 +200,28 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
 
               return (
                 <rect
-                  className={`cloud-cell cloud-cell-${cloud.hpa}`}
-                  key={`cloud-${cloud.hpa}`}
+                  className={
+                    nativeLayer
+                      ? `cloud-cell native-cloud-cell native-cloud-level-${nativeLayer.modelLevel}`
+                      : `cloud-cell cloud-cell-${cloud.hpa}`
+                  }
+                  data-model-level={nativeLayer?.modelLevel}
+                  key={`cloud-${nativeLayer?.modelLevel ?? cloud.hpa}`}
                   x={formatNumber(0)}
-                  y={formatNumber(scales.mslScale(cloud.mslFtTop))}
+                  y={formatNumber(top)}
                   width={formatNumber(columnWidth)}
-                  height={formatNumber(
-                    scales.mslScale(cloud.mslFtBottom) -
-                      scales.mslScale(cloud.mslFtTop),
-                  )}
+                  height={formatNumber(Math.max(0, bottom - top))}
                   fill={fillColor}
                   stroke="transparent"
                   strokeWidth={0}
                   style={{ cursor: "default" }}
-                  onMouseEnter={() => handleMouseEnter(d.date, cloud)}
+                  onMouseEnter={() =>
+                    handleMouseEnter(d.date, atmosphere, nativeLayer)
+                  }
                   onMouseLeave={handleMouseLeave}
-                  onClick={(event) => handleClick(d.date, cloud, event)}
+                  onClick={(event) =>
+                    handleClick(d.date, atmosphere, event, nativeLayer)
+                  }
                 />
               );
             })}

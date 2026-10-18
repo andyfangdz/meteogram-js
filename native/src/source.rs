@@ -820,7 +820,11 @@ fn task(
     };
     let mut expected = vec!["init_time", "lead_time", spatial[0], spatial[1]];
     if pressure.is_some() {
-        expected.push("pressure_level");
+        expected.push(if name.starts_with("model_level/") {
+            "model_level"
+        } else {
+            "pressure_level"
+        });
     }
     anyhow::ensure!(
         m["data_type"] == "float64"
@@ -842,11 +846,14 @@ fn task(
         let i = match d {
             "init_time" => init,
             "lead_time" => lead,
-            "pressure_level" => pressure.context("Missing level")?,
+            "pressure_level" | "model_level" => pressure.context("Missing level")?,
             "x" | "y" | "latitude" | "longitude" => 0,
             _ => bail!("Unknown dimension {d}"),
         };
-        if matches!(d, "init_time" | "lead_time" | "pressure_level") {
+        if matches!(
+            d,
+            "init_time" | "lead_time" | "pressure_level" | "model_level"
+        ) {
             anyhow::ensure!(chunk == 1, "Nonspatial chunks changed");
         } else {
             anyhow::ensure!(
@@ -1074,4 +1081,255 @@ pub async fn probe(model: &str, pin: &Value) -> Result<Value> {
     Ok(
         json!({"key":t.key,"bytes":bytes.len(),"values":values.len(),"first_finite":values.iter().copied().find(|v|v.is_finite()),"seconds":started.elapsed().as_secs_f64()}),
     )
+}
+
+/// Fetch all 50 HRRR model levels for the same initialized forecast hour.
+/// Cloud references can arrive after pressure references; pin their own snapshot.
+/// Whole-map reads happen only in the background updater/backfill.
+pub async fn fetch_clouds(out: &Path, available: Option<&Source>) -> Result<Value> {
+    let mut meta = read_json(out.join("metadata.json"))?;
+    anyhow::ensure!(
+        meta["model"] == "hrrr" && meta["leads"].as_array().map(Vec::len) == Some(1),
+        "Native clouds require one HRRR hour"
+    );
+    if crate::clouds::binding(out, &meta)?.is_some() {
+        return Ok(meta["native_clouds"].clone());
+    }
+    let opened;
+    let src = if let Some(s) = available.filter(|s| s.collection["id"] == meta["dataset"]) {
+        s
+    } else {
+        // Pin the current cloud metadata: the old pressure snapshot may predate
+        // wrfnat references. Dataset/init/lead/grid are checked independently.
+        opened = Source::open("hrrr", Some(&json!({"dataset":meta["dataset"]}))).await?;
+        &opened
+    };
+    anyhow::ensure!(
+        src.collection["id"] == meta["dataset"],
+        "Cloud collection differs"
+    );
+    let init_time = timestamp(meta["init_time"].as_str().context("Cloud init")?)?;
+    let init = src
+        .init_times()
+        .await?
+        .iter()
+        .position(|t| (*t - init_time).abs() < 0.001)
+        .context("Cloud initialization unavailable")?;
+    let lead_meta = src.meta("lead_time").await?;
+    let factor = match lead_meta["attributes"]["units"].as_str() {
+        Some("seconds") => 1. / 3600.,
+        Some("hours") => 1.,
+        Some("nanoseconds") => 1. / 3.6e12,
+        _ => bail!("Unsupported cloud lead units"),
+    };
+    let hour = meta["leads"][0].as_u64().context("Cloud lead")?;
+    let lead = src
+        .coord("lead_time")
+        .await?
+        .iter()
+        .position(|h| (*h * factor - hour as f64).abs() < 0.001)
+        .context("Cloud lead unavailable")?;
+    let levels = src.coord("model_level/model_level").await?;
+    anyhow::ensure!(
+        levels
+            == (1..=crate::clouds::LEVELS)
+                .map(|n| n as f64)
+                .collect::<Vec<_>>(),
+        "Native model level axis changed"
+    );
+    let xs = src.coord("x").await?;
+    let ys = src.coord("y").await?;
+    let crs = Lambert::from_cf(&src.meta("spatial_ref").await?["attributes"])?;
+    anyhow::ensure!(
+        json!(xs) == meta["grid"]["x"]
+            && json!(ys) == meta["grid"]["y"]
+            && crs.crs() == meta["grid"]["crs"],
+        "Native cloud grid differs"
+    );
+    let mut arrays = crate::stage::load_cells(out)?;
+    let ids = arrays.remove("cell_id").context("Cloud cell ids")?;
+    anyhow::ensure!(
+        ids.dtype == "<u4"
+            && ids.bytes.len() == meta["cells"].as_u64().context("Cloud cells")? as usize * 4,
+        "Cloud retained cells differ"
+    );
+    let ids = Arc::new(
+        ids.bytes
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|b| u32::from_le_bytes(*b))
+            .collect::<Vec<_>>(),
+    );
+    anyhow::ensure!(
+        !ids.is_empty() && ids.len() <= 2_000_000 && ids.windows(2).all(|w| w[0] < w[1]),
+        "Cloud cell order/size"
+    );
+    let mut metas = HashMap::new();
+    for name in crate::clouds::FIELDS {
+        let field = format!("model_level/{name}");
+        let m = src.meta(&field).await?;
+        anyhow::ensure!(
+            m["attributes"]["units"] == crate::clouds::units()[name],
+            "Unsupported native cloud units: {name}"
+        );
+        metas.insert(field, m);
+    }
+    let mut tasks = Vec::new();
+    for (field, name) in crate::clouds::FIELDS.iter().enumerate() {
+        for level in 0..levels.len() {
+            tasks.push(task(
+                field,
+                Some(level),
+                format!("model_level/{name}"),
+                &metas,
+                init,
+                lead,
+                Some(level),
+            )?);
+        }
+    }
+    let keys = tasks.iter().map(|t| t.key.clone()).collect::<Vec<_>>();
+    let preflight = check_references(keys.clone(), |key| {
+        let store = src.store.clone();
+        async move { Ok(store.exists(&key).await?) }
+    })
+    .await?;
+    anyhow::ensure!(
+        preflight["complete"] == true,
+        "Incomplete native cloud references: {preflight}"
+    );
+    let cache = out.join("source-cache");
+    fs::create_dir_all(&cache)?;
+    let count = Arc::new(AtomicU64::new(0));
+    let native_cells = xs.len() * ys.len();
+    anyhow::ensure!(
+        ids.last().is_some_and(|id| (*id as usize) < native_cells),
+        "Cloud cell outside source map"
+    );
+    let mut results = stream::iter(tasks)
+        .map(|t| {
+            let store = src.store.clone();
+            let cache = cache.clone();
+            let ids = ids.clone();
+            let count = count.clone();
+            async move {
+                let b = cached(&store, &cache, &t.key, &count).await?;
+                tokio::task::spawn_blocking(move || -> Result<_> {
+                    let map = decode(&t.meta, &b)?;
+                    anyhow::ensure!(map.len() == native_cells, "Native cloud map shape changed");
+                    let values = ids
+                        .iter()
+                        .map(|id| map[*id as usize] as f32)
+                        .collect::<Vec<_>>();
+                    anyhow::ensure!(
+                        values.iter().all(|v| v.is_finite()),
+                        "Missing native cloud data"
+                    );
+                    Ok((t.field, t.level.unwrap(), values))
+                })
+                .await?
+            }
+        })
+        .buffer_unordered(16);
+    let shape = [ids.len(), crate::clouds::LEVELS, 3];
+    let mut values = vec![0.; ids.len() * crate::clouds::STRIDE];
+    while let Some((field, level, map)) = results.try_next().await? {
+        for (cell, value) in map.into_iter().enumerate() {
+            values[cell * crate::clouds::STRIDE + level * 3 + field] = value;
+        }
+    }
+    crate::clouds::validate(&values)?;
+    disk_guard(out, (values.len() * 4) as u64)?;
+    let logical = out.join("native-clouds.npy");
+    let stats = crate::stage::write(&logical, &shape, &values)?;
+    let staged = crate::stage::Array::open(&logical, &shape)?;
+    let mut scratch = crate::stage::Scratch::new()?;
+    let mut check = vec![0.; crate::stage::BLOCK_CELLS * crate::clouds::STRIDE];
+    for (block, original) in values.chunks(check.len()).enumerate() {
+        staged.read_into_with(
+            block * check.len(),
+            &mut check[..original.len()],
+            &mut scratch,
+        )?;
+        anyhow::ensure!(
+            original
+                .iter()
+                .zip(&check)
+                .all(|(a, b)| a.to_bits() == b.to_bits()),
+            "Native cloud roundtrip changed Float32 values"
+        );
+    }
+    let mut info = json!({"version":1,"shape":shape,"model_levels":levels,"fields":crate::clouds::FIELDS,"units":crate::clouds::units(),"full_values_checked":true,"logical_values":values.len(),"data_bytes":fs::metadata(out.join(crate::clouds::FILES[0]))?.len(),"data_sha256":crate::dictionary::file_hash(&out.join(crate::clouds::FILES[0]))?,"index_sha256":crate::dictionary::file_hash(&out.join(crate::clouds::FILES[1]))?,"storage":stats,"grib_bytes":count.load(Ordering::Relaxed)});
+    // Keep the axis integral and identical across source/data/API schemas.
+    info["model_levels"] = json!((1..=crate::clouds::LEVELS).collect::<Vec<_>>());
+    for key in ["model", "dataset", "init_time", "leads", "grid"] {
+        info[key] = meta[key].clone();
+    }
+    info["snapshot_id"] = json!(src.snapshot);
+    info["pressure_snapshot_id"] = meta["snapshot_id"].clone();
+    meta["native_clouds"] = info.clone();
+    crate::clouds::binding(out, &meta)?.context("Cloud binding absent")?;
+    atomic(out.join("metadata.json"), &meta)?;
+    prune_checkpointed_cache(&cache, &keys)?;
+    Ok(info)
+}
+
+pub async fn cloud_availability(product: &str) -> Result<Value> {
+    let src = Source::open("hrrr", Some(&json!({"dataset":product}))).await?;
+    let inits = src.init_times().await?;
+    let mut metas = HashMap::new();
+    for name in crate::clouds::FIELDS {
+        let name = format!("model_level/{name}");
+        metas.insert(name.clone(), src.meta(&name).await?);
+    }
+    let mut runs = Vec::new();
+    for init in (inits.len().saturating_sub(24)..inits.len()).rev() {
+        let mut hours = Vec::new();
+        for hour in [0, 1, 12, 18] {
+            let mut keys = Vec::new();
+            for (field, name) in crate::clouds::FIELDS.iter().enumerate() {
+                for level in [0, 25, 49] {
+                    keys.push(
+                        task(
+                            field,
+                            Some(level),
+                            format!("model_level/{name}"),
+                            &metas,
+                            init,
+                            hour,
+                            Some(level),
+                        )?
+                        .key,
+                    );
+                }
+            }
+            let result = check_references(keys, |key| {
+                let store = src.store.clone();
+                async move { Ok(store.exists(&key).await?) }
+            })
+            .await?;
+            hours.push(json!({"lead":hour,"references":result}));
+        }
+        runs.push(json!({"init_time":chrono::DateTime::from_timestamp(inits[init] as i64,0).context("Init")?.to_rfc3339(),"hours":hours}));
+    }
+    Ok(json!({"dataset":product,"snapshot_id":src.snapshot,"runs":runs,"payload_reads":0}))
+}
+
+#[cfg(test)]
+mod cloud_tests {
+    use super::*;
+    #[test]
+    fn model_level_maps_require_the_declared_axis_and_complete_spatial_chunks() {
+        let name = "model_level/fraction_of_cloud_cover".to_owned();
+        let meta = json!({"data_type":"float64","dimension_names":["init_time","lead_time","y","x","model_level"],"shape":[2,19,10,20,50],"chunk_grid":{"configuration":{"chunk_shape":[1,1,10,20,1]}}});
+        let mut metas = HashMap::from([(name.clone(), meta)]);
+        let t = task(0, Some(49), name.clone(), &metas, 1, 2, Some(49)).unwrap();
+        assert_eq!(t.key, "model_level/fraction_of_cloud_cover/c/1/2/0/0/49");
+        metas.get_mut(&name).unwrap()["dimension_names"][4] = json!("pressure_level");
+        assert!(task(0, Some(0), name.clone(), &metas, 1, 2, Some(0)).is_err());
+        metas.get_mut(&name).unwrap()["dimension_names"][4] = json!("model_level");
+        metas.get_mut(&name).unwrap()["chunk_grid"]["configuration"]["chunk_shape"][4] = json!(2);
+        assert!(task(0, Some(0), name, &metas, 1, 2, Some(0)).is_err());
+    }
 }

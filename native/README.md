@@ -417,6 +417,46 @@ load, independent audits and four-model service installation.
 The [incremental ingestion report](../docs/plans/2026-10-18-incremental-ingestion.md)
 describes per-hour publication, complete-run retention and live verification.
 
+## HRRR native cloud layers
+
+Normal incremental ingestion acquires all 50 `model_level/fraction_of_cloud_cover`,
+`geopotential_height` and `pressure` maps for each hour. This leaves the 30-level
+pressure-profile table intact. The immutable hourly descriptor retains a
+cell-major `[cells,50,3]` checksummed Float32 file (`native-clouds.stage.zst` plus
+its index), bound to that forecast initialization, lead and exact source grid.
+All retained values pass finite/range/vertical-order checks and a bit-exact
+readback before publication. API point reads check frame CRCs. Cloud files are
+serving data, so staging cleanup preserves them; descriptor GC removes them
+with the corresponding forecast hour.
+
+Model-level references may arrive in a newer Icechunk snapshot than pressure
+fields. The supplement pins its own snapshot and records both `snapshot_id`
+and `pressure_snapshot_id`; dataset, initialization, forecast hour and grid
+must still match exactly. It never substitutes clouds from another model run.
+
+Backfill existing incremental HRRR runs without rewriting pressure data:
+
+```sh
+meteogram-native native-clouds --root "$HOME/.local/share/meteogram-native" --run latest
+meteogram-native native-clouds --root "$HOME/.local/share/meteogram-native" --run latest_complete --leads 1,2
+meteogram-native native-clouds --root "$HOME/.local/share/meteogram-native" --run long
+meteogram-native cloud-availability --product noaa-hrrr-forecast-18-hour-virtual
+```
+
+Backfill uses the update lock and creates new immutable child/parent descriptors.
+The cloud-only publication gate requires identical pressure tables, hours,
+metadata, codebooks and proofs and only permits an absent supplement to become
+present. Existing supplements are never replaced. Each completed hour publishes
+atomically; rerunning skips it. The availability diagnostic checks three model
+levels at four forecast hours for the latest 24 runs, without downloading maps;
+it does not replace full 150-map acquisition/validation.
+
+`/forecast` adds optional `native_clouds` with its own 50 model levels, three
+fields, per-hour snapshots and rows. The original pressure response is unchanged.
+The site renders cloud layers at WGS84 MSL heights, keeps temperature/wind on
+pressure levels, and labels mixed native/estimated hours. No missing hour is
+interpolated. Old complete-run descriptors continue to serve without a supplement.
+
 ## Cloudflare Tunnel and the site
 
 Install `cloudflared`, authorize the `andyfang.app` zone with
@@ -450,10 +490,24 @@ instances before starting managed instances, since the local ports are
 exclusive. These unit files provide restart and boot configuration; a running
 shell process alone does not establish reboot persistence.
 
+The site overlays the newest HRRR intervals on the latest complete 48-hour
+run (`run=long`), keeping the full HRRR horizon. `latest_complete` retains the
+previous complete short run underneath any new partial run. Other native models overlay
+`latest` on `latest_complete`. Requests run concurrently and use the existing
+five-second per-request limit. Newer initialization wins; gaps retain the base
+run. Coarse native intervals may be split for display with their original
+sample time retained, without interpolating values. The chart shows a colored
+run strip, initialization-change lines and non-overlapping labels, with the
+actual initialization in each tooltip. Open-Meteo-only routes explicitly label
+initialization unavailable because their standard forecast response does not
+identify the run supplying each interval.
+
 The site adapter rotates regional winds using the grid's Lambert convergence,
 converts vector speeds to km/h, computes WGS84 MSL heights, and retains the
 actual pressure levels and lead times. Native GFS cloud fraction is used
-directly. Other models use a pressure-dependent Sundqvist humidity cloud
+directly. New HRRR hours have a separate 50-model-level native cloud
+supplement with actual heights and pressures. RRFS/AIFS and older HRRR hours
+without that supplement use a pressure-dependent Sundqvist humidity cloud
 estimate, following [Open-Meteo's meteorological implementation](https://github.com/open-meteo/open-meteo/blob/main/Sources/App/Helper/Meteorology.swift).
 AIFS specific humidity is converted with Murphy–Koop saturation pressures and
 ECMWF mixed-phase weighting. Those cloud estimates are explicitly labeled in

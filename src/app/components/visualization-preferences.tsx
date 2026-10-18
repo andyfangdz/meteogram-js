@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import NavWrapper from "./nav-wrapper";
 import MeteogramWrapper from "./meteogram-wrapper";
 import {
@@ -70,24 +70,48 @@ export default function VisualizationPreferencesComponent({
             </a>
             {" · "}
             {source.model.toUpperCase()}
-            {source.initializedAt && (
+            {source.runs && source.runs.length > 1 ? (
               <>
-                {" · Run "}
-                <time dateTime={source.initializedAt}>
-                  {source.initializedAt.slice(0, 10)}{" "}
-                  {source.initializedAt.slice(11, 16)} UTC
-                </time>
+                {source.runs.map((run, i) => (
+                  <React.Fragment key={run.initializedAt}>
+                    {` · ${i === 0 ? "Latest" : i === source.runs!.length - 1 ? "Base" : "Previous"} `}
+                    <time dateTime={run.initializedAt}>
+                      {run.initializedAt.slice(0, 10)}{" "}
+                      {run.initializedAt.slice(11, 16)} UTC
+                    </time>
+                    {` (${run.forecastLengthHours} h run${run.complete ? "" : `, partial ${run.availableHours}/${run.expectedHours}`})`}
+                  </React.Fragment>
+                ))}
+              </>
+            ) : (
+              <>
+                {source.initializedAt && (
+                  <>
+                    {" · Run "}
+                    <time dateTime={source.initializedAt}>
+                      {source.initializedAt.slice(0, 10)}{" "}
+                      {source.initializedAt.slice(11, 16)} UTC
+                    </time>
+                  </>
+                )}
+                {source.complete !== undefined && (
+                  <>
+                    {" · "}
+                    {source.complete ? "Complete" : "Partial"} (
+                    {source.availableHours}/{source.expectedHours} forecast
+                    hours)
+                  </>
+                )}
               </>
             )}
-            {source.complete !== undefined && (
-              <>
-                {" · "}
-                {source.complete ? "Complete" : "Partial"} (
-                {source.availableHours}/{source.expectedHours} forecast hours)
-              </>
+            {source.provider === "open-meteo" && !source.initializedAt && (
+              <>{" · Run initialization unavailable"}</>
             )}
             {source.cloudMethod === "humidity-estimate" && (
               <>{" · Clouds estimated from humidity"}</>
+            )}
+            {source.nativeCloudLevels && (
+              <>{` · Native clouds (${source.nativeCloudLevels} levels${source.cloudMethod === "mixed" ? `, ${source.nativeCloudHours}/${source.displayedHours} displayed hours; remaining hours estimated from humidity` : ""})`}</>
             )}
             {source.fallback && <>{" · Backup forecast"}</>}
           </div>

@@ -18,6 +18,7 @@ import {
 } from "@/config/weather";
 import { fetchWeatherApi } from "openmeteo";
 import chunk from "lodash/chunk";
+import { mergeForecastRuns } from "@/utils/forecast-runs";
 import {
   parseNativeForecast,
   transformNativeForecast,
@@ -70,24 +71,37 @@ async function nativeWeather(
   ) {
     throw new Error("Native weather URL must use HTTPS or loopback HTTP");
   }
-  const url = new URL("/forecast", origin);
-  url.search = new URLSearchParams({
-    model: nativeModel,
-    lat: String(latitude),
-    lon: String(longitude),
-  }).toString();
   const token = process.env.METEOGRAM_API_TOKEN;
-  const response = await fetch(url, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(5000),
-    headers: token ? { Authorization: "Bearer " + token } : {},
-    redirect: "error",
-  });
-  if (!response.ok)
-    throw new Error("Native weather returned HTTP " + response.status);
-  return transformNativeForecast(
-    parseNativeForecast(await response.json(), nativeModel),
+  const now = Date.now();
+  const load = async (run: string) => {
+    const url = new URL("/forecast", origin);
+    url.search = new URLSearchParams({
+      model: nativeModel,
+      lat: String(latitude),
+      lon: String(longitude),
+      run,
+    }).toString();
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+      headers: token ? { Authorization: "Bearer " + token } : {},
+      redirect: "error",
+    });
+    if (!response.ok)
+      throw new Error("Native weather returned HTTP " + response.status);
+    const forecast = parseNativeForecast(await response.json(), nativeModel);
+    return transformNativeForecast(forecast, now, { allowSparse: true });
+  };
+  const selections =
+    nativeModel === "hrrr"
+      ? ["long", "latest_complete", "latest"]
+      : ["latest_complete", "latest"];
+  const responses = await Promise.allSettled(selections.map(load));
+  const runs = responses.flatMap((r) =>
+    r.status === "fulfilled" ? [r.value] : [],
   );
+  if (!runs.length) throw new Error("Native forecast runs unavailable");
+  return mergeForecastRuns(runs, now);
 }
 
 /**

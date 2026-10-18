@@ -186,6 +186,7 @@ pub fn attach_lead(
         child_path.join("source-validation.json"),
     )?;
     crate::dictionary::copy(path, &child_path, &m)?;
+    crate::clouds::copy(path, &child_path, &m)?;
     shared_cells(root, path, &child_path)?;
     for (from, to) in [
         (format!("lead-{lead:03}.json"), "acquisition.json"),
@@ -219,6 +220,7 @@ pub fn attach_lead(
     atomic(parent_path.join("entry.json"), &parent)?;
     let mut manifest = m.clone();
     manifest.as_object_mut().unwrap().remove("staging");
+    manifest.as_object_mut().unwrap().remove("native_clouds");
     manifest["leads"] = json!(have);
     manifest["storage"] = json!({"layout":"lead_partition_tiles_v1","version":1,"encoding":runs::ENCODING,"tile_size":256,"axes":"level","packing":"uint16x8_le","element_type":"UInt128","index_type":"UInt16","expected_leads":expected,"complete":have==expected,"codebook_entries":count,"books":books});
     atomic(parent_path.join("metadata.json"), &manifest)?;
@@ -364,6 +366,9 @@ async fn ingest(
             options,
         )
         .await?;
+    }
+    if model == "hrrr" {
+        source::fetch_clouds(&path, Some(&source)).await?;
     }
     let r = root.to_owned();
     tokio::task::spawn_blocking(move || -> Result<()> {

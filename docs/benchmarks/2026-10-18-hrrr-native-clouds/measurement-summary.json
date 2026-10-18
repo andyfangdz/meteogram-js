@@ -1,0 +1,31 @@
+{
+  "short": {
+    "dataset": "noaa-hrrr-forecast-18-hour-virtual",
+    "init_time": "2026-10-18T20:00:00Z",
+    "forecast_times": 19,
+    "wall_seconds": 207.47,
+    "max_rss_kib": 1619988
+  },
+  "long": {
+    "dataset": "noaa-hrrr-forecast-48-hour-virtual",
+    "init_time": "2026-10-18T18:00:00Z",
+    "forecast_times": 49,
+    "wall_seconds": 572.89,
+    "max_rss_kib": 1684936
+  },
+  "fresh_hour": {
+    "forecast_times": 1,
+    "wall_seconds": 32.35,
+    "max_rss_kib": 2739724,
+    "includes": "pressure and native cloud acquisition, database loading, complete validation and publication"
+  },
+  "backfill_clock": "Native cloud acquisition, complete validation, immutable descriptor publication; pressure data already resident",
+  "tests": {
+    "rust": 57,
+    "typescript": 102,
+    "production_build": true,
+    "clippy_warnings_as_errors": true,
+    "eslint_errors": 0,
+    "eslint_preexisting_warnings": 1
+  }
+}

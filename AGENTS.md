@@ -48,7 +48,8 @@ src/
 │   └── components/
 │       ├── client-wrapper.tsx          # Client boundary, state management, auto-refresh
 │       ├── meteogram.tsx               # Main visualization container
-│       ├── cloud-columns.tsx           # Cloud coverage rectangles + wind barbs
+│       ├── cloud-columns.tsx           # Native/pressure cloud rectangles + wind barbs
+│       ├── run-boundaries.tsx          # Run strips, handoff lines and initialization labels
 │       ├── weather-lines.tsx           # Isotherms, isotachs, freezing level
 │       ├── pressure-lines.tsx          # Constant-pressure surface lines
 │       ├── nav.tsx, nav-wrapper.tsx    # Navigation bar with preference toggles
@@ -65,6 +66,7 @@ src/
 ├── utils/
 │   ├── weather.ts                      # Open-Meteo transform and shared column geometry
 │   ├── native-weather.ts               # Validated native schema, units, humidity and wind adapter
+│   ├── forecast-runs.ts                # Run overlays, native intervals and initialization handoffs
 │   ├── meteogram.ts                    # Grid interpolation, contour helpers
 │   ├── params.ts                       # URL param serialization
 │   └── serverPreferences.ts            # Server-side cookie/URL preference logic
@@ -91,7 +93,7 @@ Meteogram → CloudColumns, WeatherLines, etc.
 
 1. **ModelConfig** (`src/config/weather.ts`): Encapsulates per-model differences (time resolution, pressure levels, display parameters). Extend this class rather than branching in rendering code.
 
-2. **CloudColumn/CloudCell** (`src/types/weather.ts`): The normalized data structure passed to visualization components. Each column is a timestep; each cell is a pressure level with cloud cover, temp, wind.
+2. **CloudColumn/CloudCell** (`src/types/weather.ts`): The normalized data structure passed to visualization components. Each column is a native display interval with initialization provenance; each atmospheric cell is a pressure level with cloud cover, temp, wind. Optional native cloud layers retain independent model heights.
 
 3. **PreferencesContext**: Client-side state for visualization toggles. Auto-syncs to cookies and URL query params.
 
@@ -226,7 +228,8 @@ if (preferences.showNewFeature) { /* render */ }
 The component hierarchy:
 ```
 Meteogram (SVG container, scales, dimensions)
-├── CloudColumns (cloud rectangles per cell)
+├── CloudColumns (native cloud layers or pressure cloud rectangles)
+├── RunBoundaries (supplying initializations and handoffs)
 │   └── WindBarb (per filtered cell)
 ├── WeatherLines (isotherms, isotachs, freezing level)
 ├── PressureLines (constant-pressure paths)
@@ -406,6 +409,7 @@ ownership and must not be deleted by production retention.
 | Legacy complete-run benchmark acquisition, update and rollback | `native/src/pipeline.rs` |
 | Fresh source availability polling, durable per-hour recovery and partition attachment | `native/src/incremental.rs` |
 | Immutable per-hour manifests/books, shared-table reader and complete-run retention | `native/src/runs.rs` |
+| HRRR model-level cloud storage, provenance, cloud-only upgrades and point reads | `native/src/clouds.rs` |
 | ClickHouse HTTP/RowBinary access and legacy/raw-bit/dictionary/tile readers | `native/src/db.rs` |
 | Loopback forecast API and health | `native/src/api.rs` |
 | ClickHouse/API/updater supervision and persisted schedule | `native/src/service.rs` |
@@ -680,9 +684,62 @@ tail. `CloudColumn.durationMinutes` controls actual cell widths and the final
 time-domain extent. Do not synthesize missing layers/hours. The adapter uses
 the existing WGS84 MSL conversion and shared `completeCloudColumn` geometry,
 rotates grid-relative HRRR/RRFS winds using the API's Lambert convergence,
-and converts m/s to the app's km/h. GFS has native cloud fraction; the other
-models use labeled humidity cloud estimates. AIFS specific humidity uses
+and converts m/s to the app's km/h. GFS has native pressure-level cloud fraction. New HRRR hours also ingest all
+50 native model-level cloud fractions with their actual geopotential heights
+and pressures, independently of the 30 atmospheric pressure levels. RRFS/AIFS
+and HRRR hours without a supplement use labeled humidity cloud estimates. AIFS specific humidity uses
 Murphy–Koop saturation and ECMWF mixed phase; GFS dew point is derived.
+
+HRRR cloud supplements are immutable `native-clouds.stage.zst`/`.stage.json`
+files in each hourly child descriptor, with cell-major shape `[cells,50,3]`
+(fraction 0..1, geopotential metres, pressure Pa). They use the existing indexed,
+checksummed Float32 staging codec as durable serving data. Full finite/range/
+monotonic-height/pressure checks and bit-exact staged roundtrip precede publication.
+The index hash, file length, source snapshot, initialized hour and exact grid are
+bound to the child's metadata hash. Point reads validate frame CRCs. These files
+must survive staging cleanup and follow their child's catalog retention/GC.
+Cloud references can arrive after pressure references; cloud acquisition pins
+its own Icechunk snapshot for the same dataset/init/lead/grid and records
+`pressure_snapshot_id` separately. Do not combine different initialized runs.
+`native-clouds --root ROOT --run latest|latest_complete|long [--leads 1,2]` backfills
+existing incremental hours through new child and parent revisions. Its strict
+cloud-only publication gate preserves the full pressure manifest, table,
+codebook and proofs; it never changes a published pressure hour or replaces an
+existing cloud supplement. Normal incremental publication still must advance
+hours and preserve previous books. `cloud-availability --product PRODUCT`
+is a bounded metadata-only diagnostic over the latest 24 runs.
+
+`CloudColumn.nativeCloudLayers` carries 50 separate layers. Native shading uses
+midpoints between actual model heights and stops at the outer model centres;
+it is clipped to the chart's altitude range. Time steps remain hourly. Pressure
+profiles, wind barbs and thermodynamics remain on their original levels. The
+hover state carries native cloud and atmospheric pressure cells separately;
+the tooltip explicitly labels the pressure level used for temperature and wind.
+The source badge identifies 50 native cloud levels and any mixed hours still
+using humidity estimates. Cloud schema/provenance/rendering coverage lives in
+`native-cloud-rendering.test.tsx`, `native-weather.test.ts` and `clouds.rs` tests.
+
+Native page requests fetch authenticated profiles concurrently. HRRR uses
+`run=long` as the complete 48-hour base, `latest_complete` to retain the previous
+complete short run while a new one arrives, and `latest` as the newest overlay.
+GFS, AIFS and RRFS use `latest_complete` and `latest`. Each response is validated
+independently, including its initialization and cloud provenance. Sparse latest
+runs are allowed during normalization because a complete base supplies the
+remaining horizon. `src/utils/forecast-runs.ts` selects the newest initialization
+for each native interval, fills missing intervals from the base and preserves
+native sample values/cadence. Coarse intervals can be split at overlay edges;
+`sampleDate` retains their original sample time. No weather values are interpolated.
+Same-initialization responses are deduplicated with the longest horizon retained.
+`CloudColumn.initializedAt` identifies every displayed interval. The generic
+`run-boundaries.tsx` component marks every change with a colored run strip and
+vertical line, using non-overlapping labels; tooltips include initialization and
+any original coarse sample time. All four native models use this path. Standard
+Open-Meteo forecast responses lack per-interval run provenance, so those routes
+are explicitly labeled unavailable. Do not infer it from `generationtime_ms`
+or the model-updates API. Overlay/provider/marker tests are in
+`forecast-runs.test.tsx` and `native-provider.test.ts`. Measured cloud ingestion,
+point latency and browser evidence are in
+`docs/plans/2026-10-18-hrrr-native-clouds-and-runs.md`.
 
 The source label shows provider, actual model, UTC initialization, partial-run
 progress and cloud estimation. The route keys `ClientWrapper` by location/model

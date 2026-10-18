@@ -127,3 +127,76 @@ describe("native meteorological adapter", () => {
     );
   });
 });
+
+describe("HRRR native cloud layers", () => {
+  it("keeps 50 native heights separate from 30 atmospheric levels and preserves real clear skies", async () => {
+    const { withNativeClouds } = await import("./__helpers__/nativeForecast");
+    const f = parseNativeForecast(withNativeClouds(), "hrrr");
+    const { data, source } = transformNativeForecast(
+      f,
+      Date.parse("2026-10-18T19:15Z"),
+    );
+    expect(data[0].cloud).toHaveLength(30);
+    const layers = data[0].nativeCloudLayers!;
+    expect(layers).toHaveLength(50);
+    expect(layers[0]).toMatchObject({
+      modelLevel: 50,
+      cloudCoverage: 0,
+      hpa: 1000,
+    });
+    expect(layers[1].cloudCoverage).toBe(80);
+    expect(layers[1].mslFt).toBeGreaterThan(layers[1].geopotentialFt);
+    expect(layers[0].mslFtTop).toBe(layers[1].mslFtBottom);
+    expect(source).toMatchObject({
+      cloudMethod: "model",
+      nativeCloudLevels: 50,
+      nativeCloudHours: 3,
+    });
+    expect(data.map((d) => d.date.getUTCHours())).toEqual([19, 21, 23]);
+  });
+  it("labels partially backfilled hours and preserves humidity fallback per missing frame", async () => {
+    const { withNativeClouds } = await import("./__helpers__/nativeForecast");
+    const f = withNativeClouds(nativeFixture(), [2]);
+    const { data, source } = transformNativeForecast(
+      parseNativeForecast(f, "hrrr"),
+      Date.parse("2026-10-18T19:15Z"),
+    );
+    expect(data.map((d) => Boolean(d.nativeCloudLayers))).toEqual([
+      false,
+      true,
+      false,
+    ]);
+    expect(source).toMatchObject({
+      cloudMethod: "mixed",
+      nativeCloudHours: 1,
+      displayedHours: 3,
+    });
+    expect(data[0].cloud[0].cloudCoverage).toBeCloseTo(
+      humidityCloudCover(90, 1000),
+    );
+  });
+  it.each([
+    "shape",
+    "units",
+    "range",
+    "missing",
+    "heights",
+    "pressure",
+    "source",
+    "lead",
+  ])("rejects invalid native clouds: %s", async (bad) => {
+    const { withNativeClouds } = await import("./__helpers__/nativeForecast");
+    const f = withNativeClouds();
+    const c = f.native_clouds!;
+    if (bad === "shape") c.rows[0][1].pop();
+    if (bad === "units") c.units.pressure = "hPa";
+    if (bad === "range") c.rows[0][1][0] = 1.01;
+    if (bad === "missing") c.rows[0][1][0] = NaN;
+    if (bad === "heights") c.rows[0][2][1] = c.rows[0][2][0];
+    if (bad === "pressure") c.rows[0][3][0] = -1;
+    if (bad === "source")
+      c.lead_sources[0].pressure_snapshot_id = "other-snapshot";
+    if (bad === "lead") c.rows[0][0] = 1;
+    expect(() => parseNativeForecast(f, "hrrr")).toThrow(/cloud/i);
+  });
+});
