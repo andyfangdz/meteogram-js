@@ -267,6 +267,10 @@ with an explicit warm-up pass after all three models are resident.
 
 ## Managed native forecast pipeline on the home server
 
+Latest measurements: [Rust/profile optimization](../../docs/plans/2026-10-18-native-rust-optimization.md)
+completed the pinned full cycle in 16m00s with 25.935 GB resident data, preserving
+the original profiles. That report includes the GFS concurrent-query tradeoff.
+
 `service.py` runs the local ClickHouse server, native HTTP API and periodic
 updater. `pipeline.py` builds immutable per-model tables in `meteogram_native`;
 `native_store.py` owns the catalog, loader, validation, locking and retention.
@@ -295,25 +299,56 @@ is incomplete. It retains all 49 HRRR, 141 GFS and 31 AIFS leads. Required value
 must all be finite; a missing field/time fails the candidate, rather than filling
 missing observations or shortening the forecast.
 
-Loading uses 4096-cell batches (1024 for GFS) and never replaces an existing table.
-New tables partition by `(revision_id, intDiv(cell_id, 32768))`, so background
-merges stay within bounded geographic groups. Arrow columns are filled directly
-from staged lead files, avoiding the intermediate combined field tensor.
-Each successful load records gather/Arrow, insertion, validation and total elapsed
-time in its revision's `load-timings.json`.
+New revisions store **one row per cell**, with the complete forecast in each
+field's array. Pressure fields use level/lead order (forecast time contiguous);
+surface fields use lead order. Float32 bits are reinterpreted as UInt32 and
+compressed with `T64,ZSTD(1)`. This is lossless; values are reconstructed as
+Float32 before returning the existing HTTP lead/pressure shape. SQL consumers
+of raw tables must reinterpret the bits rather than treating them as weather
+integers. The manifest's `storage` object versions this physical representation.
+Legacy cell/lead Float32 tables remain supported for reading and rollback.
 
-The next model's source extraction can overlap the current model's load and
-validation. There is at most one extractor and one loader; publication remains
-serial and retains all validation gates. Before overlapping, the updater requires
-the sum of both models' admission budgets plus the 20 GiB reserve. If that check
-fails, it continues sequentially. Use `update --no-prefetch` to force sequential
-execution. A failed prefetch does not prevent other models from updating, and
-shutdown cancels and joins the extractor before releasing the updater lock.
-Validation checks total and bounded unique keys, exact per-lead row counts,
-pressure-array lengths and finite values over the entire table. Deterministic
-sample profiles must exactly match staged Float32 values. Only then is a
-validation marker written and the catalog atomically replaced with file/directory
-fsync. Initialization must advance, except for an explicit rollback.
+Tables partition by `(revision_id, intDiv(cell_id, 32768))`, use a four-cell
+index granularity, and load batches of 4,096 cells (2,048 for GFS). The fused Rust
+NEON kernel deinterleaves six fields and transposes four levels/four times at
+once, checking finite values in the same pass. A portable Rust loop and NumPy
+fallback cover other hosts; SIMD correctness includes signed zero, subnormals,
+all tail shapes, and NaN/infinity rejection. Rust also encodes Native-format
+blocks, avoiding Arrow parsing in ClickHouse. Wire buffers are borrowed through
+synchronous insertion and then freed. No fast-math or quantization is used.
+
+`profile_pack.rs` has no external crate dependencies. `profile_pack.py` builds a
+shared library with rustc and caches it by source/compiler/architecture under
+`~/.cache/meteogram-native`. Set `METEOGRAM_RUSTC` for a custom compiler; this host
+also discovers its local toolchain under `~/.local/share/meteogram-rust`.
+Without rustc, the portable path uses NumPy and Arrow. Successful loads record
+packing, encoding, insertion and validation timing in `load-timings.json`.
+Packing runs one batch ahead of encoding/insertion, with at most two packed
+batches and one encoded wire buffer. `pack_seconds` measures overlapping worker
+time; `pack_wait_seconds` measures uncovered waiting in the insertion loop.
+Do not add overlapping phase times and call the sum wall time.
+
+Deploy/reload the metadata-aware API reader before publishing this new format.
+An already running legacy-only Python process does not acquire reader changes
+from disk automatically. Both legacy and profile revisions can then be served
+and used for rollback without changing the HTTP contract.
+
+The updater can begin GFS acquisition alongside HRRR acquisition, then continue
+fetching alongside loading. There are at most two initial extractors, and at most
+one extractor plus one loader afterward. Publication remains serial. Before
+starting the next extractor, the updater requires both model admission budgets
+plus the 20 GiB reserve. If that check fails, it continues sequentially. Use
+`update --no-prefetch` to force sequential execution. A failed prefetch does not
+prevent other models from updating; shutdown cancels and joins the extractor
+before releasing the updater lock.
+
+Validation checks every sorted cell ID, physical column types, array lengths and
+finite Float32 bits over the entire new table. Logical cell/lead counts are
+reported separately from physical cell rows. Deterministic profiles must exactly
+match staging across every field, lead and level. The validation marker binds
+the storage descriptor as well as source identity before atomic catalog
+replacement with file/directory fsync. Initialization must advance, except for an
+explicit rollback. Legacy tables retain their original full row/key checks.
 
 Readers hold a shared `catalog.lock` from catalog selection through the DB read.
 Publication and garbage collection take its exclusive lock. A request therefore
@@ -431,6 +466,7 @@ verify the startup dependency graph without starting services. See the dated dep
 "$NATIVE_PYTHON" scripts/clickhouse-prototype/test-serve.py
 TEST_NATIVE_DB=1 "$NATIVE_PYTHON" scripts/clickhouse-prototype/test-pipeline.py
 "$NATIVE_PYTHON" scripts/clickhouse-prototype/test-ingestion.py
+"$NATIVE_PYTHON" scripts/clickhouse-prototype/test-profile-pack.py
 "$NATIVE_PYTHON" scripts/clickhouse-prototype/verify-live-update.py \
   --output "$NATIVE_ROOT/live-update-verification.json"
 

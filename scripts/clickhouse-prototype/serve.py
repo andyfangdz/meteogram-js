@@ -194,6 +194,7 @@ def main():
                             cell,
                             tag="native_api",
                             database=model["database"],
+                            profile=meta,
                         )
                     finally:
                         pool.put(conn)

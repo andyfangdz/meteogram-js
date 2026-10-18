@@ -1,5 +1,9 @@
 # Native ingestion optimization — measured on the home server
 
+Follow-up: the [Rust/profile implementation](2026-10-18-native-rust-optimization.md)
+completed the same pinned cycle in 16m00s and reduced resident data to 25.935 GB.
+The measurements below remain the baseline for that change.
+
 The complete pinned HRRR/GFS/AIFS cycle finished in **20 minutes 11 seconds**,
 compared with **35 minutes 4 seconds** for the earlier live update. HRRR loading,
 validation and publication fell from **15:04 to 11:03**. The next model's download

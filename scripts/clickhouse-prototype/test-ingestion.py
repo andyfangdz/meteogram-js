@@ -88,6 +88,28 @@ class SchedulingTests(unittest.TestCase):
     def test_fetch_overlaps_load_with_serial_publication(self):
         self.exercise()
 
+    def test_next_source_starts_before_first_source_finishes(self):
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+            root = Path(temporary)
+            ahead = threading.Event()
+
+            def acquire(root, model, offsets, cancelled):
+                if model == "gfs":
+                    ahead.set()
+                if model == "hrrr":
+                    self.assertTrue(ahead.wait(2))
+                path = root / model
+                path.mkdir(exist_ok=True)
+                return path, {"table": model}, {"init_time": "2026-10-18T00:00:00"}
+
+            for name in ("collect", "recover", "clean_workspace", "load", "disk_guard"):
+                stack.enter_context(patch("pipeline." + name))
+            stack.enter_context(patch("pipeline.prepare", side_effect=acquire))
+            stack.enter_context(
+                patch("pipeline.publish", return_value={"generation": 1})
+            )
+            self.assertEqual(update(root, ["hrrr", "gfs"], [1, 2]), 0)
+
     def test_disk_budget_defers_prefetch(self):
         self.exercise(overlap=False)
 

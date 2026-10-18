@@ -127,6 +127,17 @@ def check_metadata(meta):
     ):
         raise ValueError("Source schema/coverage changed; inspect before publication")
 
+    storage = meta.get("storage")
+    if storage and (
+        storage.get("layout") != "cell_profile_v1"
+        or storage.get("axes") not in ("level_lead", "lead_level")
+        or storage.get("encoding") not in ("float32_bits", "float32")
+        or storage.get("codec") not in ("t64", "delta", "zstd", "lz4", "gorilla")
+        or (storage["codec"] in ("t64", "delta"))
+        != (storage["encoding"] == "float32_bits")
+    ):
+        raise ValueError("Unknown physical profile layout")
+
 
 def descriptor_path(root, entry):
     path = (Path(root) / "revisions" / entry["revision"]).resolve()
@@ -150,6 +161,8 @@ def publish(root, model, entry, rollback=False):
         validation[key] != meta[key] for key in ("init_time", "snapshot_id")
     ):
         raise ValueError("Validation does not match model metadata")
+    if validation.get("storage") != meta.get("storage"):
+        raise ValueError("Storage manifest changed after validation")
     if not freshness(meta)["available"]:
         raise ValueError("Forecast is too old or has insufficient remaining horizon")
     with lock(root, exclusive=True):
@@ -183,7 +196,23 @@ def disk_guard(root, extra=0):
         )
 
 
-def load(root, path, table):
+def load(root, path, table, layout="profile"):
+    if layout == "legacy":
+        return load_legacy(root, path, table)
+    from profile_store import load as load_profile
+
+    timings = load_profile(root, path, table)
+    started = time.perf_counter()
+    evidence = validate(path, table, staged=True)
+    timings["validation_seconds"] = time.perf_counter() - started
+    timings["total_seconds"] = (
+        timings["total_insert_seconds"] + timings["validation_seconds"]
+    )
+    atomic_json(path / "load-timings.json", timings)
+    return evidence
+
+
+def load_legacy(root, path, table):
     table = identifier(table)
     meta = json.loads((path / "metadata.json").read_text())
     leads = meta["leads"]
@@ -303,17 +332,63 @@ def validate(path, table, database=DATABASE, staged=False):
         raise ValueError("Incorrect cell index")
     c = client()
     try:
-        evidence = validate_keys(c, table, ids, len(meta["leads"]), database=database)
-        observed = c.query(
-            f"SELECT lead_hour,count() FROM {database}.{table} GROUP BY lead_hour ORDER BY lead_hour"
-        ).result_rows
-        if list(observed) != [(lead, len(ids)) for lead in meta["leads"]]:
-            raise ValueError("Incorrect per-lead counts")
-        checks = [
-            f"length({identifier(v)}) != {len(meta['levels'])} OR arrayExists(x -> NOT isFinite(x),{v})"
-            for v in meta["variables"]
-        ]
-        checks += [f"NOT isFinite({identifier(v)})" for v in meta["surface_variables"]]
+        profile_layout = meta.get("storage", {}).get("layout") == "cell_profile_v1"
+        if profile_layout:
+            storage_rows = c.query(f"SELECT count() FROM {database}.{table}").first_row[
+                0
+            ]
+            if storage_rows != len(ids):
+                raise ValueError("Incorrect profile row count")
+            actual_ids = c.query_arrow(
+                f"SELECT cell_id FROM {database}.{table} ORDER BY cell_id"
+            )["cell_id"].to_numpy()
+            if not np.array_equal(actual_ids, ids):
+                raise ValueError("Missing, duplicate or substituted profile cell IDs")
+            bit_encoded = meta["storage"].get("encoding") == "float32_bits"
+            invalid = (
+                "bitAnd(x,2139095040) = 2139095040"
+                if bit_encoded
+                else "NOT isFinite(x)"
+            )
+            fields = meta["variables"] + meta["surface_variables"]
+            expected_type = "Array(UInt32)" if bit_encoded else "Array(Float32)"
+            observed_types = dict(
+                c.query(
+                    "SELECT name,type FROM system.columns WHERE database={db:String} AND table={table:String}",
+                    parameters={"db": database, "table": table},
+                ).result_rows
+            )
+            if any(observed_types.get(v) != expected_type for v in fields):
+                raise ValueError("Physical profile types differ from manifest encoding")
+            checks = [
+                f"length({identifier(v)}) != {len(meta['levels']) * len(meta['leads'])} OR arrayExists(x -> {invalid},{v})"
+                for v in meta["variables"]
+            ]
+            checks += [
+                f"length({identifier(v)}) != {len(meta['leads'])} OR arrayExists(x -> {invalid},{v})"
+                for v in meta["surface_variables"]
+            ]
+            evidence = {
+                "rows": len(ids) * len(meta["leads"]),
+                "storage_rows": storage_rows,
+                "layout": "cell_profile_v1",
+            }
+        else:
+            evidence = validate_keys(
+                c, table, ids, len(meta["leads"]), database=database
+            )
+            observed = c.query(
+                f"SELECT lead_hour,count() FROM {database}.{table} GROUP BY lead_hour ORDER BY lead_hour"
+            ).result_rows
+            if list(observed) != [(lead, len(ids)) for lead in meta["leads"]]:
+                raise ValueError("Incorrect per-lead counts")
+            checks = [
+                f"length({identifier(v)}) != {len(meta['levels'])} OR arrayExists(x -> NOT isFinite(x),{v})"
+                for v in meta["variables"]
+            ]
+            checks += [
+                f"NOT isFinite({identifier(v)})" for v in meta["surface_variables"]
+            ]
         if c.query(
             f"SELECT count() FROM {database}.{table} WHERE revision_id != 1 OR {' OR '.join(checks)}"
         ).first_row[0]:
@@ -330,6 +405,7 @@ def validate(path, table, database=DATABASE, staged=False):
                 meta["variables"] + meta["surface_variables"],
                 ids[index],
                 database=database,
+                profile=meta,
             )
             if [row[0] for row in result.result_rows] != meta["leads"]:
                 raise ValueError("Incomplete sampled profile")
@@ -354,6 +430,7 @@ def validate(path, table, database=DATABASE, staged=False):
             snapshot_id=meta["snapshot_id"],
             samples=len(samples),
             staged_comparison=staged,
+            storage=meta.get("storage"),
             validated_at=time.time(),
         )
         atomic_json(path / "validated.json", evidence)

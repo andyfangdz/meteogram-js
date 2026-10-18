@@ -200,7 +200,13 @@ class PublicationTests(unittest.TestCase):
     "real local ClickHouse integration is opt-in",
 )
 class LoaderTests(unittest.TestCase):
-    def test_real_insert_validate_and_corruption_gate(self):
+    def test_legacy_insert_clone_gc_and_corruption_gate(self):
+        self.exercise_loader("legacy")
+
+    def test_profile_insert_clone_gc_and_corruption_gate(self):
+        self.exercise_loader("profile")
+
+    def exercise_loader(self, layout):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             table = "gfs_test_" + uuid.uuid4().hex
@@ -218,9 +224,14 @@ class LoaderTests(unittest.TestCase):
             atomic_json(root / "metadata.json", meta)
             np.savez(root / "cells.npz", cell_id=np.array([7, 19], dtype=np.uint32))
             for lead in meta["leads"]:
+                values = np.full((2, 2, 1), lead / 7, dtype=np.float32)
+                if lead == 0:
+                    values[:, :, 0] = np.array(
+                        [[0x80000000, 1], [0x7F7FFFFF, 0xFF7FFFFF]], dtype=np.uint32
+                    ).view(np.float32)
                 np.save(
                     root / f"lead-{lead:03d}.npy",
-                    np.full((2, 2, 1), lead / 7, dtype=np.float32),
+                    values,
                 )
                 np.save(
                     root / f"surface-{lead:03d}.npy",
@@ -232,11 +243,25 @@ class LoaderTests(unittest.TestCase):
                 )
             c = client()
             try:
-                result = load(root, root, table)
+                result = load(root, root, table, layout=layout)
                 self.assertEqual(result["rows"], 282)
                 self.assertTrue(result["staged_comparison"])
+                from benchmark import query_profile
+
+                stored_meta = json.loads((root / "metadata.json").read_text())
+                exact, _ = query_profile(
+                    c, table, ["temperature"], 7, database=DATABASE, profile=stored_meta
+                )
+                np.testing.assert_array_equal(
+                    np.asarray(exact.result_rows[0][1], dtype=np.float32).view(
+                        np.uint32
+                    ),
+                    np.array([0x80000000, 1], dtype=np.uint32),
+                )
                 with self.assertRaises(DatabaseError):
-                    load(root, root, table)  # Must never overwrite an existing table.
+                    load(
+                        root, root, table, layout=layout
+                    )  # Must never overwrite an existing table.
                 np.save(
                     root / "lead-000.npy", np.full((2, 2, 1), np.nan, dtype=np.float32)
                 )
@@ -245,6 +270,16 @@ class LoaderTests(unittest.TestCase):
                 with self.assertRaises(AssertionError):
                     validate(root, table, staged=True)
                 self.assertFalse((root / "validated.json").exists())
+                if layout == "profile":
+                    c.command(
+                        f"CREATE TABLE {DATABASE}.{table}_bad CLONE AS {DATABASE}.{table}"
+                    )
+                    c.command(
+                        f"ALTER TABLE {DATABASE}.{table}_bad UPDATE temperature = arrayMap(x -> toUInt32(2139095040),temperature) WHERE 1 SETTINGS mutations_sync=1"
+                    )
+                    with self.assertRaisesRegex(ValueError, "Malformed/non-finite"):
+                        validate(root, table + "_bad")
+                    c.command(f"DROP TABLE {DATABASE}.{table}_bad SYNC")
                 c.command(
                     f"CREATE TABLE {DATABASE}.{table}_clone CLONE AS {DATABASE}.{table}"
                 )
@@ -253,7 +288,7 @@ class LoaderTests(unittest.TestCase):
                     c.query(f"SELECT count() FROM {DATABASE}.{table}_clone").first_row[
                         0
                     ],
-                    282,
+                    2 if layout == "profile" else 282,
                 )
                 c.command(
                     f"CREATE TABLE {DATABASE}.{table}_expired CLONE AS {DATABASE}.{table}_clone"
@@ -296,9 +331,10 @@ class LoaderTests(unittest.TestCase):
                     c.query(f"SELECT count() FROM {DATABASE}.{table}_clone").first_row[
                         0
                     ],
-                    282,
+                    2 if layout == "profile" else 282,
                 )
             finally:
+                c.command(f"DROP TABLE IF EXISTS {DATABASE}.{table}_bad SYNC")
                 c.command(f"DROP TABLE IF EXISTS {DATABASE}.{table}_expired SYNC")
                 c.command(f"DROP TABLE IF EXISTS {DATABASE}.{table}_clone SYNC")
                 c.command(f"DROP TABLE IF EXISTS {DATABASE}.{table} SYNC")

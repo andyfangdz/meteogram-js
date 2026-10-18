@@ -1,0 +1,7 @@
+{"phase": "load", "model": "gfs", "cells": 2, "total": 2}
+.{"phase": "profile_load", "model": "gfs", "cells": 2, "total": 2}
+.........
+----------------------------------------------------------------------
+Ran 10 tests in 8.139s
+
+OK

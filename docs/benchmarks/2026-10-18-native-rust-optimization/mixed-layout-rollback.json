@@ -1,0 +1,20 @@
+[
+  {
+    "model": "hrrr",
+    "previous_layout": "legacy",
+    "restored_layout": "cell_profile_v1",
+    "passed": true
+  },
+  {
+    "model": "gfs",
+    "previous_layout": "legacy",
+    "restored_layout": "cell_profile_v1",
+    "passed": true
+  },
+  {
+    "model": "aifs",
+    "previous_layout": "legacy",
+    "restored_layout": "cell_profile_v1",
+    "passed": true
+  }
+]

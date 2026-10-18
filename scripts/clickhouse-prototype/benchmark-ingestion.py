@@ -106,6 +106,11 @@ def main():
             for model in MODELS:
                 entry = state["current"][model]
                 source = original["current"][model]
+                source_meta = json.loads(
+                    (
+                        descriptor_path(args.source_root, source) / "metadata.json"
+                    ).read_text()
+                )
                 path = descriptor_path(args.output, entry)
                 meta = json.loads((path / "metadata.json").read_text())
                 ids = np.load(path / "cells.npz")["cell_id"]
@@ -114,10 +119,20 @@ def main():
                 latency = []
                 for cell in samples:
                     actual, ms = query_profile(
-                        c, entry["table"], fields, cell, database=entry["database"]
+                        c,
+                        entry["table"],
+                        fields,
+                        cell,
+                        database=entry["database"],
+                        profile=meta,
                     )
                     expected, _ = query_profile(
-                        c, source["table"], fields, cell, database=source["database"]
+                        c,
+                        source["table"],
+                        fields,
+                        cell,
+                        database=source["database"],
+                        profile=source_meta,
                     )
                     if actual.result_rows != expected.result_rows:
                         raise ValueError(f"Source-profile mismatch: {model}/{cell}")

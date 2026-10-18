@@ -76,6 +76,7 @@ def main():
         c = client()
         try:
             counts = {}
+            physical_counts = {}
             for section in ("current", "previous"):
                 for model, entry in before[section].items():
                     meta = json.loads(
@@ -84,10 +85,17 @@ def main():
                     count = c.query(
                         f"SELECT count() FROM {identifier(entry['database'])}.{identifier(entry['table'])}"
                     ).first_row[0]
-                    if count != meta["cells"] * len(meta["leads"]):
+                    expected = (
+                        meta["cells"]
+                        if meta.get("storage", {}).get("layout") == "cell_profile_v1"
+                        else meta["cells"] * len(meta["leads"])
+                    )
+                    if count != expected:
                         raise ValueError("Retained row count changed after restart")
-                    counts[f"{section}/{model}"] = count
+                    counts[f"{section}/{model}"] = meta["cells"] * len(meta["leads"])
+                    physical_counts[f"{section}/{model}"] = count
             result["retained_rows"] = counts
+            result["retained_storage_rows"] = physical_counts
             schema = c.query("SHOW CREATE TABLE system.query_log").first_row[0]
             if "TTL" not in schema or "toIntervalDay(7)" not in schema:
                 raise ValueError("Query log does not have the expected seven-day TTL")

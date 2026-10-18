@@ -411,23 +411,51 @@ installation, ownership and host commands. `test-pipeline.py` and
 `verify-live-update.py` verify operational correctness and real update continuity.
 `verify-service.py` checks retained rows/HTTP state and can explicitly exercise a
 database restart; separate child process groups preserve the supervisor.
-The updater can prefetch the next model while loading/validating the current
-model, with one source process and one loader at most. It reserves the combined
-model disk budgets before overlapping; `update --no-prefetch` forces sequential
-work. Cancellation joins the fetch worker before releasing `update.lock`.
-New tables partition by revision and 32,768-cell ID groups to bound merge work;
-the loader fills Arrow column buffers directly and writes `load-timings.json`.
-`test-ingestion.py` checks overlap, disk fallback, failures and cancellation.
+The updater starts the next model's source acquisition before waiting for the
+current source, reserving both complete model budgets plus 20 GiB. At most two
+extractors run during initial acquisition, then one extractor alongside one
+loader. `update --no-prefetch` forces sequential work. Cancellation joins the
+fetch worker before releasing `update.lock`.
+
+New managed revisions use `profile_store.py`: one physical row per native cell,
+with full forecasts stored as level/lead arrays. Float32 bit patterns are stored
+losslessly in UInt32 arrays using T64 + ZSTD(1); the HTTP reader reconstructs the
+original lead/pressure shape. Metadata `storage` explicitly versions layout,
+axes, encoding and writer, and is bound to the validation marker. Legacy
+cell/lead tables remain readable and rollback-compatible. Validation compares
+ALL sorted native cell IDs, physical column types, array lengths and finite bits,
+plus exact staged samples. Preserve the distinction between physical cell rows
+and logical cell/lead rows in reports and service verification.
+
+`profile_pack.rs` implements the fused ARM NEON transpose/finite check and
+ClickHouse Native block encoder. `profile_pack.py` checks NumPy buffer contracts,
+loads a source/compiler-keyed shared library from `~/.cache/meteogram-native`, and
+keeps Rust-owned wire buffers alive through synchronous insertion. It builds with
+rustc (std only, no crate downloads); `METEOGRAM_RUSTC` can select the compiler.
+Without a compiler, NumPy packing/Arrow insertion is the portable fallback. Do
+not enable fast-math or quantization. `test-profile-pack.py` checks IEEE bit
+preservation, vector tails and non-finite rejection; `test-pipeline.py` covers
+both storage generations, including encoded non-finite database corruption.
+Packing runs one batch ahead of insertion with bounded buffers; phase work times
+overlap, so use total elapsed time for comparisons. Deploy/reload the new API
+reader before publishing profile revisions; an existing Python process retains
+its imported legacy reader until restarted.
+`test-ingestion.py` checks early overlap, disk fallback, failures and cancellation.
+
 `benchmark-ingestion.py` replays a pinned serving cycle into a separate catalog,
-checks complete profiles against the serving tables, and measures API availability
-without changing the serving catalog. It holds the serving updater lock during
-the experiment; use an empty output directory and explicitly clean up its tables
-after preserving results.
-Measured optimization results and verification are in
-`docs/plans/2026-10-17-native-ingestion-optimization.md`: the pinned full cycle
-took 20m11s, versus the earlier 35m04s live update (which included a rejected
-source candidate). Do not describe the isolated build's HTTP availability check
-as a live publication-lock latency test.
+checks complete profiles against serving tables, and measures API availability
+without replacing the serving catalog. It holds both updater locks during the
+experiment; use an empty output directory and explicitly clean up its tables
+after preserving results. The first measured optimization is documented in
+`docs/plans/2026-10-17-native-ingestion-optimization.md` (20m11s pinned full cycle).
+Do not describe an isolated build's HTTP availability check as a live
+publication-lock latency test.
+The latest measured implementation is documented in
+`docs/plans/2026-10-18-native-rust-optimization.md`: 16m00s for the same pinned
+cycle and 25.935 GB resident data. The running API reader was reloaded and verified
+against both formats; new revisions use Rust packing/Native writing. Existing
+serving revisions remain legacy until replaced. GFS four-client query p95 is a
+measured tradeoff (22 ms versus 15 ms), not a universal query improvement.
 The app still uses Open-Meteo; native fields are not yet the application's
 meteorologically normalized provider. Public serving is not configured.
 

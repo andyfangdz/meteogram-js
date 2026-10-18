@@ -1,0 +1,3 @@
+{
+  "note": "Screening model/bit-codec variants use a C packing prototype and Arrow; the final Rust variant uses the Rust packer and Native writer. Baseline includes validation; profile screening core timings do not. Storage sizes and exact-profile comparisons are comparable; use the full-cycle total for end-to-end timing. Gated sample and microbenchmarks also ran during concurrent source activity, so are not isolated before/after speed claims."
+}

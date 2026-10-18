@@ -38,9 +38,38 @@ def distribution(values):
 
 
 def query_profile(
-    c, table, fields, cell, revision=1, direct=False, tag="", database=DATABASE
+    c,
+    table,
+    fields,
+    cell,
+    revision=1,
+    direct=False,
+    tag="",
+    database=DATABASE,
+    profile=None,
 ):
     started = time.perf_counter()
+    if profile and profile.get("storage", {}).get("layout") == "cell_profile_v1":
+        from profile_store import read_profile
+
+        if revision != 1:
+            raise ValueError("Profile revisions use immutable per-table identity")
+        result = read_profile(
+            c,
+            table,
+            fields,
+            cell,
+            profile,
+            database,
+            {
+                "max_threads": 2,
+                "use_query_cache": 0,
+                "use_uncompressed_cache": 0,
+                "min_bytes_to_use_direct_io": 1 if direct else 0,
+                "log_comment": tag,
+            },
+        )
+        return result, (time.perf_counter() - started) * 1000
     result = c.query(
         f"SELECT lead_hour,{','.join(fields)} FROM {database}.{table} WHERE revision_id={{revision:UInt32}} AND cell_id={{cell:UInt32}} ORDER BY lead_hour",
         parameters={"revision": revision, "cell": int(cell)},

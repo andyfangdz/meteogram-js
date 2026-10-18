@@ -283,21 +283,11 @@ def update(root, models, offsets, prefetch=True):
     future = None
     try:
         for index, model in enumerate(models):
-            try:
-                pending, future = future, None
-                prepared = (
-                    pending.result()
-                    if pending
-                    else prepare(root, model, offsets, cancelled)
-                )
-            except Exception as error:  # noqa: BLE001 -- another model can still advance
-                failures.append({"model": model, "error": str(error)})
-                continue
-            if prepared is None:
-                continue
-            path, entry, meta = prepared
-            # At most one fetch and one loader. Reserve BOTH full model budgets
-            # before overlap; fall back to sequential work on tighter disks.
+            pending, future = future, None
+            # Start one model ahead before waiting for the current source.
+            # This permits two extractors during initial acquisition, then
+            # one extractor alongside the loader. Both full disk budgets are
+            # admitted together; a single worker bounds queued prefetches.
             if prefetch and index + 1 < len(models):
                 next_model = models[index + 1]
                 try:
@@ -311,6 +301,18 @@ def update(root, models, offsets, prefetch=True):
                     )
                 else:
                     future = pool.submit(prepare, root, next_model, offsets, cancelled)
+            try:
+                prepared = (
+                    pending.result()
+                    if pending
+                    else prepare(root, model, offsets, cancelled)
+                )
+            except Exception as error:  # noqa: BLE001 -- another model can still advance
+                failures.append({"model": model, "error": str(error)})
+                continue
+            if prepared is None:
+                continue
+            path, entry, meta = prepared
             try:
                 event(root, phase="load", model=model)
                 load(root, path, entry["table"])
