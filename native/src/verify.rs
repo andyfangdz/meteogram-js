@@ -111,6 +111,7 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
     let _catalog = Lock::acquire(root, "catalog", false, false)?;
     let http = reqwest::blocking::Client::builder()
         .no_proxy()
+        .default_headers(crate::api::client_headers(root)?)
         .timeout(std::time::Duration::from_secs(30))
         .build()?;
     let health = http
@@ -443,6 +444,7 @@ pub fn check_api(root: &Path, port: u16, compare: Option<&str>, full: bool) -> R
     let base = format!("http://127.0.0.1:{port}");
     let http = reqwest::blocking::Client::builder()
         .no_proxy()
+        .default_headers(crate::api::client_headers(root)?)
         .timeout(Duration::from_secs(1))
         .build()?;
     let mut ready = false;

@@ -576,11 +576,19 @@ fn spherical_lambert_roundtrip_matches_known_origin() {
     let p = Lambert::new(6371229., 38.5, -97.5, 38.5, 38.5, 0., 0.).unwrap();
     assert!(p.forward(38.5, -97.5).0.abs() < 1e-8);
     assert!(p.forward(38.5, -97.5).1.abs() < 1e-8);
+    assert!(p.convergence_degrees(-97.5).abs() < 1e-12);
+    assert!((p.convergence_degrees(-74.283767) - 14.452).abs() < 0.02);
     for (lat, lon) in [(24., -125.), (50., -66.), (41., -74.), (37., -120.)] {
         let (x, y) = p.forward(lat, lon);
         let (la, lo) = p.inverse(x, y);
         assert!((la - lat).abs() < 1e-10);
         assert!((lo - lon).abs() < 1e-10);
+        // A true north displacement projects as (-sin(theta),cos(theta)).
+        // This checks the sign against the projection, independently of the
+        // wind adapter's component rotation.
+        let (nx, ny) = p.forward(lat + 0.00001, lon);
+        let bearing = (-(nx - x)).atan2(ny - y).to_degrees();
+        assert!((bearing - p.convergence_degrees(lon)).abs() < 1e-7);
     }
 }
 #[test]

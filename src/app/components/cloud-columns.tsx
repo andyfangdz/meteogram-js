@@ -49,11 +49,23 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   onHover,
   onFreezeChange,
 }) => {
+  const widthFor = (column: CloudColumn) =>
+    column.durationMinutes
+      ? Math.max(
+          0,
+          scales.dateScale(
+            new Date(column.date.getTime() + column.durationMinutes * 60_000),
+          ) - scales.dateScale(column.date),
+        )
+      : barWidth;
   // Convert pressureLevels array to Set for O(1) lookups during filtering
   // This optimization is beneficial when filtering large datasets (many cloud cells per column)
   // Trade-off: Set creation has overhead, but pays off when pressureLevels.length > ~10
   // and when weatherData contains many columns with many cloud cells each
-  const pressureLevelsSet = React.useMemo(() => new Set(pressureLevels), [pressureLevels]);
+  const pressureLevelsSet = React.useMemo(
+    () => new Set(pressureLevels),
+    [pressureLevels],
+  );
 
   // Memoize filtered weather data to avoid recomputing on every render.
   // We also carry a parallel filteredParcelTemps array — parcelProfiles is
@@ -79,11 +91,14 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   // The parent component MUST memoize these callbacks (e.g., with useCallback)
   // to prevent these handlers from being recreated on every render.
   // Currently verified: meteogram.tsx memoizes both callbacks correctly.
-  const handleMouseEnter = React.useCallback((date: Date, cloud: CloudCell) => {
-    if (!frozenRect) {
-      onHover(date, cloud);
-    }
-  }, [frozenRect, onHover]);
+  const handleMouseEnter = React.useCallback(
+    (date: Date, cloud: CloudCell) => {
+      if (!frozenRect) {
+        onHover(date, cloud);
+      }
+    },
+    [frozenRect, onHover],
+  );
 
   const handleMouseLeave = React.useCallback(() => {
     if (!frozenRect) {
@@ -103,33 +118,33 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
       const next =
         idx < filteredClouds.length - 1 ? filteredClouds[idx + 1] : null;
       return {
-        tintBottom: prev
-          ? (prev.mslFt + cloud.mslFt) / 2
-          : cloud.mslFtBottom,
-        tintTop: next
-          ? (cloud.mslFt + next.mslFt) / 2
-          : cloud.mslFtTop,
+        tintBottom: prev ? (prev.mslFt + cloud.mslFt) / 2 : cloud.mslFtBottom,
+        tintTop: next ? (cloud.mslFt + next.mslFt) / 2 : cloud.mslFtTop,
       };
     },
     [],
   );
 
-  const handleClick = React.useCallback((date: Date, cloud: CloudCell, event: React.MouseEvent) => {
-    if ((event.nativeEvent as PointerEvent).pointerType === "mouse") {
-      if (frozenRect) {
-        onFreezeChange(null);
-        onHover(date, cloud);
-      } else {
-        onFreezeChange({ date, cloudCell: cloud });
-        onHover(date, cloud);
+  const handleClick = React.useCallback(
+    (date: Date, cloud: CloudCell, event: React.MouseEvent) => {
+      if ((event.nativeEvent as PointerEvent).pointerType === "mouse") {
+        if (frozenRect) {
+          onFreezeChange(null);
+          onHover(date, cloud);
+        } else {
+          onFreezeChange({ date, cloudCell: cloud });
+          onHover(date, cloud);
+        }
       }
-    }
-  }, [frozenRect, onFreezeChange, onHover]);
+    },
+    [frozenRect, onFreezeChange, onHover],
+  );
 
   return (
     <>
       {filteredWeatherData.map((d) => {
         const { filteredClouds, filteredParcelTemps } = d;
+        const columnWidth = widthFor(d);
 
         return (
           <Group
@@ -153,7 +168,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                   key={`cloud-${cloud.hpa}`}
                   x={formatNumber(0)}
                   y={formatNumber(scales.mslScale(cloud.mslFtTop))}
-                  width={formatNumber(barWidth)}
+                  width={formatNumber(columnWidth)}
                   height={formatNumber(
                     scales.mslScale(cloud.mslFtBottom) -
                       scales.mslScale(cloud.mslFtTop),
@@ -193,7 +208,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                     key={`stability-${cloud.hpa}`}
                     x={formatNumber(0)}
                     y={formatNumber(scales.mslScale(tintTop))}
-                    width={formatNumber(barWidth)}
+                    width={formatNumber(columnWidth)}
                     height={formatNumber(
                       scales.mslScale(tintBottom) - scales.mslScale(tintTop),
                     )}
@@ -221,7 +236,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                     key={`parcel-${cloud.hpa}`}
                     x={formatNumber(0)}
                     y={formatNumber(scales.mslScale(tintTop))}
-                    width={formatNumber(barWidth)}
+                    width={formatNumber(columnWidth)}
                     height={formatNumber(
                       scales.mslScale(tintBottom) - scales.mslScale(tintTop),
                     )}
@@ -239,7 +254,19 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
         model &&
         MODEL_CONFIGS[model] &&
         weatherData
-          .filter((_, index) => index % MODEL_CONFIGS[model].windBarbStep === 0)
+          .filter((d, index) => {
+            if (!d.durationMinutes)
+              return index % MODEL_CONFIGS[model].windBarbStep === 0;
+            const config = MODEL_CONFIGS[model];
+            const minutes =
+              config.windBarbStep *
+              (config.forecastDataKey === "minutely15" ? 15 : 60);
+            return (
+              d.date.getTime() %
+                (Math.max(minutes, d.durationMinutes) * 60_000) ===
+              0
+            );
+          })
           .map((d) =>
             d.cloud
               ?.filter(
@@ -258,7 +285,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                   className={`wind-barb-group wind-barb-${cloud.hpa}`}
                 >
                   <WindBarb
-                    x={formatNumber(scales.dateScale(d.date) + barWidth / 2)}
+                    x={formatNumber(scales.dateScale(d.date) + widthFor(d) / 2)}
                     y={formatNumber(scales.mslScale(cloud.geopotentialFt))}
                     speed={cloud.windSpeed}
                     direction={cloud.windDirection}

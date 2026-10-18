@@ -7,9 +7,10 @@ runtime compilation are not required. The binary uses Rust Icechunk 2.3.0 and
 Gribberish 1.8.4 directly. Cargo also builds the native codec dependencies.
 ClickHouse remains a separately installed database executable.
 
-The Next.js application's weather provider is still Open-Meteo. This service
-returns native model fields; it does not implement the application's
-meteorological adapter or expose a public endpoint.
+The Next.js application's optional native provider consumes this service through
+an authenticated Cloudflare Tunnel. `src/utils/native-weather.ts` converts native
+fields into the application's normalized meteogram columns. Open-Meteo remains
+the fallback for unsupported locations/models and unavailable native forecasts.
 
 ## Build and run
 
@@ -55,6 +56,16 @@ included ClickHouse configuration has an empty local password and binds only
 to loopback; it is for this local service.
 
 ## Operate
+
+All API routes require `Authorization: Bearer <secret>` when a token is
+configured. The service reads `METEOGRAM_API_TOKEN`, then an explicit
+`METEOGRAM_API_TOKEN_FILE`, then `<root>/api-token`. A present but invalid token
+file prevents startup. Without any token configuration, the API remains a local
+unauthenticated service; configure authentication **before** running a tunnel.
+Keep the file private (mode 0600). `check-api`, `observe` and `verify` read the
+same token automatically. For the curl examples below, include
+`-H "Authorization: Bearer $(cat "$HOME/.local/share/meteogram-native/api-token")"`
+when authentication is enabled.
 
 ```sh
 meteogram-native status --root "$HOME/.local/share/meteogram-native"
@@ -400,3 +411,43 @@ load, independent audits and four-model service installation.
 
 The [incremental ingestion report](../docs/plans/2026-10-18-incremental-ingestion.md)
 describes per-hour publication, complete-run retention and live verification.
+
+## Cloudflare Tunnel and the site
+
+Install `cloudflared`, authorize the `andyfang.app` zone with
+`cloudflared tunnel login`, and create a named tunnel. Keep its credentials
+outside the repository. The installed configuration lives at
+`~/.local/share/meteogram-tunnel/config.yml`:
+
+```yaml
+tunnel: <tunnel-UUID>
+credentials-file: /home/<user>/.local/share/meteogram-tunnel/credentials.json
+metrics: 127.0.0.1:20242
+ingress:
+  - hostname: <your-tunnel-hostname>
+    service: http://127.0.0.1:18080
+  - service: http_status:404
+```
+
+Route the hostname with `cloudflared tunnel route dns <tunnel-UUID> <hostname>`.
+Verify its HTTPS certificate and an unauthenticated 401 before adding the
+server-only `METEOGRAM_API_URL` and `METEOGRAM_API_TOKEN` variables to Vercel.
+An authenticated `/forecast` request should return 200 for each of the four
+models. No database port is exposed. A hostname such as
+`weather.api.andyfang.app` needs certificate coverage beyond Cloudflare's normal
+single-label wildcard; validate that coverage before deploying the site.
+
+Install `native/systemd/meteogram-tunnel.service` beside the native user unit
+and enable both units on a host with a working user service manager. Stop direct
+instances before starting managed instances, since the local ports are
+exclusive. These unit files provide restart and boot configuration; a running
+shell process alone does not establish reboot persistence.
+
+The site adapter rotates regional winds using the grid's Lambert convergence,
+converts vector speeds to km/h, computes WGS84 MSL heights, and retains the
+actual pressure levels and lead times. Native GFS cloud fraction is used
+directly. Other models use a pressure-dependent Sundqvist humidity cloud
+estimate, following [Open-Meteo's meteorological implementation](https://github.com/open-meteo/open-meteo/blob/main/Sources/App/Helper/Meteorology.swift).
+AIFS specific humidity is converted with Murphy–Koop saturation pressures and
+ECMWF mixed-phase weighting. Those cloud estimates are explicitly labeled in
+the site; no unavailable vertical layers or forecast hours are invented.

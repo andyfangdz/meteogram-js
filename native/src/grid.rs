@@ -106,6 +106,10 @@ impl Lambert {
             self.y0 + self.rho0 - rho * theta.cos(),
         )
     }
+    /// Clockwise rotation from native grid bearings to true bearings.
+    pub fn convergence_degrees(&self, longitude: f64) -> f64 {
+        self.n * ((longitude - self.lon0.to_degrees() + 180.).rem_euclid(360.) - 180.)
+    }
     pub fn inverse(&self, x: f64, y: f64) -> (f64, f64) {
         let (x, y) = (x - self.x0, self.rho0 - (y - self.y0));
         let rho = x.hypot(y) * self.n.signum();

@@ -33,6 +33,7 @@ pub async fn observe(
     let started = now();
     let http = reqwest::Client::builder()
         .no_proxy()
+        .default_headers(crate::api::client_headers(&disk_root)?)
         .timeout(Duration::from_secs(30))
         .build()?;
     let mut hashes = HashMap::new();

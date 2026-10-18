@@ -20,7 +20,7 @@ This document provides comprehensive guidance for AI agents working on this code
 
 ## Project Overview
 
-**Meteogram-js** is a Next.js 16 aviation weather visualization app. It fetches atmospheric forecast data from Open-Meteo and renders interactive meteograms (time-height cross-sections) showing clouds, temperature, wind, and pressure.
+**Meteogram-js** is a Next.js 16 aviation weather visualization app. It fetches atmospheric forecast data from the optional native Dynamical/ClickHouse service with Open-Meteo fallback and renders interactive meteograms (time-height cross-sections) showing clouds, temperature, wind, and pressure.
 
 ### Tech Stack
 - **Framework**: Next.js 16 (App Router, React 19)
@@ -63,7 +63,8 @@ src/
 ├── types/
 │   └── weather.ts                      # TypeScript interfaces
 ├── utils/
-│   ├── weather.ts                      # transformWeatherData function
+│   ├── weather.ts                      # Open-Meteo transform and shared column geometry
+│   ├── native-weather.ts               # Validated native schema, units, humidity and wind adapter
 │   ├── meteogram.ts                    # Grid interpolation, contour helpers
 │   ├── params.ts                       # URL param serialization
 │   └── serverPreferences.ts            # Server-side cookie/URL preference logic
@@ -73,11 +74,11 @@ src/
 ### Data Flow
 
 ```
-[Open-Meteo API]
+[Native API over authenticated Cloudflare Tunnel, or Open-Meteo fallback]
        ↓
-fetchWeatherDataAction (server action)
+getWeatherData (server action; native first for supported CONUS routes)
        ↓
-transformWeatherData (utils/weather.ts)
+transformNativeForecast or transformWeatherData
        ↓
 [CloudColumn[] with computed MSL heights]
        ↓
@@ -328,7 +329,8 @@ Server-side cookie reading can fail on Edge. The `cookieReadSuccess` flag trigge
 
 ## Dynamical migration and native forecast service
 
-The Next.js provider still uses Open-Meteo. Current incremental operation and
+The Next.js provider can use this native service with Open-Meteo fallback.
+Current incremental operation and
 verification are documented in `docs/plans/2026-10-18-incremental-ingestion.md`.
 The separate home-server native
 service now lives in `native/`, with one Rust/Cargo application for source reads,
@@ -362,7 +364,7 @@ column at a time with two threads and one tile per block, including after
 background merges, so 85-lead arrays stay under the 2 GiB query cap;
 do not remove full palette/index/key checks to reduce memory. Complete first-run
 evidence is in `docs/plans/2026-10-18-rrfs-ingestion.md`.
-This adds native ingestion only; the Next.js model menu/provider is unchanged.
+The RRFS ingestion report predates the subsequent site integration described below.
 
 Historical evidence remains under `docs/plans/` and `docs/benchmarks/`:
 
@@ -658,6 +660,49 @@ The subsequent packing, source-preflight and temporary-cache measurements are in
 `docs/plans/2026-10-18-native-ingestion-optimization.md`. Keep resident kernel
 timings distinct from complete load and refresh times. Cache eviction reduces
 temporary retention; it does not avoid the initial map download/cache write.
+
+### Native site provider and tunnel
+
+`getWeatherData` reads server-only `METEOGRAM_API_URL` and
+`METEOGRAM_API_TOKEN`. `ModelConfig.nativeModel` maps `best_match`/`gfs_hrrr`
+to HRRR, `gfs_seamless` to GFS, `ecmwf_aifs025_single` to AIFS and `rrfs` to
+RRFS. Other routes and coordinates outside the retained CONUS region keep
+Open-Meteo. `fallbackModel` gives RRFS an explicitly labeled GFS backup.
+Native fetches use HTTPS (loopback HTTP for development), bearer authentication,
+no redirects/cache and a five-second timeout. Invalid schemas, units, freshness
+or usable horizon fall back to Open-Meteo; source metadata reaches the client,
+credentials do not. Elevation is an independent bounded Open-Meteo request.
+
+`src/utils/native-weather.ts` validates exact model field/pressure grids and
+expected lead sets before normalization. It preserves missing hours, native
+AIFS levels and six-hour cadence, hourly regional data and the GFS three-hour
+tail. `CloudColumn.durationMinutes` controls actual cell widths and the final
+time-domain extent. Do not synthesize missing layers/hours. The adapter uses
+the existing WGS84 MSL conversion and shared `completeCloudColumn` geometry,
+rotates grid-relative HRRR/RRFS winds using the API's Lambert convergence,
+and converts m/s to the app's km/h. GFS has native cloud fraction; the other
+models use labeled humidity cloud estimates. AIFS specific humidity uses
+Murphy–Koop saturation and ECMWF mixed phase; GFS dew point is derived.
+
+The source label shows provider, actual model, UTC initialization, partial-run
+progress and cloud estimation. The route keys `ClientWrapper` by location/model
+to prevent a prior route's refresh from changing the new route's data.
+Tests live in `native-weather.test.ts` and `native-provider.test.ts`, with a
+native response fixture in `__helpers__/nativeForecast.ts`.
+
+The Rust API reads the token from `METEOGRAM_API_TOKEN`, an explicit token file,
+or `<root>/api-token`. A configured invalid file fails startup. All three routes
+(`/health`, `/runs`, `/forecast`) require bearer auth when configured; native
+verification clients load that same token. API wind rotation comes from the
+selected grid cell's actual source projection, never a hardcoded HRRR angle.
+
+Tunnel credentials/config live outside Git under
+`~/.local/share/meteogram-tunnel`; ingress only proxies loopback 18080, with a
+404 catchall. Database and metrics listeners remain local. The user units are
+`native/systemd/meteogram-{native,tunnel}.service`. Validate public TLS, a 401
+without auth, authenticated forecasts, and actual Vercel charts before calling
+the integration deployed. A direct process alone is not proof of reboot
+persistence. See `native/README.md` for setup and certificate limitations.
 
 ## Development Tips
 

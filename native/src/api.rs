@@ -1,19 +1,72 @@
 use crate::{db::Db, grid, state::*};
 use anyhow::{Context, Result};
 use axum::{
-    extract::{Query, State},
+    extract::{Query, Request, State},
     http::{HeaderMap, StatusCode},
+    middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, HashMap},
     io::Write,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
+
+pub fn api_token(root: &Path) -> Result<Option<String>> {
+    let token = if let Ok(value) = std::env::var("METEOGRAM_API_TOKEN") {
+        Some(value)
+    } else if let Some(path) = std::env::var_os("METEOGRAM_API_TOKEN_FILE") {
+        Some(std::fs::read_to_string(path).context("Read API token file")?)
+    } else {
+        let path = root.join("api-token");
+        if path.exists() {
+            Some(std::fs::read_to_string(path).context("Read API token file")?)
+        } else {
+            None
+        }
+    };
+    token
+        .map(|s| {
+            let s = s.trim().to_owned();
+            anyhow::ensure!(
+                (32..=512).contains(&s.len()) && s.bytes().all(|b| b.is_ascii_graphic()),
+                "API token must contain 32–512 printable ASCII characters"
+            );
+            Ok(s)
+        })
+        .transpose()
+}
+pub fn client_headers(root: &Path) -> Result<HeaderMap> {
+    let mut headers = HeaderMap::new();
+    if let Some(token) = api_token(root)? {
+        let mut value = format!("Bearer {token}").parse::<axum::http::HeaderValue>()?;
+        value.set_sensitive(true);
+        headers.insert(axum::http::header::AUTHORIZATION, value);
+    }
+    Ok(headers)
+}
+async fn authenticate(State(expected): State<[u8; 32]>, request: Request, next: Next) -> Response {
+    let valid = request
+        .headers()
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|h| h.to_str().ok())
+        .and_then(|h| h.strip_prefix("Bearer "))
+        .is_some_and(|token| Sha256::digest(token.as_bytes()).as_slice() == expected);
+    if !valid {
+        return (
+            StatusCode::UNAUTHORIZED,
+            [("www-authenticate", "Bearer")],
+            Json(json!({"error":"Unauthorized"})),
+        )
+            .into_response();
+    }
+    next.run(request).await
+}
 struct Model {
     meta: Value,
     ids: Vec<u32>,
@@ -185,6 +238,11 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
                 .collect::<Vec<_>>());
         }
         payload["freshness"] = freshness;
+        payload["wind_rotation_degrees"] = json!(if grid_relative(&name) {
+            grid::Lambert::from_crs(&m.meta["grid"]["crs"])?.convergence_degrees(m.lon[i])
+        } else {
+            0.
+        });
         Ok((StatusCode::OK, payload))
     };
     run().unwrap_or((
@@ -275,6 +333,7 @@ async fn health(State(app): State<App>) -> (StatusCode, Json<Value>) {
     .unwrap()
 }
 pub async fn serve(root: PathBuf, port: u16) -> Result<()> {
+    let token = api_token(&root)?;
     let db = tokio::task::spawn_blocking(Db::new).await??;
     let app = App {
         root,
@@ -283,11 +342,15 @@ pub async fn serve(root: PathBuf, port: u16) -> Result<()> {
         pool: Arc::new(tokio::sync::Semaphore::new(4)),
         books: Default::default(),
     };
-    let router = Router::new()
+    let mut router = Router::new()
         .route("/forecast", get(handle))
         .route("/health", get(health))
         .route("/runs", get(list_runs))
         .with_state(app);
+    if let Some(token) = token {
+        let digest: [u8; 32] = Sha256::digest(token.as_bytes()).into();
+        router = router.layer(middleware::from_fn_with_state(digest, authenticate));
+    }
     let listener = tokio::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, port)).await?;
     println!("Rust native forecast API listening on 127.0.0.1:{port}");
     axum::serve(listener, router).await?;
@@ -332,4 +395,66 @@ pub(crate) fn test_forecast(root: &Path, query: HashMap<String, String>) -> (Sta
         },
         query,
     )
+}
+
+#[cfg(test)]
+mod auth_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn bearer_auth_protects_all_routes_before_handlers() {
+        let token = "test-only-token-with-at-least-32-characters";
+        let hash: [u8; 32] = Sha256::digest(token.as_bytes()).into();
+        let mut router = Router::new();
+        for path in ["/health", "/forecast", "/runs"] {
+            router = router.route(path, get(|| async { StatusCode::OK }));
+        }
+        let router = router.layer(middleware::from_fn_with_state(hash, authenticate));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let task = tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
+        for path in ["/health", "/forecast", "/runs"] {
+            let url = format!("http://127.0.0.1:{port}{path}");
+            for value in [None, Some("Bearer wrong"), Some("Basic invalid")] {
+                let mut request = client.get(&url);
+                if let Some(value) = value {
+                    request = request.header("authorization", value);
+                }
+                let response = request.send().await.unwrap();
+                assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+                assert_eq!(response.headers()["www-authenticate"], "Bearer");
+            }
+            assert_eq!(
+                client
+                    .get(url)
+                    .bearer_auth(token)
+                    .send()
+                    .await
+                    .unwrap()
+                    .status(),
+                StatusCode::OK
+            );
+        }
+        task.abort();
+    }
+
+    #[test]
+    fn token_files_fail_closed_and_client_headers_hide_secrets() {
+        let root = tempfile::tempdir().unwrap();
+        assert!(api_token(root.path()).unwrap().is_none());
+        std::fs::write(root.path().join("api-token"), "too-short").unwrap();
+        assert!(api_token(root.path()).is_err());
+        std::fs::write(
+            root.path().join("api-token"),
+            "public-test-token-longer-than-thirty-two-characters\n",
+        )
+        .unwrap();
+        let headers = client_headers(root.path()).unwrap();
+        assert!(headers["authorization"].is_sensitive());
+        assert!(headers["authorization"]
+            .to_str()
+            .unwrap()
+            .starts_with("Bearer "));
+    }
 }

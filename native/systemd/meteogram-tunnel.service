@@ -1,0 +1,15 @@
+[Unit]
+Description=Cloudflare Tunnel for the native meteogram API
+After=network-online.target meteogram-native.service
+Wants=meteogram-native.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate --config %h/.local/share/meteogram-tunnel/config.yml --protocol http2 run
+Restart=always
+RestartSec=15
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

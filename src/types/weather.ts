@@ -24,6 +24,8 @@ export interface CloudCell {
 
 export interface CloudColumn {
   date: Date;
+  /** Native forecast interval; absent on legacy Open-Meteo columns. */
+  durationMinutes?: number;
   cloud: CloudCell[];
   groundTemp: number; // Temperature in Celsius at 2m above ground
   groundDewPoint: number; // Dew point in Celsius at 2m above ground
@@ -53,7 +55,29 @@ export type WeatherModel =
   | "ecmwf_ifs"
   | "ecmwf_aifs025_single"
   | "gem_seamless"
-  | "gem_hrdps_continental";
+  | "gem_hrdps_continental"
+  | "rrfs";
+
+export type NativeWeatherModel = "hrrr" | "gfs" | "aifs" | "rrfs";
+
+export interface WeatherSource {
+  provider: "dynamical" | "open-meteo";
+  model: string;
+  initializedAt?: string;
+  complete?: boolean;
+  availableHours?: number;
+  expectedHours?: number;
+  cloudMethod: "model" | "humidity-estimate";
+  cadenceMinutes: number;
+  fallback?: boolean;
+}
+
+export interface WeatherResult {
+  data: CloudColumn[];
+  timestamp: string;
+  elevationFt: number | null;
+  source: WeatherSource;
+}
 
 export interface WeatherApiParams {
   cell_selection: string;

@@ -44,7 +44,14 @@ export const useMeteogramScales = (
 
     return {
       dateScale: scaleTime({
-        domain: [weatherData[0].date, weatherData[weatherData.length - 1].date],
+        domain: [
+          weatherData[0].date,
+          new Date(
+            weatherData[weatherData.length - 1].date.getTime() +
+              (weatherData[weatherData.length - 1].durationMinutes ?? 0) *
+                60_000,
+          ),
+        ],
         range: [0, bounds.xMax],
       }),
       mslScale: scaleLinear<number>({
