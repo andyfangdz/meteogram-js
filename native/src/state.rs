@@ -221,16 +221,26 @@ pub fn check_metadata(m: &Value) -> Result<()> {
         bail!("Source schema/coverage changed");
     }
     if let Some(s) = m.get("storage") {
-        if s["layout"] != "cell_profile_v1"
+        crate::dictionary::index_bytes(m)?;
+        if crate::packed::tiled(m) {
+            anyhow::ensure!(
+                crate::packed::valid_layout(m)
+                    && s["encoding"] == crate::dictionary::ENCODING
+                    && s["codec"] == "delta"
+                    && s["delta_bytes"] == 2,
+                "Unknown packed storage layout"
+            );
+        } else if s["layout"] != "cell_profile_v1"
             || !["level_lead", "lead_level"].iter().any(|v| s["axes"] == *v)
-            || !["float32_bits", "float32"]
+            || !["float32_bits", "float32", crate::dictionary::ENCODING]
                 .iter()
                 .any(|v| s["encoding"] == *v)
             || !["t64", "delta", "zstd", "lz4", "gorilla"]
                 .iter()
                 .any(|v| s["codec"] == *v)
             || (["t64", "delta"].iter().any(|v| s["codec"] == *v)
-                != (s["encoding"] == "float32_bits"))
+                != (s["encoding"] == "float32_bits"
+                    || s["encoding"] == crate::dictionary::ENCODING))
         {
             bail!("Unknown storage layout");
         }
@@ -447,6 +457,10 @@ pub fn clean_workspace(p: &Path) -> Result<()> {
     for item in fs::read_dir(p)? {
         let item = item?;
         let s = item.file_name().to_string_lossy().into_owned();
+        if s.starts_with("lead-") && s.ends_with(".palette") && item.file_type()?.is_dir() {
+            fs::remove_dir_all(item.path())?;
+            continue;
+        }
         if (s.starts_with("lead-") || s.starts_with("surface-"))
             && [".npy", ".stage.zst", ".stage.json", ".stage.zst.tmp"]
                 .iter()

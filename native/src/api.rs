@@ -19,6 +19,7 @@ struct Model {
     ids: Vec<u32>,
     lat: Vec<f64>,
     lon: Vec<f64>,
+    dictionary: Option<crate::dictionary::Dictionary>,
 }
 #[derive(Clone)]
 struct App {
@@ -59,11 +60,13 @@ fn model(root: &Path, e: &Entry) -> Result<Model> {
     let lat = coords("latitude", &mut arrays)?;
     let lon = coords("longitude", &mut arrays)?;
     anyhow::ensure!(ids.windows(2).all(|w| w[0] < w[1]), "Unsorted cell ids");
+    let dictionary = crate::dictionary::Dictionary::load(&p, &meta)?;
     Ok(Model {
         meta,
         ids,
         lat,
         lon,
+        dictionary,
     })
 }
 fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
@@ -103,7 +106,17 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
             Ok(v) => v,
             Err(e) => return Ok((StatusCode::NOT_FOUND, json!({"error":e.to_string()}))),
         };
-        let (rows, elapsed) = app.db.profile(&e.database, &e.table, &m.meta, cell)?;
+        let (rows, elapsed) = if m.dictionary.is_some() {
+            app.db.profile_with_dictionary(
+                &e.database,
+                &e.table,
+                &m.meta,
+                cell,
+                m.dictionary.as_ref(),
+            )?
+        } else {
+            app.db.profile(&e.database, &e.table, &m.meta, cell)?
+        };
         let mut fields = vec!["lead_hour".to_owned()];
         fields.extend(crate::state::fields(&m.meta));
         Ok((

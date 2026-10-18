@@ -1,0 +1,336 @@
+{
+  "full_database_validation": false,
+  "gzip_bytes": 11315,
+  "health": {
+    "models": {
+      "aifs": {
+        "age_hours": 11.102,
+        "available": true,
+        "init_time": "2026-10-18T06:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 168.898
+      },
+      "gfs": {
+        "age_hours": 11.102,
+        "available": true,
+        "init_time": "2026-10-18T06:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 168.898
+      },
+      "hrrr": {
+        "age_hours": 5.102,
+        "available": true,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 12,
+        "remaining_hours": 42.898
+      }
+    },
+    "native_fields": true
+  },
+  "invalid_inputs": 4,
+  "outside_region": 3,
+  "profiles": [
+    {
+      "cell_id": 282664,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 41.013,
+      "longitude": -74.027,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "0df4dbce1ca42f392cf6c56dc103a6347d27080162cb7a1997e46662d1edb931",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 305520,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -120.0,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "3f07eb561999f8114d223ec0b35a68ec726ba26511f2f478f06d07008fcdb0e5",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 288300,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 40.0,
+      "longitude": -105.0,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "2babefb8e89f36a713ee0066b69332fded2a277fe21748431038a47841bb790b",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 305612,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -97.0,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "8741e51784428ab478e3ea949acb63cb108af34b91bb5c55a65a26daa9c2eb4a",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 230620,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 50.0,
+      "longitude": -125.0,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "65f03f49b96c7925d97273a01fb3acec11f1f27cc39e57d283360a8e9752944d",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 380616,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 24.0,
+      "longitude": -66.0,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "40f8dc246daadf5e49baf88d34e8ef40a2194198924432a66cb341f8fd0e4c97",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 305618,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -95.5,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "91e55140726e6b583a56ac9a07bbf5a5a7b640e13a4a1c90fac13a6867661e16",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 281020,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 41.25,
+      "longitude": -125.0,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "77b8e9346700c223fdbcc443d803355a1dade629b105854b9908ff2a585fcd4c",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 252220,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 46.25,
+      "longitude": -125.0,
+      "model": "aifs",
+      "revision": "aifs_20261018135757_414d1e3b",
+      "rows_sha256": "7f87c9383aca94efe9e9f8f11c68a704a2dff4053d8e59d52be1efe0348a3735",
+      "snapshot_id": "W2VTRZNGHSMWYWKERRR0"
+    },
+    {
+      "cell_id": 282664,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 41.013,
+      "longitude": -74.027,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "563ce858ea385e88f246027cd6e4be741c9eb580ab60f0d5c68369d729eadb55",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 305520,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -120.0,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "8dcc4c661da8b7dd3514b3a334627f228d340918a4cae768ba717f8a98a37650",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 288300,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 40.0,
+      "longitude": -105.0,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "e67488655b970d225f2da98311076cf22e556777bae538d879092f3f9a9489fd",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 305612,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -97.0,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "4e8dc4f34bb25c14e8c3b41f4ffebf82a43132f21ff970e8bd65aeae604c2f38",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 230620,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 50.0,
+      "longitude": -125.0,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "f19c9df479e88f0d2f789f934c792e6c8c6c76b4f11e902e76b26b6b222e3f6d",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 380616,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 24.0,
+      "longitude": -66.0,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "576a4ed4efffbf5eed18b3f4464b12ebcabe2aea91e87d02f916e07adef88845",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 305618,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -95.5,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "af36226efbfd09c81bca1a0d70251a15dfdd789b75640b30ccf15531376bf47b",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 281020,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 41.25,
+      "longitude": -125.0,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "f39f2b3cdf054f67572089449bb44c15baea27d3e49c16c14f448b6e154c41f6",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 252220,
+      "compared": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "latitude": 46.25,
+      "longitude": -125.0,
+      "model": "gfs",
+      "revision": "gfs_20261018134756_7d24c140",
+      "rows_sha256": "21028239c77d83462fce014760b082467c337ea0d497909ed353c0f96a908528",
+      "snapshot_id": "C1ZJYPP8XXY76JW0RQSG"
+    },
+    {
+      "cell_id": 634797,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 41.013,
+      "longitude": -74.027,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "84352069ee65ecea4aef01fc19a836eb14f69277e81e94c056ea4ab1acfe041f",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 905137,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -120.0,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "2804801825bc2028130e8f5169424c60fb7f06bd2048d4f15fbabc151c8db507",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 837221,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 40.0,
+      "longitude": -105.0,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "0dd0ee17bd9d00fbf256b512d4585220c025906208d3b41b8d9928a166553394",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 1051530,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 37.0,
+      "longitude": -97.0,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "77ca2f0b84657742e86a66dfa687e76c86c094d86a77063d87dc894a1ac8481b",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 1560,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 49.99870527918694,
+      "longitude": -69.9457653465481,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "2423d263e874787e0f9b2ddc026ce16f932811499d8d8d724e086ef019b311a3",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 1904539,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 24.002274157586132,
+      "longitude": -88.95581746244328,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "57258d30f3edb6a5a0ceb37a68533b663cbae9c543e914ed2cd016f4bf065376",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 1021285,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 36.854790114523844,
+      "longitude": -85.57539176200294,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "2f4302b199d6e625c65105c915b2c734d2aac8023f4b484c1ec723ce15df6c6b",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 733746,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 39.56150593001015,
+      "longitude": -74.38129510451668,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "5d532078ff53f588437844d0f7d285d86796e522696e9327c70978b1ffb90392",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    },
+    {
+      "cell_id": 389057,
+      "compared": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "latitude": 45.88935115428077,
+      "longitude": -113.9638130433631,
+      "model": "hrrr",
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "rows_sha256": "bd293b4bb618426aa58f329c932e42861dd69098cc36be18a89eb5dff8926449",
+      "snapshot_id": "WX5GN6QXSDKTBPQQP96G"
+    }
+  ],
+  "success": true,
+  "time": 1792343166.805447
+}

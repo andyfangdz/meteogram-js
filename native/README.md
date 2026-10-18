@@ -109,15 +109,19 @@ meteogram-native adopt --root "$SERVICE_ROOT" --source "$MODEL_DATA" \
 
 ## Storage and query contract
 
-The physical format is `cell_profile_v1`: one row per native cell, with pressure
+The original physical format is `cell_profile_v1`: one row per native cell, with pressure
 fields arranged as level/lead arrays and surface fields as lead arrays. Float32
 bits are stored losslessly as `Array(UInt32)` with T64 and Zstd (level 3 for
 HRRR, level 1 for GFS/AIFS); there is no
-quantization. The ARM build uses the NEON packing routine, finishing small groups
+quantization. New HRRR acquisitions use the lossless dictionary/tile format
+described below; GFS/AIFS retain raw Float32 bits. The ARM build uses the NEON
+packing routine, finishing small groups
 of cells across all leads to keep output profiles in CPU cache. Up to three
 readers reuse bounded input/packing buffers, read full cell batches, and feed a
-bounded queue of encoded ClickHouse Native blocks. HRRR defaults to four insert
-workers with 4,096-cell batches; GFS uses 2,048 cells and AIFS 4,096. Other models
+bounded queue of encoded ClickHouse Native blocks. Raw-bit HRRR uses four insert
+workers with 4,096-cell batches; packed HRRR uses six workers, two readers and
+16,384-cell batches, with at most four simultaneous inserts. GFS uses 2,048
+cells and AIFS 4,096. Other models
 default to one worker. `load --workers 1..6` selects an explicit
 insert worker count. Workers wait for each complete insert response, including
 late server errors. Failed loads cancel and drain all workers before cleanup.
@@ -138,6 +142,33 @@ to avoid a second full scan. The standalone `validate` command always performs
 an independent whole-table scan, and `--staged` reads the staging files again.
 Any failed attempt clears its validation marker and drains pending work.
 
+`float32_dictionary_v1` stores exact Float32 palettes for each field/level/lead
+and unsigned indices into them. It preserves every Float32 bit, including
+signed zero; it does not quantize values. `values.dict.zst` is versioned,
+checksummed, SHA-256-bound to metadata and required for serving. All palettes
+must be finite, and every stored index must fit its own slot's palette.
+Acquisition sorts palettes in Float32 total order and checkpoints them with
+each durable lead. Palette files must survive weather-staging cleanup.
+
+When all palettes fit UInt16, HRRR uses `cell_tiles_v1`: each row retains 256
+adjacent native cells, preserving their ordered original IDs. For each
+field/level/lead slot, 32 UInt128 words hold eight exact UInt16 indices each.
+`Delta(2)/Zstd(1)` compresses the lanes. Every lane in every word is checked
+against its exact palette bound after insertion, including zero padding in the
+last tile. Report physical tile rows separately from logical cells and
+cell/lead rows. This grouping reduces storage without averaging spatial cells.
+The reader accepts 8-, 64- and 256-cell tiles, UInt16/UInt32 dictionary profiles,
+and raw-bit profiles. SQL bound queries have an explicit 2 MiB parser limit.
+
+For a UInt16 source of at most 8 GiB, the loader can prefetch all input files
+inside the load clock when `MemAvailable >= input bytes + 12 GiB`; otherwise
+it streams normally. It decodes checksum-checked, aligned staging frames
+directly into UInt16 tile words. The queue and reader buffers are bounded;
+consumed file pages receive discard hints. The server's 6 GiB limit is unchanged.
+Packed loads release unused ClickHouse allocator pages initially and every
+four validated batches, keeping background logging below the same RSS cap.
+These releases and the final allocator purge are included in measured load time.
+
 The reader also supports the earlier one-row-per-cell/lead format, so existing
 current/previous tables need no migration. Both formats return the same JSON
 rows. The source wind frame remains explicit: HRRR grid-relative, GFS/AIFS
@@ -149,7 +180,9 @@ gzip and retain `Cache-Control: no-store`.
 
 New weather staging uses `*.stage.zst` plus a versioned `*.stage.json` index.
 Independent Zstd level-1 frames contain at most 4,096 cells, with reversible
-Float32 byte shuffling and a checksum on every frame. The JSON index records
+Float32 byte shuffling and a checksum on every frame. Version 2 UInt16 staging
+uses slot-major spatial deltas and byte shuffling, preserving every index.
+The JSON index records
 shape, dtype, encoding, and exact compressed offsets/lengths. Reads decode only
 the required blocks into bounded buffers, including partial final blocks.
 Coordinates use `cells.bin.zst`: a checksummed Zstd frame containing the
@@ -175,7 +208,7 @@ revision metadata expires after seven days.
 ```sh
 cargo fmt --check --manifest-path native/Cargo.toml
 cargo clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings
-# Include the four integration tests while the isolated database is running:
+# Include the integration tests while the isolated database is running:
 cargo test --locked --manifest-path native/Cargo.toml -- --include-ignored
 
 meteogram-native verify --root "$SERVICE_ROOT" --full --output "$RESULTS/verify.json"
@@ -238,3 +271,6 @@ the [ingestion optimization report](../docs/plans/2026-10-18-native-ingestion-op
 The subsequent [full HRRR load and compressed staging report](../docs/plans/2026-10-18-hrrr-load-optimization.md)
 records complete 116.36- and 118.03-second loads, including validation, and the
 native staging format's measured storage reduction.
+The [one-minute HRRR report](../docs/plans/2026-10-18-hrrr-one-minute-load.md)
+records complete 50.21- and 53.70-second fresh-table loads, exact dictionary
+storage, bounded insert concurrency, full validation and installation evidence.

@@ -1,0 +1,19 @@
+{
+  "queries": 134,
+  "key": "tile_id",
+  "read_rows": 25606,
+  "expected_rows": 25606,
+  "read_bytes": 29231399904,
+  "os_read_bytes": 0,
+  "user_seconds": 86.67286299999998,
+  "system_seconds": 4.447167000000001,
+  "wall_work_seconds": 88.785,
+  "all_range_rows_match": true,
+  "ranges_contiguous_disjoint": true,
+  "all_physical_rows_covered": true,
+  "logical_cells": 1638757,
+  "logical_cell_lead_rows": 80299093,
+  "tile_size": 64,
+  "first_tile": 0,
+  "last_tile": 25605
+}

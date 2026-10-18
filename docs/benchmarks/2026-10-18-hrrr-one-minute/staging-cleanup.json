@@ -1,0 +1,12 @@
+{
+  "files": 298,
+  "weather_bytes": 50727764653,
+  "retained": [
+    "metadata",
+    "coordinate indexes",
+    "codebooks",
+    "frame descriptors",
+    "reports",
+    "source pin"
+  ]
+}

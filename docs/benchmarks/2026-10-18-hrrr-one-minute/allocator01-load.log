@@ -1,0 +1,5 @@
+{"cells":16384,"model":"hrrr","phase":"load","readers":2,"total":1638757,"workers":6}
+{"cells":196608,"model":"hrrr","phase":"load","readers":2,"total":1638757,"workers":6}
+{"cells":344064,"model":"hrrr","phase":"load","readers":2,"total":1638757,"workers":6}
+Error: ClickHouse 500 Internal Server Error: Code: 241. DB::Exception: (total) memory limit exceeded: would use 2.61 GiB (attempt to allocate chunk of 0.00 B), current RSS: 6.02 GiB, maximum: 6.00 GiB. Untracked memory across all threads: 8.99 MiB. (MEMORY_LIMIT_EXCEEDED)
+

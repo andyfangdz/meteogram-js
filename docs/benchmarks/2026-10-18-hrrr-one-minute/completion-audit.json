@@ -1,0 +1,15 @@
+{
+  "time": 1792343473.262,
+  "full_scope_verified": true,
+  "two_external_cli_loads_under_60_seconds": true,
+  "every_stored_index_and_palette_value_checked": true,
+  "independent_whole_table_audit_passed": true,
+  "exact_profiles_and_http_passed": true,
+  "no_new_memory_errors_during_final_loads": true,
+  "installed_binary_identical": true,
+  "protected_tables_and_catalog_preserved": true,
+  "source_hashes_verified_before_cleanup": true,
+  "rust_source_hashes_valid": true,
+  "evidence_json_valid": true,
+  "local_links_valid": 6
+}

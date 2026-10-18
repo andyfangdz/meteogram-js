@@ -366,12 +366,15 @@ ownership and must not be deleted by production retention.
 | CLI and operational commands | `native/src/main.rs` |
 | Catalog, locks, freshness/schema policy, durable files, legacy NPY/NPZ decoding | `native/src/state.rs` |
 | Indexed checksummed Zstd staging, compressed coordinate index, legacy conversion | `native/src/stage.rs` |
+| Lossless per-field/level/lead palettes, versioned/hash-bound codebook I/O | `native/src/dictionary.rs` |
+| UInt128 words packing eight indices, 256-cell Native tiles and complete lane/ID validation | `native/src/packed.rs` |
+| Bounded preparation from an immutable local profile table (diagnostic/offline) | `native/src/prepare.rs` |
 | Pinned Icechunk manifest preflight, source reads, Zarr codecs, regional gathering | `native/src/source.rs` |
 | Native spherical HRRR projection and nearest-cell resolution | `native/src/grid.rs` |
 | Buffered parallel staging reads/Native insertion and validation/GC | `native/src/store.rs` |
 | Bit-exact cache-tiled NEON/portable packing and Native block encoding | `native/src/pack.rs` |
 | Async acquisition overlap, recovery, update and rollback | `native/src/pipeline.rs` |
-| ClickHouse HTTP/RowBinary access and both physical readers | `native/src/db.rs` |
+| ClickHouse HTTP/RowBinary access and legacy/raw-bit/dictionary/tile readers | `native/src/db.rs` |
 | Loopback forecast API and health | `native/src/api.rs` |
 | ClickHouse/API/updater supervision and persisted schedule | `native/src/service.rs` |
 | HTTP/data verification, query/packing benchmarks, staging compression | `native/src/verify.rs` |
@@ -389,10 +392,11 @@ fsynced. Each candidate has a unique immutable table. Keep current/previous
 revisions and a ten-minute retired grace period. GC drops only explicitly owned
 tables; adoption creates an independent validated clone of its source table.
 
-New revisions use `cell_profile_v1`: one physical row per native cell, full
+Raw-bit revisions use `cell_profile_v1`: one physical row per native cell, full
 pressure profiles arranged as level/lead arrays, surface profiles as lead arrays,
 and exact Float32 bits in UInt32 arrays with T64 + Zstd (level 3 for HRRR,
-level 1 for GFS/AIFS). Metadata explicitly
+level 1 for GFS/AIFS). New HRRR acquisitions use the lossless dictionary/tile
+format detailed below. Metadata explicitly
 versions layout, axes, encoding and writer and is bound to its validation marker.
 The API also reads legacy cell/lead tables, including rollback to them. Validation
 compares ALL sorted cell IDs, physical types, array lengths and finite bits,
@@ -406,9 +410,13 @@ pinned Icechunk manifests (16 concurrent checks); `preflight.json` records missi
 references. This does not guarantee the referenced payload objects are readable;
 preserve download/decode/full-data gates. At most two extractors run initially,
 then one extractor overlaps one loader. Each extractor
-has at most 16 map tasks. HRRR loading uses up to three reusable-buffer readers
-and four insert workers connected by a bounded queue; other models default to
+has at most 16 map tasks. HRRR loading uses three raw-bit or two packed-tile
+reusable-buffer readers and four raw-bit or six packed-tile load workers
+connected by a bounded
+queue; other models default to
 one of each. `load --workers 1..6` overrides insert concurrency for measurement.
+Packed workers share four insert permits; validation overlaps inserts without
+holding a permit. Keep permits RAII-scoped so errors and panics release them.
 New staging is indexed, byte-shuffled Float32 in independent checksummed Zstd
 frames (`*.stage.zst` + versioned JSON indexes); new coordinates use
 `cells.bin.zst`. `stage.rs` retains legacy NPY/NPZ readers for old snapshots.
@@ -428,12 +436,80 @@ Only the loader's private in-memory proof of all validated ranges avoids a
 duplicate whole-table scan; standalone `validate` always performs that scan.
 Do not replace range checks with source-only checks, sampling, persisted flags,
 or a row-count-only gate. Failed attempts clear stale validation markers.
+The one-minute optimization work adds experimental `float32_dictionary_v1`:
+UInt16 spatial indices when every palette fits (UInt32 otherwise), plus exact
+Float32 palettes for each field/level/lead. UInt16 encoding checks every word
+before narrowing. The metadata's `storage.index_type` controls physical decoding;
+an absent key means the original UInt32 index representation.
+There is no quantization. Palettes must be versioned, checksummed, hash-bound to
+metadata, dimension-checked and finite; every stored index must be checked
+against its own slot's palette length. Profile/API readers decode the palettes
+and retain legacy Float32-bit support. Preserve both validations: finite palette
+values and bounds of **all** database indices. HRRR acquisition checkpoints a
+per-lead palette alongside durable arrays before source-cache eviction; a final
+codebook remains required serving data and must survive staging cleanup.
+`prepare-store` exports all configured cells/fields/times from an immutable local
+source table into fresh raw/dictionary staging for controlled comparisons; its
+preparation time must not be reported as loader performance. This prototype's
+performance claims require complete measured loads; acquisition and preparation
+remain outside the load clock.
+`sort-stage` losslessly sorts palettes and remaps staged indices for experiments.
+Direct HRRR acquisition sorts each map's palette in Float32 total order. Typed
+UInt16 arrays use indexed staging version 2: spatial slot-major wrapping deltas,
+byte shuffle, and checksummed Zstd blocks. Readers reconstruct exact UInt32 codes
+and still accept version 1 Float32/UInt32 staging. Keep partial-block, random-read,
+delta-wrap, overflow, checksum and legacy-format checks when changing this codec.
+For UInt16 inputs of at most 8 GiB, the loader can sequentially prefetch the
+immutable weather files **inside the load clock** before starting DB writes.
+This requires `MemAvailable >= input bytes + 12 GiB` for the unchanged 6 GiB
+database cap, 4 GiB client budget and 2 GiB margin; otherwise it streams normally.
+Every frame still receives CRC/shape/decode checks and every stored index is
+validated. Consumed pages are discarded. Legacy UInt16 profile tables use T64/Zstd level 1;
+raw-bit HRRR retains T64/Zstd level 3. Preserve the measured memory guards.
+The current HRRR UInt16 experiment uses `cell_tiles_v1`: 256 adjacent source
+rows are packed as 32 UInt128 words per field/level/lead slot, each containing
+eight exact little-endian UInt16 indices. `tile_id` is the source-row ordinal
+divided by 256; ordered
+`cell_ids Array(UInt32)` preserves and verifies every original grid ID.
+Arrays retain the level/lead slot order, and independent DB lane checks compare
+**all eight indices** with that slot's palette bound. A guarded broadword
+comparison is used for bounds <=32768; the complete UInt16 domain has a checked
+fallback. `Delta(2)/Zstd(1)` compresses the UInt16 lanes beneath the UInt128 type.
+The final incomplete tile pads unused weather lanes with valid code zero;
+those lanes are checked too, but are not exposed as cells. Physical tile-row
+counts must not be reported as cell counts. Keep full ordered-ID checks,
+single-cell API decoding, all-lane corruption tests and legacy profile readers.
+Readers also accept the earlier 8- and 64-cell tile formats. Physical array widths
+include all words per slot; checks must cover every group. Full bound queries
+use an explicit 2 MiB SQL limit.
+When every input is UInt16 staging v2, the tile loader decodes complete aligned
+frames directly to their `[block][slot][cell]` UInt16 layout and copies adjacent
+cells into UInt128 words. It does not widen or transpose the whole forecast.
+Legacy inputs retain the normalized-buffer path. Both paths share checksum and
+bounded decode gates; their Native bytes and ingestion-buffer source samples
+must remain identical. Palette broadcasts are compact binary constants
+(`base64Decode`/`reinterpret`), expanded across word groups by a constant
+`arrayWithConstant` expression in lane checks, so there is no UInt128
+multiplication per stored word and full HRRR queries fit the SQL parser limit.
+Exact palette bounds remain unchanged.
 The full scope, 116.36/118.03-second measured HRRR loads, compressed staging and
 deployment evidence are in
 `docs/plans/2026-10-18-hrrr-load-optimization.md`. Those load times include all
-stored-value checks but exclude source acquisition/staging. Keep 4,096-cell
-HRRR batches and the existing memory limits: an 8,192-cell/four-writer experiment
+stored-value checks but exclude source acquisition/staging. Raw-bit HRRR loads
+retain 4,096-cell batches; HRRR packed loads use 16,384-cell batches and two
+readers/queued blocks; non-tiled UInt16 loads use 8,192-cell batches.
+Packed loads purge unused ClickHouse allocator pages initially and after each
+four validated batches, as well as before final validation. This keeps
+background logging below the unchanged 6 GiB RSS cap; all purge time is included
+in the load clock. Do not replace these releases by raising the memory limit.
+Preserve the existing memory limits: a raw-bit
+8,192-cell/four-writer experiment
 exceeded the 6 GiB server limit and was rejected.
+The subsequent full 12Z HRRR loads finished in 50.21 and 53.70 seconds with the
+same frozen binary, all validation included, using the lossless 256-cell layout
+and four active-insert permits. Evidence and installation details are in
+`docs/plans/2026-10-18-hrrr-one-minute-load.md`. These are complete staged-load
+measurements, not complete network-refresh timings. Preserve this distinction.
 Packing completes small cell tiles across all leads to reuse output cache lines.
 Encoded maps are evicted only after both staged arrays are synced and the lead
 checkpoint is durable. Resume prunes any already-checkpointed maps and retains

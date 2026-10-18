@@ -1,0 +1,44 @@
+{
+  "fields": [
+    {
+      "entries": 14278052,
+      "max_cardinality": 24455,
+      "slots": 1470
+    },
+    {
+      "entries": 515229,
+      "max_cardinality": 581,
+      "slots": 1470
+    },
+    {
+      "entries": 1269117,
+      "max_cardinality": 1246,
+      "slots": 1470
+    },
+    {
+      "entries": 1196092,
+      "max_cardinality": 1317,
+      "slots": 1470
+    },
+    {
+      "entries": 1147012,
+      "max_cardinality": 798,
+      "slots": 1470
+    },
+    {
+      "entries": 1693452,
+      "max_cardinality": 1588,
+      "slots": 1470
+    },
+    {
+      "entries": 30178,
+      "max_cardinality": 684,
+      "slots": 49
+    },
+    {
+      "entries": 35447,
+      "max_cardinality": 885,
+      "slots": 49
+    }
+  ]
+}

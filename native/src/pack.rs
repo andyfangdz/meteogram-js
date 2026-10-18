@@ -193,6 +193,41 @@ fn text(out: &mut Vec<u8>, s: &[u8]) {
     out.extend_from_slice(s);
 }
 
+/// Append exact UInt16 indices without a scalar Vec append for every value.
+/// All inputs are checked before narrowing; no overflowing word is accepted.
+unsafe fn append_uint16(out: &mut Vec<u8>, values: &[u32]) -> bool {
+    let bytes = values.len() * 2;
+    out.reserve(bytes);
+    let target = out.as_mut_ptr().add(out.len());
+    let mut i = 0;
+    #[cfg(target_arch = "aarch64")]
+    {
+        let mut maximum = vdupq_n_u32(0);
+        while i + 8 <= values.len() {
+            let a = vld1q_u32(values.as_ptr().add(i));
+            let b = vld1q_u32(values.as_ptr().add(i + 4));
+            maximum = vmaxq_u32(maximum, vmaxq_u32(a, b));
+            vst1q_u16(
+                target.add(i * 2).cast(),
+                vcombine_u16(vmovn_u32(a), vmovn_u32(b)),
+            );
+            i += 8;
+        }
+        if vmaxvq_u32(maximum) > u16::MAX as u32 {
+            return false;
+        }
+    }
+    while i < values.len() {
+        let Ok(value) = u16::try_from(values[i]) else {
+            return false;
+        };
+        target.add(i * 2).cast::<u16>().write_unaligned(value);
+        i += 1;
+    }
+    out.set_len(out.len() + bytes);
+    true
+}
+
 /// Encode a plain HTTP Native-format block. Names are NUL-terminated ASCII;
 /// each column contains cells*lengths[f] 32-bit values. The Rust caller owns all inputs.
 /// # Safety
@@ -208,9 +243,10 @@ pub unsafe extern "C" fn encode_native(
     encoded: i32,
     out_len: *mut usize,
 ) -> *mut u8 {
-    if cfg!(target_endian = "big") || fields == 0 || cells == 0 {
+    if cfg!(target_endian = "big") || fields == 0 || cells == 0 || !(0..=2).contains(&encoded) {
         return std::ptr::null_mut();
     }
+    let value_bytes = if encoded == 2 { 2 } else { 4 };
     fn vsize(mut n: usize) -> usize {
         let mut size = 1;
         while n >= 128 {
@@ -221,10 +257,10 @@ pub unsafe extern "C" fn encode_native(
     }
     let mut size =
         vsize(fields + 2) + vsize(cells) + 1 + 11 + 1 + 6 + cells * 4 + 1 + 7 + 1 + 6 + cells * 4;
-    let kind: &[u8] = if encoded != 0 {
-        b"Array(UInt32)"
-    } else {
-        b"Array(Float32)"
+    let kind: &[u8] = match encoded {
+        2 => b"Array(UInt16)",
+        1 => b"Array(UInt32)",
+        _ => b"Array(Float32)",
     };
     for f in 0..fields {
         let n = std::ffi::CStr::from_ptr(*names.add(f)).to_bytes().len();
@@ -233,7 +269,7 @@ pub unsafe extern "C" fn encode_native(
             + vsize(kind.len())
             + kind.len()
             + cells * 8
-            + cells * (*lengths.add(f)) * 4;
+            + cells * (*lengths.add(f)) * value_bytes;
     }
     let mut out = Vec::with_capacity(size);
     varuint(&mut out, fields + 2);
@@ -248,22 +284,24 @@ pub unsafe extern "C" fn encode_native(
     out.extend_from_slice(std::slice::from_raw_parts(ids as *const u8, cells * 4));
     for f in 0..fields {
         text(&mut out, std::ffi::CStr::from_ptr(*names.add(f)).to_bytes());
-        text(
-            &mut out,
-            if encoded != 0 {
-                b"Array(UInt32)"
-            } else {
-                b"Array(Float32)"
-            },
-        );
+        text(&mut out, kind);
         let width = *lengths.add(f);
         for row in 1..=cells {
             out.extend_from_slice(&((row * width) as u64).to_le_bytes());
         }
-        out.extend_from_slice(std::slice::from_raw_parts(
-            *columns.add(f) as *const u8,
-            cells * width * 4,
-        ));
+        if encoded == 2 {
+            if !append_uint16(
+                &mut out,
+                std::slice::from_raw_parts(*columns.add(f), cells * width),
+            ) {
+                return std::ptr::null_mut();
+            }
+        } else {
+            out.extend_from_slice(std::slice::from_raw_parts(
+                *columns.add(f) as *const u8,
+                cells * width * 4,
+            ));
+        }
     }
     let mut data = out.into_boxed_slice();
     *out_len = data.len();
@@ -280,5 +318,78 @@ pub unsafe extern "C" fn free_native(pointer: *mut u8, len: usize) {
         drop(Box::from_raw(std::ptr::slice_from_raw_parts_mut(
             pointer, len,
         )));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn vector_uint16_rejects_overflow_in_vector_and_tail() {
+        for bad in [None, Some(0), Some(8), Some(16)] {
+            let mut values = [65535u32; 17];
+            if let Some(i) = bad {
+                values[i] = 65536;
+            }
+            let mut output = vec![42u8];
+            assert_eq!(
+                unsafe { append_uint16(&mut output, &values) },
+                bad.is_none()
+            );
+            if bad.is_some() {
+                assert_eq!(output, [42]);
+            } else {
+                assert_eq!(output.len(), 35);
+                assert!(output[1..].iter().all(|v| *v == 255));
+            }
+        }
+    }
+    #[test]
+    fn uint16_native_wire_preserves_the_entire_code_domain() {
+        let values: Vec<u32> = (0..=65535).collect();
+        let mut bytes = vec![7u8];
+        assert!(unsafe { append_uint16(&mut bytes, &values) });
+        assert_eq!(bytes.len(), 1 + 65536 * 2);
+        for (code, word) in bytes[1..].as_chunks::<2>().0.iter().enumerate() {
+            assert_eq!(u16::from_le_bytes(*word) as usize, code);
+        }
+    }
+    #[test]
+    fn native_uint16_keeps_boundary_and_rejects_overflow() {
+        let name = std::ffi::CString::new("temperature").unwrap();
+        let names = [name.as_ptr()];
+        let widths = [2];
+        let ids = [7];
+        for (codes, mode, succeeds) in [
+            ([0u32, 65535], 2, true),
+            ([0u32, 65536], 2, false),
+            ([0u32, 65536], 1, true),
+        ] {
+            let columns = [codes.as_ptr()];
+            let mut len = 0;
+            let pointer = unsafe {
+                encode_native(
+                    names.as_ptr(),
+                    columns.as_ptr(),
+                    widths.as_ptr(),
+                    1,
+                    ids.as_ptr(),
+                    1,
+                    mode,
+                    &mut len,
+                )
+            };
+            assert_eq!(!pointer.is_null(), succeeds);
+            if succeeds {
+                let bytes = unsafe { std::slice::from_raw_parts(pointer, len) };
+                if mode == 2 {
+                    assert!(bytes.windows(13).any(|w| w == b"Array(UInt16)"));
+                    assert_eq!(&bytes[len - 4..], &[0, 0, 255, 255]);
+                } else {
+                    assert_eq!(&bytes[len - 4..], &65536u32.to_le_bytes());
+                }
+                unsafe { free_native(pointer, len) };
+            }
+        }
     }
 }

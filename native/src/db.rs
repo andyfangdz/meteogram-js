@@ -27,7 +27,12 @@ impl Db {
         })
     }
     pub fn bytes(&self, query: &str) -> Result<Vec<u8>> {
-        let r = self.http.post(&self.url).body(query.to_owned()).send()?;
+        let r = self
+            .http
+            .post(&self.url)
+            .query(&[("max_query_size", "2097152")])
+            .body(query.to_owned())
+            .send()?;
         let status = r.status();
         let b = r.bytes()?.to_vec();
         if !status.is_success() {
@@ -92,15 +97,46 @@ impl Db {
         m: &Value,
         cell: u32,
     ) -> Result<(Vec<Value>, f64)> {
+        self.profile_with_dictionary(database, table, m, cell, None)
+    }
+    pub fn profile_with_dictionary(
+        &self,
+        database: &str,
+        table: &str,
+        m: &Value,
+        cell: u32,
+        dictionary: Option<&crate::dictionary::Dictionary>,
+    ) -> Result<(Vec<Value>, f64)> {
+        anyhow::ensure!(
+            !crate::dictionary::encoded(m) || dictionary.is_some(),
+            "Missing profile dictionary"
+        );
         ident(database)?;
         ident(table)?;
         let fs = fields(m);
         for f in &fs {
             ident(f)?;
         }
-        let profile = m["storage"]["layout"] == "cell_profile_v1";
+        let tiled = crate::packed::tiled(m);
+        let tile_cells = if tiled {
+            crate::packed::tile_cells(m)?
+        } else {
+            1
+        };
+        let point = if tiled {
+            Some(
+                dictionary
+                    .context("Missing packed dictionary")?
+                    .point_index(cell)?,
+            )
+        } else {
+            None
+        };
+        let profile = m["storage"]["layout"] == "cell_profile_v1" || tiled;
         let cols = fs.join(",");
-        let q = if profile {
+        let q = if let Some(point) = point {
+            format!("SELECT cell_ids,{cols} FROM {database}.{table} PREWHERE tile_id={} LIMIT 2 FORMAT RowBinary",point/tile_cells)
+        } else if profile {
             format!("SELECT {cols} FROM {database}.{table} PREWHERE cell_id={cell} LIMIT 2 FORMAT RowBinary")
         } else {
             format!("SELECT lead_hour,{cols} FROM {database}.{table} PREWHERE cell_id={cell} ORDER BY lead_hour FORMAT RowBinary")
@@ -116,9 +152,24 @@ impl Db {
         let bit = m["storage"]["encoding"] == "float32_bits";
         let mut rows = vec![];
         if profile {
+            let lane = if let Some(point) = point {
+                let lane = point % tile_cells;
+                let ids = array(&mut c, 4)?;
+                anyhow::ensure!(
+                    ids.len() <= tile_cells && ids.get(lane) == Some(&cell),
+                    "Incorrect packed cell association"
+                );
+                lane
+            } else {
+                0
+            };
             let mut arrays = vec![];
             for _ in &fs {
-                arrays.push(array(&mut c)?);
+                arrays.push(if tiled {
+                    packed_array(&mut c, lane, tile_cells / crate::packed::LANES)?
+                } else {
+                    array(&mut c, crate::dictionary::index_bytes(m)?)?
+                });
             }
             if c.position() != bytes.len() as u64 {
                 bail!("Duplicate cell profile");
@@ -130,16 +181,21 @@ impl Db {
                     if a.len() != width {
                         bail!("Malformed profile length");
                     }
-                    let value = |i: usize| -> Value {
-                        let v = if bit {
-                            f32::from_bits(a[i])
+                    let value = |i: usize| -> Result<Value> {
+                        let bits = if let Some(dictionary) = dictionary {
+                            dictionary.value(f, i, a[i])?
                         } else {
-                            f32::from_le_bytes(a[i].to_le_bytes())
+                            a[i]
+                        };
+                        let v = if bit {
+                            f32::from_bits(bits)
+                        } else {
+                            f32::from_le_bytes(bits.to_le_bytes())
                         };
                         if v.is_finite() {
-                            json!(v as f64)
+                            Ok(json!(v as f64))
                         } else {
-                            Value::Null
+                            Ok(Value::Null)
                         }
                     };
                     if f < nf {
@@ -151,10 +207,10 @@ impl Db {
                                     t * nl + l
                                 })
                             })
-                            .collect();
+                            .collect::<Result<Vec<_>>>()?;
                         row.push(Value::Array(vals));
                     } else {
-                        row.push(value(t));
+                        row.push(value(t)?);
                     }
                 }
                 rows.push(Value::Array(row));
@@ -167,7 +223,7 @@ impl Db {
                 for f in 0..fs.len() {
                     if f < nf {
                         row.push(Value::Array(
-                            array(&mut c)?
+                            array(&mut c, 4)?
                                 .into_iter()
                                 .map(|bits| json!(f32::from_bits(bits) as f64))
                                 .collect(),
@@ -199,7 +255,7 @@ pub fn varuint(c: &mut Cursor<&[u8]>) -> Result<usize> {
     }
     bail!("Invalid varuint")
 }
-fn array(c: &mut Cursor<&[u8]>) -> Result<Vec<u32>> {
+fn array(c: &mut Cursor<&[u8]>, bytes: usize) -> Result<Vec<u32>> {
     let n = varuint(c)?;
     if n > 1000000 {
         bail!("Oversized profile");
@@ -207,8 +263,34 @@ fn array(c: &mut Cursor<&[u8]>) -> Result<Vec<u32>> {
     let mut a = Vec::with_capacity(n);
     for _ in 0..n {
         let mut b = [0; 4];
-        c.read_exact(&mut b)?;
+        c.read_exact(&mut b[..bytes])?;
         a.push(u32::from_le_bytes(b));
     }
     Ok(a)
+}
+fn packed_array(c: &mut Cursor<&[u8]>, lane: usize, groups: usize) -> Result<Vec<u32>> {
+    let n = varuint(c)?;
+    anyhow::ensure!(
+        n <= 1_000_000
+            && groups > 0
+            && n.is_multiple_of(groups)
+            && lane < groups * crate::packed::LANES,
+        "Oversized packed profile"
+    );
+    let start = c.position() as usize;
+    let end = start
+        .checked_add(n * 16)
+        .context("Packed profile overflow")?;
+    anyhow::ensure!(end <= c.get_ref().len(), "Truncated packed profile");
+    let mut values = Vec::with_capacity(n / groups);
+    for slot in 0..n / groups {
+        let at = start + (slot * groups + lane / crate::packed::LANES) * 16;
+        let bytes: &[u8; 16] = c.get_ref()[at..at + 16].try_into()?;
+        values.push(crate::packed::code(
+            u128::from_le_bytes(*bytes),
+            lane % crate::packed::LANES,
+        ));
+    }
+    c.set_position(end as u64);
+    Ok(values)
 }

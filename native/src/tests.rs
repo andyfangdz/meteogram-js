@@ -297,7 +297,8 @@ fn database_native_roundtrip_and_corruption_gate() {
     let root = tempfile::tempdir().unwrap();
     let db = Db::new().unwrap();
     let table = format!("rust_test_{}", uuid::Uuid::new_v4().simple());
-    // Cross two 4,096-cell loader/staging boundaries and a short final batch.
+    // Cross 4,096-cell staging/raw-load and 8,192-cell UInt16-load boundaries,
+    // including a short final batch in both representations.
     let cells = 8197;
     let ids: Vec<_> = (1..=cells as u32).map(|i| i * 11).collect();
     save_cells(
@@ -349,6 +350,83 @@ fn database_native_roundtrip_and_corruption_gate() {
         store::validate(root.path(), &clone, "meteogram_native", true).unwrap();
         store::validate(&compressed, &clone, "meteogram_native", true).unwrap();
         let loaded_metadata = read_json(compressed.join("metadata.json")).unwrap();
+        let coded_dir = root.path().join("dictionary");
+        let recoded_raw = root.path().join("raw_again");
+        crate::prepare::from_store(
+            &compressed,
+            DATABASE,
+            &clone,
+            &coded_dir,
+            Some(&recoded_raw),
+        )
+        .unwrap();
+        let dict_table = format!("{table}_dict");
+        let coded =
+            store::load_with_workers(root.path(), &coded_dir, &dict_table, Some(4)).unwrap();
+        assert_eq!(coded["storage"]["encoding"], crate::dictionary::ENCODING);
+        assert_eq!(coded["storage"]["index_type"], "UInt16");
+        assert_eq!(coded["storage"]["layout"], "cell_tiles_v1");
+        assert_eq!(coded["storage_rows"], cells.div_ceil(crate::packed::CELLS));
+        store::validate(&coded_dir, &dict_table, DATABASE, true).unwrap();
+        db.command(&format!("DROP TABLE {DATABASE}.{dict_table} SYNC"))
+            .unwrap();
+        let sorted_dir = root.path().join("sorted_dictionary");
+        crate::prepare::sorted_stage(&coded_dir, &sorted_dir).unwrap();
+        let coded_dir = sorted_dir;
+        store::load_with_workers(root.path(), &coded_dir, &dict_table, Some(4)).unwrap();
+        store::validate(&coded_dir, &dict_table, DATABASE, true).unwrap();
+        let coded_meta = read_json(coded_dir.join("metadata.json")).unwrap();
+        let dictionary = crate::dictionary::Dictionary::load(&coded_dir, &coded_meta)
+            .unwrap()
+            .unwrap();
+        for index in (0..8).chain([4096, cells - 1]) {
+            let original = db
+                .profile(DATABASE, &clone, &loaded_metadata, ids[index])
+                .unwrap()
+                .0;
+            let restored = db
+                .profile_with_dictionary(
+                    DATABASE,
+                    &dict_table,
+                    &coded_meta,
+                    ids[index],
+                    Some(&dictionary),
+                )
+                .unwrap()
+                .0;
+            assert_eq!(original, restored);
+        }
+        let exported = root.path().join("packed_export");
+        let raw_export = root.path().join("packed_raw");
+        crate::prepare::from_store(
+            &coded_dir,
+            DATABASE,
+            &dict_table,
+            &exported,
+            Some(&raw_export),
+        )
+        .unwrap();
+        let mut decoded = vec![0f32; cells * 4];
+        crate::stage::Array::open(&raw_export.join("lead-000.npy"), &[cells, 2, 2])
+            .unwrap()
+            .read_into(0, &mut decoded)
+            .unwrap();
+        assert!(decoded
+            .iter()
+            .enumerate()
+            .all(|(i, v)| v.to_bits() == bits[i % bits.len()]));
+        let book = coded_dir.join("values.dict.zst");
+        let pristine = fs::read(&book).unwrap();
+        let mut corrupt = pristine.clone();
+        corrupt[10] ^= 1;
+        fs::write(&book, corrupt).unwrap();
+        assert!(crate::dictionary::Dictionary::load(&coded_dir, &coded_meta).is_err());
+        fs::write(&book, pristine).unwrap();
+        let invalid = 65535u128 << 112;
+        db.command(&format!("ALTER TABLE {DATABASE}.{dict_table} UPDATE temperature=arrayConcat([toUInt128('{invalid}')],arrayWithConstant({},toUInt128(0))) WHERE tile_id=0 SETTINGS mutations_sync=2",6*crate::packed::GROUPS-1)).unwrap();
+        assert!(store::validate(&coded_dir, &dict_table, DATABASE, false).is_err());
+        db.command(&format!("DROP TABLE {DATABASE}.{dict_table} SYNC"))
+            .unwrap();
         store::validate_inserted_batch(
             &db,
             &clone,
@@ -387,6 +465,9 @@ fn database_native_roundtrip_and_corruption_gate() {
     ));
     let _ = db.command(&format!(
         "DROP TABLE IF EXISTS meteogram_native.{table}_clone SYNC"
+    ));
+    let _ = db.command(&format!(
+        "DROP TABLE IF EXISTS {DATABASE}.{table}_dict SYNC"
     ));
     assert!(result.is_ok());
 }

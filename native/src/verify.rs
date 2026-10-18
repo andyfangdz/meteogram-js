@@ -121,6 +121,7 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
     for (name, e) in &c.current {
         let path = descriptor(root, e)?;
         let meta = read_json(path.join("metadata.json"))?;
+        let dictionary = crate::dictionary::Dictionary::load(&path, &meta)?;
         if full {
             store::validate(&path, &e.table, &e.database, false)?;
         }
@@ -166,7 +167,13 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
                 .send()?
                 .error_for_status()?
                 .json()?;
-            let (database_rows, _) = db.profile(&e.database, &e.table, &meta, cell)?;
+            let (database_rows, _) = db.profile_with_dictionary(
+                &e.database,
+                &e.table,
+                &meta,
+                cell,
+                dictionary.as_ref(),
+            )?;
             anyhow::ensure!(
                 equivalent(&v["rows"], &json!(database_rows), ""),
                 "HTTP/database values differ"
@@ -243,6 +250,8 @@ pub fn benchmark(root: &Path, count: usize, clients: usize) -> Result<Value> {
     let mut out = serde_json::Map::new();
     for (name, e) in c.current {
         let m = read_json(descriptor(root, &e)?.join("metadata.json"))?;
+        let dictionary = crate::dictionary::Dictionary::load(&descriptor(root, &e)?, &m)?
+            .map(std::sync::Arc::new);
         let cells = crate::stage::load_cells(&descriptor(root, &e)?)?;
         let ids: Vec<_> = cells["cell_id"]
             .bytes
@@ -253,7 +262,13 @@ pub fn benchmark(root: &Path, count: usize, clients: usize) -> Result<Value> {
             .collect();
         let db = Db::new()?;
         for i in 0..count {
-            db.profile(&e.database, &e.table, &m, ids[(i * 104729) % ids.len()])?;
+            db.profile_with_dictionary(
+                &e.database,
+                &e.table,
+                &m,
+                ids[(i * 104729) % ids.len()],
+                dictionary.as_deref(),
+            )?;
         }
         let started = Instant::now();
         let mut handles = vec![];
@@ -262,11 +277,18 @@ pub fn benchmark(root: &Path, count: usize, clients: usize) -> Result<Value> {
             let e = e.clone();
             let m = m.clone();
             let ids = ids.clone();
+            let dictionary = dictionary.clone();
             handles.push(std::thread::spawn(move || -> Result<Vec<f64>> {
                 let mut times = vec![];
                 for i in (worker..count).step_by(clients) {
                     let t = Instant::now();
-                    db.profile(&e.database, &e.table, &m, ids[(i * 104729) % ids.len()])?;
+                    db.profile_with_dictionary(
+                        &e.database,
+                        &e.table,
+                        &m,
+                        ids[(i * 104729) % ids.len()],
+                        dictionary.as_deref(),
+                    )?;
                     times.push(t.elapsed().as_secs_f64() * 1000.);
                 }
                 Ok(times)
@@ -324,6 +346,9 @@ pub fn compare_stores(root: &Path, reference: &Path, samples: usize) -> Result<V
             .context("Reference model missing")?;
         let m = read_json(descriptor(root, &e)?.join("metadata.json"))?;
         let om = read_json(descriptor(reference, old)?.join("metadata.json"))?;
+        let dictionary = crate::dictionary::Dictionary::load(&descriptor(root, &e)?, &m)?;
+        let original_dictionary =
+            crate::dictionary::Dictionary::load(&descriptor(reference, old)?, &om)?;
         for key in [
             "dataset",
             "init_time",
@@ -380,8 +405,15 @@ pub fn compare_stores(root: &Path, reference: &Path, samples: usize) -> Result<V
         let mut compared = 0;
         for i in 0..samples {
             let id = ids[(i * 104729) % ids.len()];
-            let (a, _) = db.profile(&e.database, &e.table, &m, id)?;
-            let (b, _) = db.profile(&old.database, &old.table, &om, id)?;
+            let (a, _) =
+                db.profile_with_dictionary(&e.database, &e.table, &m, id, dictionary.as_ref())?;
+            let (b, _) = db.profile_with_dictionary(
+                &old.database,
+                &old.table,
+                &om,
+                id,
+                original_dictionary.as_ref(),
+            )?;
             anyhow::ensure!(
                 equivalent(&json!(a), &json!(b), ""),
                 "Source values differ {name} cell {id}"

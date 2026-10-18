@@ -1,9 +1,12 @@
 mod api;
 mod db;
+mod dictionary;
 mod grid;
 mod observe;
 mod pack;
+mod packed;
 mod pipeline;
+mod prepare;
 mod service;
 mod source;
 mod stage;
@@ -25,6 +28,28 @@ struct Cli {
 }
 #[derive(Subcommand)]
 enum Cmd {
+    SortStage {
+        #[arg(long)]
+        source: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    PrepareStore {
+        #[arg(long)]
+        source: PathBuf,
+        #[arg(long, default_value = "meteogram_native")]
+        database: String,
+        #[arg(long)]
+        table: String,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        raw_output: Option<PathBuf>,
+    },
+    InspectDictionary {
+        #[arg(long)]
+        data: PathBuf,
+    },
     Inspect {
         model: String,
     },
@@ -219,6 +244,27 @@ fn output(value: &serde_json::Value, path: Option<PathBuf>) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     match Cli::parse().command {
+        Cmd::SortStage {
+            source,
+            output: target,
+        } => output(
+            &tokio::task::spawn_blocking(move || prepare::sorted_stage(&source, &target)).await??,
+            None,
+        )?,
+        Cmd::InspectDictionary { data } => output(&dictionary::inspect(&data)?, None)?,
+        Cmd::PrepareStore {
+            source,
+            database,
+            table,
+            output: target,
+            raw_output,
+        } => output(
+            &tokio::task::spawn_blocking(move || {
+                prepare::from_store(&source, &database, &table, &target, raw_output.as_deref())
+            })
+            .await??,
+            None,
+        )?,
         Cmd::ConvertStage {
             source,
             output: target,
@@ -355,6 +401,7 @@ async fn main() -> Result<()> {
                 let (p, e) = state::candidate(&root, model)?;
                 fs::copy(source.join("metadata.json"), p.join("metadata.json"))?;
                 stage::copy_cells(&source, &p)?;
+                dictionary::copy(&source, &p, &m)?;
                 let db = db::Db::new()?;
                 db.command("CREATE DATABASE IF NOT EXISTS meteogram_native")?;
                 db.command(&format!(

@@ -1,0 +1,31 @@
+{
+  "database": "meteogram_native",
+  "finite_validation_mode": "whole_table_scan",
+  "full_values_checked": true,
+  "init_time": "2026-10-18T12:00:00.000000000",
+  "rows": 1638757,
+  "samples": 10,
+  "snapshot_id": "WX5GN6QXSDKTBPQQP96G",
+  "staged_comparison": true,
+  "staged_sample_origin": "staging_files",
+  "storage": {
+    "axes": "level_lead",
+    "codec": "t64",
+    "compression": "ZSTD(3)",
+    "dictionary": {
+      "encoded_bytes": 1372612,
+      "entries": 485081,
+      "file": "values.dict.zst",
+      "sha256": "492a0cc8d758e4ef9817a8ff32bef0b1b59b62694fd87769750f52c4f79046c8",
+      "version": 1
+    },
+    "encoding": "float32_dictionary_v1",
+    "index_granularity": 4,
+    "index_type": "UInt16",
+    "layout": "cell_profile_v1",
+    "writer": "rust_native"
+  },
+  "storage_rows": 1638757,
+  "table": "goal_hrrr_60_sorted_smoke",
+  "validated_at": 1792337713.1530037
+}

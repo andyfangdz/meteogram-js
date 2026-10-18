@@ -321,6 +321,8 @@ pub async fn fetch(
     } else {
         pin
     };
+    let dictionary_mode =
+        model == "hrrr" && (!existing || old.as_ref().is_some_and(crate::dictionary::staged));
     if let Some(ref p) = old {
         anyhow::ensure!(
             p["model"] == model && p["dataset"] == dataset(model)?,
@@ -444,7 +446,10 @@ pub async fn fetch(
         metas.insert(v.to_owned(), src.meta(v).await?);
     }
     let leads = selected_leads.unwrap_or_else(|| leads(model));
-    let meta = json!({"model":model,"dataset":dataset(model)?,"init_time":init_time,"snapshot_id":src.snapshot,"cells":ids.len(),"levels":levels,"leads":leads,"variables":variables,"surface_variables":surface,"grid":grid,"units":units,"coverage":"conus","spatial_shards":1,"shard_index":0,"workers":16,"zarr_concurrency":16,"open_seconds":start.elapsed().as_secs_f64(),"offline_cache":false});
+    let mut meta = json!({"model":model,"dataset":dataset(model)?,"init_time":init_time,"snapshot_id":src.snapshot,"cells":ids.len(),"levels":levels,"leads":leads,"variables":variables,"surface_variables":surface,"grid":grid,"units":units,"coverage":"conus","spatial_shards":1,"shard_index":0,"workers":16,"zarr_concurrency":16,"open_seconds":start.elapsed().as_secs_f64(),"offline_cache":false});
+    if dictionary_mode {
+        meta["staging"] = json!({"encoding":crate::dictionary::ENCODING,"complete":false});
+    }
     if let Some(ref old) = old {
         for k in ["init_time", "snapshot_id", "cells", "levels"] {
             anyhow::ensure!(
@@ -528,7 +533,26 @@ pub async fn fetch(
     fs::create_dir_all(&cache)?;
     let ids = Arc::new(ids);
     let bytes = Arc::new(AtomicU64::new(0));
-    for (lead, tasks) in by_lead {
+    let mut palettes: Vec<Vec<Vec<u32>>> = crate::dictionary::widths(&meta)?
+        .into_iter()
+        .map(|width| (0..width).map(|_| Vec::new()).collect())
+        .collect();
+    let nt = leads.len();
+    let nf = variables.len();
+    fn merge_palettes(
+        full: &mut [Vec<Vec<u32>>],
+        partial: crate::dictionary::Dictionary,
+        t: usize,
+        nt: usize,
+        nf: usize,
+    ) {
+        for (f, field) in partial.fields.into_iter().enumerate() {
+            for (l, palette) in field.into_iter().enumerate() {
+                full[f][if f < nf { l * nt + t } else { t }] = palette;
+            }
+        }
+    }
+    for (time_index, (lead, tasks)) in by_lead.into_iter().enumerate() {
         let completed_keys: Vec<_> = tasks.iter().map(|t| t.key.clone()).collect();
         let report = out.join(format!("lead-{lead:03}.json"));
         if report.exists() {
@@ -537,6 +561,19 @@ pub async fn fetch(
                     && crate::stage::exists(&out.join(format!("surface-{lead:03}.npy"))),
                 "Completed arrays removed; use fresh extraction"
             );
+            if dictionary_mode {
+                let checkpoint = out.join(format!("lead-{lead:03}.palette"));
+                let partial_meta = read_json(checkpoint.join("metadata.json"))?;
+                anyhow::ensure!(
+                    partial_meta["snapshot_id"] == meta["snapshot_id"]
+                        && partial_meta["init_time"] == meta["init_time"]
+                        && partial_meta["leads"] == json!([lead]),
+                    "Palette checkpoint identity"
+                );
+                let partial = crate::dictionary::Dictionary::load(&checkpoint, &partial_meta)?
+                    .context("Missing palette checkpoint")?;
+                merge_palettes(&mut palettes, partial, time_index, nt, nf);
+            }
             prune_checkpointed_cache(&cache, &completed_keys)?;
             continue;
         }
@@ -565,7 +602,14 @@ pub async fn fetch(
                             );
                             values.push(f);
                         }
-                        Ok((t, values))
+                        drop(data);
+                        let (values, palette) = if dictionary_mode {
+                            let (codes, palette) = crate::dictionary::encode_spatial(values)?;
+                            (codes, Some(palette))
+                        } else {
+                            (values, None)
+                        };
+                        Ok((t, values, palette))
                     })
                     .await?
                 }
@@ -578,7 +622,21 @@ pub async fn fetch(
         let nf = variables.len();
         let mut profiles = vec![0f32; nc * nl * nf];
         let mut ground = vec![0f32; nc * 2];
-        for (t, values) in results {
+        let mut partial_fields: Vec<Vec<Vec<u32>>> = (0..nf + 2)
+            .map(|f| {
+                (0..if f < nf { nl } else { 1 })
+                    .map(|_| Vec::new())
+                    .collect()
+            })
+            .collect();
+        for (t, values, palette) in results {
+            if let Some(palette) = palette {
+                partial_fields[if t.level.is_some() {
+                    t.field
+                } else {
+                    nf + t.field
+                }][t.level.unwrap_or(0)] = palette;
+            }
             for (i, v) in values.into_iter().enumerate() {
                 if let Some(l) = t.level {
                     profiles[(i * nl + l) * nf + t.field] = v;
@@ -588,16 +646,33 @@ pub async fn fetch(
             }
         }
         disk_guard(out, ((profiles.len() + ground.len()) * 4) as u64)?;
-        let profile_stage = crate::stage::write(
+        let write = if dictionary_mode {
+            crate::stage::write_codes
+        } else {
+            crate::stage::write
+        };
+        let profile_stage = write(
             &out.join(format!("lead-{lead:03}.npy")),
             &[nc, nl, nf],
             &profiles,
         )?;
-        let surface_stage = crate::stage::write(
+        let surface_stage = write(
             &out.join(format!("surface-{lead:03}.npy")),
             &[nc, 2],
             &ground,
         )?;
+        if dictionary_mode {
+            let checkpoint = out.join(format!("lead-{lead:03}.palette"));
+            fs::create_dir_all(&checkpoint)?;
+            let mut partial_meta = meta.clone();
+            partial_meta["leads"] = json!([lead]);
+            let partial = crate::dictionary::Dictionary::new(partial_fields);
+            let info = partial.save(&checkpoint, &partial_meta)?;
+            partial_meta["staging"] =
+                json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
+            atomic(checkpoint.join("metadata.json"), &partial_meta)?;
+            merge_palettes(&mut palettes, partial, time_index, nt, nf);
+        }
         File::open(out)?.sync_all()?;
         let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"profile_stage":profile_stage,"surface_stage":surface_stage,"source_cache_policy":"uncheckpointed_leads_only"});
         atomic(&report, &stats)?;
@@ -605,6 +680,13 @@ pub async fn fetch(
         // encoded maps for resume. Retain only a partially acquired lead.
         prune_checkpointed_cache(&cache, &completed_keys)?;
         println!("{stats}");
+    }
+    if dictionary_mode {
+        let dictionary = crate::dictionary::Dictionary::new(palettes);
+        let info = dictionary.save(out, &meta)?;
+        meta["staging"] =
+            json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
+        atomic(out.join("metadata.json"), &meta)?;
     }
     Ok(meta)
 }
