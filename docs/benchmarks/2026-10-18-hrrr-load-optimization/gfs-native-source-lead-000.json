@@ -1,0 +1,23 @@
+{
+  "chunks": 182,
+  "finite": true,
+  "grib_bytes": 135770385,
+  "lead": 0,
+  "profile_stage": {
+    "checksum": true,
+    "encoded_bytes": 11773883,
+    "format": "indexed_zstd_v1",
+    "raw_bytes": 17917200,
+    "seconds": 0.107708048
+  },
+  "seconds": 2.106301955,
+  "source_cache_policy": "uncheckpointed_leads_only",
+  "staged_value_bytes": 18116280,
+  "surface_stage": {
+    "checksum": true,
+    "encoded_bytes": 125889,
+    "format": "indexed_zstd_v1",
+    "raw_bytes": 199080,
+    "seconds": 0.013422134
+  }
+}

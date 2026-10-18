@@ -297,8 +297,8 @@ fn database_native_roundtrip_and_corruption_gate() {
     let root = tempfile::tempdir().unwrap();
     let db = Db::new().unwrap();
     let table = format!("rust_test_{}", uuid::Uuid::new_v4().simple());
-    // Cross the loader's 4,096-cell boundary, including a short final batch.
-    let cells = 4101;
+    // Cross two 4,096-cell loader/staging boundaries and a short final batch.
+    let cells = 8197;
     let ids: Vec<_> = (1..=cells as u32).map(|i| i * 11).collect();
     save_cells(
         &root.path().join("cells.npz"),
@@ -307,7 +307,7 @@ fn database_native_roundtrip_and_corruption_gate() {
         &vec![-74.; cells],
     )
     .unwrap();
-    let m = json!({"model":"aifs","init_time":"2026-10-17T18:00:00","snapshot_id":"test","coverage":"conus","cells":cells,"levels":[1000,500],"leads":[0,6,12],"variables":["temperature","wind_u"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
+    let m = json!({"model":"hrrr","init_time":"2026-10-17T18:00:00","snapshot_id":"test","coverage":"conus","cells":cells,"levels":[1000,500],"leads":[0,6,12],"variables":["temperature","wind_u"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
     atomic(root.path().join("metadata.json"), &m).unwrap();
     let bits = [0u32, 0x80000000, 1, 0x7f7fffff, 0xff7fffff, 0x3f812345];
     for (t, lead) in [0, 6, 12].iter().enumerate() {
@@ -329,7 +329,14 @@ fn database_native_roundtrip_and_corruption_gate() {
         .unwrap();
     }
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let v = store::load(root.path(), root.path(), &table).unwrap();
+        let compressed = root.path().join("compressed");
+        crate::stage::convert(root.path(), &compressed).unwrap();
+        let v = store::load_with_workers(root.path(), &compressed, &table, Some(4)).unwrap();
+        fs::copy(
+            compressed.join("metadata.json"),
+            root.path().join("metadata.json"),
+        )
+        .unwrap();
         assert_eq!(v["rows"], cells * 3);
         assert_eq!(v["storage_rows"], cells);
         let clone = format!("{table}_clone");
@@ -340,8 +347,37 @@ fn database_native_roundtrip_and_corruption_gate() {
         db.command(&format!("TRUNCATE TABLE meteogram_native.{table}"))
             .unwrap();
         store::validate(root.path(), &clone, "meteogram_native", true).unwrap();
+        store::validate(&compressed, &clone, "meteogram_native", true).unwrap();
+        let loaded_metadata = read_json(compressed.join("metadata.json")).unwrap();
+        store::validate_inserted_batch(
+            &db,
+            &clone,
+            &loaded_metadata,
+            ids[0],
+            ids[cells - 1],
+            cells,
+        )
+        .unwrap();
         db.command(&format!("ALTER TABLE meteogram_native.{clone} UPDATE temperature=[toUInt32(2139095040),0,0,0,0,0] WHERE cell_id=11 SETTINGS mutations_sync=2")).unwrap();
         assert!(store::validate(root.path(), &clone, "meteogram_native", false).is_err());
+        assert!(store::validate_inserted_batch(
+            &db,
+            &clone,
+            &loaded_metadata,
+            ids[0],
+            ids[cells - 1],
+            cells
+        )
+        .is_err());
+        assert!(store::validate_inserted_batch(
+            &db,
+            &clone,
+            &loaded_metadata,
+            ids[0],
+            ids[cells - 1],
+            cells + 1
+        )
+        .is_err());
         assert!(!root.path().join("validated.json").exists());
         db.command(&format!("DROP TABLE meteogram_native.{clone} SYNC"))
             .unwrap();
@@ -352,6 +388,52 @@ fn database_native_roundtrip_and_corruption_gate() {
     let _ = db.command(&format!(
         "DROP TABLE IF EXISTS meteogram_native.{table}_clone SYNC"
     ));
+    assert!(result.is_ok());
+}
+
+#[test]
+#[ignore = "requires the isolated loopback ClickHouse server"]
+fn parallel_load_failure_drains_insert_workers_before_returning() {
+    let root = tempfile::tempdir().unwrap();
+    atomic(
+        root.path().join("validated.json"),
+        &json!({"table":"stale_prior_attempt"}),
+    )
+    .unwrap();
+    let db = Db::new().unwrap();
+    let table = format!("rust_failed_load_{}", uuid::Uuid::new_v4().simple());
+    let cells = 8200;
+    let ids: Vec<_> = (0..cells as u32).collect();
+    save_cells(
+        &root.path().join("cells.npz"),
+        &ids,
+        &vec![41.; cells],
+        &vec![-74.; cells],
+    )
+    .unwrap();
+    atomic(root.path().join("metadata.json"),&json!({"model":"hrrr","cells":cells,"levels":[1000],"leads":[0],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]})).unwrap();
+    let mut p: Vec<u8> = (0..cells).flat_map(|_| 1f32.to_le_bytes()).collect();
+    p[..4].copy_from_slice(&f32::NAN.to_le_bytes());
+    fs::write(
+        root.path().join("lead-000.npy"),
+        npy_bytes("<f4", &[cells, 1, 1], &p),
+    )
+    .unwrap();
+    let g: Vec<u8> = (0..cells * 2).flat_map(|_| 1f32.to_le_bytes()).collect();
+    fs::write(
+        root.path().join("surface-000.npy"),
+        npy_bytes("<f4", &[cells, 2], &g),
+    )
+    .unwrap();
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        assert!(store::load_with_workers(root.path(), root.path(), &table, Some(4)).is_err());
+        assert!(!root.path().join("validated.json").exists());
+        assert_eq!(db.scalar(&format!("SELECT count() FROM system.processes WHERE startsWith(query,'INSERT INTO meteogram_native.{table} ')")).unwrap(),0);
+    }));
+    db.command(&format!(
+        "DROP TABLE IF EXISTS meteogram_native.{table} SYNC"
+    ))
+    .unwrap();
     assert!(result.is_ok());
 }
 

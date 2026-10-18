@@ -382,6 +382,7 @@ pub fn parse_npy(b: &[u8]) -> Result<(Vec<usize>, String, usize)> {
         .collect::<std::result::Result<Vec<usize>, _>>()?;
     Ok((shape, dtype, start + n))
 }
+#[cfg(test)]
 pub fn npy_bytes(dtype: &str, shape: &[usize], bytes: &[u8]) -> Vec<u8> {
     let dims = shape
         .iter()
@@ -417,6 +418,7 @@ pub fn load_npz(p: &Path) -> Result<BTreeMap<String, Npy>> {
     }
     Ok(out)
 }
+#[cfg(test)]
 pub fn save_cells(p: &Path, ids: &[u32], lat: &[f64], lon: &[f64]) -> Result<()> {
     let mut z = zip::ZipWriter::new(File::create(p)?);
     let opts =
@@ -445,7 +447,11 @@ pub fn clean_workspace(p: &Path) -> Result<()> {
     for item in fs::read_dir(p)? {
         let item = item?;
         let s = item.file_name().to_string_lossy().into_owned();
-        if (s.starts_with("lead-") || s.starts_with("surface-")) && s.ends_with(".npy") {
+        if (s.starts_with("lead-") || s.starts_with("surface-"))
+            && [".npy", ".stage.zst", ".stage.json", ".stage.zst.tmp"]
+                .iter()
+                .any(|suffix| s.ends_with(suffix))
+        {
             fs::remove_file(item.path())?;
         }
     }

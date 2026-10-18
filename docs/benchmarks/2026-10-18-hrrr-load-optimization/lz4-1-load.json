@@ -1,0 +1,19 @@
+{
+  "candidate_merges_resumed": true,
+  "encode_seconds": 12.032156142999998,
+  "input_cache_hint_failures": 0,
+  "input_cache_policy": "discard_consumed_pages_linux_fadvise",
+  "insert_seconds": 499.522470498,
+  "logical_rows": 80299093,
+  "pack_seconds": 15.449645793999998,
+  "pipeline": "bounded_readers_writers_v3",
+  "queued_batches": 3,
+  "read_seconds": 141.039774008,
+  "reader": "indexed_zstd_v1_buffered_pread",
+  "readers": 3,
+  "storage_rows": 1638757,
+  "total_insert_seconds": 125.791110022,
+  "total_seconds": 169.306362655,
+  "validation_seconds": 42.05628928,
+  "workers": 4
+}

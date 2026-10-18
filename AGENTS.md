@@ -364,10 +364,11 @@ ownership and must not be deleted by production retention.
 | Purpose | File |
 |---------|------|
 | CLI and operational commands | `native/src/main.rs` |
-| Catalog, locks, freshness/schema policy, durable files, NPY/NPZ | `native/src/state.rs` |
+| Catalog, locks, freshness/schema policy, durable files, legacy NPY/NPZ decoding | `native/src/state.rs` |
+| Indexed checksummed Zstd staging, compressed coordinate index, legacy conversion | `native/src/stage.rs` |
 | Pinned Icechunk manifest preflight, source reads, Zarr codecs, regional gathering | `native/src/source.rs` |
 | Native spherical HRRR projection and nearest-cell resolution | `native/src/grid.rs` |
-| Bounded staging transpose, Native insertion and validation/GC | `native/src/store.rs` |
+| Buffered parallel staging reads/Native insertion and validation/GC | `native/src/store.rs` |
 | Bit-exact cache-tiled NEON/portable packing and Native block encoding | `native/src/pack.rs` |
 | Async acquisition overlap, recovery, update and rollback | `native/src/pipeline.rs` |
 | ClickHouse HTTP/RowBinary access and both physical readers | `native/src/db.rs` |
@@ -390,7 +391,8 @@ tables; adoption creates an independent validated clone of its source table.
 
 New revisions use `cell_profile_v1`: one physical row per native cell, full
 pressure profiles arranged as level/lead arrays, surface profiles as lead arrays,
-and exact Float32 bits in UInt32 arrays with T64 + ZSTD(1). Metadata explicitly
+and exact Float32 bits in UInt32 arrays with T64 + Zstd (level 3 for HRRR,
+level 1 for GFS/AIFS). Metadata explicitly
 versions layout, axes, encoding and writer and is bound to its validation marker.
 The API also reads legacy cell/lead tables, including rollback to them. Validation
 compares ALL sorted cell IDs, physical types, array lengths and finite bits,
@@ -404,7 +406,34 @@ pinned Icechunk manifests (16 concurrent checks); `preflight.json` records missi
 references. This does not guarantee the referenced payload objects are readable;
 preserve download/decode/full-data gates. At most two extractors run initially,
 then one extractor overlaps one loader. Each extractor
-has at most 16 map tasks; packing runs one bounded batch ahead of insertion.
+has at most 16 map tasks. HRRR loading uses up to three reusable-buffer readers
+and four insert workers connected by a bounded queue; other models default to
+one of each. `load --workers 1..6` overrides insert concurrency for measurement.
+New staging is indexed, byte-shuffled Float32 in independent checksummed Zstd
+frames (`*.stage.zst` + versioned JSON indexes); new coordinates use
+`cells.bin.zst`. `stage.rs` retains legacy NPY/NPZ readers for old snapshots.
+Do not introduce new NPY/NPZ production writes. `convert-stage` prepares a fresh
+compressed directory without modifying its source. Preserve all float bits,
+shape/type checks, bounded decoding, frame checksum verification and partial
+final blocks. Consumed input pages receive a Linux discard hint. Merges are
+paused only for the new unpublished table and must resume before load success.
+Every worker is joined before any load error returns, so cleanup
+cannot race pending inserts. Insert responses are drained with
+`wait_end_of_query=1` before a batch counts as completed.
+Each batch additionally validates every stored value, array length, revision
+and expected row count in its disjoint cell-ID range before completion. Final
+global row/key/type and complete sampled bit comparisons remain mandatory.
+The ten source samples are retained from the immutable ingestion buffers.
+Only the loader's private in-memory proof of all validated ranges avoids a
+duplicate whole-table scan; standalone `validate` always performs that scan.
+Do not replace range checks with source-only checks, sampling, persisted flags,
+or a row-count-only gate. Failed attempts clear stale validation markers.
+The full scope, 116.36/118.03-second measured HRRR loads, compressed staging and
+deployment evidence are in
+`docs/plans/2026-10-18-hrrr-load-optimization.md`. Those load times include all
+stored-value checks but exclude source acquisition/staging. Keep 4,096-cell
+HRRR batches and the existing memory limits: an 8,192-cell/four-writer experiment
+exceeded the 6 GiB server limit and was rejected.
 Packing completes small cell tiles across all leads to reuse output cache lines.
 Encoded maps are evicted only after both staged arrays are synced and the lead
 checkpoint is durable. Resume prunes any already-checkpointed maps and retains

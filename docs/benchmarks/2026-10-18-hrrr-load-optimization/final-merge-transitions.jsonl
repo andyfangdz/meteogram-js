@@ -1,0 +1,6 @@
+{"event_time_microseconds":"2026-10-18 09:03:12.162582","query":"SYSTEM STOP MERGES meteogram_native.goal_hrrr_zstd3_run1"}
+{"event_time_microseconds":"2026-10-18 09:05:07.955094","query":"SYSTEM START MERGES meteogram_native.goal_hrrr_zstd3_run1"}
+{"event_time_microseconds":"2026-10-18 09:05:08.451322","query":"SYSTEM STOP MERGES meteogram_native.goal_hrrr_zstd3_run1"}
+{"event_time_microseconds":"2026-10-18 09:05:39.801275","query":"SYSTEM STOP MERGES meteogram_native.goal_hrrr_zstd3_run2"}
+{"event_time_microseconds":"2026-10-18 09:07:36.933318","query":"SYSTEM START MERGES meteogram_native.goal_hrrr_zstd3_run2"}
+{"event_time_microseconds":"2026-10-18 09:07:37.666992","query":"SYSTEM STOP MERGES meteogram_native.goal_hrrr_zstd3_run2"}

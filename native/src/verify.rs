@@ -124,7 +124,7 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
         if full {
             store::validate(&path, &e.table, &e.database, false)?;
         }
-        let cells = load_npz(&path.join("cells.npz"))?;
+        let cells = crate::stage::load_cells(&path)?;
         let ids: Vec<_> = cells["cell_id"]
             .bytes
             .as_chunks::<4>()
@@ -243,7 +243,7 @@ pub fn benchmark(root: &Path, count: usize, clients: usize) -> Result<Value> {
     let mut out = serde_json::Map::new();
     for (name, e) in c.current {
         let m = read_json(descriptor(root, &e)?.join("metadata.json"))?;
-        let cells = load_npz(&descriptor(root, &e)?.join("cells.npz"))?;
+        let cells = crate::stage::load_cells(&descriptor(root, &e)?)?;
         let ids: Vec<_> = cells["cell_id"]
             .bytes
             .as_chunks::<4>()
@@ -300,6 +300,10 @@ pub fn staging(path: &Path) -> Result<Value> {
             compressed += encoded.len();
         }
     }
+    anyhow::ensure!(
+        original > 0,
+        "Legacy compression measurement requires NPY inputs; new staging is already compressed"
+    );
     Ok(
         json!({"raw_bytes":original,"zstd_bytes":compressed,"seconds":started.elapsed().as_secs_f64(),"lossless":true}),
     )
@@ -338,8 +342,8 @@ pub fn compare_stores(root: &Path, reference: &Path, samples: usize) -> Result<V
             numeric_array_eq(&m["levels"], &om["levels"]),
             "Pressure levels differ"
         );
-        let arrays = load_npz(&descriptor(root, &e)?.join("cells.npz"))?;
-        let oa = load_npz(&descriptor(reference, old)?.join("cells.npz"))?;
+        let arrays = crate::stage::load_cells(&descriptor(root, &e)?)?;
+        let oa = crate::stage::load_cells(&descriptor(reference, old)?)?;
         anyhow::ensure!(
             arrays["cell_id"].bytes == oa["cell_id"].bytes,
             "Cell selection differs {name}"

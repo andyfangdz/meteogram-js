@@ -68,12 +68,20 @@ impl Db {
                     format!("INSERT INTO meteogram_native.{table} FORMAT Native"),
                 ),
                 ("max_threads", "2".into()),
+                ("wait_end_of_query", "1".into()),
             ])
             .body(body)
             .send()?;
         let status = r.status();
-        if !status.is_success() {
-            bail!("Insert {status}: {}", r.text()?);
+        let bytes = r.bytes()?;
+        if !status.is_success() || !bytes.iter().all(u8::is_ascii_whitespace) {
+            bail!(
+                "Insert {status}: {}",
+                String::from_utf8_lossy(&bytes)
+                    .chars()
+                    .take(2000)
+                    .collect::<String>()
+            );
         }
         Ok(())
     }

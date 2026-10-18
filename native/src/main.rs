@@ -6,6 +6,7 @@ mod pack;
 mod pipeline;
 mod service;
 mod source;
+mod stage;
 mod state;
 mod store;
 mod verify;
@@ -82,6 +83,8 @@ enum Cmd {
         data: PathBuf,
         #[arg(long)]
         table: String,
+        #[arg(long)]
+        workers: Option<usize>,
     },
     Validate {
         #[arg(long)]
@@ -193,6 +196,12 @@ enum Cmd {
         #[arg(long)]
         output: Option<PathBuf>,
     },
+    ConvertStage {
+        #[arg(long)]
+        source: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     StagingCompression {
         #[arg(long)]
         data: PathBuf,
@@ -210,6 +219,10 @@ fn output(value: &serde_json::Value, path: Option<PathBuf>) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     match Cli::parse().command {
+        Cmd::ConvertStage {
+            source,
+            output: target,
+        } => output(&stage::convert(&source, &target)?, None)?,
         Cmd::Observe {
             base_url,
             until,
@@ -272,8 +285,16 @@ async fn main() -> Result<()> {
                 std::process::exit(code);
             }
         }
-        Cmd::Load { root, data, table } => output(
-            &tokio::task::spawn_blocking(move || store::load(&root, &data, &table)).await??,
+        Cmd::Load {
+            root,
+            data,
+            table,
+            workers,
+        } => output(
+            &tokio::task::spawn_blocking(move || {
+                store::load_with_workers(&root, &data, &table, workers)
+            })
+            .await??,
             None,
         )?,
         Cmd::Validate {
@@ -333,7 +354,7 @@ async fn main() -> Result<()> {
                 let model = m["model"].as_str().context("Model")?;
                 let (p, e) = state::candidate(&root, model)?;
                 fs::copy(source.join("metadata.json"), p.join("metadata.json"))?;
-                fs::copy(source.join("cells.npz"), p.join("cells.npz"))?;
+                stage::copy_cells(&source, &p)?;
                 let db = db::Db::new()?;
                 db.command("CREATE DATABASE IF NOT EXISTS meteogram_native")?;
                 db.command(&format!(

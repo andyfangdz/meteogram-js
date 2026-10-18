@@ -1,0 +1,22 @@
+{
+  "candidate_merges_resumed": true,
+  "encode_seconds": 0.005608561999999999,
+  "finite_validation_batches": 13,
+  "finite_validation_rows": 24885,
+  "finite_validation_work_seconds": 0.18204818,
+  "input_cache_hint_failures": 0,
+  "input_cache_policy": "discard_consumed_pages_linux_fadvise",
+  "insert_seconds": 1.441748662,
+  "logical_rows": 24885,
+  "pack_seconds": 0.00577647,
+  "pipeline": "bounded_readers_writers_validated_v4",
+  "queued_batches": 1,
+  "read_seconds": 0.092737352,
+  "reader": "indexed_zstd_v1_buffered_pread",
+  "readers": 1,
+  "storage_rows": 24885,
+  "total_insert_seconds": 1.637622607,
+  "total_seconds": 1.761923768,
+  "validation_seconds": 0.091384387,
+  "workers": 1
+}

@@ -14,7 +14,6 @@ use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::Write,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicU64, Ordering},
@@ -467,7 +466,7 @@ pub async fn fetch(
     atomic(out.join("collection.json"), &src.collection)?;
     atomic(out.join("source-arrays.json"), &metas)?;
     atomic(out.join("metadata.json"), &meta)?;
-    save_cells(&out.join("cells.npz"), &ids, &lat, &lon)?;
+    crate::stage::save_cells(out, &ids, &lat, &lon)?;
     if metadata_only {
         return Ok(meta);
     }
@@ -534,8 +533,8 @@ pub async fn fetch(
         let report = out.join(format!("lead-{lead:03}.json"));
         if report.exists() {
             anyhow::ensure!(
-                out.join(format!("lead-{lead:03}.npy")).exists()
-                    && out.join(format!("surface-{lead:03}.npy")).exists(),
+                crate::stage::exists(&out.join(format!("lead-{lead:03}.npy")))
+                    && crate::stage::exists(&out.join(format!("surface-{lead:03}.npy"))),
                 "Completed arrays removed; use fresh extraction"
             );
             prune_checkpointed_cache(&cache, &completed_keys)?;
@@ -589,18 +588,18 @@ pub async fn fetch(
             }
         }
         disk_guard(out, ((profiles.len() + ground.len()) * 4) as u64)?;
-        let raw = |v: &[f32]| -> &[u8] {
-            unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
-        };
-        write_stage(
-            out.join(format!("lead-{lead:03}.npy")),
-            npy_bytes("<f4", &[nc, nl, nf], raw(&profiles)),
+        let profile_stage = crate::stage::write(
+            &out.join(format!("lead-{lead:03}.npy")),
+            &[nc, nl, nf],
+            &profiles,
         )?;
-        write_stage(
-            out.join(format!("surface-{lead:03}.npy")),
-            npy_bytes("<f4", &[nc, 2], raw(&ground)),
+        let surface_stage = crate::stage::write(
+            &out.join(format!("surface-{lead:03}.npy")),
+            &[nc, 2],
+            &ground,
         )?;
-        let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"source_cache_policy":"uncheckpointed_leads_only"});
+        File::open(out)?.sync_all()?;
+        let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"profile_stage":profile_stage,"surface_stage":surface_stage,"source_cache_policy":"uncheckpointed_leads_only"});
         atomic(&report, &stats)?;
         // The synced staged arrays and durable checkpoint now replace these
         // encoded maps for resume. Retain only a partially acquired lead.
@@ -631,13 +630,6 @@ where
     Ok(
         json!({"chunks":count,"missing_count":missing.len(),"missing_examples":missing.iter().take(8).collect::<Vec<_>>(),"complete":missing.is_empty(),"seconds":started.elapsed().as_secs_f64(),"payload_reads":0}),
     )
-}
-fn write_stage(path: impl AsRef<Path>, bytes: Vec<u8>) -> Result<()> {
-    let mut f = File::create(path)?;
-    f.write_all(&bytes)?;
-    // A durable checkpoint must never precede its staged data after power loss.
-    f.sync_all()?;
-    Ok(())
 }
 fn task(
     field: usize,

@@ -111,11 +111,32 @@ meteogram-native adopt --root "$SERVICE_ROOT" --source "$MODEL_DATA" \
 
 The physical format is `cell_profile_v1`: one row per native cell, with pressure
 fields arranged as level/lead arrays and surface fields as lead arrays. Float32
-bits are stored losslessly as `Array(UInt32) CODEC(T64,ZSTD(1))`; there is no
+bits are stored losslessly as `Array(UInt32)` with T64 and Zstd (level 3 for
+HRRR, level 1 for GFS/AIFS); there is no
 quantization. The ARM build uses the NEON packing routine, finishing small groups
-of cells across all leads to keep output profiles in CPU cache. A bounded producer
-packs the next batch while the current batch is encoded and inserted in
-ClickHouse Native format. Other architectures use the portable Rust path.
+of cells across all leads to keep output profiles in CPU cache. Up to three
+readers reuse bounded input/packing buffers, read full cell batches, and feed a
+bounded queue of encoded ClickHouse Native blocks. HRRR defaults to four insert
+workers with 4,096-cell batches; GFS uses 2,048 cells and AIFS 4,096. Other models
+default to one worker. `load --workers 1..6` selects an explicit
+insert worker count. Workers wait for each complete insert response, including
+late server errors. Failed loads cancel and drain all workers before cleanup.
+Only the new unpublished table has merges paused during loading and full
+validation; merges must resume successfully before loading returns. On Linux,
+consumed source pages receive a discard hint to preserve cache for database
+parts. Other architectures use the portable Rust packing path.
+
+Every completed insert is followed by a database query of that exact, disjoint
+cell range. It checks the expected row count, revision value, every array length
+and every stored value's finiteness before counting the batch as completed.
+This checks the full dataset while new parts are still in cache. After all
+workers join, global row counts, exact sorted cell IDs and physical types are
+checked, plus ten complete bit-exact source/database profiles. Those source
+samples are retained from the immutable input buffers during reading (about
+357 kB for full HRRR). Only this in-memory completion proof permits the loader
+to avoid a second full scan. The standalone `validate` command always performs
+an independent whole-table scan, and `--staged` reads the staging files again.
+Any failed attempt clears its validation marker and drains pending work.
 
 The reader also supports the earlier one-row-per-cell/lead format, so existing
 current/previous tables need no migration. Both formats return the same JSON
@@ -126,13 +147,23 @@ and stale/unavailable forecasts return 503. Requests never download source maps.
 `/health` checks model freshness and database connectivity. Responses support
 gzip and retain `Cache-Control: no-store`.
 
-Staging uses the existing `.npy`/`.npz` binary formats through Rust readers and
-writers; the formats do not require a Python runtime. Per-lead checkpoint
+New weather staging uses `*.stage.zst` plus a versioned `*.stage.json` index.
+Independent Zstd level-1 frames contain at most 4,096 cells, with reversible
+Float32 byte shuffling and a checksum on every frame. The JSON index records
+shape, dtype, encoding, and exact compressed offsets/lengths. Reads decode only
+the required blocks into bounded buffers, including partial final blocks.
+Coordinates use `cells.bin.zst`: a checksummed Zstd frame containing the
+`MGCELL01` version tag, a little-endian UInt64 count, then contiguous UInt32 IDs
+and Float64 latitude/longitude columns. All float bits are preserved.
+Legacy NPY/NPZ descriptors remain readable. New acquisitions write neither
+format. Restart the supervisor/API when upgrading this binary, before the next
+publication, so every running reader supports the new coordinate format.
+Per-lead checkpoint
 reports make interrupted acquisitions resumable when staging remains intact.
 Encoded source maps are removed only after both staged files are synced and the
 lead checkpoint is durable. The cache retains unfinished leads; a resume also
 prunes maps left behind after a checkpoint. Completed leads resume from staging,
-so a complete encoded-map archive is not retained. After publication, raw staging
+so a complete encoded-map archive is not retained. After publication, weather staging
 and remaining source cache are removed; descriptors,
 coordinates and validation evidence remain. All service tables live in
 `meteogram_native`; historical `meteogram_bench` tables are separate.
@@ -144,7 +175,7 @@ revision metadata expires after seven days.
 ```sh
 cargo fmt --check --manifest-path native/Cargo.toml
 cargo clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings
-# Include the three integration tests while the isolated database is running:
+# Include the four integration tests while the isolated database is running:
 cargo test --locked --manifest-path native/Cargo.toml -- --include-ignored
 
 meteogram-native verify --root "$SERVICE_ROOT" --full --output "$RESULTS/verify.json"
@@ -156,6 +187,8 @@ meteogram-native compare-stores --root "$CANDIDATE_ROOT" \
   --reference-root "$SERVICE_ROOT" --samples 100 --output "$RESULTS/exact.json"
 meteogram-native check-api --root "$CANDIDATE_ROOT" --port 18082 \
   --compare-url http://127.0.0.1:18080 --output "$RESULTS/candidate-http.json"
+meteogram-native convert-stage --source "$LEGACY_MODEL_DATA" \
+  --output "$FRESH_COMPRESSED_DIRECTORY"
 ```
 
 `check-api` owns a temporary API child and always stops it after verification.
@@ -202,3 +235,6 @@ versions; current operations use this application.
 
 The measured packing, source-preflight and cache changes are documented in
 the [ingestion optimization report](../docs/plans/2026-10-18-native-ingestion-optimization.md).
+The subsequent [full HRRR load and compressed staging report](../docs/plans/2026-10-18-hrrr-load-optimization.md)
+records complete 116.36- and 118.03-second loads, including validation, and the
+native staging format's measured storage reduction.

@@ -30,7 +30,7 @@ struct App {
 fn model(root: &Path, e: &Entry) -> Result<Model> {
     let p = descriptor(root, e)?;
     let meta = read_json(p.join("metadata.json"))?;
-    let mut arrays = load_npz(&p.join("cells.npz"))?;
+    let mut arrays = crate::stage::load_cells(&p)?;
     let ids = arrays.remove("cell_id").context("Missing ids")?;
     anyhow::ensure!(
         ids.dtype == "<u4" && ids.bytes.len() % 4 == 0,
