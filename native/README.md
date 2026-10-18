@@ -429,7 +429,9 @@ ingress:
   - service: http_status:404
 ```
 
-Route the hostname with `cloudflared tunnel route dns <tunnel-UUID> <hostname>`.
+The current instance uses `weather-api.andyfang.app` through the named
+`meteogram-weather-api` tunnel. Route a hostname with
+`cloudflared tunnel route dns <tunnel-UUID> <hostname>`.
 Verify its HTTPS certificate and an unauthenticated 401 before adding the
 server-only `METEOGRAM_API_URL` and `METEOGRAM_API_TOKEN` variables to Vercel.
 An authenticated `/forecast` request should return 200 for each of the four

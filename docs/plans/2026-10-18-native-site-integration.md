@@ -1,8 +1,9 @@
 # Native forecast site integration — 2026-10-18
 
 The site now has a tested native forecast adapter and authenticated API path.
-Production activation is pending Cloudflare certificate coverage and Vercel
-environment configuration. Do not describe the public site as switched over.
+The public Cloudflare path is verified, including all four charts. Production
+activation still awaits the manual Vercel deployment described below; do not
+describe the public site as switched over yet.
 
 ## Request path
 
@@ -68,23 +69,33 @@ Evidence is under `docs/benchmarks/2026-10-18-native-site/`:
 
 ## External activation status
 
-A named `meteogram-native` tunnel and DNS route for the requested
-`weather.api.andyfang.app` were created. The connector registered four HTTP/2
-connections and its readiness endpoint returned 200. Public HTTPS currently
-fails during the Cloudflare TLS handshake, before an HTTP request can reach the
-API. The hostname is two labels below `andyfang.app`; Cloudflare's normal
-single-label wildcard does not cover it. The user was asked whether to use
-`weather-api.andyfang.app` or configure certificate coverage for the requested
-name. The session cannot manage certificate settings with the tunnel login.
-Cloudflare documents deep-hostname coverage under
-[Advanced Certificate Manager](https://developers.cloudflare.com/ssl/edge-certificates/advanced-certificate-manager/).
+The active hostname is **weather-api.andyfang.app**. The user selected this
+single-label hostname after the original two-label name lacked Cloudflare
+certificate coverage. The replacement named tunnel is `meteogram-weather-api`
+(`f65d971f-8364-4f2f-9c8e-215c53c04d14`), with credentials stored outside Git and
+four ready HTTP/2 connections. Its local metrics listener is 127.0.0.1:20243.
+The original session-created tunnel and its obsolete DNS record were deleted;
+unrelated tunnels were left alone.
 
-The connected Vercel tool rejected creation of the two server environment
-variables with `MCP tool call requires approval, but approval policy is never`.
-No environment variable was changed. Configure the URL and matching token in
-the existing Vercel project's Preview and Production settings after resolving
-the hostname, then deploy this commit and verify hosted native charts before
-moving production traffic.
+Public HTTPS verification passed with ordinary certificate validation:
+unauthenticated health returned 401, and authenticated HRRR, GFS, AIFS and RRFS
+forecasts each returned 200 with usable data. The first individual requests took
+459, 1100, 95 and 2151 ms respectively; these are observations, not latency
+percentiles or a service guarantee. A local Next.js production server configured
+with the public URL rendered all four native charts in Chromium without page
+errors. See `public-tunnel.json` and `browser-cloudflare.json` in the evidence
+directory. This checks browser → Next.js → public Cloudflare TLS → home API →
+ClickHouse → normalized chart; it does not establish the deployed Vercel flow.
+
+Commit `9684287` built successfully in the Vercel preview deployment
+`dpl_3YXtuQ1SDNUYcVecth4cjjU4awo3`. The user subsequently reported configuring
+the server environment variables. The connector cannot list their metadata
+(403), so the values/targets were not independently inspected. Deployment
+creation and protected-preview access were rejected with
+`MCP tool call requires approval, but approval policy is never`. The user was
+asked to promote that concrete tested commit through Vercel using the updated
+production variables. Hosted native charts still require verification after
+that action. No production deployment was made by this session.
 
 `meteogram-native.service` and `meteogram-tunnel.service` are installed in the
 user unit search path with `default.target.wants` links; the host already has

@@ -102,7 +102,7 @@ To enable native forecasts, set these **server-only** environment variables in
 Vercel and redeploy:
 
 ```text
-METEOGRAM_API_URL=https://<your-tunnel-hostname>
+METEOGRAM_API_URL=https://weather-api.andyfang.app
 METEOGRAM_API_TOKEN=<same secret as the native service api-token file>
 ```
 

@@ -696,6 +696,7 @@ or `<root>/api-token`. A configured invalid file fails startup. All three routes
 verification clients load that same token. API wind rotation comes from the
 selected grid cell's actual source projection, never a hardcoded HRRR angle.
 
+The active public API hostname is `weather-api.andyfang.app`.
 Tunnel credentials/config live outside Git under
 `~/.local/share/meteogram-tunnel`; ingress only proxies loopback 18080, with a
 404 catchall. Database and metrics listeners remain local. The user units are
