@@ -22,10 +22,16 @@ use std::{
     time::Instant,
 };
 use tokio::sync::RwLock;
+#[derive(Clone)]
 pub struct Source {
     pub store: Arc<Store>,
     pub snapshot: String,
     pub collection: Value,
+    // A Source always owns one immutable readonly snapshot. Keep only its
+    // small metadata/coordinate arrays here, never weather payloads.
+    metadata: Arc<RwLock<HashMap<String, Value>>>,
+    coordinates: Arc<RwLock<HashMap<String, Vec<f64>>>>,
+    map_slots: Arc<tokio::sync::Semaphore>,
 }
 static REPOSITORIES: std::sync::OnceLock<tokio::sync::Mutex<HashMap<String, Arc<Repository>>>> =
     std::sync::OnceLock::new();
@@ -107,16 +113,30 @@ impl Source {
             store,
             snapshot,
             collection,
+            metadata: Arc::new(RwLock::new(HashMap::new())),
+            coordinates: Arc::new(RwLock::new(HashMap::new())),
+            map_slots: Arc::new(tokio::sync::Semaphore::new(16)),
         })
     }
     pub async fn meta(&self, name: &str) -> Result<Value> {
+        if let Some(value) = self.metadata.read().await.get(name) {
+            return Ok(value.clone());
+        }
         let bytes = self
             .store
             .get(&format!("{name}/zarr.json"), &ByteRange::ALL)
             .await?;
-        Ok(serde_json::from_slice(&bytes)?)
+        let value: Value = serde_json::from_slice(&bytes)?;
+        self.metadata
+            .write()
+            .await
+            .insert(name.to_owned(), value.clone());
+        Ok(value)
     }
     pub async fn coord(&self, name: &str) -> Result<Vec<f64>> {
+        if let Some(values) = self.coordinates.read().await.get(name) {
+            return Ok(values.clone());
+        }
         let m = self.meta(name).await?;
         let shape = m["shape"].as_array().context("No shape")?;
         anyhow::ensure!(shape.len() == 1, "Expected 1D coordinate");
@@ -134,6 +154,10 @@ impl Source {
             values.append(&mut data);
         }
         values.truncate(len);
+        self.coordinates
+            .write()
+            .await
+            .insert(name.to_owned(), values.clone());
         Ok(values)
     }
     pub async fn init_times(&self) -> Result<Vec<f64>> {
@@ -161,10 +185,10 @@ impl Source {
 }
 pub(crate) fn initial_config(model: &str) -> icechunk::RepositoryConfig {
     let mut config = icechunk::RepositoryConfig::default();
-    if model == "rrfs" {
-        // RRFS persists a one-million-reference cache, which thrashes when
-        // cycling through the eight required arrays. Keep a bounded manifest
-        // cache, without caching weather payloads. Set this at initial open:
+    if matches!(model, "hrrr" | "rrfs") {
+        // Regional pressure/cloud arrays exceed the default reference cache.
+        // Keep bounded manifest references, without weather payloads. Set this
+        // at initial open:
         // Icechunk 2.3's reopen shares the original asset manager and caches.
         config.caching = Some(icechunk::config::CachingConfig {
             num_chunk_refs: Some(8_000_000),
@@ -327,6 +351,24 @@ pub(crate) fn prune_checkpointed_cache(dir: &Path, keys: &[String]) -> Result<u6
     }
     Ok(removed)
 }
+fn cloud_cache_dir(out: &Path, snapshot: &str) -> Result<PathBuf> {
+    let root = out.join("source-cache");
+    fs::create_dir_all(&root)?;
+    let namespace = format!("cloud-{:x}", Sha256::digest(snapshot));
+    for entry in fs::read_dir(&root)? {
+        let entry = entry?;
+        let name = entry.file_name();
+        if name.to_string_lossy().starts_with("cloud-")
+            && name != namespace.as_str()
+            && entry.file_type()?.is_dir()
+        {
+            fs::remove_dir_all(entry.path())?;
+        }
+    }
+    let path = root.join(namespace);
+    fs::create_dir_all(&path)?;
+    Ok(path)
+}
 async fn cached(store: &Store, dir: &Path, key: &str, bytes: &AtomicU64) -> Result<Vec<u8>> {
     let p = cache_path(dir, key);
     if p.exists() {
@@ -352,12 +394,34 @@ async fn cached(store: &Store, dir: &Path, key: &str, bytes: &AtomicU64) -> Resu
     }
     bail!("Missing source chunk {key}: {:?}", last)
 }
+#[cfg(test)]
+pub async fn fetch_pressure_hour(
+    model: &str,
+    out: &Path,
+    pin: Value,
+    lead: u16,
+    available: &Source,
+) -> Result<Value> {
+    fetch_hour_inner(model, out, pin, lead, available, false).await
+}
+
 pub async fn fetch_hour(
     model: &str,
     out: &Path,
     pin: Value,
     lead: u16,
     available: &Source,
+) -> Result<Value> {
+    fetch_hour_inner(model, out, pin, lead, available, model == "hrrr").await
+}
+
+async fn fetch_hour_inner(
+    model: &str,
+    out: &Path,
+    pin: Value,
+    lead: u16,
+    available: &Source,
+    with_clouds: bool,
 ) -> Result<Value> {
     fs::create_dir_all(out)?;
     let _lock = Lock::acquire(out, "fetch", true, true)?;
@@ -381,7 +445,9 @@ pub async fn fetch_hour(
     );
     let opened;
     let src = if existing {
-        opened = Source::open(model, Some(&old)).await?;
+        let mut source = Source::open(model, Some(&old)).await?;
+        source.map_slots = available.map_slots.clone();
+        opened = source;
         &opened
     } else {
         available
@@ -506,221 +572,258 @@ pub async fn fetch_hour(
     atomic(out.join("source-arrays.json"), &metas)?;
     atomic(out.join("metadata.json"), &meta)?;
     crate::stage::save_cells(out, &ids, &lat, &lon)?;
-    // Resolve references in the pinned Icechunk manifests before downloading
-    // any whole-map payload. Incomplete recent runs otherwise fail minutes in.
-    let mut by_lead = vec![];
-    for lead in &leads {
-        let ti = source_leads
-            .iter()
-            .position(|v| v == lead)
-            .context("Lead unavailable")?;
-        let mut tasks = vec![];
-        for (field, v) in variables.iter().enumerate() {
-            for (level, p) in levels.iter().enumerate() {
-                let pi = pressure
+    // Both tasks share a 16-map limit. A separate task lets cloud I/O progress
+    // while pressure arrays are staged. Joining drains both on failure.
+    let cloud_source = if available.collection["id"] == meta["dataset"] {
+        available
+    } else {
+        src
+    };
+    let cloud_task = if with_clouds {
+        let source = cloud_source.clone();
+        let path = out.to_owned();
+        Some(tokio::spawn(async move {
+            fetch_cloud_coverage(&path, &source).await
+        }))
+    } else {
+        None
+    };
+    let (weather, clouds) = tokio::join!(
+        async {
+            // Resolve references in the pinned Icechunk manifests before downloading
+            // any whole-map payload. Incomplete recent runs otherwise fail minutes in.
+            let mut by_lead = vec![];
+            for lead in &leads {
+                let ti = source_leads
                     .iter()
-                    .position(|x| *x == *p as f64)
-                    .context("Pressure unavailable")?;
-                tasks.push(task(
-                    field,
-                    Some(level),
-                    format!("pressure_level/{v}"),
-                    &metas,
-                    init_index,
-                    ti,
-                    Some(pi),
-                )?);
+                    .position(|v| v == lead)
+                    .context("Lead unavailable")?;
+                let mut tasks = vec![];
+                for (field, v) in variables.iter().enumerate() {
+                    for (level, p) in levels.iter().enumerate() {
+                        let pi = pressure
+                            .iter()
+                            .position(|x| *x == *p as f64)
+                            .context("Pressure unavailable")?;
+                        tasks.push(task(
+                            field,
+                            Some(level),
+                            format!("pressure_level/{v}"),
+                            &metas,
+                            init_index,
+                            ti,
+                            Some(pi),
+                        )?);
+                    }
+                }
+                for (field, v) in surface.iter().enumerate() {
+                    tasks.push(task(
+                        field,
+                        None,
+                        (*v).into(),
+                        &metas,
+                        init_index,
+                        ti,
+                        None,
+                    )?);
+                }
+                by_lead.push((*lead, tasks));
             }
-        }
-        for (field, v) in surface.iter().enumerate() {
-            tasks.push(task(
-                field,
-                None,
-                (*v).into(),
-                &metas,
-                init_index,
-                ti,
-                None,
-            )?);
-        }
-        by_lead.push((*lead, tasks));
-    }
-    let keys = by_lead
-        .iter()
-        .flat_map(|(_, tasks)| tasks.iter().map(|t| t.key.clone()))
-        .collect();
-    let references = check_references(keys, |key| {
-        let store = src.store.clone();
-        async move { Ok(store.exists(&key).await?) }
-    })
-    .await?;
-    atomic(out.join("preflight.json"), &references)?;
-    anyhow::ensure!(
-        references["complete"] == true,
-        "Incomplete source references: {}",
-        references
-    );
-    let cache = out.join("source-cache");
-    fs::create_dir_all(&cache)?;
-    let ids = Arc::new(ids);
-    let bytes = Arc::new(AtomicU64::new(0));
-    let mut palettes: Vec<Vec<Vec<u32>>> = crate::dictionary::widths(&meta)?
-        .into_iter()
-        .map(|width| (0..width).map(|_| Vec::new()).collect())
-        .collect();
-    let nt = leads.len();
-    let nf = variables.len();
-    let mut palette_entries = 0;
-    fn merge_palettes(
-        full: &mut [Vec<Vec<u32>>],
-        partial: crate::dictionary::Dictionary,
-        t: usize,
-        nt: usize,
-        nf: usize,
-        entries: &mut usize,
-    ) -> Result<()> {
-        for (f, field) in partial.fields.into_iter().enumerate() {
-            for (l, palette) in field.into_iter().enumerate() {
-                crate::dictionary::count_entries(entries, palette.len())?;
-                full[f][if f < nf { l * nt + t } else { t }] = palette;
-            }
-        }
-        Ok(())
-    }
-    for (time_index, (lead, tasks)) in by_lead.into_iter().enumerate() {
-        let completed_keys: Vec<_> = tasks.iter().map(|t| t.key.clone()).collect();
-        let report = out.join(format!("lead-{lead:03}.json"));
-        if report.exists() {
-            anyhow::ensure!(
-                crate::stage::exists(&out.join(format!("lead-{lead:03}")))
-                    && crate::stage::exists(&out.join(format!("surface-{lead:03}"))),
-                "Completed arrays removed; use fresh extraction"
-            );
-            {
-                let checkpoint = out.join(format!("lead-{lead:03}.palette"));
-                let partial_meta = read_json(checkpoint.join("metadata.json"))?;
-                anyhow::ensure!(
-                    partial_meta["snapshot_id"] == meta["snapshot_id"]
-                        && partial_meta["init_time"] == meta["init_time"]
-                        && partial_meta["leads"] == json!([lead]),
-                    "Palette checkpoint identity"
-                );
-                let partial = crate::dictionary::Dictionary::load(&checkpoint, &partial_meta)?;
-                merge_palettes(
-                    &mut palettes,
-                    partial,
-                    time_index,
-                    nt,
-                    nf,
-                    &mut palette_entries,
-                )?;
-            }
-            prune_checkpointed_cache(&cache, &completed_keys)?;
-            continue;
-        }
-        let before = bytes.load(Ordering::Relaxed);
-        let started = Instant::now();
-        let results = stream::iter(tasks)
-            .map(|t| {
+            let keys = by_lead
+                .iter()
+                .flat_map(|(_, tasks)| tasks.iter().map(|t| t.key.clone()))
+                .collect();
+            let references = check_references(keys, |key| {
                 let store = src.store.clone();
-                let dir = cache.clone();
-                let ids = ids.clone();
-                let count = bytes.clone();
-                async move {
-                    let b = cached(&store, &dir, &t.key, &count).await?;
-                    tokio::task::spawn_blocking(move || -> Result<_> {
-                        let data = decode(&t.meta, &b)?;
-                        let mut values = Vec::with_capacity(ids.len());
-                        for id in ids.iter() {
-                            let v = *data
-                                .get(*id as usize)
-                                .context("Spatial GRIB shape mismatch")?;
-                            let f = v as f32;
-                            anyhow::ensure!(
-                                v.is_finite() && f.is_finite(),
-                                "Missing/non-finite source {}",
-                                t.name
-                            );
-                            values.push(f);
-                        }
-                        drop(data);
-                        let (values, palette) = crate::dictionary::encode_spatial(values)?;
-                        Ok((t, values, palette))
-                    })
-                    .await?
-                }
+                async move { Ok(store.exists(&key).await?) }
             })
-            .buffer_unordered(16)
-            .try_collect::<Vec<_>>()
             .await?;
-        let nc = ids.len();
-        let nl = levels.len();
-        let nf = variables.len();
-        let mut profiles = vec![0f32; nc * nl * nf];
-        let mut ground = vec![0f32; nc * 2];
-        let mut partial_fields: Vec<Vec<Vec<u32>>> = (0..nf + 2)
-            .map(|f| {
-                (0..if f < nf { nl } else { 1 })
-                    .map(|_| Vec::new())
-                    .collect()
-            })
-            .collect();
-        for (t, values, palette) in results {
-            {
-                partial_fields[if t.level.is_some() {
-                    t.field
-                } else {
-                    nf + t.field
-                }][t.level.unwrap_or(0)] = palette;
-            }
-            for (i, v) in values.into_iter().enumerate() {
-                if let Some(l) = t.level {
-                    profiles[(i * nl + l) * nf + t.field] = v;
-                } else {
-                    ground[i * 2 + t.field] = v;
+            atomic(out.join("preflight.json"), &references)?;
+            anyhow::ensure!(
+                references["complete"] == true,
+                "Incomplete source references: {}",
+                references
+            );
+            let cache = out.join("source-cache");
+            fs::create_dir_all(&cache)?;
+            let ids = Arc::new(ids);
+            let bytes = Arc::new(AtomicU64::new(0));
+            let mut palettes: Vec<Vec<Vec<u32>>> = crate::dictionary::widths(&meta)?
+                .into_iter()
+                .map(|width| (0..width).map(|_| Vec::new()).collect())
+                .collect();
+            let nt = leads.len();
+            let nf = variables.len();
+            let mut palette_entries = 0;
+            fn merge_palettes(
+                full: &mut [Vec<Vec<u32>>],
+                partial: crate::dictionary::Dictionary,
+                t: usize,
+                nt: usize,
+                nf: usize,
+                entries: &mut usize,
+            ) -> Result<()> {
+                for (f, field) in partial.fields.into_iter().enumerate() {
+                    for (l, palette) in field.into_iter().enumerate() {
+                        crate::dictionary::count_entries(entries, palette.len())?;
+                        full[f][if f < nf { l * nt + t } else { t }] = palette;
+                    }
                 }
+                Ok(())
+            }
+            for (time_index, (lead, tasks)) in by_lead.into_iter().enumerate() {
+                let completed_keys: Vec<_> = tasks.iter().map(|t| t.key.clone()).collect();
+                let report = out.join(format!("lead-{lead:03}.json"));
+                if report.exists() {
+                    anyhow::ensure!(
+                        crate::stage::exists(&out.join(format!("lead-{lead:03}")))
+                            && crate::stage::exists(&out.join(format!("surface-{lead:03}"))),
+                        "Completed arrays removed; use fresh extraction"
+                    );
+                    {
+                        let checkpoint = out.join(format!("lead-{lead:03}.palette"));
+                        let partial_meta = read_json(checkpoint.join("metadata.json"))?;
+                        anyhow::ensure!(
+                            partial_meta["snapshot_id"] == meta["snapshot_id"]
+                                && partial_meta["init_time"] == meta["init_time"]
+                                && partial_meta["leads"] == json!([lead]),
+                            "Palette checkpoint identity"
+                        );
+                        let partial =
+                            crate::dictionary::Dictionary::load(&checkpoint, &partial_meta)?;
+                        merge_palettes(
+                            &mut palettes,
+                            partial,
+                            time_index,
+                            nt,
+                            nf,
+                            &mut palette_entries,
+                        )?;
+                    }
+                    prune_checkpointed_cache(&cache, &completed_keys)?;
+                    continue;
+                }
+                let before = bytes.load(Ordering::Relaxed);
+                let started = Instant::now();
+                let results = stream::iter(tasks)
+                    .map(|t| {
+                        let store = src.store.clone();
+                        let dir = cache.clone();
+                        let ids = ids.clone();
+                        let count = bytes.clone();
+                        let slots = src.map_slots.clone();
+                        async move {
+                            let _permit = slots.acquire().await?;
+                            let b = cached(&store, &dir, &t.key, &count).await?;
+                            tokio::task::spawn_blocking(move || -> Result<_> {
+                                let data = decode(&t.meta, &b)?;
+                                let mut values = Vec::with_capacity(ids.len());
+                                for id in ids.iter() {
+                                    let v = *data
+                                        .get(*id as usize)
+                                        .context("Spatial GRIB shape mismatch")?;
+                                    let f = v as f32;
+                                    anyhow::ensure!(
+                                        v.is_finite() && f.is_finite(),
+                                        "Missing/non-finite source {}",
+                                        t.name
+                                    );
+                                    values.push(f);
+                                }
+                                drop(data);
+                                let (values, palette) = crate::dictionary::encode_spatial(values)?;
+                                Ok((t, values, palette))
+                            })
+                            .await?
+                        }
+                    })
+                    .buffer_unordered(16)
+                    .collect::<Vec<_>>()
+                    .await
+                    .into_iter()
+                    .collect::<Result<Vec<_>>>()?;
+                let nc = ids.len();
+                let nl = levels.len();
+                let nf = variables.len();
+                let mut profiles = vec![0f32; nc * nl * nf];
+                let mut ground = vec![0f32; nc * 2];
+                let mut partial_fields: Vec<Vec<Vec<u32>>> = (0..nf + 2)
+                    .map(|f| {
+                        (0..if f < nf { nl } else { 1 })
+                            .map(|_| Vec::new())
+                            .collect()
+                    })
+                    .collect();
+                for (t, values, palette) in results {
+                    {
+                        partial_fields[if t.level.is_some() {
+                            t.field
+                        } else {
+                            nf + t.field
+                        }][t.level.unwrap_or(0)] = palette;
+                    }
+                    for (i, v) in values.into_iter().enumerate() {
+                        if let Some(l) = t.level {
+                            profiles[(i * nl + l) * nf + t.field] = v;
+                        } else {
+                            ground[i * 2 + t.field] = v;
+                        }
+                    }
+                }
+                disk_guard(out, ((profiles.len() + ground.len()) * 4) as u64)?;
+                let write = crate::stage::write_codes;
+                let profile_stage = write(
+                    &out.join(format!("lead-{lead:03}")),
+                    &[nc, nl, nf],
+                    &profiles,
+                )?;
+                let surface_stage =
+                    write(&out.join(format!("surface-{lead:03}")), &[nc, 2], &ground)?;
+                {
+                    let checkpoint = out.join(format!("lead-{lead:03}.palette"));
+                    fs::create_dir_all(&checkpoint)?;
+                    let mut partial_meta = meta.clone();
+                    partial_meta["leads"] = json!([lead]);
+                    let partial = crate::dictionary::Dictionary::new(partial_fields);
+                    let info = partial.save(&checkpoint, &partial_meta)?;
+                    partial_meta["staging"] = json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
+                    atomic(checkpoint.join("metadata.json"), &partial_meta)?;
+                    merge_palettes(
+                        &mut palettes,
+                        partial,
+                        time_index,
+                        nt,
+                        nf,
+                        &mut palette_entries,
+                    )?;
+                }
+                File::open(out)?.sync_all()?;
+                let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"profile_stage":profile_stage,"surface_stage":surface_stage,"source_cache_policy":"uncheckpointed_leads_only"});
+                atomic(&report, &stats)?;
+                // The synced staged arrays and durable checkpoint now replace these
+                // encoded maps for resume. Retain only a partially acquired lead.
+                prune_checkpointed_cache(&cache, &completed_keys)?;
+                println!("{stats}");
+            }
+            {
+                let dictionary = crate::dictionary::Dictionary::new(palettes);
+                let info = dictionary.save(out, &meta)?;
+                meta["staging"] = json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
+                atomic(out.join("metadata.json"), &meta)?;
+            }
+            Ok::<_, anyhow::Error>(())
+        },
+        async {
+            if let Some(task) = cloud_task {
+                Ok(Some(task.await??))
+            } else {
+                Ok::<_, anyhow::Error>(None)
             }
         }
-        disk_guard(out, ((profiles.len() + ground.len()) * 4) as u64)?;
-        let write = crate::stage::write_codes;
-        let profile_stage = write(
-            &out.join(format!("lead-{lead:03}")),
-            &[nc, nl, nf],
-            &profiles,
-        )?;
-        let surface_stage = write(&out.join(format!("surface-{lead:03}")), &[nc, 2], &ground)?;
-        {
-            let checkpoint = out.join(format!("lead-{lead:03}.palette"));
-            fs::create_dir_all(&checkpoint)?;
-            let mut partial_meta = meta.clone();
-            partial_meta["leads"] = json!([lead]);
-            let partial = crate::dictionary::Dictionary::new(partial_fields);
-            let info = partial.save(&checkpoint, &partial_meta)?;
-            partial_meta["staging"] =
-                json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
-            atomic(checkpoint.join("metadata.json"), &partial_meta)?;
-            merge_palettes(
-                &mut palettes,
-                partial,
-                time_index,
-                nt,
-                nf,
-                &mut palette_entries,
-            )?;
-        }
-        File::open(out)?.sync_all()?;
-        let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"profile_stage":profile_stage,"surface_stage":surface_stage,"source_cache_policy":"uncheckpointed_leads_only"});
-        atomic(&report, &stats)?;
-        // The synced staged arrays and durable checkpoint now replace these
-        // encoded maps for resume. Retain only a partially acquired lead.
-        prune_checkpointed_cache(&cache, &completed_keys)?;
-        println!("{stats}");
-    }
-    {
-        let dictionary = crate::dictionary::Dictionary::new(palettes);
-        let info = dictionary.save(out, &meta)?;
-        meta["staging"] =
-            json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
+    );
+    weather?;
+    if let Some(clouds) = clouds? {
+        meta["native_clouds"] = clouds;
         atomic(out.join("metadata.json"), &meta)?;
     }
     Ok(meta)
@@ -1050,180 +1153,261 @@ pub async fn fetch_clouds(out: &Path, available: Option<&Source>) -> Result<Valu
     let src = if let Some(s) = available.filter(|s| s.collection["id"] == meta["dataset"]) {
         s
     } else {
-        // Pin the current cloud metadata: the old pressure snapshot may predate
-        // wrfnat references. Dataset/init/lead/grid are checked independently.
         opened = Source::open("hrrr", Some(&json!({"dataset":meta["dataset"]}))).await?;
         &opened
     };
+    let info = fetch_cloud_coverage(out, src).await?;
+    meta["native_clouds"] = info.clone();
+    atomic(out.join("metadata.json"), &meta)?;
+    Ok(info)
+}
+
+/// All 50 exact fraction maps plus two small native geometry anchors. No
+/// per-level height/pressure maps are retained or downloaded by the point API.
+pub async fn fetch_cloud_coverage(out: &Path, available: &Source) -> Result<Value> {
+    let started = Instant::now();
+    let meta = read_json(out.join("metadata.json"))?;
     anyhow::ensure!(
-        src.collection["id"] == meta["dataset"],
-        "Cloud collection differs"
+        meta["model"] == "hrrr"
+            && meta["leads"].as_array().map(Vec::len) == Some(1)
+            && available.collection["id"] == meta["dataset"],
+        "Cloud source identity differs"
     );
     let init_time = timestamp(meta["init_time"].as_str().context("Cloud init")?)?;
-    let init = src
+    let init = available
         .init_times()
         .await?
         .iter()
         .position(|t| (*t - init_time).abs() < 0.001)
         .context("Cloud initialization unavailable")?;
-    let lead_meta = src.meta("lead_time").await?;
+    let lead_meta = available.meta("lead_time").await?;
     let factor = match lead_meta["attributes"]["units"].as_str() {
         Some("seconds") => 1. / 3600.,
         Some("hours") => 1.,
-        Some("nanoseconds") => 1. / 3.6e12,
+        Some("nanoseconds") => 1e-9 / 3600.,
         _ => bail!("Unsupported cloud lead units"),
     };
-    let hour = meta["leads"][0].as_u64().context("Cloud lead")?;
-    let lead = src
+    let lead = available
         .coord("lead_time")
         .await?
         .iter()
-        .position(|h| (*h * factor - hour as f64).abs() < 0.001)
+        .position(|h| (*h * factor - meta["leads"][0].as_u64().unwrap() as f64).abs() < 0.001)
         .context("Cloud lead unavailable")?;
-    let levels = src.coord("model_level/model_level").await?;
+    let name = "model_level/fraction_of_cloud_cover";
+    let pressure_name = "model_level/pressure";
+    let height_name = "model_level/geopotential_height";
+    let (model_levels, field, pressure_field, height_field) = tokio::try_join!(
+        available.coord("model_level/model_level"),
+        available.meta(name),
+        available.meta(pressure_name),
+        available.meta(height_name)
+    )?;
     anyhow::ensure!(
-        levels
-            == (1..=crate::clouds::LEVELS)
+        model_levels
+            == (1..=crate::cloud_coverage::LEVELS)
                 .map(|n| n as f64)
                 .collect::<Vec<_>>(),
-        "Native model level axis changed"
+        "Native cloud level axis differs"
     );
-    let xs = src.coord("x").await?;
-    let ys = src.coord("y").await?;
-    let crs = Lambert::from_cf(&src.meta("spatial_ref").await?["attributes"])?;
+    let xs = available.coord("x").await?;
+    let ys = available.coord("y").await?;
+    let crs = Lambert::from_cf(&available.meta("spatial_ref").await?["attributes"])?;
     anyhow::ensure!(
         json!(xs) == meta["grid"]["x"]
             && json!(ys) == meta["grid"]["y"]
             && crs.crs() == meta["grid"]["crs"],
-        "Native cloud grid differs"
+        "Cloud grid differs"
     );
-    let mut arrays = crate::stage::load_cells(out)?;
-    let ids = arrays.remove("cell_id").context("Cloud cell ids")?;
+    let arrays = crate::stage::load_cells(out)?;
+    let array = arrays.get("cell_id").context("Cloud cells")?;
+    let ids: Vec<u32> = array
+        .bytes
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|b| u32::from_le_bytes(*b))
+        .collect();
+    let native_cells = xs.len() * ys.len();
     anyhow::ensure!(
-        ids.dtype == "<u4"
-            && ids.bytes.len() == meta["cells"].as_u64().context("Cloud cells")? as usize * 4,
+        array.dtype == "<u4"
+            && array.bytes.len().is_multiple_of(4)
+            && ids.len() == meta["cells"].as_u64().context("Cloud cell count")? as usize
+            && !ids.is_empty()
+            && ids.len() <= 2_000_000
+            && ids.windows(2).all(|v| v[0] < v[1])
+            && ids.last().is_some_and(|id| (*id as usize) < native_cells),
         "Cloud retained cells differ"
     );
-    let ids = Arc::new(
-        ids.bytes
-            .as_chunks::<4>()
-            .0
-            .iter()
-            .map(|b| u32::from_le_bytes(*b))
-            .collect::<Vec<_>>(),
-    );
+    let ids = Arc::new(ids);
     anyhow::ensure!(
-        !ids.is_empty() && ids.len() <= 2_000_000 && ids.windows(2).all(|w| w[0] < w[1]),
-        "Cloud cell order/size"
+        field["attributes"]["units"] == "1"
+            && pressure_field["attributes"]["units"] == "Pa"
+            && height_field["attributes"]["units"] == "m",
+        "Cloud field units differ"
     );
-    let mut metas = HashMap::new();
-    for name in crate::clouds::FIELDS {
-        let field = format!("model_level/{name}");
-        let m = src.meta(&field).await?;
-        anyhow::ensure!(
-            m["attributes"]["units"] == crate::clouds::units()[name],
-            "Unsupported native cloud units: {name}"
-        );
-        metas.insert(field, m);
-    }
-    let mut tasks = Vec::new();
-    for (field, name) in crate::clouds::FIELDS.iter().enumerate() {
-        for level in 0..levels.len() {
-            tasks.push(task(
-                field,
-                Some(level),
-                format!("model_level/{name}"),
-                &metas,
-                init,
-                lead,
-                Some(level),
-            )?);
-        }
-    }
+    let metas = HashMap::from([
+        (name.to_owned(), field),
+        (pressure_name.to_owned(), pressure_field),
+        (height_name.to_owned(), height_field),
+    ]);
+    let tasks = cloud_tasks(&metas, init, lead)?;
     let keys = tasks.iter().map(|t| t.key.clone()).collect::<Vec<_>>();
+    let setup_seconds = started.elapsed().as_secs_f64();
+    let preflight_started = Instant::now();
     let preflight = check_references(keys.clone(), |key| {
-        let store = src.store.clone();
+        let store = available.store.clone();
         async move { Ok(store.exists(&key).await?) }
     })
     .await?;
     anyhow::ensure!(
         preflight["complete"] == true,
-        "Incomplete native cloud references: {preflight}"
+        "Incomplete cloud references: {preflight}"
     );
-    let cache = out.join("source-cache");
-    fs::create_dir_all(&cache)?;
+    let preflight_seconds = preflight_started.elapsed().as_secs_f64();
+    let cache = cloud_cache_dir(out, &available.snapshot)?;
     let count = Arc::new(AtomicU64::new(0));
-    let native_cells = xs.len() * ys.len();
-    anyhow::ensure!(
-        ids.last().is_some_and(|id| (*id as usize) < native_cells),
-        "Cloud cell outside source map"
-    );
-    let mut results = stream::iter(tasks)
-        .map(|t| {
-            let store = src.store.clone();
-            let cache = cache.clone();
-            let ids = ids.clone();
-            let count = count.clone();
-            async move {
-                let b = cached(&store, &cache, &t.key, &count).await?;
-                tokio::task::spawn_blocking(move || -> Result<_> {
-                    let map = decode(&t.meta, &b)?;
-                    anyhow::ensure!(map.len() == native_cells, "Native cloud map shape changed");
-                    let values = ids
-                        .iter()
-                        .map(|id| map[*id as usize] as f32)
-                        .collect::<Vec<_>>();
-                    anyhow::ensure!(
-                        values.iter().all(|v| v.is_finite()),
-                        "Missing native cloud data"
-                    );
-                    Ok((t.field, t.level.unwrap(), values))
-                })
-                .await?
+    enum CloudValues {
+        Coverage(crate::cloud_coverage::Level),
+        Anchor(Vec<f32>),
+        Top,
+    }
+    let mut reads = stream::iter(tasks).map(|t| {
+        let store = available.store.clone();
+        let cache = cache.clone();
+        let ids = ids.clone();
+        let count = count.clone();
+        let slots = available.map_slots.clone();
+        async move {
+            let _permit = slots.acquire().await?;
+            let read_started = Instant::now();
+            let bytes = cached(&store, &cache, &t.key, &count).await?;
+            let read_seconds = read_started.elapsed().as_secs_f64();
+            tokio::task::spawn_blocking(move || -> Result<_> {
+                let decode_started = Instant::now();
+                let map = decode(&t.meta, &bytes)?;
+                anyhow::ensure!(map.len() == native_cells, "Cloud map shape differs");
+                let decode_seconds = decode_started.elapsed().as_secs_f64();
+                let encode_started = Instant::now();
+                let gathered = ids.iter().map(|id| map[*id as usize] as f32);
+                let values = match t.field {
+                    0 => CloudValues::Coverage(crate::cloud_coverage::encode(gathered)?),
+                    1 | 2 => CloudValues::Anchor(gathered.collect()),
+                    3 => {
+                        anyhow::ensure!(
+                            gathered.clone().all(|p| p.is_finite() && (f64::from(p) - crate::cloud_geometry::top_pressure()).abs() < 0.1),
+                            "HRRR hybrid model top changed"
+                        );
+                        CloudValues::Top
+                    }
+                    _ => anyhow::bail!("Unknown cloud field"),
+                };
+                let timing = json!({"field":t.field,"level":t.level,"read_seconds":read_seconds,"decode_seconds":decode_seconds,"encode_seconds":encode_started.elapsed().as_secs_f64(),"bytes":bytes.len()});
+                Ok((t.field, t.level.context("Cloud level")?, values, timing))
+            }).await?
+        }
+    }).buffer_unordered(16);
+    let mut levels = (0..crate::cloud_coverage::LEVELS)
+        .map(|_| None)
+        .collect::<Vec<_>>();
+    let mut anchors: [Option<Vec<f32>>; 2] = [None, None];
+    let mut top_checked = false;
+    let mut error = None;
+    let mut map_timings = Vec::new();
+    while let Some(result) = reads.next().await {
+        match result {
+            Ok((field, level, values, timing)) if error.is_none() => {
+                let duplicate = match values {
+                    CloudValues::Coverage(codes) => levels[level].replace(codes).is_some(),
+                    CloudValues::Anchor(values) => anchors[field - 1].replace(values).is_some(),
+                    CloudValues::Top => std::mem::replace(&mut top_checked, true),
+                };
+                if duplicate {
+                    error = Some(anyhow::anyhow!("Duplicate cloud source map"));
+                }
+                map_timings.push(timing);
             }
-        })
-        .buffer_unordered(16);
-    let shape = [ids.len(), crate::clouds::LEVELS, 3];
-    let mut values = vec![0.; ids.len() * crate::clouds::STRIDE];
-    while let Some((field, level, map)) = results.try_next().await? {
-        for (cell, value) in map.into_iter().enumerate() {
-            values[cell * crate::clouds::STRIDE + level * 3 + field] = value;
+            Err(e) if error.is_none() => error = Some(e),
+            _ => {}
         }
     }
-    crate::clouds::validate(&values)?;
-    disk_guard(out, (values.len() * 4) as u64)?;
-    let logical = out.join("native-clouds");
-    let stats = crate::stage::write(&logical, &shape, &values)?;
-    let staged = crate::stage::Array::open(&logical, &shape)?;
-    let mut scratch = crate::stage::Scratch::new()?;
-    let mut check = vec![0.; crate::stage::BLOCK_CELLS * crate::clouds::STRIDE];
-    for (block, original) in values.chunks(check.len()).enumerate() {
-        staged.read_into_with(
-            block * check.len(),
-            &mut check[..original.len()],
-            &mut scratch,
-        )?;
-        anyhow::ensure!(
-            original
-                .iter()
-                .zip(&check)
-                .all(|(a, b)| a.to_bits() == b.to_bits()),
-            "Native cloud roundtrip changed Float32 values"
-        );
+    if let Some(e) = error {
+        return Err(e);
     }
-    let mut info = json!({"version":1,"shape":shape,"model_levels":levels,"fields":crate::clouds::FIELDS,"units":crate::clouds::units(),"full_values_checked":true,"logical_values":values.len(),"data_bytes":fs::metadata(out.join(crate::clouds::FILES[0]))?.len(),"data_sha256":crate::dictionary::file_hash(&out.join(crate::clouds::FILES[0]))?,"index_sha256":crate::dictionary::file_hash(&out.join(crate::clouds::FILES[1]))?,"storage":stats,"grib_bytes":count.load(Ordering::Relaxed)});
-    // Keep the axis integral and identical across source/data/API schemas.
-    info["model_levels"] = json!((1..=crate::clouds::LEVELS).collect::<Vec<_>>());
-    for key in ["model", "dataset", "init_time", "leads", "grid"] {
-        info[key] = meta[key].clone();
-    }
-    info["snapshot_id"] = json!(src.snapshot);
-    info["pressure_snapshot_id"] = meta["snapshot_id"].clone();
-    meta["native_clouds"] = info.clone();
-    crate::clouds::binding(out, &meta)?.context("Cloud binding absent")?;
-    atomic(out.join("metadata.json"), &meta)?;
+    anyhow::ensure!(top_checked, "Missing source model-top check");
+    let acquisition_seconds = started.elapsed().as_secs_f64();
+    let levels = levels
+        .into_iter()
+        .map(|l| l.context("Missing cloud level"))
+        .collect::<Result<Vec<_>>>()?;
+    // Cached retries must preserve the same reserve as fresh downloads. Cover
+    // both cloud data/index pairs and their provenance before the first write.
+    disk_guard(out, crate::clouds::max_stored_bytes(ids.len())?)?;
+    let mut coverage = crate::cloud_coverage::write(out, &levels)?;
+    coverage["index_sha256"] = json!(crate::dictionary::file_hash(
+        &out.join(crate::cloud_coverage::INDEX)
+    )?);
+    let [bottom, top] = anchors;
+    let anchor_stats = crate::clouds::write_anchors(
+        out,
+        &[
+            bottom.context("Missing bottom pressure")?,
+            top.context("Missing top height")?,
+        ],
+    )?;
+    coverage["data_sha256"] = json!(crate::dictionary::file_hash(
+        &out.join(crate::cloud_coverage::DATA)
+    )?);
+    let mut info = crate::clouds::metadata(&meta, &available.snapshot, coverage, anchor_stats)?;
+    info["source_maps"] = json!(53);
+    info["source_top_checked"] = json!(true);
+    info["setup_seconds"] = json!(setup_seconds);
+    info["preflight_seconds"] = json!(preflight_seconds);
+    info["map_timings"] = json!(map_timings);
+    info["acquisition_seconds"] = json!(acquisition_seconds);
+    info["grib_bytes"] = json!(count.load(Ordering::Relaxed));
+    atomic(out.join("cloud-coverage-provenance.json"), &info)?;
     prune_checkpointed_cache(&cache, &keys)?;
+    info["total_seconds"] = json!(started.elapsed().as_secs_f64());
+    atomic(out.join("cloud-coverage-provenance.json"), &info)?;
     Ok(info)
+}
+
+fn cloud_tasks(metas: &HashMap<String, Value>, init: usize, lead: usize) -> Result<Vec<Task>> {
+    let name = "model_level/fraction_of_cloud_cover";
+    let pressure_name = "model_level/pressure";
+    let height_name = "model_level/geopotential_height";
+    let mut tasks = (0..crate::cloud_coverage::LEVELS)
+        .map(|l| task(0, Some(l), name.to_owned(), metas, init, lead, Some(l)))
+        .collect::<Result<Vec<_>>>()?;
+    tasks.push(task(
+        1,
+        Some(0),
+        pressure_name.to_owned(),
+        metas,
+        init,
+        lead,
+        Some(0),
+    )?);
+    tasks.push(task(
+        2,
+        Some(49),
+        height_name.to_owned(),
+        metas,
+        init,
+        lead,
+        Some(49),
+    )?);
+    // Confirm the configured hybrid lid against this immutable source hour.
+    tasks.push(task(
+        3,
+        Some(49),
+        pressure_name.to_owned(),
+        metas,
+        init,
+        lead,
+        Some(49),
+    )?);
+    Ok(tasks)
 }
 
 pub async fn cloud_availability(product: &str) -> Result<Value> {
@@ -1238,23 +1422,10 @@ pub async fn cloud_availability(product: &str) -> Result<Value> {
     for init in (inits.len().saturating_sub(24)..inits.len()).rev() {
         let mut hours = Vec::new();
         for hour in [0, 1, 12, 18] {
-            let mut keys = Vec::new();
-            for (field, name) in crate::clouds::FIELDS.iter().enumerate() {
-                for level in [0, 25, 49] {
-                    keys.push(
-                        task(
-                            field,
-                            Some(level),
-                            format!("model_level/{name}"),
-                            &metas,
-                            init,
-                            hour,
-                            Some(level),
-                        )?
-                        .key,
-                    );
-                }
-            }
+            let keys = cloud_tasks(&metas, init, hour)?
+                .into_iter()
+                .map(|t| t.key)
+                .collect();
             let result = check_references(keys, |key| {
                 let store = src.store.clone();
                 async move { Ok(store.exists(&key).await?) }
@@ -1270,6 +1441,24 @@ pub async fn cloud_availability(product: &str) -> Result<Value> {
 #[cfg(test)]
 mod cloud_tests {
     use super::*;
+    #[test]
+    fn cloud_retries_are_snapshot_scoped_and_preserve_pressure_cache() {
+        let root = tempfile::tempdir().unwrap();
+        let pressure = root.path().join("source-cache/pressure");
+        fs::create_dir_all(pressure.parent().unwrap()).unwrap();
+        fs::write(&pressure, b"pressure").unwrap();
+        let first = cloud_cache_dir(root.path(), "snapshot-a").unwrap();
+        fs::write(first.join("encoded"), b"cloud-a").unwrap();
+        assert!(cloud_cache_dir(root.path(), "snapshot-a")
+            .unwrap()
+            .join("encoded")
+            .exists());
+        let next = cloud_cache_dir(root.path(), "snapshot-b").unwrap();
+        assert_ne!(first, next);
+        assert!(!first.exists());
+        assert!(next.is_dir());
+        assert_eq!(fs::read(pressure).unwrap(), b"pressure");
+    }
     #[test]
     fn model_level_maps_require_the_declared_axis_and_complete_spatial_chunks() {
         let name = "model_level/fraction_of_cloud_cover".to_owned();

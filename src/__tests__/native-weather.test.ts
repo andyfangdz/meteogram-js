@@ -184,6 +184,8 @@ describe("HRRR native cloud layers", () => {
     "pressure",
     "source",
     "lead",
+    "geometry",
+    "coverage-fidelity",
   ])("rejects invalid native clouds: %s", async (bad) => {
     const { withNativeClouds } = await import("./__helpers__/nativeForecast");
     const f = withNativeClouds();
@@ -197,6 +199,9 @@ describe("HRRR native cloud layers", () => {
     if (bad === "source")
       c.lead_sources[0].pressure_snapshot_id = "other-snapshot";
     if (bad === "lead") c.rows[0][0] = 1;
+    if (bad === "geometry") Object.assign(c.geometry!, { method: "unknown" });
+    if (bad === "coverage-fidelity")
+      Object.assign(c.geometry!, { coverage: "quantized" });
     expect(() => parseNativeForecast(f, "hrrr")).toThrow(/cloud/i);
   });
 });

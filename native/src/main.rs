@@ -1,4 +1,7 @@
 mod api;
+mod cloud_compaction;
+mod cloud_coverage;
+mod cloud_geometry;
 mod clouds;
 mod db;
 mod dictionary;
@@ -44,6 +47,11 @@ enum Cmd {
         run: String,
         #[arg(long, value_delimiter = ',')]
         leads: Option<Vec<u16>>,
+    },
+    /// Convert resident HRRR clouds to exact fractions with derived geometry.
+    CompactClouds {
+        #[arg(long)]
+        root: PathBuf,
     },
     Inspect {
         model: String,
@@ -202,6 +210,7 @@ async fn main() -> Result<()> {
         Cmd::NativeClouds { root, run, leads } => {
             output(&clouds::backfill(&root, &run, leads).await?, None)?
         }
+        Cmd::CompactClouds { root } => output(&cloud_compaction::compact(&root)?, None)?,
         Cmd::Inspect { model } => {
             let s = source::Source::open(&model, None).await?;
             println!("snapshot={}", s.snapshot);

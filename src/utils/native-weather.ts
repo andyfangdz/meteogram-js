@@ -30,6 +30,11 @@ export interface NativeForecast {
   freshness: { available: boolean };
   lead_sources?: { lead: number; snapshot_id: string }[];
   native_clouds?: {
+    geometry?: {
+      method: "hrrr_hybrid_moist_log_pressure_v1";
+      coverage: "exact_source_float32";
+      height: "log_pressure_interpolation";
+    };
     model_levels: number[];
     fields: string[];
     units: Record<string, string>;
@@ -195,6 +200,11 @@ function validateNativeClouds(
   if (
     !record(c) ||
     model !== "hrrr" ||
+    (c.geometry !== undefined &&
+      (!record(c.geometry) ||
+        c.geometry.method !== "hrrr_hybrid_moist_log_pressure_v1" ||
+        c.geometry.coverage !== "exact_source_float32" ||
+        c.geometry.height !== "log_pressure_interpolation")) ||
     !same(
       c.model_levels,
       Array.from({ length: 50 }, (_, i) => i + 1),
@@ -273,6 +283,9 @@ function nativeCloudLayers(
   const layers = forecast
     .native_clouds!.model_levels.map((modelLevel, i) => ({
       modelLevel,
+      ...(forecast.native_clouds!.geometry
+        ? { geometry: "derived" as const }
+        : {}),
       hpa: row[3][i] / 100,
       geopotentialFt: row[2][i] * FEET_PER_METER,
       mslFt:
@@ -494,6 +507,9 @@ export function transformNativeForecast(
         ? {
             nativeCloudLevels: 50,
             nativeCloudHours: nativeHours,
+            ...(forecast.native_clouds?.geometry
+              ? { nativeCloudGeometry: "derived" as const }
+              : {}),
             displayedHours: data.length,
           }
         : {}),

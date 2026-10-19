@@ -1,0 +1,72 @@
+{
+  "run_init": "2026-10-19T00:00:00.000000000",
+  "hours": 49,
+  "weather_variables": [
+    "geopotential_height",
+    "temperature",
+    "wind_u",
+    "wind_v",
+    "relative_humidity",
+    "dew_point_temperature",
+    "temperature_2m",
+    "dew_point_temperature_2m"
+  ],
+  "columns": [
+    {
+      "column": "wind_v",
+      "compressed": 937875127
+    },
+    {
+      "column": "relative_humidity",
+      "compressed": 1352469929
+    },
+    {
+      "column": "dew_point_temperature",
+      "compressed": 1729795374
+    },
+    {
+      "column": "cell_ids",
+      "compressed": 322885340
+    },
+    {
+      "column": "wind_u",
+      "compressed": 930779987
+    },
+    {
+      "column": "temperature",
+      "compressed": 766052502
+    },
+    {
+      "column": "lead_hour",
+      "compressed": 146945
+    },
+    {
+      "column": "temperature_2m",
+      "compressed": 64876526
+    },
+    {
+      "column": "revision_id",
+      "compressed": 155374
+    },
+    {
+      "column": "dew_point_temperature_2m",
+      "compressed": 62944121
+    },
+    {
+      "column": "geopotential_height",
+      "compressed": 1187321381
+    },
+    {
+      "column": "tile_id",
+      "compressed": 1362782
+    }
+  ],
+  "codebook_bytes": 57692115,
+  "average_variable_bytes_per_hour": 18086242.505102042,
+  "baseline_time": {
+    "source": "prior live two-hour phase trace",
+    "pressure_acquisition_plus_post_cloud_seconds": 16.462909936904907,
+    "variable_count": 8,
+    "average_variable_processing_seconds": 2.0578637421131134
+  }
+}

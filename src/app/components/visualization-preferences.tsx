@@ -111,7 +111,7 @@ export default function VisualizationPreferencesComponent({
               <>{" · Clouds estimated from humidity"}</>
             )}
             {source.nativeCloudLevels && (
-              <>{` · Native clouds (${source.nativeCloudLevels} levels${source.cloudMethod === "mixed" ? `, ${source.nativeCloudHours}/${source.displayedHours} displayed hours; remaining hours estimated from humidity` : ""})`}</>
+              <>{` · Native clouds (${source.nativeCloudLevels} levels${source.nativeCloudGeometry === "derived" ? "; derived layer heights" : ""}${source.cloudMethod === "mixed" ? `, ${source.nativeCloudHours}/${source.displayedHours} displayed hours; remaining hours estimated from humidity` : ""})`}</>
             )}
             {source.fallback && <>{" · Backup forecast"}</>}
           </div>

@@ -1,0 +1,193 @@
+{
+  "version": "meteogram-native 0.3.0",
+  "sha256": "3387817d7999f0e6be8d057dd640bf2fb6e608125f1da3f324923735cab0bce1",
+  "native_tests_passed_including_database": 54,
+  "live_source_hours_passed": 6,
+  "frontend_tests_passed": 111,
+  "clippy_warnings_denied": true,
+  "frontend_typecheck_lint_build": true,
+  "disk_reserve_guarded_for_all_cloud_writes": true,
+  "benchmark_sample_order_explicitly_alternated": true,
+  "head": "afeaaace7bc43509598807831761cb9e6ebcbd66",
+  "installed_at": "2026-10-19T04:28:58.006253+00:00",
+  "all_models_healthy": true,
+  "all_twelve_api_payloads_unchanged": true,
+  "retention_satisfied": true,
+  "api_before_after_comparison": [
+    {
+      "location": "KCDW",
+      "run": "latest",
+      "init_time": "2026-10-19T03:00:00.000000000",
+      "weather_hours": 7,
+      "cloud_hours": 7,
+      "logical_payload_sha256": "660a8653508d67618b9ea97294aec499fa97659dbc47c64617e66969ada10659",
+      "seconds": 0.41863706801086664
+    },
+    {
+      "location": "KCDW",
+      "run": "latest_complete",
+      "init_time": "2026-10-19T02:00:00.000000000",
+      "weather_hours": 19,
+      "cloud_hours": 19,
+      "logical_payload_sha256": "8a7d956cbd1228d4d327626e149eadd0c58163d9da24545623dff6b710c199f6",
+      "seconds": 1.396080964943394
+    },
+    {
+      "location": "KCDW",
+      "run": "previous_complete",
+      "init_time": "2026-10-19T01:00:00.000000000",
+      "weather_hours": 19,
+      "cloud_hours": 19,
+      "logical_payload_sha256": "dc8c4d6a19209ea71d656e4515954ea2c4b4d7513e64b21e1725ee8996115303",
+      "seconds": 1.2608138059731573
+    },
+    {
+      "location": "KCDW",
+      "run": "long",
+      "init_time": "2026-10-19T00:00:00.000000000",
+      "weather_hours": 49,
+      "cloud_hours": 49,
+      "logical_payload_sha256": "3cdf46ba07e716740dfc3b68afec29419c9fe8dc25ff86292da806c938d280bf",
+      "seconds": 1.4704201670829207
+    },
+    {
+      "location": "Houston",
+      "run": "latest",
+      "init_time": "2026-10-19T03:00:00.000000000",
+      "weather_hours": 7,
+      "cloud_hours": 7,
+      "logical_payload_sha256": "fea2aaf2e633f67ff90afc743c6643c373022eb1c3a27114c4eb31f2ccf517c7",
+      "seconds": 0.05116155301220715
+    },
+    {
+      "location": "Houston",
+      "run": "latest_complete",
+      "init_time": "2026-10-19T02:00:00.000000000",
+      "weather_hours": 19,
+      "cloud_hours": 19,
+      "logical_payload_sha256": "786b2abd1f6cee0b96d88ab475caf81d30b4e0d60c6edf4d3a292efb59255ef6",
+      "seconds": 0.13269403879530728
+    },
+    {
+      "location": "Houston",
+      "run": "previous_complete",
+      "init_time": "2026-10-19T01:00:00.000000000",
+      "weather_hours": 19,
+      "cloud_hours": 19,
+      "logical_payload_sha256": "b2ba977fe2b4d41447533c56b463b7658339dcdaead376a4b67cbf2540c0124e",
+      "seconds": 0.13299756706692278
+    },
+    {
+      "location": "Houston",
+      "run": "long",
+      "init_time": "2026-10-19T00:00:00.000000000",
+      "weather_hours": 49,
+      "cloud_hours": 49,
+      "logical_payload_sha256": "99c978209508b7ac9aedd9cb27208ebdb317d86b1143591a422ca93a33128b47",
+      "seconds": 0.27934341598302126
+    },
+    {
+      "location": "Denver",
+      "run": "latest",
+      "init_time": "2026-10-19T03:00:00.000000000",
+      "weather_hours": 7,
+      "cloud_hours": 7,
+      "logical_payload_sha256": "9d9c5d94bdbda6cc311bc5a6516913e1299d5c4507d09574ab0af7a49dd95390",
+      "seconds": 0.04970807279460132
+    },
+    {
+      "location": "Denver",
+      "run": "latest_complete",
+      "init_time": "2026-10-19T02:00:00.000000000",
+      "weather_hours": 19,
+      "cloud_hours": 19,
+      "logical_payload_sha256": "74b4c983ff67fa9c20951c17477ba7c9a3cbdb9daa0921e68045b11e63346dc2",
+      "seconds": 0.12139098299667239
+    },
+    {
+      "location": "Denver",
+      "run": "previous_complete",
+      "init_time": "2026-10-19T01:00:00.000000000",
+      "weather_hours": 19,
+      "cloud_hours": 19,
+      "logical_payload_sha256": "803a2420253a70be82788bb464d6e2875d4943a17f463a27efbc37e4ea718a1d",
+      "seconds": 0.1205522168893367
+    },
+    {
+      "location": "Denver",
+      "run": "long",
+      "init_time": "2026-10-19T00:00:00.000000000",
+      "weather_hours": 49,
+      "cloud_hours": 49,
+      "logical_payload_sha256": "6643f487417e507c2855fb0ba7586c44c0604c81b3c71b05c04a10d3e5313a3e",
+      "seconds": 0.2718092610593885
+    }
+  ],
+  "authenticated_api_checks": {
+    "success": true,
+    "report": [
+      {
+        "base_url": "http://127.0.0.1:18080",
+        "unauthenticated_status": 401,
+        "authenticated_health_status": 200,
+        "all_models_available_with_retention": true,
+        "forecasts": [
+          {
+            "model": "hrrr",
+            "hours": 49,
+            "init_time": "2026-10-19T00:00:00.000000000",
+            "cloud_hours": 49,
+            "cloud_levels": 50,
+            "derived_geometry_method": "hrrr_hybrid_moist_log_pressure_v1"
+          },
+          {
+            "model": "gfs",
+            "hours": 75,
+            "init_time": "2026-10-19T00:00:00.000000000"
+          },
+          {
+            "model": "aifs",
+            "hours": 31,
+            "init_time": "2026-10-18T18:00:00.000000000"
+          },
+          {
+            "model": "rrfs",
+            "hours": 85,
+            "init_time": "2026-10-19T00:00:00.000000000"
+          }
+        ]
+      },
+      {
+        "base_url": "https://weather-api.andyfang.app",
+        "unauthenticated_status": 401,
+        "authenticated_health_status": 200,
+        "all_models_available_with_retention": true,
+        "forecasts": [
+          {
+            "model": "hrrr",
+            "hours": 49,
+            "init_time": "2026-10-19T00:00:00.000000000",
+            "cloud_hours": 49,
+            "cloud_levels": 50,
+            "derived_geometry_method": "hrrr_hybrid_moist_log_pressure_v1"
+          },
+          {
+            "model": "gfs",
+            "hours": 75,
+            "init_time": "2026-10-19T00:00:00.000000000"
+          },
+          {
+            "model": "aifs",
+            "hours": 31,
+            "init_time": "2026-10-18T18:00:00.000000000"
+          },
+          {
+            "model": "rrfs",
+            "hours": 85,
+            "init_time": "2026-10-19T00:00:00.000000000"
+          }
+        ]
+      }
+    ]
+  }
+}

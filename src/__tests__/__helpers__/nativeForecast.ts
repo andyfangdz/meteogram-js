@@ -93,6 +93,11 @@ export function withNativeClouds(
   leads = forecast.available_leads,
 ) {
   forecast.native_clouds = {
+    geometry: {
+      method: "hrrr_hybrid_moist_log_pressure_v1",
+      coverage: "exact_source_float32",
+      height: "log_pressure_interpolation",
+    },
     model_levels: Array.from({ length: 50 }, (_, i) => i + 1),
     fields: [
       "lead_hour",

@@ -91,7 +91,7 @@ publication. Source staging retains a 20 GiB free-space floor.
 Coverage is 24–50°N, 125–66°W, subject to each source grid. Keep every configured
 cell, field, level and forecast time. HRRR/RRFS retain their source-declared
 spherical Lambert grid and grid-relative winds; GFS/AIFS winds are earth-relative.
-RRFS opens Icechunk with a bounded eight-million-reference manifest cache and
+HRRR and RRFS open Icechunk with bounded eight-million-reference manifest caches and
 weather payload caching disabled. Configure that cache at initial repository
 open because `reopen` shares the original asset manager.
 
@@ -119,7 +119,8 @@ required serving files, not regenerable staging.
 An hourly child descriptor uses `cell_tiles_v1` with `partitioned_lead=true` and
 one matching `lead_hour`. Its weather staging is indexed Zstd v2 with UInt16
 spatial deltas and byte shuffling. Coordinates use checksummed `cells.bin.zst`.
-Cloud serving files use the indexed Float32 Zstd v1 codec. Both codecs are part
+Cloud anchors use indexed Float32 Zstd v1; cloud fractions use the exact palette
+codec described below. These codecs are part
 of the current format. Unsupported storage layouts and staging types are
 rejected.
 
@@ -196,28 +197,59 @@ curl --noproxy '*' --compressed \
 
 ## HRRR native clouds
 
-Normal HRRR ingestion acquires 50 model-level cloud fractions, geopotential
-heights and pressures when available, independently of the 30 pressure levels.
-Each hourly supplement is a checksummed cell-major `[cells,50,3]` Float32 file,
-with finite/range/vertical-order checks and bit-exact staged readback before
-publication. Point reads check frame CRCs. Cloud files are serving data and
-follow their hourly descriptor's retention.
+HRRR retains all 50 model-level cloud coverages exactly. Version 2 stores
+coverage in Float32 palettes with constant levels and checksummed 256-cell
+spatial frames (`cloud-coverage.bin.zst`/`cloud-coverage.json`). The separate
+`cloud-anchors.stage.zst`/`.stage.json` retain two exact native Float32 fields:
+level-1 pressure and level-50 geopotential height. Every stored fraction and
+anchor is compared bit for bit during staged readback. Files follow the hourly
+child's immutable metadata, source binding and retention; point reads check CRCs.
+Fresh writes, cached retries and conversion all check space for both file pairs
+plus provenance while preserving the 20 GiB source-staging reserve.
+
+Layer coordinates are derived from the atmosphere already retained for each
+point. NOAA's 51 HRRR interfaces and WRF hybrid weights, anchored by the native
+bottom pressure and corrected using the pressure profile's moisture column,
+determine layer pressures. Geopotential height interpolates in log pressure;
+the native top height anchors the extension above the 275 hPa profile limit.
+A separate native top-pressure map checks the configured 15 hPa model lid.
+The API declares this geometry method; the site labels estimated coordinates.
+Source acquisition therefore needs 53 maps rather than 150. Its task runs
+alongside pressure extraction, sharing the same 16-map concurrency limit.
+All tasks drain before an hour returns an error. Retry payloads are scoped to
+the pinned cloud snapshot.
 
 Cloud references may arrive in a newer Icechunk snapshot than pressure fields.
-The supplement records both snapshots while requiring the same dataset,
-initialization, forecast hour and exact grid. Backfill missing supplements with:
+Both snapshots are recorded, with the same dataset, initialization, hour and grid.
+Backfill missing supplements or compact existing retained runs with:
 
 ```sh
 meteogram-native native-clouds --root "$NATIVE_ROOT" --run latest
 meteogram-native native-clouds --root "$NATIVE_ROOT" --run latest_complete --leads 1,2
 meteogram-native native-clouds --root "$NATIVE_ROOT" --run long
+meteogram-native compact-clouds --root "$NATIVE_ROOT"
 meteogram-native cloud-availability --product noaa-hrrr-forecast-18-hour-virtual
 ```
 
-Backfill creates immutable child/parent revisions while preserving pressure
-tables, hours, metadata, codebooks and proofs. Existing supplements are never
-replaced. Each completed hour publishes atomically; rerunning skips it. The
-availability command is a bounded reference diagnostic, not full validation.
+Backfill preserves all weather tables, hours, metadata, codebooks and proofs.
+Compaction reads the original resident cloud arrays, compares every coverage
+and anchor bit, creates new immutable descriptors, and atomically replaces all
+retained catalog roles. Original descriptors keep the ten-minute retirement
+grace period before GC. It also converts unpublished incoming hours under the
+update lock. Rerunning skips already optimized supplements. Serving accepts
+version 2; the former three-field reader exists only in the conversion tool.
+
+The ignored full-CONUS benchmark is explicitly opt-in. Set
+`METEOGRAM_CLOUD_COST_SOURCE` to colon-separated resident hourly descriptor paths
+and `METEOGRAM_CLOUD_COST_OUTPUT` to a nonexistent directory, then run
+`cargo test --release full_conus_live_source_cost_and_exactness -- --ignored --nocapture`
+from `native/`. It primes only weather references, compares independent
+pressure-only/integrated runs with fresh payloads and alternating order, checks
+identical weather staging bytes and every cloud fraction/anchor, and compares
+every reconstructed column with native coordinates. Its runtime has four
+workers and the production 16-map limit. Run database integration tests with
+`cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness`
+to avoid invoking this separate live benchmark.
 
 ## Site and tunnel
 

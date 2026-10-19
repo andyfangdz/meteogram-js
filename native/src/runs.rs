@@ -345,6 +345,44 @@ pub fn publish_cloud_upgrade(root: &Path, prior: &Entry, next: Entry) -> Result<
     crate::clouds::check_upgrade(root, prior, &next)?;
     publish_with(root, "hrrr", next, false, Some(prior))
 }
+/// Caller holds update.lock. Preserve selector roles while replacing immutable
+/// cloud storage; never rerank runs or change their weather tables/hours.
+pub fn publish_cloud_replacements(root: &Path, changes: &[(Entry, Entry)]) -> Result<Catalog> {
+    anyhow::ensure!(!changes.is_empty(), "No cloud replacements");
+    for (prior, next) in changes {
+        crate::clouds::check_upgrade(root, prior, next)?;
+        let path = descriptor(root, next)?;
+        let meta = read_json(path.join("metadata.json"))?;
+        binding(&path, next, &meta)?;
+        validate_manifest(root, next, &meta, false)?;
+    }
+    let _catalog = Lock::acquire(root, "catalog", true, false)?;
+    let mut catalog = catalog(root)?;
+    let before = direct(&catalog, false);
+    for (prior, next) in changes {
+        anyhow::ensure!(
+            before.contains(prior),
+            "Cloud replacement no longer selected"
+        );
+        for entry in catalog
+            .current
+            .values_mut()
+            .chain(catalog.previous.values_mut())
+            .chain(catalog.complete_runs.values_mut().flatten())
+            .chain(catalog.building.values_mut().flatten())
+            .chain(catalog.hrrr_long.iter_mut())
+        {
+            if entry == prior {
+                *entry = next.clone();
+            }
+        }
+    }
+    retire_removed(&mut catalog, before);
+    catalog.generation += 1;
+    catalog.published_at = Some(now());
+    atomic(root.join("catalog.json"), &catalog)?;
+    Ok(catalog)
+}
 fn publish_with(
     root: &Path,
     model: &str,

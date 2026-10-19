@@ -24,6 +24,7 @@ export interface CloudCell {
 
 export interface NativeCloudLayer {
   modelLevel: number;
+  geometry?: "derived";
   hpa: number;
   geopotentialFt: number;
   mslFt: number;
@@ -104,6 +105,7 @@ export interface WeatherSource {
   cloudMethod: "model" | "humidity-estimate" | "mixed";
   nativeCloudLevels?: number;
   nativeCloudHours?: number;
+  nativeCloudGeometry?: "derived";
   displayedHours?: number;
   cadenceMinutes: number;
   fallback?: boolean;

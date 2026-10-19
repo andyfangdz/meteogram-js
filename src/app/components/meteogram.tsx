@@ -357,6 +357,10 @@ const Meteogram = React.memo(function Meteogram({
               bounds.yMax +
                 margin.top -
                 ((hoveredRect || frozenRect)!.nativeCloudLayer ? 330 : 290) -
+                ((hoveredRect || frozenRect)!.nativeCloudLayer?.geometry ===
+                "derived"
+                  ? 20
+                  : 0) -
                 ((hoveredRect || frozenRect)!.initializedAt ? 20 : 0) -
                 ((hoveredRect || frozenRect)!.sampleDate ? 20 : 0),
             ),

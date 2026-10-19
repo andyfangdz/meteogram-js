@@ -1,44 +1,94 @@
-//! Immutable HRRR model-level cloud supplement, independent of pressure profiles.
+//! Immutable HRRR cloud coverage and native anchors, with derived coordinates.
 use crate::{dictionary::file_hash, stage, state::*};
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::{collections::BTreeMap, fs, path::Path};
 
 pub const LEVELS: usize = 50;
-pub const STRIDE: usize = LEVELS * 3;
-pub const FILES: [&str; 2] = ["native-clouds.stage.zst", "native-clouds.stage.json"];
+pub const FILES: [&str; 4] = [
+    crate::cloud_coverage::DATA,
+    crate::cloud_coverage::INDEX,
+    "cloud-anchors.stage.zst",
+    "cloud-anchors.stage.json",
+];
+/// Conservative bound for both data/index pairs plus provenance. Fractions may
+/// use UInt16 codes and full 65,536-entry Float32 palettes at every level.
+/// Include pretty-printed JSON whitespace in the per-palette-entry bound.
+pub fn max_stored_bytes(cells: usize) -> Result<u64> {
+    anyhow::ensure!((1..=2_000_000).contains(&cells), "Cloud cell count");
+    Ok((cells * (LEVELS * 2 + 8)
+        + cells.div_ceil(256) * 1024
+        + cells.div_ceil(stage::BLOCK_CELLS) * 1024
+        + LEVELS * 65_536 * 24
+        + 1024 * 1024) as u64)
+}
+
+pub fn write_anchors(path: &Path, anchors: &[Vec<f32>; 2]) -> Result<Value> {
+    let started = std::time::Instant::now();
+    let cells = anchors[0].len();
+    anyhow::ensure!(
+        cells > 0 && cells <= 2_000_000 && anchors[1].len() == cells,
+        "Cloud anchor shape"
+    );
+    let mut values = Vec::with_capacity(cells * 2);
+    for (&p, &h) in anchors[0].iter().zip(&anchors[1]) {
+        anyhow::ensure!(
+            p.is_finite() && p > 10000. && p < 120000. && h.is_finite() && h > 20000. && h < 40000.,
+            "Invalid cloud anchor"
+        );
+        values.extend_from_slice(&[p, h]);
+    }
+    let mut info = stage::write(&path.join("cloud-anchors"), &[cells, 2], &values)?;
+    let reader = stage::Array::open(&path.join("cloud-anchors"), &[cells, 2])?;
+    let mut scratch = stage::Scratch::new()?;
+    let mut buffer = vec![0.; 4096 * 2];
+    for first in (0..cells).step_by(4096) {
+        let n = 4096.min(cells - first);
+        reader.read_into_with(first * 2, &mut buffer[..n * 2], &mut scratch)?;
+        anyhow::ensure!(
+            buffer[..n * 2]
+                .iter()
+                .zip(&values[first * 2..(first + n) * 2])
+                .all(|(a, b)| a.to_bits() == b.to_bits()),
+            "Cloud anchor roundtrip"
+        );
+    }
+    info["data_bytes"] = json!(fs::metadata(path.join(FILES[2]))?.len());
+    info["index_bytes"] = json!(fs::metadata(path.join(FILES[3]))?.len());
+    info["index_sha256"] = json!(file_hash(&path.join(FILES[3]))?);
+    info["data_sha256"] = json!(file_hash(&path.join(FILES[2]))?);
+    info["full_values_checked"] = json!(true);
+    info["seconds"] = json!(started.elapsed().as_secs_f64());
+    Ok(info)
+}
+
+pub fn metadata(meta: &Value, snapshot: &str, coverage: Value, anchors: Value) -> Result<Value> {
+    let cells = meta["cells"].as_u64().context("Cloud cells")?;
+    anyhow::ensure!(
+        cells > 0
+            && cells <= 2_000_000
+            && coverage["full_values_checked"] == true
+            && anchors["full_values_checked"] == true,
+        "Incomplete cloud storage proof"
+    );
+    let data_bytes = coverage["data_bytes"]
+        .as_u64()
+        .context("Coverage bytes")?
+        .checked_add(anchors["data_bytes"].as_u64().context("Anchor bytes")?)
+        .context("Cloud byte overflow")?;
+    let mut result = json!({"version":2,"format":"cloud_fraction_anchors_v2","shape":[cells,50,3],"model_levels":(1..=50).collect::<Vec<_>>(),"fields":FIELDS,"units":units(),"full_values_checked":true,"stored_fraction_values":cells*50,"stored_anchor_values":cells*2,"geometry":crate::cloud_geometry::description(),"coverage":coverage,"anchors":anchors,"snapshot_id":snapshot,"pressure_snapshot_id":meta["snapshot_id"],"data_bytes":data_bytes});
+    for key in ["model", "dataset", "init_time", "leads", "cells", "grid"] {
+        result[key] = meta[key].clone();
+    }
+    Ok(result)
+}
 pub const FIELDS: [&str; 3] = ["fraction_of_cloud_cover", "geopotential_height", "pressure"];
 pub fn units() -> Value {
     json!({"fraction_of_cloud_cover":"1","geopotential_height":"m","pressure":"Pa"})
 }
-pub fn validate(values: &[f32]) -> Result<()> {
-    anyhow::ensure!(
-        values.len().is_multiple_of(STRIDE) && !values.is_empty(),
-        "Invalid native cloud width"
-    );
-    for cell in values.as_chunks::<STRIDE>().0 {
-        for v in cell.as_chunks::<3>().0 {
-            anyhow::ensure!(
-                v.iter().all(|x| x.is_finite()) && (0. ..=1.).contains(&v[0]) && v[2] > 0.,
-                "Invalid native cloud value"
-            );
-        }
-        let ascending = cell[4] > cell[1];
-        for levels in cell.windows(6).step_by(3) {
-            anyhow::ensure!(
-                if ascending {
-                    levels[4] > levels[1] && levels[5] < levels[2]
-                } else {
-                    levels[4] < levels[1] && levels[5] > levels[2]
-                },
-                "Native cloud heights/pressures are not monotonic"
-            );
-        }
-    }
-    Ok(())
-}
 pub struct Reader {
-    array: stage::Array,
+    coverage: crate::cloud_coverage::Reader,
+    anchors: stage::Array,
     pub snapshot: String,
     pressure_snapshot: String,
 }
@@ -51,12 +101,13 @@ pub fn binding(path: &Path, meta: &Value) -> Result<Option<Reader>> {
         meta["model"] == "hrrr"
             && cells > 0
             && cells <= 2_000_000
-            && c["version"] == 1
+            && c["version"] == 2
             && c["shape"] == json!([cells, LEVELS, 3])
             && c["fields"] == json!(FIELDS)
             && c["units"] == units()
             && c["model_levels"] == json!((1..=LEVELS).collect::<Vec<_>>())
-            && c["full_values_checked"] == true,
+            && c["full_values_checked"] == true
+            && c["source_top_checked"] == true,
         "Invalid native cloud schema/proof"
     );
     for key in ["model", "dataset", "init_time", "leads", "grid"] {
@@ -67,26 +118,39 @@ pub fn binding(path: &Path, meta: &Value) -> Result<Option<Reader>> {
     }
     anyhow::ensure!(
         c["pressure_snapshot_id"] == meta["snapshot_id"]
-            && c["snapshot_id"].as_str().is_some_and(|s| !s.is_empty()),
+            && c["snapshot_id"].as_str().is_some_and(|s| !s.is_empty())
+            && c["leads"].as_array().map(Vec::len) == Some(1),
         "Cloud/pressure provenance mismatch"
     );
     anyhow::ensure!(
-        c["leads"].as_array().map(Vec::len) == Some(1),
-        "Cloud supplement requires one hour"
-    );
-    anyhow::ensure!(
-        file_hash(&path.join(FILES[1]))?
-            == c["index_sha256"].as_str().context("Cloud index hash")?
+        c["geometry"] == crate::cloud_geometry::description()
+            && c["stored_fraction_values"] == json!(cells * LEVELS)
+            && c["stored_anchor_values"] == json!(cells * 2)
+            && file_hash(&path.join(FILES[1]))?
+                == c["coverage"]["index_sha256"]
+                    .as_str()
+                    .context("Coverage index hash")?
+            && file_hash(&path.join(FILES[3]))?
+                == c["anchors"]["index_sha256"]
+                    .as_str()
+                    .context("Anchor index hash")?
             && fs::metadata(path.join(FILES[0]))?.len()
-                == c["data_bytes"].as_u64().context("Cloud bytes")?,
-        "Cloud index/file identity differs"
+                == c["coverage"]["data_bytes"]
+                    .as_u64()
+                    .context("Coverage bytes")?
+            && fs::metadata(path.join(FILES[2]))?.len()
+                == c["anchors"]["data_bytes"]
+                    .as_u64()
+                    .context("Anchor bytes")?,
+        "Cloud file/geometry identity differs"
     );
     Ok(Some(Reader {
+        coverage: crate::cloud_coverage::Reader::open(path, cells)?,
+        anchors: stage::Array::open(&path.join("cloud-anchors"), &[cells, 2])?,
         pressure_snapshot: meta["snapshot_id"]
             .as_str()
             .context("Pressure snapshot")?
             .to_owned(),
-        array: stage::Array::open(&path.join("native-clouds"), &[cells, LEVELS, 3])?,
         snapshot: c["snapshot_id"]
             .as_str()
             .context("Cloud snapshot")?
@@ -94,19 +158,22 @@ pub fn binding(path: &Path, meta: &Value) -> Result<Option<Reader>> {
     }))
 }
 impl Reader {
-    pub fn profile(&self, cell: usize, scratch: &mut stage::Scratch) -> Result<[Vec<f32>; 3]> {
-        let mut values = [0.; STRIDE];
-        self.array.read_into_with(
-            cell.checked_mul(STRIDE).context("Cloud offset")?,
-            &mut values,
+    pub fn stored(
+        &self,
+        cell: usize,
+        scratch: &mut stage::Scratch,
+        coverage_scratch: &mut crate::cloud_coverage::Scratch,
+    ) -> Result<(Vec<f32>, [f32; 2])> {
+        let mut anchor = [0.; 2];
+        self.anchors.read_into_with(
+            cell.checked_mul(2).context("Anchor offset")?,
+            &mut anchor,
             scratch,
         )?;
-        validate(&values)?;
-        Ok(std::array::from_fn(|f| {
-            values.as_chunks::<3>().0.iter().map(|v| v[f]).collect()
-        }))
+        Ok((self.coverage.profile(cell, coverage_scratch)?, anchor))
     }
 }
+
 pub fn copy(source: &Path, target: &Path, meta: &Value) -> Result<()> {
     if binding(source, meta)?.is_none() {
         return Ok(());
@@ -129,18 +196,24 @@ pub fn readers(root: &Path, meta: &Value) -> Result<BTreeMap<u16, Reader>> {
     }
     Ok(result)
 }
-pub fn payload(readers: &BTreeMap<u16, Reader>, cell: usize) -> Result<Option<Value>> {
+pub fn payload(
+    readers: &BTreeMap<u16, Reader>,
+    cell: usize,
+    atmosphere: &Value,
+) -> Result<Option<Value>> {
     let mut scratch = stage::Scratch::new()?;
+    let mut coverage_scratch = crate::cloud_coverage::Scratch::new()?;
     let mut rows = Vec::new();
     let mut sources = Vec::new();
     let mut leads = Vec::new();
     for (lead, reader) in readers {
-        let [cloud, height, pressure] = reader.profile(cell, &mut scratch)?;
+        let (cloud, anchors) = reader.stored(cell, &mut scratch, &mut coverage_scratch)?;
+        let [height, pressure] = crate::cloud_geometry::from_payload(atmosphere, *lead, anchors)?;
         rows.push(json!([lead, cloud, height, pressure]));
         leads.push(*lead);
         sources.push(json!({"lead":lead,"snapshot_id":reader.snapshot,"pressure_snapshot_id":reader.pressure_snapshot}));
     }
-    Ok((!rows.is_empty()).then(||json!({"model_levels":(1..=LEVELS).collect::<Vec<_>>(),"fields":["lead_hour",FIELDS[0],FIELDS[1],FIELDS[2]],"units":units(),"available_leads":leads,"lead_sources":sources,"rows":rows})))
+    Ok((!rows.is_empty()).then(||json!({"model_levels":(1..=LEVELS).collect::<Vec<_>>(),"fields":["lead_hour",FIELDS[0],FIELDS[1],FIELDS[2]],"units":units(),"available_leads":leads,"lead_sources":sources,"geometry":crate::cloud_geometry::description(),"rows":rows})))
 }
 
 /// A cloud-only revision must preserve every pressure value, proof and hour.
@@ -183,12 +256,12 @@ pub fn check_upgrade(root: &Path, prior: &Entry, next: &Entry) -> Result<()> {
         let (ae, ap, mut am) = crate::runs::book_entry(root, a)?;
         let (be, bp, mut bm) = crate::runs::book_entry(root, b)?;
         anyhow::ensure!(
-            ae.database == be.database
-                && ae.table == be.table
-                && am.get("native_clouds").is_none()
-                && binding(&bp, &bm)?.is_some(),
-            "Cloud upgrade replaced existing clouds or pressure table"
+            ae.database == be.database && ae.table == be.table && binding(&bp, &bm)?.is_some(),
+            "Cloud upgrade changed pressure table or lacks clouds"
         );
+        if am.get("native_clouds").is_some() {
+            crate::cloud_compaction::verify(&ap, &bp, &am, &bm)?;
+        }
         am.as_object_mut().unwrap().remove("native_clouds");
         bm.as_object_mut().unwrap().remove("native_clouds");
         anyhow::ensure!(am == bm, "Cloud upgrade changed pressure metadata");
@@ -286,6 +359,7 @@ pub async fn backfill(root: &Path, run: &str, leads: Option<Vec<u16>>) -> Result
 #[cfg(test)]
 mod tests {
     use super::*;
+    const STRIDE: usize = LEVELS * 3;
     fn fixture(path: &Path, cells: usize) -> (Value, Vec<f32>) {
         fs::create_dir_all(path).unwrap();
         let values = (0..cells)
@@ -293,27 +367,34 @@ mod tests {
                 (0..LEVELS).flat_map(move |l| {
                     [
                         if l == 0 { 0. } else { 0.8 },
-                        100. + l as f32 * 200. + c as f32,
+                        100. + l as f32 * 600. + c as f32,
                         100000. - l as f32 * 1500.,
                     ]
                 })
             })
             .collect::<Vec<_>>();
-        let shape = [cells, LEVELS, 3];
-        stage::write(&path.join("native-clouds"), &shape, &values).unwrap();
         let mut meta = json!({"model":"hrrr","dataset":"noaa-hrrr-forecast-18-hour-virtual","init_time":"2026-10-18T21:00:00","snapshot_id":"test_snapshot","leads":[0],"cells":cells,"grid":{"test":true}});
-        let mut cloud = json!({"version":1,"shape":shape,"model_levels":(1..=LEVELS).collect::<Vec<_>>(),"fields":FIELDS,"units":units(),"full_values_checked":true,"data_bytes":fs::metadata(path.join(FILES[0])).unwrap().len(),"index_sha256":file_hash(&path.join(FILES[1])).unwrap()});
-        for key in [
-            "model",
-            "dataset",
-            "init_time",
-            "snapshot_id",
-            "leads",
-            "grid",
-        ] {
-            cloud[key] = meta[key].clone();
-        }
-        cloud["pressure_snapshot_id"] = meta["snapshot_id"].clone();
+        let encoded = (0..LEVELS)
+            .map(|level| {
+                crate::cloud_coverage::encode((0..cells).map(|c| values[c * STRIDE + level * 3]))
+            })
+            .collect::<Result<Vec<_>>>()
+            .unwrap();
+        let mut coverage = crate::cloud_coverage::write(path, &encoded).unwrap();
+        coverage["index_sha256"] = json!(file_hash(&path.join(FILES[1])).unwrap());
+        coverage["data_sha256"] = json!(file_hash(&path.join(FILES[0])).unwrap());
+        let anchors = [
+            (0..cells).map(|c| values[c * STRIDE + 2]).collect(),
+            (0..cells).map(|c| values[(c + 1) * STRIDE - 2]).collect(),
+        ];
+        let mut cloud = metadata(
+            &meta,
+            "test_snapshot",
+            coverage,
+            write_anchors(path, &anchors).unwrap(),
+        )
+        .unwrap();
+        cloud["source_top_checked"] = json!(true);
         meta["native_clouds"] = cloud;
         (meta, values)
     }
@@ -321,29 +402,54 @@ mod tests {
     fn native_cloud_roundtrip_partial_frame_and_random_cell() {
         let root = tempfile::tempdir().unwrap();
         let (meta, values) = fixture(root.path(), 4100);
-        validate(&values).unwrap();
         let reader = binding(root.path(), &meta).unwrap().unwrap();
         let mut scratch = stage::Scratch::new().unwrap();
         for cell in [4099, 0, 4095, 4096] {
-            let [cloud, height, pressure] = reader.profile(cell, &mut scratch).unwrap();
+            let (cloud, anchors) = reader
+                .stored(
+                    cell,
+                    &mut scratch,
+                    &mut crate::cloud_coverage::Scratch::new().unwrap(),
+                )
+                .unwrap();
             for l in 0..LEVELS {
-                for (f, v) in [cloud[l], height[l], pressure[l]].iter().enumerate() {
-                    assert_eq!(v.to_bits(), values[cell * STRIDE + l * 3 + f].to_bits());
-                }
+                assert_eq!(cloud[l].to_bits(), values[cell * STRIDE + l * 3].to_bits());
             }
+            assert_eq!(anchors[0].to_bits(), values[cell * STRIDE + 2].to_bits());
+            assert_eq!(
+                anchors[1].to_bits(),
+                values[(cell + 1) * STRIDE - 2].to_bits()
+            );
         }
-        assert!(reader.profile(4100, &mut scratch).is_err());
+        assert!(reader
+            .stored(
+                4100,
+                &mut scratch,
+                &mut crate::cloud_coverage::Scratch::new().unwrap()
+            )
+            .is_err());
     }
     #[test]
-    fn native_cloud_rejects_missing_fraction_bad_geometry_and_source_binding() {
+    fn native_cloud_rejects_bad_anchors_and_source_binding() {
         let root = tempfile::tempdir().unwrap();
-        let (meta, values) = fixture(root.path(), 1);
-        for (index, value) in [(0, f32::NAN), (0, 1.01), (2, -1.), (4, 100.), (5, 100000.)] {
-            let mut broken = values.clone();
-            broken[index] = value;
-            assert!(validate(&broken).is_err());
+        let (meta, _) = fixture(root.path(), 1);
+        for anchors in [
+            [vec![f32::NAN], vec![30000.]],
+            [vec![-1.], vec![30000.]],
+            [vec![100000.], vec![1000.]],
+        ] {
+            assert!(write_anchors(root.path(), &anchors).is_err());
         }
-        for key in ["pressure_snapshot_id", "grid", "leads", "units", "shape"] {
+        for key in [
+            "pressure_snapshot_id",
+            "grid",
+            "leads",
+            "units",
+            "shape",
+            "geometry",
+            "source_top_checked",
+            "version",
+        ] {
             let mut broken = meta.clone();
             broken["native_clouds"][key] = json!("wrong");
             assert!(binding(root.path(), &broken).is_err());
@@ -362,7 +468,11 @@ mod tests {
         data[n - 1] ^= 1;
         fs::write(path, data).unwrap();
         assert!(reader
-            .profile(0, &mut stage::Scratch::new().unwrap())
+            .stored(
+                0,
+                &mut stage::Scratch::new().unwrap(),
+                &mut crate::cloud_coverage::Scratch::new().unwrap()
+            )
             .is_err());
     }
     #[test]
@@ -401,7 +511,11 @@ mod tests {
         binding(&shared, &meta)
             .unwrap()
             .unwrap()
-            .profile(0, &mut stage::Scratch::new().unwrap())
+            .stored(
+                0,
+                &mut stage::Scratch::new().unwrap(),
+                &mut crate::cloud_coverage::Scratch::new().unwrap(),
+            )
             .unwrap();
     }
     #[test]
