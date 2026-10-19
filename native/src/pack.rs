@@ -108,7 +108,7 @@ pub unsafe fn pack_tiled<const TILE: usize>(
     assert!(TILE > 0);
     #[cfg(not(target_arch = "aarch64"))]
     {
-        return pack_scalar(source, out, c, l, f, t);
+        pack_scalar(source, out, c, l, f, t)
     }
     #[cfg(target_arch = "aarch64")]
     {
