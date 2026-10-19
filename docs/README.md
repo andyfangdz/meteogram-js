@@ -10,6 +10,10 @@ The native service is deployed for HRRR, GFS, AIFS and RRFS. All four use the
 per-hour UInt16 dictionary/tile format. The site includes native HRRR cloud
 layers and initialization-aware overlays, with Open-Meteo fallback.
 
+## Validation records
+
+- [Native path cleanup and retained RRFS archive conversion](benchmarks/2026-10-18-native-cleanup/README.md)
+
 ## Historical native investigations and rollout records
 
 [`archive/`](archive/) contains dated designs, measurements and rollout evidence.

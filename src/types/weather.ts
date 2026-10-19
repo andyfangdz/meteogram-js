@@ -42,7 +42,7 @@ export interface HoveredCloud {
 
 export interface CloudColumn {
   date: Date;
-  /** Native forecast interval; absent on legacy Open-Meteo columns. */
+  /** Native forecast interval; absent on Open-Meteo columns. */
   durationMinutes?: number;
   cloud: CloudCell[];
   nativeCloudLayers?: NativeCloudLayer[];
