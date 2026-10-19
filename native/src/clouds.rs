@@ -1,4 +1,4 @@
-//! Immutable HRRR model-level cloud supplement, independent of pressure profiles.
+//! Immutable HRRR cloud coverage and native anchors, with derived coordinates.
 use crate::{dictionary::file_hash, stage, state::*};
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
@@ -11,6 +11,18 @@ pub const FILES: [&str; 4] = [
     "cloud-anchors.stage.zst",
     "cloud-anchors.stage.json",
 ];
+/// Conservative bound for both data/index pairs plus provenance. Fractions may
+/// use UInt16 codes and full 65,536-entry Float32 palettes at every level.
+/// Include pretty-printed JSON whitespace in the per-palette-entry bound.
+pub fn max_stored_bytes(cells: usize) -> Result<u64> {
+    anyhow::ensure!((1..=2_000_000).contains(&cells), "Cloud cell count");
+    Ok((cells * (LEVELS * 2 + 8)
+        + cells.div_ceil(256) * 1024
+        + cells.div_ceil(stage::BLOCK_CELLS) * 1024
+        + LEVELS * 65_536 * 24
+        + 1024 * 1024) as u64)
+}
+
 pub fn write_anchors(path: &Path, anchors: &[Vec<f32>; 2]) -> Result<Value> {
     let started = std::time::Instant::now();
     let cells = anchors[0].len();

@@ -168,6 +168,10 @@ pub fn compact(root: &Path) -> Result<Value> {
             if old["native_clouds"]["version"] != 1 {
                 continue;
             }
+            disk_guard(
+                root,
+                clouds::max_stored_bytes(old["cells"].as_u64().context("Cloud cells")? as usize)?,
+            )?;
             let (target, mut child) = candidate(root, "hrrr")?;
             child.table = old_entry.table;
             child.database = old_entry.database;
@@ -227,6 +231,12 @@ pub fn compact(root: &Path) -> Result<Value> {
             }
             let old = read_json(&meta)?;
             if old["model"] == "hrrr" && old["native_clouds"]["version"] == 1 {
+                disk_guard(
+                    root,
+                    clouds::max_stored_bytes(
+                        old["cells"].as_u64().context("Cloud cells")? as usize
+                    )?,
+                )?;
                 convert(&path, &path, &old)?;
                 for name in LEGACY_FILES {
                     fs::remove_file(path.join(name))?;

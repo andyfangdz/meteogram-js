@@ -98,7 +98,8 @@
           "reference_pressure_pa": 100000.0
         }
       },
-      "total_cloud_file_bytes": 10312961
+      "total_cloud_file_bytes": 10312961,
+      "measurement_order": "control_then_integrated"
     },
     {
       "added_cloud_source_seconds": 0.004277315999999587,
@@ -186,7 +187,8 @@
           "reference_pressure_pa": 100000.0
         }
       },
-      "total_cloud_file_bytes": 12232638
+      "total_cloud_file_bytes": 12232638,
+      "measurement_order": "integrated_then_control"
     },
     {
       "added_cloud_source_seconds": -0.570324008,
@@ -274,7 +276,8 @@
           "reference_pressure_pa": 100000.0
         }
       },
-      "total_cloud_file_bytes": 12050653
+      "total_cloud_file_bytes": 12050653,
+      "measurement_order": "control_then_integrated"
     }
   ]
 }

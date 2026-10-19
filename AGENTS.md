@@ -463,7 +463,9 @@ count, persisted success flag or source-only check for full value validation.
 The loopback database has a 12 GiB process ceiling and a 2 GiB per-query ceiling.
 Periodic allocator purges and consumed-page discard hints keep memory bounded.
 Optional staged-input prefetch reserves 18 GiB beyond input bytes; otherwise it
-streams. Source staging keeps a 20 GiB free-space floor. Source instances and their clones
+streams. Source staging keeps a 20 GiB free-space floor. Cloud producers and
+resident conversion check a conservative bound for both cloud data/index pairs
+and provenance before writing, including cached retries. Source instances and their clones
 share only one immutable snapshot's metadata/coordinates. HRRR pressure and cloud
 tasks run together with one shared 16-map semaphore; both drain before returning
 an error. Cloud payload retry directories are snapshot-scoped; a newer cloud

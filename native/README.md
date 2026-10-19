@@ -119,7 +119,8 @@ required serving files, not regenerable staging.
 An hourly child descriptor uses `cell_tiles_v1` with `partitioned_lead=true` and
 one matching `lead_hour`. Its weather staging is indexed Zstd v2 with UInt16
 spatial deltas and byte shuffling. Coordinates use checksummed `cells.bin.zst`.
-Cloud serving files use the indexed Float32 Zstd v1 codec. Both codecs are part
+Cloud anchors use indexed Float32 Zstd v1; cloud fractions use the exact palette
+codec described below. These codecs are part
 of the current format. Unsupported storage layouts and staging types are
 rejected.
 
@@ -203,6 +204,8 @@ spatial frames (`cloud-coverage.bin.zst`/`cloud-coverage.json`). The separate
 level-1 pressure and level-50 geopotential height. Every stored fraction and
 anchor is compared bit for bit during staged readback. Files follow the hourly
 child's immutable metadata, source binding and retention; point reads check CRCs.
+Fresh writes, cached retries and conversion all check space for both file pairs
+plus provenance while preserving the 20 GiB source-staging reserve.
 
 Layer coordinates are derived from the atmosphere already retained for each
 point. NOAA's 51 HRRR interfaces and WRF hybrid weights, anchored by the native

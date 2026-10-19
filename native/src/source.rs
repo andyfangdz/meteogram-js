@@ -1339,6 +1339,9 @@ pub async fn fetch_cloud_coverage(out: &Path, available: &Source) -> Result<Valu
         .into_iter()
         .map(|l| l.context("Missing cloud level"))
         .collect::<Result<Vec<_>>>()?;
+    // Cached retries must preserve the same reserve as fresh downloads. Cover
+    // both cloud data/index pairs and their provenance before the first write.
+    disk_guard(out, crate::clouds::max_stored_bytes(ids.len())?)?;
     let mut coverage = crate::cloud_coverage::write(out, &levels)?;
     coverage["index_sha256"] = json!(crate::dictionary::file_hash(
         &out.join(crate::cloud_coverage::INDEX)

@@ -452,7 +452,7 @@ mod tests {
             Ok((meta, started.elapsed().as_secs_f64()))
         }
         let mut reports = Vec::new();
-        for source in sources {
+        for (sample_index, source) in sources.into_iter().enumerate() {
             let meta: Value = serde_json::from_slice(&fs::read(source.join("metadata.json"))?)?;
             let mut pin = meta.clone();
             pin["snapshot_id"] = meta["native_clouds"]["snapshot_id"].clone();
@@ -477,7 +477,7 @@ mod tests {
             let control_source = crate::source::Source::open("hrrr", Some(&pin)).await?;
             let candidate_source = crate::source::Source::open("hrrr", Some(&pin)).await?;
             let coverage = output.join("integrated");
-            let (control, integrated) = if lead % 40 == 20 {
+            let (control, integrated) = if sample_index % 2 == 1 {
                 let candidate = measured(&coverage, &pin, lead, &candidate_source, true).await?;
                 let control =
                     measured(&output.join("pressure"), &pin, lead, &control_source, false).await?;
@@ -616,7 +616,7 @@ mod tests {
                 }
                 f64::NAN
             };
-            let report = json!({"lead":lead,"full_conus_coverage_values_compared":nc*50,"all_fractions_exact":true,"all_anchors_exact":true,"all_derived_columns_finite_and_monotonic":true,
+            let report = json!({"lead":lead,"measurement_order":if sample_index % 2 == 1 {"integrated_then_control"} else {"control_then_integrated"},"full_conus_coverage_values_compared":nc*50,"all_fractions_exact":true,"all_anchors_exact":true,"all_derived_columns_finite_and_monotonic":true,
                 "pressure_source_seconds":pressure_seconds,"pressure_and_cloud_source_seconds":integrated_seconds,"added_cloud_source_seconds":integrated_seconds-pressure_seconds,"cloud_branch_wall_seconds":coverage_wall_seconds,"cloud":info,"all_weather_staging_bytes_identical":true,
                 "geometry_comparison":{"height_range_m":[0,6096],"values":compared_geometry,"height_abs_error_p50_upper_m":percentile(&height_histogram,0.5),"height_abs_error_p99_upper_m":percentile(&height_histogram,0.99),"height_abs_error_max_m":max_height_error,"height_bias_m":height_bias/compared_geometry as f64,"pressure_abs_error_p99_upper_pa":percentile(&pressure_histogram,0.99),"pressure_abs_error_max_pa":max_pressure_error,"height_abs_error_max_all_levels_m":max_height_error_all_levels}});
             crate::state::atomic(output.join("cost.json"), &report)?;

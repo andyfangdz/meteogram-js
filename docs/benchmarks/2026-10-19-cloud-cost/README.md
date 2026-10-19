@@ -19,7 +19,7 @@ loading/publication. See [baseline.json](baseline.json).
 | Source product / sampled leads | Mean cloud files per hour | Largest added ingestion time |
 | ------------------------------ | ------------------------: | ---------------------------: |
 | 48-hour, leads 0 / 20 / 48     |  11,532,084 B (11.00 MiB) |                      0.248 s |
-| 18-hour, leads 0 / 9 / 18      |  11,227,066 B (10.71 MiB) |                      0.600 s |
+| 18-hour, leads 0 / 9 / 18      |  11,227,066 B (10.71 MiB) |                      0.506 s |
 
 These are real full-CONUS reads of **six hours**, covering both source products;
 they are not a newly downloaded full 49-hour run. Each timed integrated run
@@ -36,7 +36,7 @@ Cloud extraction overlaps weather extraction. The time above is the change in
 not the cloud branch's standalone duration. Cloud branch durations of roughly
 4–6 seconds are recorded in the evidence. The 48-hour mean difference is
 −0.106 seconds, which is measurement noise, not a negative processing cost;
-the 18-hour mean difference is 0.416 seconds. There is no cloud SQL-load phase.
+the 18-hour mean difference is 0.379 seconds. There is no cloud SQL-load phase.
 
 Every timed pair produced byte-identical weather stages and codebooks. All
 **491,627,100 cloud fraction values** and **19,665,084 anchor values** across the
@@ -82,6 +82,21 @@ catalog selector roles are replaced atomically. Previous descriptors retain
 the normal ten-minute retirement grace; GC then removes unreferenced files.
 Serving accepts only version 2. The original three-field reader is isolated in
 the conversion command.
+
+The resident audit at 04:18 UTC checked **94 unique cloud hours**, including the
+full 49-hour run, both 19-hour complete runs and the seven available latest-run
+hours. Ninety-two original supplements were converted; two hours had already
+been ingested in the new format. All catalog roles, weather metadata, table
+bindings, forecast hours and cloud source snapshots matched. Independent
+conversion and publication checks compared **7,538,282,200 fraction values** and
+both exact anchors for every converted cell.
+
+Selected cloud files total **1,086,870,394 bytes (1.012 GiB)**, down from
+30,495,641,064 bytes (28.401 GiB). The mean is **11,562,451 bytes (11.03 MiB)**
+and the largest hour is **12,469,027 bytes (11.89 MiB)**; every hour is below the
+17.25 MiB average-variable target. Replaced files become eligible for normal GC
+at 04:26:22 UTC; the selected footprint and physically reclaimed disk are
+reported separately. See [retained-conversion.json](retained-conversion.json).
 
 The native test suite includes database integration checks, exact codec
 roundtrips, CRC rejection, conversion proof forgery rejection, binding checks,

@@ -1,0 +1,1398 @@
+{
+  "captured_at": "2026-10-19T04:18:49.227992+00:00",
+  "all_catalog_roles_and_forecast_hours_preserved": true,
+  "all_weather_metadata_and_tables_preserved": true,
+  "all_cloud_source_snapshots_preserved": true,
+  "all_retained_clouds_version_2": true,
+  "unique_cloud_hours": 94,
+  "old_cloud_file_bytes": 30495641064,
+  "new_cloud_file_bytes": 1086870394,
+  "max_cloud_hour_bytes": 12469027,
+  "mean_cloud_hour_bytes": 11562451.0,
+  "all_hours_below_average_variable_bytes": true,
+  "comparison_fraction_values": 7538282200,
+  "all_conversion_fraction_and_anchor_bits_identical": true,
+  "roles": [
+    {
+      "selector": "current/hrrr",
+      "init_time": "2026-10-19T03:00:00.000000000",
+      "leads": [0, 1, 2, 3, 4, 7, 8],
+      "table": "hrrr_run_99477c38423049d09b88f963cbd26ec8",
+      "old_revision": "hrrr_20261019040842_600d4d06",
+      "new_revision": "hrrr_20261019041357_ff918127",
+      "weather_metadata_sha256": "422818ae0374ebc32e85637f7b77f00378e1a42928a7df67422f44bc5484cce0"
+    },
+    {
+      "selector": "previous/hrrr",
+      "init_time": "2026-10-19T02:00:00.000000000",
+      "leads": [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
+      ],
+      "table": "hrrr_run_636ba08543aa4d8b874a8e0d70022476",
+      "old_revision": "hrrr_20261019033724_0cf0e70d",
+      "new_revision": "hrrr_20261019041341_4ae7bbd1",
+      "weather_metadata_sha256": "3f5044768d3180db5f1cb44ec2576a9832331586856e23069f39bab50a82fc03"
+    },
+    {
+      "selector": "building/hrrr/0",
+      "init_time": "2026-10-19T03:00:00.000000000",
+      "leads": [0, 1, 2, 3, 4, 7, 8],
+      "table": "hrrr_run_99477c38423049d09b88f963cbd26ec8",
+      "old_revision": "hrrr_20261019040842_600d4d06",
+      "new_revision": "hrrr_20261019041357_ff918127",
+      "weather_metadata_sha256": "422818ae0374ebc32e85637f7b77f00378e1a42928a7df67422f44bc5484cce0"
+    },
+    {
+      "selector": "complete_runs/hrrr/0",
+      "init_time": "2026-10-19T02:00:00.000000000",
+      "leads": [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
+      ],
+      "table": "hrrr_run_636ba08543aa4d8b874a8e0d70022476",
+      "old_revision": "hrrr_20261019033724_0cf0e70d",
+      "new_revision": "hrrr_20261019041341_4ae7bbd1",
+      "weather_metadata_sha256": "3f5044768d3180db5f1cb44ec2576a9832331586856e23069f39bab50a82fc03"
+    },
+    {
+      "selector": "complete_runs/hrrr/1",
+      "init_time": "2026-10-19T01:00:00.000000000",
+      "leads": [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
+      ],
+      "table": "hrrr_run_d67cdff9ccd3416ca14118fceed77261",
+      "old_revision": "hrrr_20261019022945_1a54ba0e",
+      "new_revision": "hrrr_20261019041241_53280de2",
+      "weather_metadata_sha256": "6bc82d5ac2103b233ba595717eeab3aa5389a2a80c29c45a7ba050b2191634fc"
+    },
+    {
+      "selector": "hrrr_long",
+      "init_time": "2026-10-19T00:00:00.000000000",
+      "leads": [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
+        38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48
+      ],
+      "table": "hrrr_run_3dcbbf35c62c4cc28576c1dca9af26ba",
+      "old_revision": "hrrr_20261019021406_a9debb8e",
+      "new_revision": "hrrr_20261019041139_2940c2bb",
+      "weather_metadata_sha256": "c95a41d05d9d4bae4b03b9ba0daa95e21d837d024d112328c890d1ab17d4da4c"
+    }
+  ],
+  "hours": [
+    {
+      "identity": "2026-10-19T03:00:00.000000000/0",
+      "old_cloud_file_bytes": 326894935,
+      "new_cloud_file_bytes": 10260045,
+      "weather_metadata_sha256": "10e0996a072083400061949af313b3d51241d14274fb0f50c00078e311d05663",
+      "cloud_snapshot_id": "BDEXSCPXMBERRRQT0HE0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T03:00:00.000000000/1",
+      "old_cloud_file_bytes": 323037227,
+      "new_cloud_file_bytes": 10104023,
+      "weather_metadata_sha256": "3b17ca57d4368df5f10f698ef774de8d17dfd106a7121350136cc427080dfa30",
+      "cloud_snapshot_id": "9QZXSG004Z3PPB49SW7G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T03:00:00.000000000/2",
+      "old_cloud_file_bytes": 324671603,
+      "new_cloud_file_bytes": 10247678,
+      "weather_metadata_sha256": "bec29087aaf78ebec623536eabd602789b48db5e11f840ce0612c30ed5c3f9e2",
+      "cloud_snapshot_id": "G0TGZQ6DCZA1A5Q7NGN0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T03:00:00.000000000/3",
+      "old_cloud_file_bytes": 324219163,
+      "new_cloud_file_bytes": 10418064,
+      "weather_metadata_sha256": "449970863e000ea5bfc3338c3031f4b6d4001721b965a4e57dfd1051e6722ce6",
+      "cloud_snapshot_id": "G0TGZQ6DCZA1A5Q7NGN0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T03:00:00.000000000/4",
+      "old_cloud_file_bytes": 324809708,
+      "new_cloud_file_bytes": 10627995,
+      "weather_metadata_sha256": "2b947775771ab408a8dfdfd6d449b6e29417c4cab9d24b0e75ab1f98efad6871",
+      "cloud_snapshot_id": "570SCF9KT1FQJP7WC2PG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T03:00:00.000000000/7",
+      "old_cloud_file_bytes": 11139887,
+      "new_cloud_file_bytes": 11139887,
+      "weather_metadata_sha256": "f00ac4e8dcff2f06cf7daa2ea51c97a7e847712fb046f69d46f698cb1ec6e383",
+      "cloud_snapshot_id": "0E1WYBT0ZNPJV0TVY9F0",
+      "fraction_values": 81937850,
+      "conversion_proof": null
+    },
+    {
+      "identity": "2026-10-19T03:00:00.000000000/8",
+      "old_cloud_file_bytes": 11320033,
+      "new_cloud_file_bytes": 11320033,
+      "weather_metadata_sha256": "1036e53f78dacbdf8e2e4049e647930d3b351c56caafcf7067ff1981c872a477",
+      "cloud_snapshot_id": "0E1WYBT0ZNPJV0TVY9F0",
+      "fraction_values": 81937850,
+      "conversion_proof": null
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/0",
+      "old_cloud_file_bytes": 327168314,
+      "new_cloud_file_bytes": 10212715,
+      "weather_metadata_sha256": "e9df620b7e9d7e50097b782f28738909bbbcc18c6f1dac8822914574ea3948d9",
+      "cloud_snapshot_id": "20864P70MAGPVRN1T0S0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/1",
+      "old_cloud_file_bytes": 324541426,
+      "new_cloud_file_bytes": 10182760,
+      "weather_metadata_sha256": "87b509bf59deb501f00315a011eb6cdb20da6f7371d87bfa311c3e7b590536a6",
+      "cloud_snapshot_id": "20864P70MAGPVRN1T0S0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/2",
+      "old_cloud_file_bytes": 324001902,
+      "new_cloud_file_bytes": 10191060,
+      "weather_metadata_sha256": "9265149f0bf3c0afabd629fbb08958af099c774fda74a9a74827f1eabeb6ba5e",
+      "cloud_snapshot_id": "R6SYQNZR9EK6AQ5G1JFG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/3",
+      "old_cloud_file_bytes": 325400124,
+      "new_cloud_file_bytes": 10387160,
+      "weather_metadata_sha256": "dba03c7eb98d8d769d279ed81d7f6be6abd6093af226797981a8238d3b93b186",
+      "cloud_snapshot_id": "NY5X4Z92PE2ZDJ797ASG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/4",
+      "old_cloud_file_bytes": 324266449,
+      "new_cloud_file_bytes": 10555034,
+      "weather_metadata_sha256": "42488ca91564fcf8f4e3fe883626ad4f8b31e330b865e71ba56aa17a42d2827e",
+      "cloud_snapshot_id": "KMCEHHDDAQ3FH91TCE00",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/5",
+      "old_cloud_file_bytes": 325554832,
+      "new_cloud_file_bytes": 10725255,
+      "weather_metadata_sha256": "6f1f1aaa58a971aa7ddc218f428b76bb5d2127d1e43b6c650f8957b465dbef56",
+      "cloud_snapshot_id": "A5K50G2CMSS21Y5W9Q50",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/6",
+      "old_cloud_file_bytes": 327735190,
+      "new_cloud_file_bytes": 10975543,
+      "weather_metadata_sha256": "264bef93d6db9c08b6bebd8e0fdfe4c4f2a47f389171b958f603852afc53e614",
+      "cloud_snapshot_id": "A5K50G2CMSS21Y5W9Q50",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/7",
+      "old_cloud_file_bytes": 328134164,
+      "new_cloud_file_bytes": 11181828,
+      "weather_metadata_sha256": "8b12e4909af63591c779a409a1dd85361d169e7a45be61b6e6b68048890a0e15",
+      "cloud_snapshot_id": "FVFDYDM6HYY5RTKAPVWG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/8",
+      "old_cloud_file_bytes": 329407162,
+      "new_cloud_file_bytes": 11313582,
+      "weather_metadata_sha256": "2b31e385bcd677fcae1b6aa26720f7113087bb288d36271155877eaae7d72f2c",
+      "cloud_snapshot_id": "NY5X4Z92PE2ZDJ797ASG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/9",
+      "old_cloud_file_bytes": 329999426,
+      "new_cloud_file_bytes": 11462889,
+      "weather_metadata_sha256": "558b418803dd8b462231a7cb5cb3d2674c53d3e7c93d7da434f46fc3debf60fb",
+      "cloud_snapshot_id": "Q0QXXYGD7YA1EFVQC1YG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/10",
+      "old_cloud_file_bytes": 331668273,
+      "new_cloud_file_bytes": 11608558,
+      "weather_metadata_sha256": "a3983f6c16987deba3fbde0c77c7fa73e1076e8a0b15c95814e224c7535cadbf",
+      "cloud_snapshot_id": "FW51Y09BQEW5YK25WMS0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/11",
+      "old_cloud_file_bytes": 331516801,
+      "new_cloud_file_bytes": 11674025,
+      "weather_metadata_sha256": "770b0283f452faf08dd158f84cd4470d25a55c6c43730b636e556d872644015f",
+      "cloud_snapshot_id": "46BWPAHVW8E237RFV7AG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/12",
+      "old_cloud_file_bytes": 331096615,
+      "new_cloud_file_bytes": 11714480,
+      "weather_metadata_sha256": "d732347901d7390e937d1a9be9179aaab918bdce89918a558a98a3cad6573bbd",
+      "cloud_snapshot_id": "AZRYFYT4DG6KBTMTDKZG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/13",
+      "old_cloud_file_bytes": 331502988,
+      "new_cloud_file_bytes": 11768758,
+      "weather_metadata_sha256": "f29d0da959c81a243187fec1354a1be2de749fb260ec56cbe45fed1aac8a5d3e",
+      "cloud_snapshot_id": "2NQJCRW78MS72NR4DEQG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/14",
+      "old_cloud_file_bytes": 331407725,
+      "new_cloud_file_bytes": 11830199,
+      "weather_metadata_sha256": "87db6839465ffeb55e1f950468ffad351bcceeeabd2195ae5ba87d6662f27ea9",
+      "cloud_snapshot_id": "DYYW52SPWMDQTGM81D0G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/15",
+      "old_cloud_file_bytes": 333736777,
+      "new_cloud_file_bytes": 11919407,
+      "weather_metadata_sha256": "8b2f51ccf5116324a97483f0294668e397fa9e653b8884b75d4fe02fb9372eb5",
+      "cloud_snapshot_id": "DYYW52SPWMDQTGM81D0G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/16",
+      "old_cloud_file_bytes": 332948571,
+      "new_cloud_file_bytes": 11933003,
+      "weather_metadata_sha256": "1ba7df18a41e68aa58f313251f35748fb4f637db7015a56b0a2552e53bc3008c",
+      "cloud_snapshot_id": "DYYW52SPWMDQTGM81D0G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/17",
+      "old_cloud_file_bytes": 333935914,
+      "new_cloud_file_bytes": 12021150,
+      "weather_metadata_sha256": "59ed7ac5fc9979cba8d7be037b3c94d954f41c52da13bbb275d6ea63977a7170",
+      "cloud_snapshot_id": "DYYW52SPWMDQTGM81D0G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T02:00:00.000000000/18",
+      "old_cloud_file_bytes": 332134704,
+      "new_cloud_file_bytes": 12005594,
+      "weather_metadata_sha256": "4e93cbff9a2d8371c57776cd2552d90b5b78f4ab0ca3985e26838a199b7133e3",
+      "cloud_snapshot_id": "3080K9F7TJGP9ND1QVY0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/0",
+      "old_cloud_file_bytes": 327858898,
+      "new_cloud_file_bytes": 10262293,
+      "weather_metadata_sha256": "e82a823ab7f602785ec36f120d2e06ecfa5d41a86a3470b8ab8c467bec4ee128",
+      "cloud_snapshot_id": "D6CDJTW7Q0X2RG6P3Q3G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/1",
+      "old_cloud_file_bytes": 325038693,
+      "new_cloud_file_bytes": 10194263,
+      "weather_metadata_sha256": "f908160d5d6f66aa4eef7d1d14262009eff7d67cbf098c677f852e5daa611f6b",
+      "cloud_snapshot_id": "BRC26HGQAZKFJWRN7NNG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/2",
+      "old_cloud_file_bytes": 324642096,
+      "new_cloud_file_bytes": 10293396,
+      "weather_metadata_sha256": "6184d47fede06b298bcccb15b37ca4ea40c416da1164a4f859d5ad9bec1f5307",
+      "cloud_snapshot_id": "M5JV8K9Y579AWEX0CJC0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/3",
+      "old_cloud_file_bytes": 324644563,
+      "new_cloud_file_bytes": 10443127,
+      "weather_metadata_sha256": "3ee0da13fabe5be076b2a37807c75c316b2d0f853b9a04095ca2519a42d6ea4c",
+      "cloud_snapshot_id": "YQ0KASEJ5MB00TV1EWBG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/4",
+      "old_cloud_file_bytes": 326313383,
+      "new_cloud_file_bytes": 10657971,
+      "weather_metadata_sha256": "b3b5d3ae3bd73e85358f2583f6f4fe6d88ca30972db67387c06d0840f549b5a6",
+      "cloud_snapshot_id": "Z8KY073V2D1VK5YSRFPG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/5",
+      "old_cloud_file_bytes": 325395928,
+      "new_cloud_file_bytes": 10848282,
+      "weather_metadata_sha256": "0119cc355d6d05591a80ff5c9a0ada5562b1674082564278d484b9158503720f",
+      "cloud_snapshot_id": "YPW0B6C06J2ZGDZNA6Q0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/6",
+      "old_cloud_file_bytes": 327005748,
+      "new_cloud_file_bytes": 10951935,
+      "weather_metadata_sha256": "1e3400ed5b89c7c4f6ffff5607eceb0021b504a0b8650d87b78dd89f56de880e",
+      "cloud_snapshot_id": "YPW0B6C06J2ZGDZNA6Q0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/7",
+      "old_cloud_file_bytes": 327672306,
+      "new_cloud_file_bytes": 11141387,
+      "weather_metadata_sha256": "73cd0e795437e39f1250b7da01e99fe017ea5be695f1c75235ff5dd19f456c03",
+      "cloud_snapshot_id": "7340833C0ZYY17Z7S9K0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/8",
+      "old_cloud_file_bytes": 329014537,
+      "new_cloud_file_bytes": 11274042,
+      "weather_metadata_sha256": "efc9d4c7d898dd0ec8c46880b8b90000692af7d0c573e5d9c6e58f5caeae1f32",
+      "cloud_snapshot_id": "9Z1T5SEZ7CWRY7KJ0X5G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/9",
+      "old_cloud_file_bytes": 330077597,
+      "new_cloud_file_bytes": 11422820,
+      "weather_metadata_sha256": "7ec42e01c2a42601379c6687f6e5efaed265363ed731eed9fffe0749e07e30cb",
+      "cloud_snapshot_id": "Q65D3QQ71B0HAAZ8JCAG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/10",
+      "old_cloud_file_bytes": 330534181,
+      "new_cloud_file_bytes": 11652571,
+      "weather_metadata_sha256": "a571607a5dd71d52d5209206914729642e8231a2b479b2dbfb5fbe1c64a2ab50",
+      "cloud_snapshot_id": "XYY11V5NX089B9HBNEP0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/11",
+      "old_cloud_file_bytes": 330441278,
+      "new_cloud_file_bytes": 11752183,
+      "weather_metadata_sha256": "7383a60c8b830e405b777acf2501c6846127c0fb5f7f03b4d940d443fe2274c3",
+      "cloud_snapshot_id": "FG1S2QA6ZB444RRQD99G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/12",
+      "old_cloud_file_bytes": 331195309,
+      "new_cloud_file_bytes": 11817988,
+      "weather_metadata_sha256": "1b59856f54e71c0b4365917f30c6ba4106b07b9a32b71519daf0d632acb8ea59",
+      "cloud_snapshot_id": "FG1S2QA6ZB444RRQD99G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/13",
+      "old_cloud_file_bytes": 331986783,
+      "new_cloud_file_bytes": 11829435,
+      "weather_metadata_sha256": "9da1659ed4097b08c265be892146907f45c327116fdd48853fbfffc51f7a9aa5",
+      "cloud_snapshot_id": "92V4VVT40GNA99FY4R40",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/14",
+      "old_cloud_file_bytes": 333515677,
+      "new_cloud_file_bytes": 11906211,
+      "weather_metadata_sha256": "13eb34d762a22710ced2555f532dfa83159b398f76b12a2a977975d43a75dc84",
+      "cloud_snapshot_id": "MZ623X8CQ0HGQC46B8FG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/15",
+      "old_cloud_file_bytes": 332915603,
+      "new_cloud_file_bytes": 11933602,
+      "weather_metadata_sha256": "c850f96be3c8936549a98e472689b274c61690849748a2b83458239efc84d3db",
+      "cloud_snapshot_id": "BQ8SQWRJ1SW5FPG4F21G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/16",
+      "old_cloud_file_bytes": 333662533,
+      "new_cloud_file_bytes": 11998848,
+      "weather_metadata_sha256": "56f1a101d10dbdfe972637c6e17e5dc173ded7ae9b9421025b81f8f1df9d45eb",
+      "cloud_snapshot_id": "APX2QJGR0SBRYFT3EW5G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/17",
+      "old_cloud_file_bytes": 333657633,
+      "new_cloud_file_bytes": 12146975,
+      "weather_metadata_sha256": "9d4f32f705cd0fd8d44f56f245c60df5b6be7bcffd5e0b28fc4ccc921d642825",
+      "cloud_snapshot_id": "92V4VVT40GNA99FY4R40",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T01:00:00.000000000/18",
+      "old_cloud_file_bytes": 333857854,
+      "new_cloud_file_bytes": 12149557,
+      "weather_metadata_sha256": "8d8e32685c771aee07a46cad9f5dde21a8192f22d034698a7d6a33e6d6dc4089",
+      "cloud_snapshot_id": "92V4VVT40GNA99FY4R40",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/0",
+      "old_cloud_file_bytes": 326552779,
+      "new_cloud_file_bytes": 10312961,
+      "weather_metadata_sha256": "d604dd60b6cd07ecbdb0e0057e146ee960bdb11499e7d47ccdb66bced427177d",
+      "cloud_snapshot_id": "H4Y7MGDT2N81JB6PEQ7G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/1",
+      "old_cloud_file_bytes": 322590716,
+      "new_cloud_file_bytes": 10256193,
+      "weather_metadata_sha256": "07ef3b6dd4eb247a8498dcab612958ef4f1708916bc2891a46c72645413bd408",
+      "cloud_snapshot_id": "H4Y7MGDT2N81JB6PEQ7G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/2",
+      "old_cloud_file_bytes": 324841338,
+      "new_cloud_file_bytes": 10365964,
+      "weather_metadata_sha256": "9e61addea87c2b19665abbdf83e007ab18b9c9dba2690456faa69c61c9707561",
+      "cloud_snapshot_id": "ZA26FE0QSYFHRG9VMMP0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/3",
+      "old_cloud_file_bytes": 325001691,
+      "new_cloud_file_bytes": 10451875,
+      "weather_metadata_sha256": "92c0e9a4a371c4b9d025b77277c09c041ac1d6f031bd3462417b963abd8db8a5",
+      "cloud_snapshot_id": "ZA26FE0QSYFHRG9VMMP0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/4",
+      "old_cloud_file_bytes": 325506172,
+      "new_cloud_file_bytes": 10613469,
+      "weather_metadata_sha256": "44934805f0e428a60b11d289dfef7866745169fdd37ac17d6214a0d5944dccf0",
+      "cloud_snapshot_id": "Z2KX72DRTNNAPXXDSJ60",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/5",
+      "old_cloud_file_bytes": 326368815,
+      "new_cloud_file_bytes": 10838294,
+      "weather_metadata_sha256": "1dec989545d9c2313df303b07c84f63e1b86d010426a306690db822a8a8844cf",
+      "cloud_snapshot_id": "Z2KX72DRTNNAPXXDSJ60",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/6",
+      "old_cloud_file_bytes": 326835312,
+      "new_cloud_file_bytes": 11063675,
+      "weather_metadata_sha256": "b101b74aca5887f38d4ad171232540fd505084af8c60208ef4603c7d1fec6675",
+      "cloud_snapshot_id": "82HEV14TXHC4YRMQDDXG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/7",
+      "old_cloud_file_bytes": 327481667,
+      "new_cloud_file_bytes": 11145334,
+      "weather_metadata_sha256": "235a2691feb0b7a98e8c845a4e209d4caa1b8052973dca6969413baa1ea1bb75",
+      "cloud_snapshot_id": "82HEV14TXHC4YRMQDDXG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/8",
+      "old_cloud_file_bytes": 328612254,
+      "new_cloud_file_bytes": 11345804,
+      "weather_metadata_sha256": "c4278f732f3f293ee7fbc091c5bfc9245b9f1f1677fd689586dcc80174505535",
+      "cloud_snapshot_id": "B66K2SMCQQNQ7WBEGXYG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/9",
+      "old_cloud_file_bytes": 329573357,
+      "new_cloud_file_bytes": 11470656,
+      "weather_metadata_sha256": "6fe097cb3a5bd8f335088bbc408be5b535b7bc47bda5575ac041b74eacb75386",
+      "cloud_snapshot_id": "B66K2SMCQQNQ7WBEGXYG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/10",
+      "old_cloud_file_bytes": 330354791,
+      "new_cloud_file_bytes": 11634767,
+      "weather_metadata_sha256": "8ae9699bef50712530a658bd4c246feba25c83718d59416ca1a3f91820c7e068",
+      "cloud_snapshot_id": "7SPFPFAVEN8SMBB9DKF0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/11",
+      "old_cloud_file_bytes": 331880864,
+      "new_cloud_file_bytes": 11719440,
+      "weather_metadata_sha256": "dda2a2f2181e757f844fa543a9aae6c06cf1b542183180dec431cf3171e5bd88",
+      "cloud_snapshot_id": "7SPFPFAVEN8SMBB9DKF0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/12",
+      "old_cloud_file_bytes": 332593827,
+      "new_cloud_file_bytes": 11891573,
+      "weather_metadata_sha256": "ad045f201b9d45cf204229d0d97dbd2eb344acc08ea69b00c5397269b94befba",
+      "cloud_snapshot_id": "PM7V0FVW1TR80FA9G5WG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/13",
+      "old_cloud_file_bytes": 334075428,
+      "new_cloud_file_bytes": 11980891,
+      "weather_metadata_sha256": "eed8efec753705a21748440bbc7f2afd07df698558e2aff1c7d1521a25db038e",
+      "cloud_snapshot_id": "PM7V0FVW1TR80FA9G5WG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/14",
+      "old_cloud_file_bytes": 334212957,
+      "new_cloud_file_bytes": 12005743,
+      "weather_metadata_sha256": "111ac55e5f6668cc5ed993553662072cf3f02b23b39ff66d8974986aedcf92c1",
+      "cloud_snapshot_id": "JF46927JT0JHSK8GY60G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/15",
+      "old_cloud_file_bytes": 334703383,
+      "new_cloud_file_bytes": 12057130,
+      "weather_metadata_sha256": "0c59116785884eb47418ef6fa8e38c45e77b790e573f1ac9b6ada16b1d5a9209",
+      "cloud_snapshot_id": "CN4P113TEZDCMFC1SFJ0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/16",
+      "old_cloud_file_bytes": 334152519,
+      "new_cloud_file_bytes": 12073145,
+      "weather_metadata_sha256": "82a26dbc7ec8e0a3eaa8fcc64f1a83eb00200fb68dec85a244c1cb5c2e37461f",
+      "cloud_snapshot_id": "CN4P113TEZDCMFC1SFJ0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/17",
+      "old_cloud_file_bytes": 335323097,
+      "new_cloud_file_bytes": 12162640,
+      "weather_metadata_sha256": "06dab9443fb4476015c9e0d3db3de175a5f7735fd4fd87509f706577f30268b8",
+      "cloud_snapshot_id": "6MHMT0HN94X977P7GFB0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/18",
+      "old_cloud_file_bytes": 335509197,
+      "new_cloud_file_bytes": 12262619,
+      "weather_metadata_sha256": "14a1ce544c9c604b7021273ddedef1636d8d2c43d8e2af5502e1f37cae061a6b",
+      "cloud_snapshot_id": "6MHMT0HN94X977P7GFB0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/19",
+      "old_cloud_file_bytes": 334794572,
+      "new_cloud_file_bytes": 12286380,
+      "weather_metadata_sha256": "b5dcb4e67944679efba870094f72bf1985e17a740df1845bedff2d966e36cee1",
+      "cloud_snapshot_id": "8FBYP2K2JJRWC225Y80G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/20",
+      "old_cloud_file_bytes": 334433618,
+      "new_cloud_file_bytes": 12232638,
+      "weather_metadata_sha256": "2b3042a3d080b2eee35648e785f3ecff2b0b3adfbe6aa8d0bab10c0726eb051f",
+      "cloud_snapshot_id": "8FBYP2K2JJRWC225Y80G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/21",
+      "old_cloud_file_bytes": 335117109,
+      "new_cloud_file_bytes": 12285099,
+      "weather_metadata_sha256": "642fa32825f1da2e7599e87260cf6f23e5acb31a18790b426212bc87b9bdefe2",
+      "cloud_snapshot_id": "AHDRQT0Y38V70C9RHE90",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/22",
+      "old_cloud_file_bytes": 334318316,
+      "new_cloud_file_bytes": 12287949,
+      "weather_metadata_sha256": "bb363ea061c756249e0e46ad62d756ef8e9fe2734fcd5a7b220a7041fb1c335b",
+      "cloud_snapshot_id": "AHDRQT0Y38V70C9RHE90",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/23",
+      "old_cloud_file_bytes": 333036893,
+      "new_cloud_file_bytes": 12178831,
+      "weather_metadata_sha256": "fab1a5f1863840235ff8524796ae227a24625e0b4e94fd9e48207b1721c8d4a4",
+      "cloud_snapshot_id": "CN255K86DTQBC98VFMT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/24",
+      "old_cloud_file_bytes": 333944300,
+      "new_cloud_file_bytes": 12097522,
+      "weather_metadata_sha256": "c08631c111c263c26a4335c781dde965757a063cfebaab4ca5b6bb7bcc3cd608",
+      "cloud_snapshot_id": "CN255K86DTQBC98VFMT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/25",
+      "old_cloud_file_bytes": 335248163,
+      "new_cloud_file_bytes": 12126973,
+      "weather_metadata_sha256": "044e3d4d84d929a8ac57cd486c631d30fda5d996cebc13b72fd80382403e239b",
+      "cloud_snapshot_id": "4FRRGB9FXBCS0PY3TN1G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/26",
+      "old_cloud_file_bytes": 336380777,
+      "new_cloud_file_bytes": 12153556,
+      "weather_metadata_sha256": "7f11fd1a12a8624d11d9f0187eafe0f3b3cb9cae1a179800dc0afa9f5a945c40",
+      "cloud_snapshot_id": "4FRRGB9FXBCS0PY3TN1G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/27",
+      "old_cloud_file_bytes": 336438815,
+      "new_cloud_file_bytes": 12163837,
+      "weather_metadata_sha256": "45a295753503b90305133ddd6d3ab25857c2615f522099f3a879ac9ae94da82d",
+      "cloud_snapshot_id": "1YZZWJJFZEBHMVKYAB0G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/28",
+      "old_cloud_file_bytes": 335488658,
+      "new_cloud_file_bytes": 12179375,
+      "weather_metadata_sha256": "3d99df4813fcd849642ae6d19e6e6f5280be072da9d633361f5afbd49f85767c",
+      "cloud_snapshot_id": "1YZZWJJFZEBHMVKYAB0G",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/29",
+      "old_cloud_file_bytes": 336212321,
+      "new_cloud_file_bytes": 12160161,
+      "weather_metadata_sha256": "c3663c9d3381e3e3f1dbe1daa4f4fb5daca2d66de343551a4af42f079a9463c5",
+      "cloud_snapshot_id": "RT81YP9QT7TJ4N684KC0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/30",
+      "old_cloud_file_bytes": 337221599,
+      "new_cloud_file_bytes": 12310246,
+      "weather_metadata_sha256": "7997115467a03c1771d1640c80bd96e94df74eb73a42d1b7a4713f3bcabf0c4d",
+      "cloud_snapshot_id": "RT81YP9QT7TJ4N684KC0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/31",
+      "old_cloud_file_bytes": 336323542,
+      "new_cloud_file_bytes": 12361585,
+      "weather_metadata_sha256": "f612127cb4b2e738be5dee16504119b9998a279fd1b003af385a15a940c2c32d",
+      "cloud_snapshot_id": "WSGGABSF44EPZ0ZMCYJ0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/32",
+      "old_cloud_file_bytes": 336680377,
+      "new_cloud_file_bytes": 12367263,
+      "weather_metadata_sha256": "25039ab1e8ed6fcbe9e0888c2d643259ff25043c2404b75b6a8193ecb3a0b744",
+      "cloud_snapshot_id": "WSGGABSF44EPZ0ZMCYJ0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/33",
+      "old_cloud_file_bytes": 335677275,
+      "new_cloud_file_bytes": 12333118,
+      "weather_metadata_sha256": "0c699831b881bd7f0c56aa09be03fe2a42e2aa2ba68242d7e807b597fb3b157a",
+      "cloud_snapshot_id": "C884QX2T66T1KPVD67FG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/34",
+      "old_cloud_file_bytes": 336290628,
+      "new_cloud_file_bytes": 12390013,
+      "weather_metadata_sha256": "32064d5e5780daa4fa454e732b2452e80ada31a1bacfc68dbef4fed34a5355ba",
+      "cloud_snapshot_id": "C884QX2T66T1KPVD67FG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/35",
+      "old_cloud_file_bytes": 335401802,
+      "new_cloud_file_bytes": 12340531,
+      "weather_metadata_sha256": "1a9a39142684bceed5634939f55a96dd06dd5fffdf100e33c8ecc97432700003",
+      "cloud_snapshot_id": "BZEJKMSRWBXKXRCH2FVG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/36",
+      "old_cloud_file_bytes": 336642156,
+      "new_cloud_file_bytes": 12410479,
+      "weather_metadata_sha256": "b7feaafd353037fc5941aea77bb09c42427c2da70a8cd6539093326eb5322eb0",
+      "cloud_snapshot_id": "BZEJKMSRWBXKXRCH2FVG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/37",
+      "old_cloud_file_bytes": 336833230,
+      "new_cloud_file_bytes": 12414070,
+      "weather_metadata_sha256": "68cb9570a1011778ffafddb3f3552016197996c6833eea2ed9407b220caf190d",
+      "cloud_snapshot_id": "AEBBMANND59HPHTT1VVG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/38",
+      "old_cloud_file_bytes": 336511849,
+      "new_cloud_file_bytes": 12424825,
+      "weather_metadata_sha256": "3a5e2a1e7f672063d754c607abd89417fd32e7023d4f5acc750665539955267b",
+      "cloud_snapshot_id": "AEBBMANND59HPHTT1VVG",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/39",
+      "old_cloud_file_bytes": 336224753,
+      "new_cloud_file_bytes": 12374339,
+      "weather_metadata_sha256": "d2ad87efdfe7b293a4017b2abfd8b54c368df81458a8633af64cbd1ed1006ed2",
+      "cloud_snapshot_id": "WFKVVE8BCX4W97JDWMP0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/40",
+      "old_cloud_file_bytes": 334714305,
+      "new_cloud_file_bytes": 12350269,
+      "weather_metadata_sha256": "f63d3414ee93e4964a6c04e7c584207699d1cdb6e6f0c2725d783ffff6684dad",
+      "cloud_snapshot_id": "WFKVVE8BCX4W97JDWMP0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/41",
+      "old_cloud_file_bytes": 337491689,
+      "new_cloud_file_bytes": 12426513,
+      "weather_metadata_sha256": "46174f2a1676b9daf206a71fdae4fc041fdf36809b19624bbe4fc9cad77635f9",
+      "cloud_snapshot_id": "WFKVVE8BCX4W97JDWMP0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/42",
+      "old_cloud_file_bytes": 335888332,
+      "new_cloud_file_bytes": 12438123,
+      "weather_metadata_sha256": "dc10a20898df397f9b5f6de441545275c81c3f71d9238f8a621b236265aea5af",
+      "cloud_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/43",
+      "old_cloud_file_bytes": 335167862,
+      "new_cloud_file_bytes": 12469027,
+      "weather_metadata_sha256": "998cd8b7744d63654eb9bd9d08e5403186d3d0409aa5d33f03803f73f688a1c3",
+      "cloud_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/44",
+      "old_cloud_file_bytes": 336069860,
+      "new_cloud_file_bytes": 12388484,
+      "weather_metadata_sha256": "963942fef4ed873f495cd1a867b5a7db5ba60261f3f7813a5edbb9a228de96dd",
+      "cloud_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/45",
+      "old_cloud_file_bytes": 335577332,
+      "new_cloud_file_bytes": 12298306,
+      "weather_metadata_sha256": "9e02b218949f584af7e5f17c68f4f52b466f76bbb39b911ac3bb676c18a67e77",
+      "cloud_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/46",
+      "old_cloud_file_bytes": 335259827,
+      "new_cloud_file_bytes": 12304024,
+      "weather_metadata_sha256": "d0c309abc96acbddbe94d32757ed4736cd8b3e5cb6063e6aa6a211783318b940",
+      "cloud_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/47",
+      "old_cloud_file_bytes": 334859241,
+      "new_cloud_file_bytes": 12156421,
+      "weather_metadata_sha256": "52b1bd7b9c54a9a2302df0ea4c76f9a7f56ca4f616bfa489a58312bedd57be41",
+      "cloud_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    },
+    {
+      "identity": "2026-10-19T00:00:00.000000000/48",
+      "old_cloud_file_bytes": 333541186,
+      "new_cloud_file_bytes": 12050653,
+      "weather_metadata_sha256": "ae3c7d5ab6dfa315df6e5c6805f695b3d48a18bf62ead148803099eeac8794d0",
+      "cloud_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+      "fraction_values": 81937850,
+      "conversion_proof": {
+        "all_anchor_bits_identical": true,
+        "all_fraction_bits_identical": true,
+        "anchor_values": 3277514,
+        "fraction_values": 81937850
+      }
+    }
+  ],
+  "conversion_command": {
+    "converted_hours": 92,
+    "converted_incoming_hours": 0,
+    "converted_manifests": 4,
+    "new_cloud_bytes": 1064410474,
+    "old_cloud_bytes": 30473181144,
+    "reclaimed_after_retirement_grace_bytes": 29408770670
+  },
+  "normal_gc_eligible_after": "2026-10-19T04:26:22.479804+00:00"
+}
