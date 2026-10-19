@@ -84,6 +84,16 @@ struct App {
     pool: Arc<tokio::sync::Semaphore>,
     books: crate::runs::BookCache,
 }
+fn retain_models(cache: &mut HashMap<String, Arc<Model>>, c: &Catalog) {
+    cache.retain(|revision, _| {
+        c.current
+            .values()
+            .chain(c.previous.values())
+            .chain(c.complete_runs.values().flatten())
+            .chain(c.hrrr_long.iter())
+            .any(|entry| &entry.revision == revision)
+    });
+}
 fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model> {
     let p = descriptor(root, e)?;
     let meta = read_json(p.join("metadata.json"))?;
@@ -192,15 +202,14 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
         .context("Requested forecast run unavailable")?;
         let m = {
             let mut cache = app.cache.lock().unwrap();
+            retain_models(&mut cache, &c);
             if !cache.contains_key(&e.revision) {
                 cache.insert(
                     e.revision.clone(),
                     Arc::new(model(&app.root, e, &app.books)?),
                 );
             }
-            let m = cache[&e.revision].clone();
-            cache.retain(|r, _| c.current.values().any(|e| &e.revision == r));
-            m
+            cache[&e.revision].clone()
         };
         let freshness = freshness(&m.meta)?;
         if q.get("run").is_none_or(|r| r == "latest") {
@@ -406,6 +415,51 @@ pub(crate) fn test_forecast(root: &Path, query: HashMap<String, String>) -> (Sta
 #[cfg(test)]
 mod auth_tests {
     use super::*;
+
+    #[test]
+    fn selected_archive_models_survive_requests_until_catalog_eviction() {
+        let entry = |revision: &str| Entry {
+            revision: revision.to_owned(),
+            database: "test".to_owned(),
+            table: "test".to_owned(),
+            owned: false,
+            retired_at: None,
+        };
+        let mut catalog = Catalog::default();
+        catalog.current.insert("hrrr".into(), entry("current"));
+        catalog.previous.insert("hrrr".into(), entry("previous"));
+        catalog
+            .complete_runs
+            .insert("hrrr".into(), vec![entry("complete")]);
+        catalog.hrrr_long = Some(entry("long"));
+        let mut cache = HashMap::new();
+        for revision in ["current", "previous", "complete", "long", "obsolete"] {
+            cache.insert(
+                revision.to_owned(),
+                Arc::new(Model {
+                    meta: json!({}),
+                    ids: vec![],
+                    lat: vec![],
+                    lon: vec![],
+                    dictionary: None,
+                    books: BTreeMap::new(),
+                    clouds: BTreeMap::new(),
+                }),
+            );
+        }
+        let long = Arc::downgrade(&cache["long"]);
+        for _ in 0..3 {
+            retain_models(&mut cache, &catalog);
+            assert_eq!(cache.len(), 4);
+            assert!(Arc::ptr_eq(&cache["long"], &long.upgrade().unwrap()));
+        }
+        catalog.hrrr_long = None;
+        catalog.complete_runs.clear();
+        retain_models(&mut cache, &catalog);
+        assert_eq!(cache.len(), 2);
+        assert!(long.upgrade().is_none());
+        assert!(!cache.contains_key("complete"));
+    }
 
     #[tokio::test]
     async fn bearer_auth_protects_all_routes_before_handlers() {

@@ -101,7 +101,23 @@ async function nativeWeather(
     r.status === "fulfilled" ? [r.value] : [],
   );
   if (!runs.length) throw new Error("Native forecast runs unavailable");
-  return mergeForecastRuns(runs, now);
+  const merged = mergeForecastRuns(runs, now);
+  // Partial overlays may bypass the API's remaining-horizon gate. Check the
+  // actual surviving intervals, including holes when a complete base failed.
+  const minimumHours =
+    nativeModel === "hrrr" ? 12 : nativeModel === "rrfs" ? 48 : 72;
+  let coveredUntil = now;
+  for (const column of merged.data) {
+    const start = column.date.getTime();
+    if (start > coveredUntil) break;
+    coveredUntil = Math.max(
+      coveredUntil,
+      start + (column.durationMinutes ?? 60) * 60_000,
+    );
+  }
+  if (coveredUntil < now + minimumHours * 3_600_000)
+    throw new Error("Native forecast has insufficient continuous coverage");
+  return merged;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { nativeFixture, withNativeClouds } from "./__helpers__/nativeForecast";
+import type { NativeWeatherModel } from "@/types/weather";
 import { createFakeOpenMeteoResponse } from "./__helpers__/fakeOpenMeteo";
 import { MODEL_CONFIGS } from "@/config/weather";
 import { getWeatherData } from "@/app/actions/weather";
@@ -10,6 +11,16 @@ vi.mock("openmeteo", () => ({ fetchWeatherApi: openMeteo }));
 const token = "public-test-token-that-must-never-reach-the-browser";
 const requests = vi.fn();
 let failure: "none" | "invalid" | "timeout" | "unavailable" = "none";
+
+function completeForecast(model: NativeWeatherModel) {
+  const body = nativeFixture(model);
+  const template = body.rows[0];
+  body.available_leads = [...body.expected_leads];
+  body.missing_leads = [];
+  body.forecast_complete = true;
+  body.rows = body.available_leads.map((lead) => [lead, ...template.slice(1)]);
+  return body;
+}
 
 describe("server-side native weather provider", () => {
   beforeEach(() => {
@@ -38,8 +49,8 @@ describe("server-side native weather provider", () => {
         }
         if (failure === "timeout")
           throw new DOMException("Timed out", "TimeoutError");
-        const body = nativeFixture(
-          url.searchParams.get("model") as "hrrr" | "gfs" | "rrfs",
+        const body = completeForecast(
+          url.searchParams.get("model") as NativeWeatherModel,
         );
         if (failure === "invalid") (body.rows[0][1] as number[])[0] = Infinity;
         return {
@@ -69,7 +80,7 @@ describe("server-side native weather provider", () => {
       provider: "dynamical",
       model: "gfs",
     });
-    expect(result.data).toHaveLength(3);
+    expect(result.data.length).toBeGreaterThan(72);
     expect(result.elevationFt).toBeCloseTo(328.084);
     expect(openMeteo).not.toHaveBeenCalled();
     const call = requests.mock.calls.find(
@@ -173,5 +184,62 @@ describe("server-side native weather provider", () => {
     ).rejects.toThrow("Failed to process");
     expect(requests).not.toHaveBeenCalled();
     expect(openMeteo).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["gfs_hrrr", "hrrr"],
+    ["gfs_seamless", "gfs"],
+    ["ecmwf_aifs025_single", "aifs"],
+    ["rrfs", "rrfs"],
+  ] as const)(
+    "falls back for %s when only an early partial overlay survives",
+    async (route, model) => {
+      requests.mockImplementation(async (input) => {
+        const url = new URL(String(input));
+        if (url.hostname === "api.open-meteo.com")
+          return { ok: true, json: async () => ({ elevation: [100] }) };
+        if (url.searchParams.get("run") !== "latest")
+          throw new DOMException("Base timed out", "TimeoutError");
+        const body = nativeFixture(model);
+        body.available_leads = model === "aifs" ? [0, 6] : [0, 1];
+        body.rows = body.available_leads.map((lead) => [
+          lead,
+          ...body.rows[0].slice(1),
+        ]);
+        body.missing_leads = body.expected_leads.filter(
+          (h) => !body.available_leads.includes(h),
+        );
+        return { ok: true, json: async () => body };
+      });
+      const result = await getWeatherData(route, "KCDW");
+      expect(result.source).toMatchObject({
+        provider: "open-meteo",
+        fallback: true,
+      });
+      expect(openMeteo).toHaveBeenCalled();
+    },
+  );
+
+  it("falls back despite a distant final lead when missing bases leave gaps", async () => {
+    requests.mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.hostname === "api.open-meteo.com")
+        return { ok: true, json: async () => ({ elevation: [100] }) };
+      if (url.searchParams.get("run") !== "latest")
+        return { ok: false, status: 503 };
+      const body = nativeFixture("gfs");
+      body.available_leads = [0, 1, 90];
+      body.rows = body.available_leads.map((lead) => [
+        lead,
+        ...body.rows[0].slice(1),
+      ]);
+      body.missing_leads = body.expected_leads.filter(
+        (h) => !body.available_leads.includes(h),
+      );
+      return { ok: true, json: async () => body };
+    });
+    expect((await getWeatherData("gfs_seamless", "KCDW")).source.provider).toBe(
+      "open-meteo",
+    );
   });
 });
