@@ -1,0 +1,11 @@
+{
+  "encode_seconds": 0.416363505,
+  "insert_seconds": 9.745683534,
+  "logical_rows": 3508785,
+  "pack_seconds": 3.7523418659999996,
+  "pack_wait_seconds": 0.224860737,
+  "storage_rows": 24885,
+  "total_insert_seconds": 10.398095672,
+  "total_seconds": 12.45161165,
+  "validation_seconds": 1.781569475
+}

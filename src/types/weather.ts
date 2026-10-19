@@ -22,9 +22,35 @@ export interface CloudCell {
   instabilityKPerKm: number | null;
 }
 
+export interface NativeCloudLayer {
+  modelLevel: number;
+  hpa: number;
+  geopotentialFt: number;
+  mslFt: number;
+  mslFtBottom: number;
+  mslFtTop: number;
+  cloudCoverage: number;
+}
+
+export interface HoveredCloud {
+  date: Date;
+  cloudCell: CloudCell;
+  nativeCloudLayer?: NativeCloudLayer;
+  initializedAt?: string;
+  sampleDate?: Date;
+}
+
 export interface CloudColumn {
   date: Date;
+  /** Native forecast interval; absent on legacy Open-Meteo columns. */
+  durationMinutes?: number;
   cloud: CloudCell[];
+  nativeCloudLayers?: NativeCloudLayer[];
+  /** Initialization of the forecast run supplying this interval. */
+  initializedAt?: string;
+  /** Original native sample time when an interval is split by a newer run. */
+  sampleDate?: Date;
+  cloudMethod?: "model" | "humidity-estimate";
   groundTemp: number; // Temperature in Celsius at 2m above ground
   groundDewPoint: number; // Dew point in Celsius at 2m above ground
 }
@@ -53,7 +79,42 @@ export type WeatherModel =
   | "ecmwf_ifs"
   | "ecmwf_aifs025_single"
   | "gem_seamless"
-  | "gem_hrdps_continental";
+  | "gem_hrdps_continental"
+  | "rrfs";
+
+export type NativeWeatherModel = "hrrr" | "gfs" | "aifs" | "rrfs";
+
+export interface ForecastRunSource {
+  initializedAt: string;
+  complete?: boolean;
+  availableHours?: number;
+  expectedHours?: number;
+  forecastLengthHours?: number;
+}
+
+export interface WeatherSource {
+  provider: "dynamical" | "open-meteo";
+  model: string;
+  initializedAt?: string;
+  forecastLengthHours?: number;
+  runs?: ForecastRunSource[];
+  complete?: boolean;
+  availableHours?: number;
+  expectedHours?: number;
+  cloudMethod: "model" | "humidity-estimate" | "mixed";
+  nativeCloudLevels?: number;
+  nativeCloudHours?: number;
+  displayedHours?: number;
+  cadenceMinutes: number;
+  fallback?: boolean;
+}
+
+export interface WeatherResult {
+  data: CloudColumn[];
+  timestamp: string;
+  elevationFt: number | null;
+  source: WeatherSource;
+}
 
 export interface WeatherApiParams {
   cell_selection: string;

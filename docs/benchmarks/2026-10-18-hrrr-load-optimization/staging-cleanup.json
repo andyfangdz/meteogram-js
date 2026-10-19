@@ -1,0 +1,7 @@
+{
+  "weather_files_removed": 302,
+  "weather_bytes_removed": 84659005508,
+  "time": 1792329103.573015067,
+  "free_bytes_after": 337419517952,
+  "scope": "Only this goal run owned raw/compressed weather arrays and single-lead smoke arrays; serving data retained"
+}

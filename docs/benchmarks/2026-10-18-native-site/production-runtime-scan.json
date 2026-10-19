@@ -1,0 +1,19 @@
+{
+  "deployment": "dpl_3b88RLf36s3nW2XEzyaQGLDGSypK",
+  "window_start": "2026-10-18T20:36:06.253Z",
+  "window_end": "2026-10-18T20:41:06.253Z",
+  "levels": ["warning", "error", "fatal"],
+  "native_route_errors_returned": 0,
+  "other_route_errors": [
+    {
+      "route": "/KCDW/ecmwf_ifs",
+      "provider": "Open-Meteo",
+      "message": "Too many concurrent requests",
+      "request_ids": [
+        "79j9r-1792356015730-1e6585219471",
+        "v99lm-1792356013391-ca644940c267"
+      ],
+      "error_log_records": 6
+    }
+  ]
+}

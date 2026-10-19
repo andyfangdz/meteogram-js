@@ -1,0 +1,69 @@
+{
+  "time": 1792350525.6573002,
+  "success": true,
+  "health": {
+    "models": {
+      "aifs": {
+        "age_hours": 13.146,
+        "available": true,
+        "init_time": "2026-10-18T06:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 166.854
+      },
+      "gfs": {
+        "age_hours": 13.146,
+        "available": true,
+        "init_time": "2026-10-18T06:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "remaining_hours": 166.854
+      },
+      "hrrr": {
+        "age_hours": 7.146,
+        "available": true,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 12,
+        "remaining_hours": 40.854
+      },
+      "rrfs": {
+        "age_hours": 7.146,
+        "available": true,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 48,
+        "remaining_hours": 76.854
+      }
+    },
+    "native_fields": true
+  },
+  "rrfs": {
+    "model": "rrfs",
+    "init_time": "2026-10-18T12:00:00.000000000",
+    "snapshot_id": "S77EM0FSR50Q18R443Z0",
+    "revision": "rrfs_20261018190636_ef01686e",
+    "grid": {
+      "cell_id": 634797,
+      "latitude": 41.024325688266636,
+      "longitude": -74.03133821853267
+    },
+    "native_wind_frame": "grid-relative"
+  },
+  "rrfs_rows": 85,
+  "rrfs_levels": 30,
+  "rrfs_fields": [
+    "lead_hour",
+    "geopotential_height",
+    "temperature",
+    "wind_u",
+    "wind_v",
+    "relative_humidity",
+    "dew_point_temperature",
+    "temperature_2m",
+    "dew_point_temperature_2m"
+  ],
+  "encoding": "gzip",
+  "compressed_bytes": 93982,
+  "cache_control": "no-store"
+}

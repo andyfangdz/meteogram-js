@@ -1,0 +1,2448 @@
+{
+  "query_tag": "resident_final_1792281396136595600",
+  "null_conversion_unit_check": true,
+  "models": {
+    "hrrr": {
+      "checks": [
+        {
+          "name": "atlanta",
+          "requested": [
+            33.6407,
+            -84.4277
+          ],
+          "selected": {
+            "cell_id": 1226422,
+            "latitude": 33.62671858217279,
+            "longitude": -84.41810670968248
+          },
+          "status": 200,
+          "ms": 109.9951989017427,
+          "gzip_bytes": 66572,
+          "json_bytes": 166650,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "seattle",
+          "requested": [
+            47.61,
+            -122.33
+          ],
+          "selected": {
+            "cell_id": 189173,
+            "latitude": 47.62136625739824,
+            "longitude": -122.3342683506325
+          },
+          "status": 200,
+          "ms": 104.45695114322007,
+          "gzip_bytes": 65946,
+          "json_bytes": 165658,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "miami",
+          "requested": [
+            25.76,
+            -80.19
+          ],
+          "selected": {
+            "cell_id": 1708738,
+            "latitude": 25.77281335911399,
+            "longitude": -80.19771394744026
+          },
+          "status": 200,
+          "ms": 107.85763594321907,
+          "gzip_bytes": 64943,
+          "json_bytes": 164698,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "los_angeles",
+          "requested": [
+            34.05,
+            -118.24
+          ],
+          "selected": {
+            "cell_id": 1119244,
+            "latitude": 34.060375353377104,
+            "longitude": -118.2337649573387
+          },
+          "status": 200,
+          "ms": 95.82493198104203,
+          "gzip_bytes": 65938,
+          "json_bytes": 166890,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "denver",
+          "requested": [
+            39.74,
+            -104.99
+          ],
+          "selected": {
+            "cell_id": 853412,
+            "latitude": 39.74694980359868,
+            "longitude": -104.98639856323189
+          },
+          "status": 200,
+          "ms": 91.33846103213727,
+          "gzip_bytes": 65568,
+          "json_bytes": 166559,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "boston",
+          "requested": [
+            42.36,
+            -71.06
+          ],
+          "selected": {
+            "cell_id": 508933,
+            "latitude": 42.36500797293459,
+            "longitude": -71.0610514405693
+          },
+          "status": 200,
+          "ms": 92.82136498950422,
+          "gzip_bytes": 66297,
+          "json_bytes": 166385,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1560",
+          "requested": [
+            49.99870527918694,
+            -69.94576534654809
+          ],
+          "selected": {
+            "cell_id": 1560,
+            "latitude": 49.99870527918694,
+            "longitude": -69.94576534654809
+          },
+          "status": 200,
+          "ms": 95.20032396540046,
+          "gzip_bytes": 65762,
+          "json_bytes": 166118,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-105671",
+          "requested": [
+            49.99999799495807,
+            -79.73369169203707
+          ],
+          "selected": {
+            "cell_id": 105671,
+            "latitude": 49.99999799495807,
+            "longitude": -79.73369169203707
+          },
+          "status": 200,
+          "ms": 84.33267311193049,
+          "gzip_bytes": 65915,
+          "json_bytes": 165497,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-208888",
+          "requested": [
+            46.78662213634722,
+            -124.99998482393904
+          ],
+          "selected": {
+            "cell_id": 208888,
+            "latitude": 46.78662213634722,
+            "longitude": -124.99998482393904
+          },
+          "status": 200,
+          "ms": 89.27495800890028,
+          "gzip_bytes": 65900,
+          "json_bytes": 165931,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-233053",
+          "requested": [
+            49.18293666043444,
+            -94.14322638222528
+          ],
+          "selected": {
+            "cell_id": 233053,
+            "latitude": 49.18293666043444,
+            "longitude": -94.14322638222528
+          },
+          "status": 200,
+          "ms": 81.74460893496871,
+          "gzip_bytes": 66001,
+          "json_bytes": 165535,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-320148",
+          "requested": [
+            44.13423539169206,
+            -66.00002041684911
+          ],
+          "selected": {
+            "cell_id": 320148,
+            "latitude": 44.13423539169206,
+            "longitude": -66.00002041684911
+          },
+          "status": 200,
+          "ms": 107.22438199445605,
+          "gzip_bytes": 66239,
+          "json_bytes": 165700,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1033960",
+          "requested": [
+            36.3502540142619,
+            -82.88345608536585
+          ],
+          "selected": {
+            "cell_id": 1033960,
+            "latitude": 36.3502540142619,
+            "longitude": -82.88345608536585
+          },
+          "status": 200,
+          "ms": 92.44648506864905,
+          "gzip_bytes": 66716,
+          "json_bytes": 167037,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1107053",
+          "requested": [
+            35.91683850426157,
+            -105.20218945499721
+          ],
+          "selected": {
+            "cell_id": 1107053,
+            "latitude": 35.91683850426157,
+            "longitude": -105.20218945499721
+          },
+          "status": 200,
+          "ms": 91.59470000304282,
+          "gzip_bytes": 65272,
+          "json_bytes": 165708,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1469999",
+          "requested": [
+            28.67361919065767,
+            -118.39079115908487
+          ],
+          "selected": {
+            "cell_id": 1469999,
+            "latitude": 28.67361919065767,
+            "longitude": -118.39079115908487
+          },
+          "status": 200,
+          "ms": 90.27215396054089,
+          "gzip_bytes": 65954,
+          "json_bytes": 165662,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1565030",
+          "requested": [
+            26.589869341837865,
+            -73.59554571513685
+          ],
+          "selected": {
+            "cell_id": 1565030,
+            "latitude": 26.589869341837865,
+            "longitude": -73.59554571513685
+          },
+          "status": 200,
+          "ms": 100.08432995527983,
+          "gzip_bytes": 64600,
+          "json_bytes": 163434,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1568752",
+          "requested": [
+            25.980679808148412,
+            -123.5181943890004
+          ],
+          "selected": {
+            "cell_id": 1568752,
+            "latitude": 25.980679808148412,
+            "longitude": -123.5181943890004
+          },
+          "status": 200,
+          "ms": 95.11371306143701,
+          "gzip_bytes": 66052,
+          "json_bytes": 166969,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1612353",
+          "requested": [
+            27.76204877811223,
+            -111.04426276435669
+          ],
+          "selected": {
+            "cell_id": 1612353,
+            "latitude": 27.76204877811223,
+            "longitude": -111.04426276435669
+          },
+          "status": 200,
+          "ms": 89.90456513129175,
+          "gzip_bytes": 65356,
+          "json_bytes": 164333,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1786663",
+          "requested": [
+            24.35627978675738,
+            -116.12995514210675
+          ],
+          "selected": {
+            "cell_id": 1786663,
+            "latitude": 24.35627978675738,
+            "longitude": -116.12995514210675
+          },
+          "status": 200,
+          "ms": 101.24646592885256,
+          "gzip_bytes": 65444,
+          "json_bytes": 164814,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1838913",
+          "requested": [
+            24.00000170446206,
+            -113.74581010379055
+          ],
+          "selected": {
+            "cell_id": 1838913,
+            "latitude": 24.00000170446206,
+            "longitude": -113.74581010379055
+          },
+          "status": 200,
+          "ms": 95.27792502194643,
+          "gzip_bytes": 65564,
+          "json_bytes": 165028,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-1904539",
+          "requested": [
+            24.002274157586132,
+            -88.95581746244328
+          ],
+          "selected": {
+            "cell_id": 1904539,
+            "latitude": 24.002274157586132,
+            "longitude": -88.95581746244328
+          },
+          "status": 200,
+          "ms": 88.08011398650706,
+          "gzip_bytes": 64871,
+          "json_bytes": 165770,
+          "all_fields_times_levels_equal": true
+        }
+      ],
+      "invalid": [
+        {
+          "latitude": "nan",
+          "longitude": "-90",
+          "status": 400,
+          "ms": 2.4388001766055822,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "inf",
+          "longitude": "-90",
+          "status": 400,
+          "ms": 1.249060034751892,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "91",
+          "longitude": "0",
+          "status": 400,
+          "ms": 1.197917154058814,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "40",
+          "longitude": "181",
+          "status": 400,
+          "ms": 0.8533999789506197,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "0",
+          "longitude": "0",
+          "status": 404,
+          "ms": 0.7925699464976788,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "60",
+          "longitude": "-150",
+          "status": 404,
+          "ms": 1.1189619544893503,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "23",
+          "longitude": "-100",
+          "status": 404,
+          "ms": 1.0077690239995718,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "23.99999999",
+          "longitude": "-100",
+          "status": 404,
+          "ms": 1.021257834509015,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "40",
+          "longitude": "-125.00000001",
+          "status": 404,
+          "ms": 1.0409438982605934,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "40",
+          "longitude": "-126",
+          "status": 404,
+          "ms": 0.9168870747089386,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        }
+      ],
+      "clients": {
+        "1": {
+          "latency_ms": {
+            "count": 100,
+            "min": 67.32810800895095,
+            "p50": 73.68423696607351,
+            "p95": 84.8374662338756,
+            "p99": 86.91919069271535,
+            "max": 87.98220800235868
+          },
+          "requests_per_second": 13.29935081448648,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 100,
+            "min": 64599.0,
+            "p50": 65907.0,
+            "p95": 66580.1,
+            "p99": 66715.01,
+            "max": 66716.0
+          }
+        },
+        "4": {
+          "latency_ms": {
+            "count": 300,
+            "min": 83.4177709184587,
+            "p50": 130.30489394441247,
+            "p95": 159.27475973730907,
+            "p99": 187.45265267789355,
+            "max": 239.34332001954317
+          },
+          "requests_per_second": 30.601604866854434,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 300,
+            "min": 64599.0,
+            "p50": 65907.0,
+            "p95": 66580.1,
+            "p99": 66716.0,
+            "max": 66717.0
+          }
+        }
+      },
+      "table_wide_coverage": {
+        "distinct_cells": 1638757,
+        "bad_pressure_array_lengths": 0,
+        "per_lead_rows": [
+          [
+            0,
+            1638757
+          ],
+          [
+            1,
+            1638757
+          ],
+          [
+            2,
+            1638757
+          ],
+          [
+            3,
+            1638757
+          ],
+          [
+            4,
+            1638757
+          ],
+          [
+            5,
+            1638757
+          ],
+          [
+            6,
+            1638757
+          ],
+          [
+            7,
+            1638757
+          ],
+          [
+            8,
+            1638757
+          ],
+          [
+            9,
+            1638757
+          ],
+          [
+            10,
+            1638757
+          ],
+          [
+            11,
+            1638757
+          ],
+          [
+            12,
+            1638757
+          ],
+          [
+            13,
+            1638757
+          ],
+          [
+            14,
+            1638757
+          ],
+          [
+            15,
+            1638757
+          ],
+          [
+            16,
+            1638757
+          ],
+          [
+            17,
+            1638757
+          ],
+          [
+            18,
+            1638757
+          ],
+          [
+            19,
+            1638757
+          ],
+          [
+            20,
+            1638757
+          ],
+          [
+            21,
+            1638757
+          ],
+          [
+            22,
+            1638757
+          ],
+          [
+            23,
+            1638757
+          ],
+          [
+            24,
+            1638757
+          ],
+          [
+            25,
+            1638757
+          ],
+          [
+            26,
+            1638757
+          ],
+          [
+            27,
+            1638757
+          ],
+          [
+            28,
+            1638757
+          ],
+          [
+            29,
+            1638757
+          ],
+          [
+            30,
+            1638757
+          ],
+          [
+            31,
+            1638757
+          ],
+          [
+            32,
+            1638757
+          ],
+          [
+            33,
+            1638757
+          ],
+          [
+            34,
+            1638757
+          ],
+          [
+            35,
+            1638757
+          ],
+          [
+            36,
+            1638757
+          ],
+          [
+            37,
+            1638757
+          ],
+          [
+            38,
+            1638757
+          ],
+          [
+            39,
+            1638757
+          ],
+          [
+            40,
+            1638757
+          ],
+          [
+            41,
+            1638757
+          ],
+          [
+            42,
+            1638757
+          ],
+          [
+            43,
+            1638757
+          ],
+          [
+            44,
+            1638757
+          ],
+          [
+            45,
+            1638757
+          ],
+          [
+            46,
+            1638757
+          ],
+          [
+            47,
+            1638757
+          ],
+          [
+            48,
+            1638757
+          ]
+        ],
+        "seconds": 2.4501108310651034
+      }
+    },
+    "gfs": {
+      "checks": [
+        {
+          "name": "atlanta",
+          "requested": [
+            33.6407,
+            -84.4277
+          ],
+          "selected": {
+            "cell_id": 324382,
+            "latitude": 33.75,
+            "longitude": -84.5
+          },
+          "status": 200,
+          "ms": 81.20297198183835,
+          "gzip_bytes": 147357,
+          "json_bytes": 403841,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "seattle",
+          "requested": [
+            47.61,
+            -122.33
+          ],
+          "selected": {
+            "cell_id": 245031,
+            "latitude": 47.5,
+            "longitude": -122.25
+          },
+          "status": 200,
+          "ms": 86.77918696776032,
+          "gzip_bytes": 150142,
+          "json_bytes": 405725,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "miami",
+          "requested": [
+            25.76,
+            -80.19
+          ],
+          "selected": {
+            "cell_id": 370479,
+            "latitude": 25.75,
+            "longitude": -80.25
+          },
+          "status": 200,
+          "ms": 79.58736503496766,
+          "gzip_bytes": 150129,
+          "json_bytes": 412442,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "los_angeles",
+          "requested": [
+            34.05,
+            -118.24
+          ],
+          "selected": {
+            "cell_id": 322807,
+            "latitude": 34.0,
+            "longitude": -118.25
+          },
+          "status": 200,
+          "ms": 79.78266896679997,
+          "gzip_bytes": 149721,
+          "json_bytes": 406042,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "denver",
+          "requested": [
+            39.74,
+            -104.99
+          ],
+          "selected": {
+            "cell_id": 289740,
+            "latitude": 39.75,
+            "longitude": -105.0
+          },
+          "status": 200,
+          "ms": 75.43739001266658,
+          "gzip_bytes": 146995,
+          "json_bytes": 405923,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "boston",
+          "requested": [
+            42.36,
+            -71.06
+          ],
+          "selected": {
+            "cell_id": 275476,
+            "latitude": 42.25,
+            "longitude": -71.0
+          },
+          "status": 200,
+          "ms": 87.26374921388924,
+          "gzip_bytes": 148456,
+          "json_bytes": 408232,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-230620",
+          "requested": [
+            50.0,
+            -125.0
+          ],
+          "selected": {
+            "cell_id": 230620,
+            "latitude": 50.0,
+            "longitude": -125.0
+          },
+          "status": 200,
+          "ms": 82.02168601565063,
+          "gzip_bytes": 151624,
+          "json_bytes": 408701,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-230856",
+          "requested": [
+            50.0,
+            -66.0
+          ],
+          "selected": {
+            "cell_id": 230856,
+            "latitude": 50.0,
+            "longitude": -66.0
+          },
+          "status": 200,
+          "ms": 74.94298391975462,
+          "gzip_bytes": 149925,
+          "json_bytes": 406626,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-239370",
+          "requested": [
+            48.5,
+            -97.5
+          ],
+          "selected": {
+            "cell_id": 239370,
+            "latitude": 48.5,
+            "longitude": -97.5
+          },
+          "status": 200,
+          "ms": 75.12818393297493,
+          "gzip_bytes": 147878,
+          "json_bytes": 403074,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-307005",
+          "requested": [
+            36.75,
+            -108.75
+          ],
+          "selected": {
+            "cell_id": 307005,
+            "latitude": 36.75,
+            "longitude": -108.75
+          },
+          "status": 200,
+          "ms": 68.10317817144096,
+          "gzip_bytes": 147328,
+          "json_bytes": 407848,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-312890",
+          "requested": [
+            35.75,
+            -77.5
+          ],
+          "selected": {
+            "cell_id": 312890,
+            "latitude": 35.75,
+            "longitude": -77.5
+          },
+          "status": 200,
+          "ms": 82.78503804467618,
+          "gzip_bytes": 146772,
+          "json_bytes": 405346,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-346010",
+          "requested": [
+            30.0,
+            -77.5
+          ],
+          "selected": {
+            "cell_id": 346010,
+            "latitude": 30.0,
+            "longitude": -77.5
+          },
+          "status": 200,
+          "ms": 78.05935782380402,
+          "gzip_bytes": 148089,
+          "json_bytes": 408751,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-354666",
+          "requested": [
+            28.5,
+            -73.5
+          ],
+          "selected": {
+            "cell_id": 354666,
+            "latitude": 28.5,
+            "longitude": -73.5
+          },
+          "status": 200,
+          "ms": 88.53681804612279,
+          "gzip_bytes": 148489,
+          "json_bytes": 407769,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-355925",
+          "requested": [
+            28.25,
+            -118.75
+          ],
+          "selected": {
+            "cell_id": 355925,
+            "latitude": 28.25,
+            "longitude": -118.75
+          },
+          "status": 200,
+          "ms": 70.89055702090263,
+          "gzip_bytes": 145890,
+          "json_bytes": 398906,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-358996",
+          "requested": [
+            27.75,
+            -71.0
+          ],
+          "selected": {
+            "cell_id": 358996,
+            "latitude": 27.75,
+            "longitude": -71.0
+          },
+          "status": 200,
+          "ms": 73.66694579832256,
+          "gzip_bytes": 149929,
+          "json_bytes": 412804,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-374739",
+          "requested": [
+            25.0,
+            -95.25
+          ],
+          "selected": {
+            "cell_id": 374739,
+            "latitude": 25.0,
+            "longitude": -95.25
+          },
+          "status": 200,
+          "ms": 77.58864993229508,
+          "gzip_bytes": 149679,
+          "json_bytes": 410137,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-380380",
+          "requested": [
+            24.0,
+            -125.0
+          ],
+          "selected": {
+            "cell_id": 380380,
+            "latitude": 24.0,
+            "longitude": -125.0
+          },
+          "status": 200,
+          "ms": 83.3748560398817,
+          "gzip_bytes": 146371,
+          "json_bytes": 401175,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-380616",
+          "requested": [
+            24.0,
+            -66.0
+          ],
+          "selected": {
+            "cell_id": 380616,
+            "latitude": 24.0,
+            "longitude": -66.0
+          },
+          "status": 200,
+          "ms": 73.47601698711514,
+          "gzip_bytes": 146911,
+          "json_bytes": 406022,
+          "all_fields_times_levels_equal": true
+        }
+      ],
+      "invalid": [
+        {
+          "latitude": "nan",
+          "longitude": "-90",
+          "status": 400,
+          "ms": 2.686080988496542,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "inf",
+          "longitude": "-90",
+          "status": 400,
+          "ms": 1.1572418734431267,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "91",
+          "longitude": "0",
+          "status": 400,
+          "ms": 0.9605309460312128,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "40",
+          "longitude": "181",
+          "status": 400,
+          "ms": 1.6063370276242495,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "0",
+          "longitude": "0",
+          "status": 404,
+          "ms": 1.3074430171400309,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "60",
+          "longitude": "-150",
+          "status": 404,
+          "ms": 1.2195820454508066,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "23",
+          "longitude": "-100",
+          "status": 404,
+          "ms": 1.1348461266607046,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "23.99999999",
+          "longitude": "-100",
+          "status": 404,
+          "ms": 1.0604229755699635,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "40",
+          "longitude": "-125.00000001",
+          "status": 404,
+          "ms": 1.0666719172149897,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "40",
+          "longitude": "-126",
+          "status": 404,
+          "ms": 1.136878039687872,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        }
+      ],
+      "clients": {
+        "1": {
+          "latency_ms": {
+            "count": 100,
+            "min": 48.58053894713521,
+            "p50": 57.911044103093445,
+            "p95": 70.63525236444548,
+            "p99": 72.04666933743283,
+            "max": 72.79604603536427
+          },
+          "requests_per_second": 16.643880611775142,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 100,
+            "min": 145887.0,
+            "p50": 148455.5,
+            "p95": 151625.0,
+            "p99": 151626.0,
+            "max": 151626.0
+          }
+        },
+        "4": {
+          "latency_ms": {
+            "count": 300,
+            "min": 49.58851612173021,
+            "p50": 100.17193655949086,
+            "p95": 136.81138169486076,
+            "p99": 150.81540522398427,
+            "max": 162.9365449771285
+          },
+          "requests_per_second": 39.432496734522495,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 300,
+            "min": 145888.0,
+            "p50": 148272.5,
+            "p95": 151624.0,
+            "p99": 151626.01,
+            "max": 151628.0
+          }
+        }
+      },
+      "table_wide_coverage": {
+        "distinct_cells": 24885,
+        "bad_pressure_array_lengths": 0,
+        "per_lead_rows": [
+          [
+            0,
+            24885
+          ],
+          [
+            1,
+            24885
+          ],
+          [
+            2,
+            24885
+          ],
+          [
+            3,
+            24885
+          ],
+          [
+            4,
+            24885
+          ],
+          [
+            5,
+            24885
+          ],
+          [
+            6,
+            24885
+          ],
+          [
+            7,
+            24885
+          ],
+          [
+            8,
+            24885
+          ],
+          [
+            9,
+            24885
+          ],
+          [
+            10,
+            24885
+          ],
+          [
+            11,
+            24885
+          ],
+          [
+            12,
+            24885
+          ],
+          [
+            13,
+            24885
+          ],
+          [
+            14,
+            24885
+          ],
+          [
+            15,
+            24885
+          ],
+          [
+            16,
+            24885
+          ],
+          [
+            17,
+            24885
+          ],
+          [
+            18,
+            24885
+          ],
+          [
+            19,
+            24885
+          ],
+          [
+            20,
+            24885
+          ],
+          [
+            21,
+            24885
+          ],
+          [
+            22,
+            24885
+          ],
+          [
+            23,
+            24885
+          ],
+          [
+            24,
+            24885
+          ],
+          [
+            25,
+            24885
+          ],
+          [
+            26,
+            24885
+          ],
+          [
+            27,
+            24885
+          ],
+          [
+            28,
+            24885
+          ],
+          [
+            29,
+            24885
+          ],
+          [
+            30,
+            24885
+          ],
+          [
+            31,
+            24885
+          ],
+          [
+            32,
+            24885
+          ],
+          [
+            33,
+            24885
+          ],
+          [
+            34,
+            24885
+          ],
+          [
+            35,
+            24885
+          ],
+          [
+            36,
+            24885
+          ],
+          [
+            37,
+            24885
+          ],
+          [
+            38,
+            24885
+          ],
+          [
+            39,
+            24885
+          ],
+          [
+            40,
+            24885
+          ],
+          [
+            41,
+            24885
+          ],
+          [
+            42,
+            24885
+          ],
+          [
+            43,
+            24885
+          ],
+          [
+            44,
+            24885
+          ],
+          [
+            45,
+            24885
+          ],
+          [
+            46,
+            24885
+          ],
+          [
+            47,
+            24885
+          ],
+          [
+            48,
+            24885
+          ],
+          [
+            49,
+            24885
+          ],
+          [
+            50,
+            24885
+          ],
+          [
+            51,
+            24885
+          ],
+          [
+            52,
+            24885
+          ],
+          [
+            53,
+            24885
+          ],
+          [
+            54,
+            24885
+          ],
+          [
+            55,
+            24885
+          ],
+          [
+            56,
+            24885
+          ],
+          [
+            57,
+            24885
+          ],
+          [
+            58,
+            24885
+          ],
+          [
+            59,
+            24885
+          ],
+          [
+            60,
+            24885
+          ],
+          [
+            61,
+            24885
+          ],
+          [
+            62,
+            24885
+          ],
+          [
+            63,
+            24885
+          ],
+          [
+            64,
+            24885
+          ],
+          [
+            65,
+            24885
+          ],
+          [
+            66,
+            24885
+          ],
+          [
+            67,
+            24885
+          ],
+          [
+            68,
+            24885
+          ],
+          [
+            69,
+            24885
+          ],
+          [
+            70,
+            24885
+          ],
+          [
+            71,
+            24885
+          ],
+          [
+            72,
+            24885
+          ],
+          [
+            73,
+            24885
+          ],
+          [
+            74,
+            24885
+          ],
+          [
+            75,
+            24885
+          ],
+          [
+            76,
+            24885
+          ],
+          [
+            77,
+            24885
+          ],
+          [
+            78,
+            24885
+          ],
+          [
+            79,
+            24885
+          ],
+          [
+            80,
+            24885
+          ],
+          [
+            81,
+            24885
+          ],
+          [
+            82,
+            24885
+          ],
+          [
+            83,
+            24885
+          ],
+          [
+            84,
+            24885
+          ],
+          [
+            85,
+            24885
+          ],
+          [
+            86,
+            24885
+          ],
+          [
+            87,
+            24885
+          ],
+          [
+            88,
+            24885
+          ],
+          [
+            89,
+            24885
+          ],
+          [
+            90,
+            24885
+          ],
+          [
+            91,
+            24885
+          ],
+          [
+            92,
+            24885
+          ],
+          [
+            93,
+            24885
+          ],
+          [
+            94,
+            24885
+          ],
+          [
+            95,
+            24885
+          ],
+          [
+            96,
+            24885
+          ],
+          [
+            97,
+            24885
+          ],
+          [
+            98,
+            24885
+          ],
+          [
+            99,
+            24885
+          ],
+          [
+            100,
+            24885
+          ],
+          [
+            101,
+            24885
+          ],
+          [
+            102,
+            24885
+          ],
+          [
+            103,
+            24885
+          ],
+          [
+            104,
+            24885
+          ],
+          [
+            105,
+            24885
+          ],
+          [
+            106,
+            24885
+          ],
+          [
+            107,
+            24885
+          ],
+          [
+            108,
+            24885
+          ],
+          [
+            109,
+            24885
+          ],
+          [
+            110,
+            24885
+          ],
+          [
+            111,
+            24885
+          ],
+          [
+            112,
+            24885
+          ],
+          [
+            113,
+            24885
+          ],
+          [
+            114,
+            24885
+          ],
+          [
+            115,
+            24885
+          ],
+          [
+            116,
+            24885
+          ],
+          [
+            117,
+            24885
+          ],
+          [
+            118,
+            24885
+          ],
+          [
+            119,
+            24885
+          ],
+          [
+            120,
+            24885
+          ],
+          [
+            123,
+            24885
+          ],
+          [
+            126,
+            24885
+          ],
+          [
+            129,
+            24885
+          ],
+          [
+            132,
+            24885
+          ],
+          [
+            135,
+            24885
+          ],
+          [
+            138,
+            24885
+          ],
+          [
+            141,
+            24885
+          ],
+          [
+            144,
+            24885
+          ],
+          [
+            147,
+            24885
+          ],
+          [
+            150,
+            24885
+          ],
+          [
+            153,
+            24885
+          ],
+          [
+            156,
+            24885
+          ],
+          [
+            159,
+            24885
+          ],
+          [
+            162,
+            24885
+          ],
+          [
+            165,
+            24885
+          ],
+          [
+            168,
+            24885
+          ],
+          [
+            171,
+            24885
+          ],
+          [
+            174,
+            24885
+          ],
+          [
+            177,
+            24885
+          ],
+          [
+            180,
+            24885
+          ]
+        ],
+        "seconds": 0.1560128889977932
+      }
+    },
+    "aifs": {
+      "checks": [
+        {
+          "name": "atlanta",
+          "requested": [
+            33.6407,
+            -84.4277
+          ],
+          "selected": {
+            "cell_id": 324382,
+            "latitude": 33.75,
+            "longitude": -84.5
+          },
+          "status": 200,
+          "ms": 32.74555201642215,
+          "gzip_bytes": 11248,
+          "json_bytes": 25705,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "seattle",
+          "requested": [
+            47.61,
+            -122.33
+          ],
+          "selected": {
+            "cell_id": 245031,
+            "latitude": 47.5,
+            "longitude": -122.25
+          },
+          "status": 200,
+          "ms": 20.676546962931752,
+          "gzip_bytes": 11311,
+          "json_bytes": 25494,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "miami",
+          "requested": [
+            25.76,
+            -80.19
+          ],
+          "selected": {
+            "cell_id": 370479,
+            "latitude": 25.75,
+            "longitude": -80.25
+          },
+          "status": 200,
+          "ms": 25.621904991567135,
+          "gzip_bytes": 11135,
+          "json_bytes": 25497,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "los_angeles",
+          "requested": [
+            34.05,
+            -118.24
+          ],
+          "selected": {
+            "cell_id": 322807,
+            "latitude": 34.0,
+            "longitude": -118.25
+          },
+          "status": 200,
+          "ms": 22.739321924746037,
+          "gzip_bytes": 11229,
+          "json_bytes": 25551,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "denver",
+          "requested": [
+            39.74,
+            -104.99
+          ],
+          "selected": {
+            "cell_id": 289740,
+            "latitude": 39.75,
+            "longitude": -105.0
+          },
+          "status": 200,
+          "ms": 28.07169407606125,
+          "gzip_bytes": 11263,
+          "json_bytes": 25512,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "boston",
+          "requested": [
+            42.36,
+            -71.06
+          ],
+          "selected": {
+            "cell_id": 275476,
+            "latitude": 42.25,
+            "longitude": -71.0
+          },
+          "status": 200,
+          "ms": 22.776456084102392,
+          "gzip_bytes": 11303,
+          "json_bytes": 25531,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-230620",
+          "requested": [
+            50.0,
+            -125.0
+          ],
+          "selected": {
+            "cell_id": 230620,
+            "latitude": 50.0,
+            "longitude": -125.0
+          },
+          "status": 200,
+          "ms": 22.634587017819285,
+          "gzip_bytes": 11234,
+          "json_bytes": 25500,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-230856",
+          "requested": [
+            50.0,
+            -66.0
+          ],
+          "selected": {
+            "cell_id": 230856,
+            "latitude": 50.0,
+            "longitude": -66.0
+          },
+          "status": 200,
+          "ms": 21.052468102425337,
+          "gzip_bytes": 11445,
+          "json_bytes": 25504,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-239370",
+          "requested": [
+            48.5,
+            -97.5
+          ],
+          "selected": {
+            "cell_id": 239370,
+            "latitude": 48.5,
+            "longitude": -97.5
+          },
+          "status": 200,
+          "ms": 21.657909965142608,
+          "gzip_bytes": 11329,
+          "json_bytes": 25502,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-307005",
+          "requested": [
+            36.75,
+            -108.75
+          ],
+          "selected": {
+            "cell_id": 307005,
+            "latitude": 36.75,
+            "longitude": -108.75
+          },
+          "status": 200,
+          "ms": 23.224197095260024,
+          "gzip_bytes": 11195,
+          "json_bytes": 25456,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-312890",
+          "requested": [
+            35.75,
+            -77.5
+          ],
+          "selected": {
+            "cell_id": 312890,
+            "latitude": 35.75,
+            "longitude": -77.5
+          },
+          "status": 200,
+          "ms": 19.47685913182795,
+          "gzip_bytes": 11306,
+          "json_bytes": 25728,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-346010",
+          "requested": [
+            30.0,
+            -77.5
+          ],
+          "selected": {
+            "cell_id": 346010,
+            "latitude": 30.0,
+            "longitude": -77.5
+          },
+          "status": 200,
+          "ms": 21.02205203846097,
+          "gzip_bytes": 11110,
+          "json_bytes": 25449,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-354666",
+          "requested": [
+            28.5,
+            -73.5
+          ],
+          "selected": {
+            "cell_id": 354666,
+            "latitude": 28.5,
+            "longitude": -73.5
+          },
+          "status": 200,
+          "ms": 22.378295892849565,
+          "gzip_bytes": 11158,
+          "json_bytes": 25364,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-355925",
+          "requested": [
+            28.25,
+            -118.75
+          ],
+          "selected": {
+            "cell_id": 355925,
+            "latitude": 28.25,
+            "longitude": -118.75
+          },
+          "status": 200,
+          "ms": 21.164702950045466,
+          "gzip_bytes": 11260,
+          "json_bytes": 25477,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-358996",
+          "requested": [
+            27.75,
+            -71.0
+          ],
+          "selected": {
+            "cell_id": 358996,
+            "latitude": 27.75,
+            "longitude": -71.0
+          },
+          "status": 200,
+          "ms": 19.30228411220014,
+          "gzip_bytes": 11210,
+          "json_bytes": 25295,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-374739",
+          "requested": [
+            25.0,
+            -95.25
+          ],
+          "selected": {
+            "cell_id": 374739,
+            "latitude": 25.0,
+            "longitude": -95.25
+          },
+          "status": 200,
+          "ms": 19.305461086332798,
+          "gzip_bytes": 11190,
+          "json_bytes": 25616,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-380380",
+          "requested": [
+            24.0,
+            -125.0
+          ],
+          "selected": {
+            "cell_id": 380380,
+            "latitude": 24.0,
+            "longitude": -125.0
+          },
+          "status": 200,
+          "ms": 22.322882199659944,
+          "gzip_bytes": 11106,
+          "json_bytes": 25432,
+          "all_fields_times_levels_equal": true
+        },
+        {
+          "name": "cell-380616",
+          "requested": [
+            24.0,
+            -66.0
+          ],
+          "selected": {
+            "cell_id": 380616,
+            "latitude": 24.0,
+            "longitude": -66.0
+          },
+          "status": 200,
+          "ms": 21.15501486696303,
+          "gzip_bytes": 11050,
+          "json_bytes": 25423,
+          "all_fields_times_levels_equal": true
+        }
+      ],
+      "invalid": [
+        {
+          "latitude": "nan",
+          "longitude": "-90",
+          "status": 400,
+          "ms": 2.878521103411913,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "inf",
+          "longitude": "-90",
+          "status": 400,
+          "ms": 1.66727090254426,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "91",
+          "longitude": "0",
+          "status": 400,
+          "ms": 0.7925701793283224,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "40",
+          "longitude": "181",
+          "status": 400,
+          "ms": 0.8057979866862297,
+          "gzip_bytes": 60,
+          "json_bytes": 40
+        },
+        {
+          "latitude": "0",
+          "longitude": "0",
+          "status": 404,
+          "ms": 1.1886979918926954,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "60",
+          "longitude": "-150",
+          "status": 404,
+          "ms": 1.0770889930427074,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "23",
+          "longitude": "-100",
+          "status": 404,
+          "ms": 0.8608479984104633,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "23.99999999",
+          "longitude": "-100",
+          "status": 404,
+          "ms": 0.9448539931327105,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "40",
+          "longitude": "-125.00000001",
+          "status": 404,
+          "ms": 0.9481359738856554,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        },
+        {
+          "latitude": "40",
+          "longitude": "-126",
+          "status": 404,
+          "ms": 1.1700529139488935,
+          "gzip_bytes": 57,
+          "json_bytes": 39
+        }
+      ],
+      "clients": {
+        "1": {
+          "latency_ms": {
+            "count": 100,
+            "min": 15.173505060374737,
+            "p50": 17.898985533975065,
+            "p95": 19.62818040046841,
+            "p99": 20.54988316260279,
+            "max": 22.245852975174785
+          },
+          "requests_per_second": 56.051525237634344,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 100,
+            "min": 11048.0,
+            "p50": 11235.0,
+            "p95": 11444.05,
+            "p99": 11446.0,
+            "max": 11446.0
+          }
+        },
+        "4": {
+          "latency_ms": {
+            "count": 300,
+            "min": 12.036037864163518,
+            "p50": 21.935059339739382,
+            "p95": 28.86155169690028,
+            "p99": 31.779394363984466,
+            "max": 33.668896881863475
+          },
+          "requests_per_second": 179.46354805692832,
+          "errors": [],
+          "gzip_bytes": {
+            "count": 300,
+            "min": 11048.0,
+            "p50": 11234.0,
+            "p95": 11444.0,
+            "p99": 11446.0,
+            "max": 11446.0
+          }
+        }
+      },
+      "table_wide_coverage": {
+        "distinct_cells": 24885,
+        "bad_pressure_array_lengths": 0,
+        "per_lead_rows": [
+          [
+            0,
+            24885
+          ],
+          [
+            6,
+            24885
+          ],
+          [
+            12,
+            24885
+          ],
+          [
+            18,
+            24885
+          ],
+          [
+            24,
+            24885
+          ],
+          [
+            30,
+            24885
+          ],
+          [
+            36,
+            24885
+          ],
+          [
+            42,
+            24885
+          ],
+          [
+            48,
+            24885
+          ],
+          [
+            54,
+            24885
+          ],
+          [
+            60,
+            24885
+          ],
+          [
+            66,
+            24885
+          ],
+          [
+            72,
+            24885
+          ],
+          [
+            78,
+            24885
+          ],
+          [
+            84,
+            24885
+          ],
+          [
+            90,
+            24885
+          ],
+          [
+            96,
+            24885
+          ],
+          [
+            102,
+            24885
+          ],
+          [
+            108,
+            24885
+          ],
+          [
+            114,
+            24885
+          ],
+          [
+            120,
+            24885
+          ],
+          [
+            126,
+            24885
+          ],
+          [
+            132,
+            24885
+          ],
+          [
+            138,
+            24885
+          ],
+          [
+            144,
+            24885
+          ],
+          [
+            150,
+            24885
+          ],
+          [
+            156,
+            24885
+          ],
+          [
+            162,
+            24885
+          ],
+          [
+            168,
+            24885
+          ],
+          [
+            174,
+            24885
+          ],
+          [
+            180,
+            24885
+          ]
+        ],
+        "seconds": 0.03718900494277477
+      }
+    }
+  },
+  "scope": "Loopback, native profiles, one resident cycle; no WAN or atomic update test.",
+  "final_resident_storage": {
+    "hrrr": {
+      "rows": 80299093,
+      "bytes_on_disk": 33597227056,
+      "data_compressed_bytes": 33589812583,
+      "data_uncompressed_bytes": 63115087098,
+      "marks_bytes": 6897928,
+      "active_parts": 5
+    },
+    "gfs": {
+      "rows": 3508785,
+      "bytes_on_disk": 1747092552,
+      "data_compressed_bytes": 1746694472,
+      "data_uncompressed_bytes": 2757905010,
+      "marks_bytes": 297337,
+      "active_parts": 5
+    },
+    "aifs": {
+      "rows": 771435,
+      "bytes_on_disk": 101167340,
+      "data_compressed_bytes": 101084832,
+      "data_uncompressed_bytes": 168172830,
+      "marks_bytes": 49404,
+      "active_parts": 2
+    }
+  },
+  "resident_database_queries": {
+    "hrrr": {
+      "warmup_queries": 300,
+      "warm": {
+        "count": 300,
+        "min": 7.535557029768825,
+        "p50": 8.522571064531803,
+        "p95": 11.022873863112181,
+        "p99": 12.027714319992809,
+        "max": 13.393218163400888
+      },
+      "direct_io": {
+        "count": 30,
+        "min": 16.258927062153816,
+        "p50": 27.782383025623858,
+        "p95": 39.39939788542688,
+        "p99": 47.65283037209884,
+        "max": 50.954185193404555
+      },
+      "four_clients": {
+        "latency_ms": {
+          "count": 300,
+          "min": 7.178958039730787,
+          "p50": 10.238303453661501,
+          "p95": 14.211779425386341,
+          "p99": 15.825182329863296,
+          "max": 18.811263144016266
+        },
+        "requests_per_second": 319.8861686939832
+      }
+    },
+    "gfs": {
+      "warmup_queries": 300,
+      "warm": {
+        "count": 300,
+        "min": 8.429945213720202,
+        "p50": 13.346970546990633,
+        "p95": 15.89697590097785,
+        "p99": 16.89634983194985,
+        "max": 25.295720901340246
+      },
+      "direct_io": {
+        "count": 30,
+        "min": 13.851063093170524,
+        "p50": 24.08296102657914,
+        "p95": 33.31158012151718,
+        "p99": 34.374647580552846,
+        "max": 34.75176705978811
+      },
+      "four_clients": {
+        "latency_ms": {
+          "count": 300,
+          "min": 7.635448127985001,
+          "p50": 11.187638039700687,
+          "p95": 15.918204712215815,
+          "p99": 28.356987209990617,
+          "max": 30.15170688740909
+        },
+        "requests_per_second": 280.08321297579477
+      }
+    },
+    "aifs": {
+      "warmup_queries": 300,
+      "warm": {
+        "count": 300,
+        "min": 7.462434936314821,
+        "p50": 9.396595996804535,
+        "p95": 11.200878559611738,
+        "p99": 11.931410152465105,
+        "max": 12.23165518604219
+      },
+      "direct_io": {
+        "count": 30,
+        "min": 9.750460973009467,
+        "p50": 14.90226702298969,
+        "p95": 25.001851050183173,
+        "p99": 30.773336605634547,
+        "max": 33.01335289143026
+      },
+      "four_clients": {
+        "latency_ms": {
+          "count": 300,
+          "min": 5.530801136046648,
+          "p50": 8.635170990601182,
+          "p95": 11.957921215798706,
+          "p99": 13.491962086409327,
+          "max": 14.876851113513112
+        },
+        "requests_per_second": 373.71289631560325
+      }
+    }
+  },
+  "resident_query_log": [
+    [
+      "resident_final_1792281396136595600_aifs_direct_io",
+      30,
+      17534976,
+      4478540
+    ],
+    [
+      "resident_final_1792281396136595600_aifs_warm",
+      300,
+      0,
+      4466588
+    ],
+    [
+      "resident_final_1792281396136595600_gfs_direct_io",
+      30,
+      26480640,
+      4492092
+    ],
+    [
+      "resident_final_1792281396136595600_gfs_warm",
+      300,
+      0,
+      4477308
+    ],
+    [
+      "resident_final_1792281396136595600_hrrr_direct_io",
+      30,
+      27230208,
+      4494892
+    ],
+    [
+      "resident_final_1792281396136595600_hrrr_warm",
+      300,
+      0,
+      4478540
+    ]
+  ],
+  "resident_query_log_columns": [
+    "label",
+    "queries",
+    "os_read_bytes",
+    "peak_tracked_memory"
+  ],
+  "all_parts": [
+    [
+      "aifs_256_zstd",
+      0,
+      6,
+      99996160
+    ],
+    [
+      "aifs_256_zstd",
+      1,
+      2,
+      101167340
+    ],
+    [
+      "gfs_256_zstd",
+      0,
+      24,
+      1725789374
+    ],
+    [
+      "gfs_256_zstd",
+      1,
+      5,
+      1747092552
+    ],
+    [
+      "hrrr_256_zstd",
+      1,
+      5,
+      33597227056
+    ]
+  ],
+  "all_parts_columns": [
+    "table",
+    "active",
+    "parts",
+    "bytes_on_disk"
+  ]
+}

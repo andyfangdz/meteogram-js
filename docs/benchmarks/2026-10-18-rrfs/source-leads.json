@@ -1,0 +1,1787 @@
+[
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252011415,
+    "lead": 0,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 249443463,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.631795184,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3534194,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 251522904,
+    "lead": 1,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 248723250,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.535517789,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3523178,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 250032488,
+    "lead": 2,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 247475230,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.524212354,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3517202,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 249326172,
+    "lead": 3,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 246896423,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.809401938,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3521044,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 248172286,
+    "lead": 4,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 245761741,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.766736904,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3521684,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 246860587,
+    "lead": 5,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 244971681,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.413366075,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3515098,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 246483934,
+    "lead": 6,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 244557242,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.308662023,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3515022,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 246905116,
+    "lead": 7,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 244966994,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.514502576,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3519621,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 248973196,
+    "lead": 8,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 246897741,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.626563801,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3524014,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 249624034,
+    "lead": 9,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 247169786,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.274836181,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3529642,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 250847217,
+    "lead": 10,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 248357864,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.476964503,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3544899,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 251520504,
+    "lead": 11,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 248905989,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.627940511,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3559696,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252886762,
+    "lead": 12,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250290695,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.308127047,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3541177,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 251885614,
+    "lead": 13,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 248927885,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.749372623,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3514069,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252732006,
+    "lead": 14,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 249813549,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.647019445,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3502645,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253867628,
+    "lead": 15,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250633595,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.745575439,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3503334,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 254858963,
+    "lead": 16,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251705163,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.399200041,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3503256,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253778398,
+    "lead": 17,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250294812,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.002872501,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3501546,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253996889,
+    "lead": 18,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250831558,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.011095839,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3499667,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255748464,
+    "lead": 19,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251690182,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.613640178,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3499540,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255819017,
+    "lead": 20,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252063485,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.958196124,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3501672,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 256502412,
+    "lead": 21,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252272269,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.898248543,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3502816,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255708835,
+    "lead": 22,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251312220,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.480840631,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3507829,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255780549,
+    "lead": 23,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251344943,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.773150326,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3510554,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255968431,
+    "lead": 24,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251617943,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 13.004591412,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3513540,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255772882,
+    "lead": 25,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251692640,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 11.526341799,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3502657,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255637771,
+    "lead": 26,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251697405,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.352376096,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3487833,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 254802674,
+    "lead": 27,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250898759,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.674757084,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3477328,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 254058076,
+    "lead": 28,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250520421,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.639718203,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3487236,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253838110,
+    "lead": 29,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250601882,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.718770207,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3493530,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252620345,
+    "lead": 30,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 249030747,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.963373814,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3499879,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252718801,
+    "lead": 31,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 249640390,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.48750133,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3507606,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253282146,
+    "lead": 32,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 249695497,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.624297785,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3514080,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253953799,
+    "lead": 33,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250422460,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.526928552,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3525779,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255059653,
+    "lead": 34,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251670563,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.696047818,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3544686,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255917655,
+    "lead": 35,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252787108,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.770866363,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3550928,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 256064716,
+    "lead": 36,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252809678,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.080102659,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3531365,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255859379,
+    "lead": 37,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252754269,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.958085973,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3508744,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255466478,
+    "lead": 38,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252356248,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.246055129,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3506852,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255590457,
+    "lead": 39,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252591831,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.941845851,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3510214,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255367326,
+    "lead": 40,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252001722,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.65132035,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3513706,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255087159,
+    "lead": 41,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251930399,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.662497777,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3516866,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255963337,
+    "lead": 42,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252849848,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.721909654,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3521109,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255870139,
+    "lead": 43,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252622728,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.750154198,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3523805,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255760013,
+    "lead": 44,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252124747,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.658648154,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3525876,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255911243,
+    "lead": 45,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252244732,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.98937179,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3529658,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255861338,
+    "lead": 46,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 252025316,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.645780436999999,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3532596,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255501537,
+    "lead": 47,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251463700,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.683959076,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3535810,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253963517,
+    "lead": 48,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250265538,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.695943187,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3535653,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 253308306,
+    "lead": 49,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 249692776,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.068242033,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3526525,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252051074,
+    "lead": 50,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 248465709,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.570521538,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3501225,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 250998154,
+    "lead": 51,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 247685011,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.926065554000001,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3480830,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 248530157,
+    "lead": 52,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 246167379,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.853580243,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3484311,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 249329707,
+    "lead": 53,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 247210353,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.026097883,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3486197,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 248070967,
+    "lead": 54,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 246190849,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.811123758,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3494470,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 249264047,
+    "lead": 55,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 247224930,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.841196815,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3502937,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 250219416,
+    "lead": 56,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 248228776,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.72443219,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3512790,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252454780,
+    "lead": 57,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250383476,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.031798206,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3526294,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 252555750,
+    "lead": 58,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 250549918,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.681396575,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3558108,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 254297456,
+    "lead": 59,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 251890569,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.882462247,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3561888,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 254771403,
+    "lead": 60,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 253220951,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.923153485,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3535468,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 254829450,
+    "lead": 61,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 253219133,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.505884782999999,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3504244,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 256386930,
+    "lead": 62,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 254699529,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.852733914,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3493691,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 255664374,
+    "lead": 63,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 253501480,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.946502827,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3490955,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 256378544,
+    "lead": 64,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 254435729,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.887255162,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3490923,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 256310813,
+    "lead": 65,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 254540110,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.673488329,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3490388,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 258426026,
+    "lead": 66,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256059183,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.013396304,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3491928,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 259583246,
+    "lead": 67,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256732786,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.914520791,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3494088,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260290260,
+    "lead": 68,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 257163766,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.004935008,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3498921,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260389488,
+    "lead": 69,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256522186,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.032128712,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3505540,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260674987,
+    "lead": 70,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256164136,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.556716984,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3512508,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260886494,
+    "lead": 71,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256381222,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.620388882,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3518534,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260530091,
+    "lead": 72,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256974030,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.639844436,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3522761,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 261072712,
+    "lead": 73,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 257042166,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.035458567,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3516738,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 259507658,
+    "lead": 74,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 255887488,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.632098057,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3496390,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 258910691,
+    "lead": 75,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 255355165,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.867040996,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3482451,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 259471620,
+    "lead": 76,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256687702,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.598338598,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3493813,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 258992643,
+    "lead": 77,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256038589,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.799345992,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3508370,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260200092,
+    "lead": 78,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 256961041,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.77418824,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3519192,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260143062,
+    "lead": 79,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 257113064,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.040453012,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3531440,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260558256,
+    "lead": 80,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 258292940,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 9.890907017,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 2999319,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260211551,
+    "lead": 81,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 257900332,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.692161545,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3006995,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 261631525,
+    "lead": 82,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 259510886,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.283899223,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 3030126,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 260293645,
+    "lead": 83,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 259261838,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.186621741,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 2331923,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  },
+  {
+    "chunks": 182,
+    "finite": true,
+    "grib_bytes": 261411482,
+    "lead": 84,
+    "profile_stage": {
+      "checksum": true,
+      "encoded_bytes": 259546606,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 589952520
+    },
+    "seconds": 10.466960468,
+    "source_cache_policy": "uncheckpointed_leads_only",
+    "staged_value_bytes": 1193015096,
+    "surface_stage": {
+      "checksum": true,
+      "encoded_bytes": 2991078,
+      "format": "indexed_zstd_v2_spatial_delta16",
+      "raw_bytes": 6555028
+    }
+  }
+]

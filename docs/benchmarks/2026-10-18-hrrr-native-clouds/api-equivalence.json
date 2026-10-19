@@ -1,0 +1,114 @@
+{
+  "success": true,
+  "profiles": 16,
+  "report": [
+    {
+      "model": "hrrr",
+      "location": "KCDW",
+      "pressure_profiles_exact": true,
+      "milliseconds": 259.33434488251805,
+      "native_cloud_hours": 1,
+      "cloud_range": [0.0, 0.0],
+      "native_low_high_metres": [103.55448150634766, 27464.4609375]
+    },
+    {
+      "model": "hrrr",
+      "location": "KSEA",
+      "pressure_profiles_exact": true,
+      "milliseconds": 53.93940303474665,
+      "native_cloud_hours": 1,
+      "cloud_range": [0.0, 0.47999998927116394],
+      "native_low_high_metres": [124.14823150634766, 27444.8046875]
+    },
+    {
+      "model": "hrrr",
+      "location": "KDEN",
+      "pressure_profiles_exact": true,
+      "milliseconds": 48.96503803320229,
+      "native_cloud_hours": 1,
+      "cloud_range": [0.0, 0.05000000074505806],
+      "native_low_high_metres": [1644.866943359375, 27464.4609375]
+    },
+    {
+      "model": "hrrr",
+      "location": "Houston",
+      "pressure_profiles_exact": true,
+      "milliseconds": 50.25857500731945,
+      "native_cloud_hours": 1,
+      "cloud_range": [0.0, 1.0],
+      "native_low_high_metres": [26.960731506347656, 27549.9609375]
+    },
+    {
+      "model": "gfs",
+      "location": "KCDW",
+      "pressure_profiles_exact": true,
+      "milliseconds": 1387.4687280040234
+    },
+    {
+      "model": "gfs",
+      "location": "KSEA",
+      "pressure_profiles_exact": true,
+      "milliseconds": 174.3683349341154
+    },
+    {
+      "model": "gfs",
+      "location": "KDEN",
+      "pressure_profiles_exact": true,
+      "milliseconds": 177.3123200982809
+    },
+    {
+      "model": "gfs",
+      "location": "Houston",
+      "pressure_profiles_exact": true,
+      "milliseconds": 163.67599205113947
+    },
+    {
+      "model": "aifs",
+      "location": "KCDW",
+      "pressure_profiles_exact": true,
+      "milliseconds": 144.1149760503322
+    },
+    {
+      "model": "aifs",
+      "location": "KSEA",
+      "pressure_profiles_exact": true,
+      "milliseconds": 42.747290106490254
+    },
+    {
+      "model": "aifs",
+      "location": "KDEN",
+      "pressure_profiles_exact": true,
+      "milliseconds": 52.25546611472964
+    },
+    {
+      "model": "aifs",
+      "location": "Houston",
+      "pressure_profiles_exact": true,
+      "milliseconds": 43.557201977819204
+    },
+    {
+      "model": "rrfs",
+      "location": "KCDW",
+      "pressure_profiles_exact": true,
+      "milliseconds": 3136.626266874373
+    },
+    {
+      "model": "rrfs",
+      "location": "KSEA",
+      "pressure_profiles_exact": true,
+      "milliseconds": 127.69965501502156
+    },
+    {
+      "model": "rrfs",
+      "location": "KDEN",
+      "pressure_profiles_exact": true,
+      "milliseconds": 134.4428479205817
+    },
+    {
+      "model": "rrfs",
+      "location": "Houston",
+      "pressure_profiles_exact": true,
+      "milliseconds": 116.05167714878917
+    }
+  ]
+}

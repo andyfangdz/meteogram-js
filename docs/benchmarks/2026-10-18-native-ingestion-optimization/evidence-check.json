@@ -1,0 +1,16 @@
+{
+  "source": {
+    "leads": 221,
+    "chunks": 35882,
+    "encoded_map_bytes": 24926926608,
+    "staged_value_bytes": 61141736264,
+    "all_finite": true
+  },
+  "complete_profiles_exact": 300,
+  "logical_rows": 84579313,
+  "protected_tables_preserved": true,
+  "profile_hashes_unchanged": true,
+  "observed_http_requests": 2625,
+  "http_errors": 0,
+  "observation_complete": true
+}

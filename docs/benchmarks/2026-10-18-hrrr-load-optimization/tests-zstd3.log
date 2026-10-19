@@ -1,0 +1,35 @@
+   Compiling meteogram-native v0.1.0 (/home/andy/.local/share/meteogram-benchmark/repo/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.88s
+     Running unittests src/main.rs (/home/andy/.cache/meteogram-native-target/debug/deps/meteogram_native-dd176668d42e4c5a)
+
+running 28 tests
+test tests::catalog_lock_drains_readers ... ok
+test tests::cache_pruning_keeps_uncheckpointed_maps_and_is_resumable ... ok
+test tests::coordinate_resolver_rejects_just_outside_conus ... ok
+test tests::existing_float_pressure_metadata_is_accepted ... ok
+test tests::full_source_schema_has_no_silent_drift ... ok
+test tests::freshness_rejects_future_stale_and_short_horizon ... ok
+test tests::malformed_npy_is_an_error ... ok
+test tests::cancellation_drains_source_before_unlock ... ok
+test tests::numpy_cells_roundtrip_without_python ... ok
+test stage::tests::cells_native_and_legacy_match_and_check_truncation ... ok
+test stage::tests::bounded_stage_preserves_every_bit_and_checks_corruption ... ok
+test tests::preflight_checks_late_missing_chunks_and_propagates_errors ... ok
+test tests::public_s3_never_requests_host_credentials ... ok
+test tests::legacy_null_storage_marker_remains_publishable ... ok
+test tests::garbage_collection_respects_ownership_and_live_references ... ok
+test tests::parallel_load_failure_drains_insert_workers_before_returning ... ok
+test tests::simd_rejects_nonfinite_in_all_tail_positions ... ok
+test tests::spherical_lambert_roundtrip_matches_known_origin ... ok
+test tests::unknown_catalog_version_is_rejected ... ok
+test tests::unsafe_identifiers_and_revisions_are_rejected ... ok
+test tests::zarr_temperature_decode_uses_float64_before_float32 ... ok
+test tests::old_failure_evidence_expires_but_published_revisions_remain ... ok
+test tests::publication_requires_validation_and_advancing_identity ... ok
+test tests::metadata_mutation_never_publishes ... ok
+test tests::legacy_validation_covers_sparse_ranges_and_balanced_duplicates ... ok
+test tests::simd_rejects_nonfinite_across_cell_tiles ... ok
+test tests::simd_preserves_every_float_bit_including_tails ... ok
+test tests::database_native_roundtrip_and_corruption_gate ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s

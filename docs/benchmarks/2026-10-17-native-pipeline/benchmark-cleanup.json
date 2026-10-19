@@ -1,0 +1,17 @@
+{
+  "time": 1792287693.5976436,
+  "benchmark_root": "/home/andy/.local/share/meteogram-benchmark/runs/20261017T231753Z",
+  "array_files": 442,
+  "array_bytes": 61141792840,
+  "cache_files": 36434,
+  "cache_bytes": 24860644855,
+  "free_before": 284107481088,
+  "preserved": [
+    "database tables",
+    "independent retained service snapshots",
+    "cells.npz",
+    "metadata and benchmark evidence"
+  ],
+  "free_after": 370192805888,
+  "completed": true
+}

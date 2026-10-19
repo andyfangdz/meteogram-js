@@ -1,0 +1,90 @@
+diff --git a/native/src/store.rs b/native/src/store.rs
+index 7cb6506..6388132 100644
+--- a/native/src/store.rs
++++ b/native/src/store.rs
+@@ -30,6 +30,23 @@ impl Array {
+     fn ptr(&self, start: usize) -> *const f32 {
+         unsafe { self.map.as_ptr().add(self.offset + start * 4) as *const f32 }
+     }
++    fn prefetch(&self, start: usize, values: usize) -> bool {
++        #[cfg(target_os = "linux")]
++        {
++            self.map
++                .advise_range(
++                    memmap2::Advice::WillNeed,
++                    self.offset + start * 4,
++                    values * 4,
++                )
++                .is_ok()
++        }
++        #[cfg(not(target_os = "linux"))]
++        {
++            let _ = (start, values);
++            true
++        }
++    }
+     fn value(&self, i: usize) -> f32 {
+         f32::from_le_bytes(
+             self.map[self.offset + i * 4..self.offset + (i + 1) * 4]
+@@ -120,11 +137,30 @@ pub fn load(root: &Path, path: &Path, table: &str) -> Result<Value> {
+     let profiles = Arc::new(profiles);
+     let surfaces = Arc::new(surfaces);
+     let (tx, rx) = mpsc::sync_channel(1);
+-    let producer = std::thread::spawn(move || -> Result<f64> {
++    let producer = std::thread::spawn(move || -> Result<(f64, usize)> {
+         let mut seconds = 0.;
++        let prefetch = |start: usize| -> usize {
++            let c = batch.min(nc - start);
++            profiles
++                .iter()
++                .map(|a| usize::from(!a.prefetch(start * nl * nf, c * nl * nf)))
++                .sum::<usize>()
++                + surfaces
++                    .iter()
++                    .map(|a| usize::from(!a.prefetch(start * 2, c * 2)))
++                    .sum::<usize>()
++        };
++        let t = Instant::now();
++        let mut advice_failures = prefetch(0);
++        seconds += t.elapsed().as_secs_f64();
+         for start in (0..nc).step_by(batch) {
+             let c = batch.min(nc - start);
+             let time = Instant::now();
++            // Bound asynchronous disk read-ahead to the following input batch.
++            // Its I/O can overlap this batch's packing and database insertion.
++            if start + c < nc {
++                advice_failures += prefetch(start + c);
++            }
+             let pp: Vec<_> = profiles.iter().map(|a| a.ptr(start * nl * nf)).collect();
+             let gp: Vec<_> = surfaces.iter().map(|a| a.ptr(start * 2)).collect();
+             let mut p = vec![0f32; c * nl * nf * nt];
+@@ -136,10 +172,10 @@ pub fn load(root: &Path, path: &Path, table: &str) -> Result<Value> {
+             anyhow::ensure!(bad == 0, "Non-finite staging");
+             seconds += time.elapsed().as_secs_f64();
+             if tx.send((start, c, p, g)).is_err() {
+-                return Ok(seconds);
++                return Ok((seconds, advice_failures));
+             }
+         }
+-        Ok(seconds)
++        Ok((seconds, advice_failures))
+     });
+     let mut insert_seconds = 0.;
+     let mut encode_seconds = 0.;
+@@ -181,14 +217,14 @@ pub fn load(root: &Path, path: &Path, table: &str) -> Result<Value> {
+         Ok(())
+     })();
+     drop(rx);
+-    let pack_seconds = producer
++    let (pack_seconds, prefetch_advice_failures) = producer
+         .join()
+         .map_err(|_| anyhow::anyhow!("Packing thread panicked"))??;
+     result?;
+     let total_insert_seconds = insert_start.elapsed().as_secs_f64();
+     let t = Instant::now();
+     let evidence = validate(path, table, DATABASE, true)?;
+-    let times = json!({"pack_seconds":pack_seconds,"pack_wait_seconds":pack_wait,"encode_seconds":encode_seconds,"insert_seconds":insert_seconds,"total_insert_seconds":total_insert_seconds,"validation_seconds":t.elapsed().as_secs_f64(),"total_seconds":started.elapsed().as_secs_f64(),"storage_rows":nc,"logical_rows":nc*nt});
++    let times = json!({"pack_seconds":pack_seconds,"pack_wait_seconds":pack_wait,"encode_seconds":encode_seconds,"insert_seconds":insert_seconds,"total_insert_seconds":total_insert_seconds,"validation_seconds":t.elapsed().as_secs_f64(),"total_seconds":started.elapsed().as_secs_f64(),"storage_rows":nc,"logical_rows":nc*nt,"prefetch_advice_failures":prefetch_advice_failures,"input_prefetch":"next_batch_linux_willneed"});
+     atomic(path.join("load-timings.json"), &times)?;
+     Ok(evidence)
+ }

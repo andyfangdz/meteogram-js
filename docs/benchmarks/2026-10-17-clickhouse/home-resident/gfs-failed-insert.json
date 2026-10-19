@@ -1,0 +1,8 @@
+{
+  "model": "gfs",
+  "batch_cells": 4096,
+  "lead_count": 141,
+  "phase_elapsed_seconds": 2.7258596420288086,
+  "error": "clickhouse_connect.driver.exceptions.DatabaseError: Received ClickHouse exception, code: 241, server response: Code: 241. DB::Exception: Query memory limit exceeded: would use 2.05 GiB (attempt to allocate chunk of 128.00 MiB), maximum: 2.00 GiB: While executing ArrowIPCBlockInputFormat. (MEMORY_LIMIT_EXCEEDED) (version 26.9.20.23 (official build)) (for url http://127.0.0.1:18123)",
+  "resolution": "Rebuild this model table from unchanged staging with 1024-cell batches; no source re-download. Verified HRRR table retained."
+}

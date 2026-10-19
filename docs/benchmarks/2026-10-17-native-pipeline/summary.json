@@ -1,0 +1,111 @@
+{
+  "recorded_at": 1792287893.0397103,
+  "sources": {
+    "hrrr": {
+      "init_time": "2026-10-17T18:00:00.000000000",
+      "snapshot_id": "G2DVQ244H9B0DTPYSY80",
+      "cells": 1638757,
+      "leads": 49,
+      "levels": 30,
+      "source_bytes": 6581884530,
+      "fetch_decode_stage_seconds": 483.5046869236976,
+      "map_retries": 0,
+      "all_source_values_finite": true
+    },
+    "gfs": {
+      "init_time": "2026-10-17T18:00:00.000000000",
+      "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+      "cells": 24885,
+      "leads": 141,
+      "levels": 30,
+      "source_bytes": 17531170214,
+      "fetch_decode_stage_seconds": 579.7609836070333,
+      "map_retries": 0,
+      "all_source_values_finite": true
+    },
+    "aifs": {
+      "init_time": "2026-10-17T18:00:00.000000000",
+      "snapshot_id": "KGX0VQA3TPWZRWK9Q7G0",
+      "cells": 24885,
+      "leads": 31,
+      "levels": 8,
+      "source_bytes": 850290876,
+      "fetch_decode_stage_seconds": 30.721472145756707,
+      "map_retries": 0,
+      "all_source_values_finite": true
+    }
+  },
+  "active_tables": [
+    {
+      "database": "meteogram_bench",
+      "table": "aifs_256_zstd",
+      "rows": 771435,
+      "logical_bytes": 101167340,
+      "parts": 2
+    },
+    {
+      "database": "meteogram_bench",
+      "table": "gfs_256_zstd",
+      "rows": 3508785,
+      "logical_bytes": 1747092552,
+      "parts": 5
+    },
+    {
+      "database": "meteogram_bench",
+      "table": "hrrr_256_zstd",
+      "rows": 80299093,
+      "logical_bytes": 33597227056,
+      "parts": 5
+    },
+    {
+      "database": "meteogram_native",
+      "table": "aifs_20261018012917_143ac186",
+      "rows": 771435,
+      "logical_bytes": 101208049,
+      "parts": 2
+    },
+    {
+      "database": "meteogram_native",
+      "table": "aifs_20261018013225_0f88f7b8",
+      "rows": 771435,
+      "logical_bytes": 101167340,
+      "parts": 2
+    },
+    {
+      "database": "meteogram_native",
+      "table": "gfs_20261018011859_19e2797e",
+      "rows": 3508785,
+      "logical_bytes": 1749176465,
+      "parts": 5
+    },
+    {
+      "database": "meteogram_native",
+      "table": "gfs_20261018013223_864282c8",
+      "rows": 3508785,
+      "logical_bytes": 1747092552,
+      "parts": 5
+    },
+    {
+      "database": "meteogram_native",
+      "table": "hrrr_20261018005542_c13c1f40",
+      "rows": 80299093,
+      "logical_bytes": 33445634350,
+      "parts": 7
+    },
+    {
+      "database": "meteogram_native",
+      "table": "hrrr_20261018013136_f14ebb9d",
+      "rows": 80299093,
+      "logical_bytes": 33597227056,
+      "parts": 5
+    }
+  ],
+  "max_logged_native_api_query_ms": 403,
+  "minimum_sampled_free_bytes": 188174626816,
+  "max_sampled_inactive_native_part_bytes": 24901335831,
+  "free_bytes_after_cleanup": 370222936064,
+  "next_update_utc": "2026-10-18T07:29:57.873124+00:00",
+  "service_endpoint": "http://127.0.0.1:18080",
+  "service_root": "/home/andy/.local/share/meteogram-native",
+  "startup": "Direct supervisor running; user-unit startup graph verified offline; live user manager inaccessible; reboot not tested."
+}

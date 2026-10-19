@@ -1,0 +1,1724 @@
+{
+  "time": 1792350512.8871589,
+  "success": true,
+  "dropped_own_temporary_tables": [
+    "rrfs_initial_20261018_12",
+    "rrfs_20261018190152_4e17ff13"
+  ],
+  "protected_existing_tables_preserved": 12,
+  "retained_published_rrfs": {
+    "revision": "rrfs_20261018190636_ef01686e",
+    "database": "meteogram_native",
+    "table": "rrfs_20261018190636_ef01686e",
+    "owned": true
+  },
+  "removed_staging_files_or_directories": 425,
+  "removed_staging_logical_bytes": 22139672559,
+  "removed_staging": [
+    {
+      "name": "lead-075.stage.zst",
+      "bytes": 255355165
+    },
+    {
+      "name": "surface-054.stage.zst",
+      "bytes": 3494470
+    },
+    {
+      "name": "surface-029.stage.zst",
+      "bytes": 3493530
+    },
+    {
+      "name": "surface-084.stage.zst",
+      "bytes": 2991078
+    },
+    {
+      "name": "surface-041.stage.zst",
+      "bytes": 3516866
+    },
+    {
+      "name": "surface-022.stage.zst",
+      "bytes": 3507829
+    },
+    {
+      "name": "surface-059.stage.zst",
+      "bytes": 3561888
+    },
+    {
+      "name": "lead-057.stage.zst",
+      "bytes": 250383476
+    },
+    {
+      "name": "surface-074.stage.zst",
+      "bytes": 3496390
+    },
+    {
+      "name": "surface-051.stage.zst",
+      "bytes": 3480830
+    },
+    {
+      "name": "lead-000.stage.zst",
+      "bytes": 249443463
+    },
+    {
+      "name": "surface-082.stage.zst",
+      "bytes": 3030126
+    },
+    {
+      "name": "lead-049.stage.zst",
+      "bytes": 249692776
+    },
+    {
+      "name": "surface-010.stage.zst",
+      "bytes": 3544899
+    },
+    {
+      "name": "surface-011.stage.zst",
+      "bytes": 3559696
+    },
+    {
+      "name": "surface-031.stage.zst",
+      "bytes": 3507606
+    },
+    {
+      "name": "lead-023.stage.zst",
+      "bytes": 251344943
+    },
+    {
+      "name": "surface-000.stage.zst",
+      "bytes": 3534194
+    },
+    {
+      "name": "lead-037.stage.zst",
+      "bytes": 252754269
+    },
+    {
+      "name": "lead-046.stage.zst",
+      "bytes": 252025316
+    },
+    {
+      "name": "surface-004.stage.zst",
+      "bytes": 3521684
+    },
+    {
+      "name": "surface-044.stage.zst",
+      "bytes": 3525876
+    },
+    {
+      "name": "lead-040.stage.zst",
+      "bytes": 252001722
+    },
+    {
+      "name": "lead-014.stage.zst",
+      "bytes": 249813549
+    },
+    {
+      "name": "surface-070.stage.zst",
+      "bytes": 3512508
+    },
+    {
+      "name": "lead-005.stage.zst",
+      "bytes": 244971681
+    },
+    {
+      "name": "surface-080.stage.zst",
+      "bytes": 2999319
+    },
+    {
+      "name": "lead-066.stage.zst",
+      "bytes": 256059183
+    },
+    {
+      "name": "lead-009.stage.zst",
+      "bytes": 247169786
+    },
+    {
+      "name": "lead-050.stage.zst",
+      "bytes": 248465709
+    },
+    {
+      "name": "surface-062.stage.zst",
+      "bytes": 3493691
+    },
+    {
+      "name": "lead-013.stage.zst",
+      "bytes": 248927885
+    },
+    {
+      "name": "surface-076.stage.zst",
+      "bytes": 3493813
+    },
+    {
+      "name": "surface-046.stage.zst",
+      "bytes": 3532596
+    },
+    {
+      "name": "lead-008.stage.zst",
+      "bytes": 246897741
+    },
+    {
+      "name": "lead-029.stage.zst",
+      "bytes": 250601882
+    },
+    {
+      "name": "surface-040.stage.zst",
+      "bytes": 3513706
+    },
+    {
+      "name": "lead-039.stage.zst",
+      "bytes": 252591831
+    },
+    {
+      "name": "surface-077.stage.zst",
+      "bytes": 3508370
+    },
+    {
+      "name": "surface-023.stage.zst",
+      "bytes": 3510554
+    },
+    {
+      "name": "lead-031.stage.zst",
+      "bytes": 249640390
+    },
+    {
+      "name": "lead-060.stage.zst",
+      "bytes": 253220951
+    },
+    {
+      "name": "surface-067.stage.zst",
+      "bytes": 3494088
+    },
+    {
+      "name": "lead-041.stage.zst",
+      "bytes": 251930399
+    },
+    {
+      "name": "lead-022.stage.zst",
+      "bytes": 251312220
+    },
+    {
+      "name": "surface-009.stage.zst",
+      "bytes": 3529642
+    },
+    {
+      "name": "surface-002.stage.zst",
+      "bytes": 3517202
+    },
+    {
+      "name": "lead-016.stage.zst",
+      "bytes": 251705163
+    },
+    {
+      "name": "lead-067.stage.zst",
+      "bytes": 256732786
+    },
+    {
+      "name": "lead-052.stage.zst",
+      "bytes": 246167379
+    },
+    {
+      "name": "surface-064.stage.zst",
+      "bytes": 3490923
+    },
+    {
+      "name": "lead-036.stage.zst",
+      "bytes": 252809678
+    },
+    {
+      "name": "surface-001.stage.zst",
+      "bytes": 3523178
+    },
+    {
+      "name": "lead-074.stage.zst",
+      "bytes": 255887488
+    },
+    {
+      "name": "surface-018.stage.zst",
+      "bytes": 3499667
+    },
+    {
+      "name": "surface-043.stage.zst",
+      "bytes": 3523805
+    },
+    {
+      "name": "lead-056.stage.zst",
+      "bytes": 248228776
+    },
+    {
+      "name": "lead-062.stage.zst",
+      "bytes": 254699529
+    },
+    {
+      "name": "surface-061.stage.zst",
+      "bytes": 3504244
+    },
+    {
+      "name": "surface-030.stage.zst",
+      "bytes": 3499879
+    },
+    {
+      "name": "surface-014.stage.zst",
+      "bytes": 3502645
+    },
+    {
+      "name": "lead-083.stage.zst",
+      "bytes": 259261838
+    },
+    {
+      "name": "surface-081.stage.zst",
+      "bytes": 3006995
+    },
+    {
+      "name": "lead-065.stage.zst",
+      "bytes": 254540110
+    },
+    {
+      "name": "surface-013.stage.zst",
+      "bytes": 3514069
+    },
+    {
+      "name": "lead-084.stage.zst",
+      "bytes": 259546606
+    },
+    {
+      "name": "lead-058.stage.zst",
+      "bytes": 250549918
+    },
+    {
+      "name": "surface-078.stage.zst",
+      "bytes": 3519192
+    },
+    {
+      "name": "lead-055.stage.zst",
+      "bytes": 247224930
+    },
+    {
+      "name": "surface-079.stage.zst",
+      "bytes": 3531440
+    },
+    {
+      "name": "lead-054.stage.zst",
+      "bytes": 246190849
+    },
+    {
+      "name": "lead-002.stage.zst",
+      "bytes": 247475230
+    },
+    {
+      "name": "lead-082.stage.zst",
+      "bytes": 259510886
+    },
+    {
+      "name": "surface-045.stage.zst",
+      "bytes": 3529658
+    },
+    {
+      "name": "surface-026.stage.zst",
+      "bytes": 3487833
+    },
+    {
+      "name": "lead-072.stage.zst",
+      "bytes": 256974030
+    },
+    {
+      "name": "surface-016.stage.zst",
+      "bytes": 3503256
+    },
+    {
+      "name": "lead-078.stage.zst",
+      "bytes": 256961041
+    },
+    {
+      "name": "surface-037.stage.zst",
+      "bytes": 3508744
+    },
+    {
+      "name": "surface-038.stage.zst",
+      "bytes": 3506852
+    },
+    {
+      "name": "lead-042.stage.zst",
+      "bytes": 252849848
+    },
+    {
+      "name": "surface-006.stage.zst",
+      "bytes": 3515022
+    },
+    {
+      "name": "surface-025.stage.zst",
+      "bytes": 3502657
+    },
+    {
+      "name": "lead-018.stage.zst",
+      "bytes": 250831558
+    },
+    {
+      "name": "lead-047.stage.zst",
+      "bytes": 251463700
+    },
+    {
+      "name": "surface-008.stage.zst",
+      "bytes": 3524014
+    },
+    {
+      "name": "lead-063.stage.zst",
+      "bytes": 253501480
+    },
+    {
+      "name": "surface-065.stage.zst",
+      "bytes": 3490388
+    },
+    {
+      "name": "lead-038.stage.zst",
+      "bytes": 252356248
+    },
+    {
+      "name": "lead-006.stage.zst",
+      "bytes": 244557242
+    },
+    {
+      "name": "lead-025.stage.zst",
+      "bytes": 251692640
+    },
+    {
+      "name": "surface-007.stage.zst",
+      "bytes": 3519621
+    },
+    {
+      "name": "surface-028.stage.zst",
+      "bytes": 3487236
+    },
+    {
+      "name": "lead-015.stage.zst",
+      "bytes": 250633595
+    },
+    {
+      "name": "lead-007.stage.zst",
+      "bytes": 244966994
+    },
+    {
+      "name": "surface-047.stage.zst",
+      "bytes": 3535810
+    },
+    {
+      "name": "surface-057.stage.zst",
+      "bytes": 3526294
+    },
+    {
+      "name": "surface-021.stage.zst",
+      "bytes": 3502816
+    },
+    {
+      "name": "surface-063.stage.zst",
+      "bytes": 3490955
+    },
+    {
+      "name": "surface-024.stage.zst",
+      "bytes": 3513540
+    },
+    {
+      "name": "surface-058.stage.zst",
+      "bytes": 3558108
+    },
+    {
+      "name": "surface-071.stage.zst",
+      "bytes": 3518534
+    },
+    {
+      "name": "lead-064.stage.zst",
+      "bytes": 254435729
+    },
+    {
+      "name": "lead-068.stage.zst",
+      "bytes": 257163766
+    },
+    {
+      "name": "lead-020.stage.zst",
+      "bytes": 252063485
+    },
+    {
+      "name": "surface-012.stage.zst",
+      "bytes": 3541177
+    },
+    {
+      "name": "surface-052.stage.zst",
+      "bytes": 3484311
+    },
+    {
+      "name": "surface-060.stage.zst",
+      "bytes": 3535468
+    },
+    {
+      "name": "surface-050.stage.zst",
+      "bytes": 3501225
+    },
+    {
+      "name": "surface-053.stage.zst",
+      "bytes": 3486197
+    },
+    {
+      "name": "surface-066.stage.zst",
+      "bytes": 3491928
+    },
+    {
+      "name": "surface-039.stage.zst",
+      "bytes": 3510214
+    },
+    {
+      "name": "lead-080.stage.zst",
+      "bytes": 258292940
+    },
+    {
+      "name": "surface-068.stage.zst",
+      "bytes": 3498921
+    },
+    {
+      "name": "surface-035.stage.zst",
+      "bytes": 3550928
+    },
+    {
+      "name": "surface-005.stage.zst",
+      "bytes": 3515098
+    },
+    {
+      "name": "lead-053.stage.zst",
+      "bytes": 247210353
+    },
+    {
+      "name": "lead-034.stage.zst",
+      "bytes": 251670563
+    },
+    {
+      "name": "lead-076.stage.zst",
+      "bytes": 256687702
+    },
+    {
+      "name": "lead-001.stage.zst",
+      "bytes": 248723250
+    },
+    {
+      "name": "surface-027.stage.zst",
+      "bytes": 3477328
+    },
+    {
+      "name": "lead-043.stage.zst",
+      "bytes": 252622728
+    },
+    {
+      "name": "lead-010.stage.zst",
+      "bytes": 248357864
+    },
+    {
+      "name": "surface-073.stage.zst",
+      "bytes": 3516738
+    },
+    {
+      "name": "lead-073.stage.zst",
+      "bytes": 257042166
+    },
+    {
+      "name": "lead-032.stage.zst",
+      "bytes": 249695497
+    },
+    {
+      "name": "lead-021.stage.zst",
+      "bytes": 252272269
+    },
+    {
+      "name": "lead-026.stage.zst",
+      "bytes": 251697405
+    },
+    {
+      "name": "lead-028.stage.zst",
+      "bytes": 250520421
+    },
+    {
+      "name": "lead-051.stage.zst",
+      "bytes": 247685011
+    },
+    {
+      "name": "surface-034.stage.zst",
+      "bytes": 3544686
+    },
+    {
+      "name": "lead-004.stage.zst",
+      "bytes": 245761741
+    },
+    {
+      "name": "lead-081.stage.zst",
+      "bytes": 257900332
+    },
+    {
+      "name": "surface-083.stage.zst",
+      "bytes": 2331923
+    },
+    {
+      "name": "lead-035.stage.zst",
+      "bytes": 252787108
+    },
+    {
+      "name": "surface-032.stage.zst",
+      "bytes": 3514080
+    },
+    {
+      "name": "lead-019.stage.zst",
+      "bytes": 251690182
+    },
+    {
+      "name": "lead-071.stage.zst",
+      "bytes": 256381222
+    },
+    {
+      "name": "surface-075.stage.zst",
+      "bytes": 3482451
+    },
+    {
+      "name": "lead-012.stage.zst",
+      "bytes": 250290695
+    },
+    {
+      "name": "lead-011.stage.zst",
+      "bytes": 248905989
+    },
+    {
+      "name": "surface-019.stage.zst",
+      "bytes": 3499540
+    },
+    {
+      "name": "surface-036.stage.zst",
+      "bytes": 3531365
+    },
+    {
+      "name": "surface-056.stage.zst",
+      "bytes": 3512790
+    },
+    {
+      "name": "surface-017.stage.zst",
+      "bytes": 3501546
+    },
+    {
+      "name": "lead-003.stage.zst",
+      "bytes": 246896423
+    },
+    {
+      "name": "lead-030.stage.zst",
+      "bytes": 249030747
+    },
+    {
+      "name": "lead-017.stage.zst",
+      "bytes": 250294812
+    },
+    {
+      "name": "surface-048.stage.zst",
+      "bytes": 3535653
+    },
+    {
+      "name": "surface-033.stage.zst",
+      "bytes": 3525779
+    },
+    {
+      "name": "surface-020.stage.zst",
+      "bytes": 3501672
+    },
+    {
+      "name": "surface-042.stage.zst",
+      "bytes": 3521109
+    },
+    {
+      "name": "surface-069.stage.zst",
+      "bytes": 3505540
+    },
+    {
+      "name": "surface-049.stage.zst",
+      "bytes": 3526525
+    },
+    {
+      "name": "lead-069.stage.zst",
+      "bytes": 256522186
+    },
+    {
+      "name": "lead-070.stage.zst",
+      "bytes": 256164136
+    },
+    {
+      "name": "lead-044.stage.zst",
+      "bytes": 252124747
+    },
+    {
+      "name": "surface-003.stage.zst",
+      "bytes": 3521044
+    },
+    {
+      "name": "lead-061.stage.zst",
+      "bytes": 253219133
+    },
+    {
+      "name": "lead-024.stage.zst",
+      "bytes": 251617943
+    },
+    {
+      "name": "lead-048.stage.zst",
+      "bytes": 250265538
+    },
+    {
+      "name": "lead-059.stage.zst",
+      "bytes": 251890569
+    },
+    {
+      "name": "surface-055.stage.zst",
+      "bytes": 3502937
+    },
+    {
+      "name": "lead-027.stage.zst",
+      "bytes": 250898759
+    },
+    {
+      "name": "lead-033.stage.zst",
+      "bytes": 250422460
+    },
+    {
+      "name": "lead-077.stage.zst",
+      "bytes": 256038589
+    },
+    {
+      "name": "surface-072.stage.zst",
+      "bytes": 3522761
+    },
+    {
+      "name": "lead-079.stage.zst",
+      "bytes": 257113064
+    },
+    {
+      "name": "lead-045.stage.zst",
+      "bytes": 252244732
+    },
+    {
+      "name": "surface-015.stage.zst",
+      "bytes": 3503334
+    },
+    {
+      "name": "surface-044.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "surface-056.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-030.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-001.stage.json",
+      "bytes": 34467
+    },
+    {
+      "name": "lead-059.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-072.stage.json",
+      "bytes": 34473
+    },
+    {
+      "name": "surface-075.stage.json",
+      "bytes": 32109
+    },
+    {
+      "name": "lead-024.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "surface-059.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-053.stage.json",
+      "bytes": 34466
+    },
+    {
+      "name": "lead-057.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "surface-049.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "surface-000.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "lead-003.stage.json",
+      "bytes": 34465
+    },
+    {
+      "name": "lead-081.stage.json",
+      "bytes": 34474
+    },
+    {
+      "name": "lead-070.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "surface-015.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-007.stage.json",
+      "bytes": 34463
+    },
+    {
+      "name": "surface-002.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-012.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-025.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-039.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-052.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "lead-004.stage.json",
+      "bytes": 34464
+    },
+    {
+      "name": "surface-045.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "lead-069.stage.json",
+      "bytes": 34472
+    },
+    {
+      "name": "lead-077.stage.json",
+      "bytes": 34472
+    },
+    {
+      "name": "surface-028.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-048.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "surface-029.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-071.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-022.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "surface-017.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-048.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "lead-005.stage.json",
+      "bytes": 34464
+    },
+    {
+      "name": "surface-034.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "surface-055.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-053.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "surface-009.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-038.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-047.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "surface-042.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "lead-023.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "surface-063.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "lead-038.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "lead-030.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-082.stage.json",
+      "bytes": 34475
+    },
+    {
+      "name": "lead-039.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "surface-066.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-082.stage.json",
+      "bytes": 32091
+    },
+    {
+      "name": "lead-010.stage.json",
+      "bytes": 34465
+    },
+    {
+      "name": "lead-000.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "lead-062.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "lead-071.stage.json",
+      "bytes": 34472
+    },
+    {
+      "name": "lead-044.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "surface-069.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-073.stage.json",
+      "bytes": 34473
+    },
+    {
+      "name": "surface-016.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-080.stage.json",
+      "bytes": 32091
+    },
+    {
+      "name": "surface-061.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "lead-084.stage.json",
+      "bytes": 34475
+    },
+    {
+      "name": "lead-056.stage.json",
+      "bytes": 34466
+    },
+    {
+      "name": "lead-037.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "lead-080.stage.json",
+      "bytes": 34474
+    },
+    {
+      "name": "surface-077.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "surface-036.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-062.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "lead-078.stage.json",
+      "bytes": 34473
+    },
+    {
+      "name": "surface-079.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-035.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-034.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "surface-019.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-028.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-068.stage.json",
+      "bytes": 34472
+    },
+    {
+      "name": "surface-046.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "lead-046.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "lead-031.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-055.stage.json",
+      "bytes": 34466
+    },
+    {
+      "name": "surface-043.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "lead-066.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "lead-019.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "surface-078.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "surface-005.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-027.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "surface-084.stage.json",
+      "bytes": 32089
+    },
+    {
+      "name": "lead-008.stage.json",
+      "bytes": 34464
+    },
+    {
+      "name": "surface-008.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-067.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-050.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-020.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-011.stage.json",
+      "bytes": 34465
+    },
+    {
+      "name": "lead-032.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-014.stage.json",
+      "bytes": 34466
+    },
+    {
+      "name": "surface-031.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-076.stage.json",
+      "bytes": 32109
+    },
+    {
+      "name": "lead-029.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "surface-033.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "surface-065.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-054.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "surface-060.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-040.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "lead-052.stage.json",
+      "bytes": 34466
+    },
+    {
+      "name": "lead-002.stage.json",
+      "bytes": 34466
+    },
+    {
+      "name": "lead-058.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "surface-070.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-027.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-026.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "lead-060.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "surface-022.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "lead-016.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "surface-003.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-037.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-036.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "lead-009.stage.json",
+      "bytes": 34464
+    },
+    {
+      "name": "lead-051.stage.json",
+      "bytes": 34467
+    },
+    {
+      "name": "lead-025.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "surface-074.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "lead-074.stage.json",
+      "bytes": 34473
+    },
+    {
+      "name": "lead-015.stage.json",
+      "bytes": 34467
+    },
+    {
+      "name": "lead-006.stage.json",
+      "bytes": 34463
+    },
+    {
+      "name": "surface-083.stage.json",
+      "bytes": 32049
+    },
+    {
+      "name": "lead-045.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "lead-018.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "surface-011.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "lead-079.stage.json",
+      "bytes": 34473
+    },
+    {
+      "name": "surface-010.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "surface-024.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "lead-017.stage.json",
+      "bytes": 34467
+    },
+    {
+      "name": "surface-018.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-007.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-051.stage.json",
+      "bytes": 32110
+    },
+    {
+      "name": "lead-033.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-013.stage.json",
+      "bytes": 34465
+    },
+    {
+      "name": "lead-061.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-042.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "lead-054.stage.json",
+      "bytes": 34466
+    },
+    {
+      "name": "lead-064.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "lead-040.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "surface-020.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-058.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-012.stage.json",
+      "bytes": 34467
+    },
+    {
+      "name": "surface-068.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-063.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "lead-065.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "surface-072.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-057.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-035.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "surface-032.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-001.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "surface-073.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "surface-047.stage.json",
+      "bytes": 32114
+    },
+    {
+      "name": "surface-041.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "lead-076.stage.json",
+      "bytes": 34473
+    },
+    {
+      "name": "lead-083.stage.json",
+      "bytes": 34475
+    },
+    {
+      "name": "lead-075.stage.json",
+      "bytes": 34472
+    },
+    {
+      "name": "surface-013.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-021.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-043.stage.json",
+      "bytes": 34471
+    },
+    {
+      "name": "lead-050.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "surface-023.stage.json",
+      "bytes": 32113
+    },
+    {
+      "name": "surface-004.stage.json",
+      "bytes": 32112
+    },
+    {
+      "name": "lead-041.stage.json",
+      "bytes": 34470
+    },
+    {
+      "name": "surface-064.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-049.stage.json",
+      "bytes": 34468
+    },
+    {
+      "name": "surface-026.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-021.stage.json",
+      "bytes": 34469
+    },
+    {
+      "name": "surface-006.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "surface-014.stage.json",
+      "bytes": 32111
+    },
+    {
+      "name": "lead-067.stage.json",
+      "bytes": 34472
+    },
+    {
+      "name": "surface-081.stage.json",
+      "bytes": 32091
+    },
+    {
+      "name": "lead-076.palette",
+      "bytes": 5453075
+    },
+    {
+      "name": "lead-039.palette",
+      "bytes": 5283208
+    },
+    {
+      "name": "lead-045.palette",
+      "bytes": 5245480
+    },
+    {
+      "name": "lead-058.palette",
+      "bytes": 5149362
+    },
+    {
+      "name": "lead-046.palette",
+      "bytes": 5146017
+    },
+    {
+      "name": "lead-009.palette",
+      "bytes": 4277819
+    },
+    {
+      "name": "lead-040.palette",
+      "bytes": 5187823
+    },
+    {
+      "name": "lead-049.palette",
+      "bytes": 4986549
+    },
+    {
+      "name": "lead-002.palette",
+      "bytes": 3506452
+    },
+    {
+      "name": "lead-048.palette",
+      "bytes": 5020742
+    },
+    {
+      "name": "lead-015.palette",
+      "bytes": 5086949
+    },
+    {
+      "name": "lead-081.palette",
+      "bytes": 5235996
+    },
+    {
+      "name": "lead-003.palette",
+      "bytes": 3554166
+    },
+    {
+      "name": "lead-007.palette",
+      "bytes": 3848629
+    },
+    {
+      "name": "lead-038.palette",
+      "bytes": 5323844
+    },
+    {
+      "name": "lead-065.palette",
+      "bytes": 5320461
+    },
+    {
+      "name": "lead-020.palette",
+      "bytes": 5386810
+    },
+    {
+      "name": "lead-037.palette",
+      "bytes": 5319703
+    },
+    {
+      "name": "lead-030.palette",
+      "bytes": 5284494
+    },
+    {
+      "name": "lead-029.palette",
+      "bytes": 5308866
+    },
+    {
+      "name": "lead-043.palette",
+      "bytes": 5381105
+    },
+    {
+      "name": "lead-051.palette",
+      "bytes": 4904202
+    },
+    {
+      "name": "lead-064.palette",
+      "bytes": 5288556
+    },
+    {
+      "name": "lead-014.palette",
+      "bytes": 5068330
+    },
+    {
+      "name": "lead-006.palette",
+      "bytes": 3588135
+    },
+    {
+      "name": "lead-073.palette",
+      "bytes": 5492017
+    },
+    {
+      "name": "lead-072.palette",
+      "bytes": 5551693
+    },
+    {
+      "name": "lead-000.palette",
+      "bytes": 3797630
+    },
+    {
+      "name": "lead-078.palette",
+      "bytes": 5414953
+    },
+    {
+      "name": "lead-060.palette",
+      "bytes": 5090088
+    },
+    {
+      "name": "lead-071.palette",
+      "bytes": 5504426
+    },
+    {
+      "name": "lead-053.palette",
+      "bytes": 4898132
+    },
+    {
+      "name": "lead-041.palette",
+      "bytes": 5191361
+    },
+    {
+      "name": "lead-010.palette",
+      "bytes": 4396876
+    },
+    {
+      "name": "lead-023.palette",
+      "bytes": 5394966
+    },
+    {
+      "name": "lead-082.palette",
+      "bytes": 5107450
+    },
+    {
+      "name": "lead-080.palette",
+      "bytes": 5253067
+    },
+    {
+      "name": "lead-011.palette",
+      "bytes": 4516541
+    },
+    {
+      "name": "lead-057.palette",
+      "bytes": 5133884
+    },
+    {
+      "name": "lead-056.palette",
+      "bytes": 5110345
+    },
+    {
+      "name": "lead-025.palette",
+      "bytes": 5465298
+    },
+    {
+      "name": "lead-077.palette",
+      "bytes": 5465573
+    },
+    {
+      "name": "lead-019.palette",
+      "bytes": 5405703
+    },
+    {
+      "name": "lead-069.palette",
+      "bytes": 5732524
+    },
+    {
+      "name": "lead-074.palette",
+      "bytes": 5465606
+    },
+    {
+      "name": "lead-026.palette",
+      "bytes": 5550585
+    },
+    {
+      "name": "lead-070.palette",
+      "bytes": 5835920
+    },
+    {
+      "name": "lead-061.palette",
+      "bytes": 4968298
+    },
+    {
+      "name": "lead-054.palette",
+      "bytes": 5026822
+    },
+    {
+      "name": "lead-031.palette",
+      "bytes": 5619901
+    },
+    {
+      "name": "lead-075.palette",
+      "bytes": 5550968
+    },
+    {
+      "name": "lead-052.palette",
+      "bytes": 4781840
+    },
+    {
+      "name": "lead-059.palette",
+      "bytes": 5063269
+    },
+    {
+      "name": "lead-027.palette",
+      "bytes": 5346941
+    },
+    {
+      "name": "lead-033.palette",
+      "bytes": 5393641
+    },
+    {
+      "name": "lead-066.palette",
+      "bytes": 5174157
+    },
+    {
+      "name": "lead-016.palette",
+      "bytes": 5446395
+    },
+    {
+      "name": "lead-018.palette",
+      "bytes": 5243564
+    },
+    {
+      "name": "lead-017.palette",
+      "bytes": 5435047
+    },
+    {
+      "name": "lead-001.palette",
+      "bytes": 3582864
+    },
+    {
+      "name": "lead-079.palette",
+      "bytes": 5406430
+    },
+    {
+      "name": "lead-047.palette",
+      "bytes": 5231722
+    },
+    {
+      "name": "lead-067.palette",
+      "bytes": 5608660
+    },
+    {
+      "name": "lead-044.palette",
+      "bytes": 5317993
+    },
+    {
+      "name": "lead-050.palette",
+      "bytes": 4810251
+    },
+    {
+      "name": "lead-084.palette",
+      "bytes": 5375908
+    },
+    {
+      "name": "lead-062.palette",
+      "bytes": 5229546
+    },
+    {
+      "name": "lead-013.palette",
+      "bytes": 4815085
+    },
+    {
+      "name": "lead-004.palette",
+      "bytes": 3596488
+    },
+    {
+      "name": "lead-008.palette",
+      "bytes": 3795665
+    },
+    {
+      "name": "lead-042.palette",
+      "bytes": 5471577
+    },
+    {
+      "name": "lead-068.palette",
+      "bytes": 5628308
+    },
+    {
+      "name": "lead-012.palette",
+      "bytes": 4833504
+    },
+    {
+      "name": "lead-032.palette",
+      "bytes": 5519277
+    },
+    {
+      "name": "lead-021.palette",
+      "bytes": 5319963
+    },
+    {
+      "name": "lead-022.palette",
+      "bytes": 5379034
+    },
+    {
+      "name": "lead-035.palette",
+      "bytes": 5441957
+    },
+    {
+      "name": "lead-055.palette",
+      "bytes": 5044096
+    },
+    {
+      "name": "lead-036.palette",
+      "bytes": 5481123
+    },
+    {
+      "name": "lead-083.palette",
+      "bytes": 5262559
+    },
+    {
+      "name": "lead-028.palette",
+      "bytes": 5365989
+    },
+    {
+      "name": "lead-005.palette",
+      "bytes": 3526286
+    },
+    {
+      "name": "lead-024.palette",
+      "bytes": 5430258
+    },
+    {
+      "name": "lead-034.palette",
+      "bytes": 5524302
+    },
+    {
+      "name": "lead-063.palette",
+      "bytes": 5102002
+    }
+  ],
+  "preview_removed": true,
+  "retained_codebook": "Hardlink to the published revision; exact compressed SHA-256 verified",
+  "free_bytes_before": 263687622656,
+  "free_bytes_after": 286633545728,
+  "scope": "Removes only RRFS task-owned temporary tables, failed clone revision, preview, weather staging and temporary palette checkpoints after published API comparisons; does not remove existing weather tables or the active RRFS codebook"
+}

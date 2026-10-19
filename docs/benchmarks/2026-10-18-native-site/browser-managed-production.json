@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "url": "https://meteogram.flyingclub.org/KCDW/rrfs",
+  "status": 200,
+  "provider": "dynamical",
+  "source": "Dynamical · RRFS · Run 2026-10-18 18:00 UTC · Partial (68/85 forecast hours) · Clouds estimated from humidity",
+  "cells": 1980,
+  "errors": []
+}

@@ -1,0 +1,180 @@
+{
+  "sample_start": 1792353337.803888,
+  "sample_end": 1792353519.3965216,
+  "samples": 181,
+  "health_checks": 37,
+  "errors": [],
+  "observed_max_server_rss_bytes": 1239867392,
+  "min_host_mem_available_bytes": 21608779776,
+  "start_current": {
+    "aifs": {
+      "init": "2026-10-18T12:00:00.000000000",
+      "leads": [
+        0,
+        6,
+        12,
+        18,
+        24,
+        30,
+        36,
+        42,
+        48,
+        54,
+        60
+      ],
+      "table": "aifs_run_37c63455572948ed9882e8133c069d59",
+      "revision": "aifs_20261018195523_553c0256"
+    },
+    "gfs": {
+      "init": "2026-10-18T12:00:00.000000000",
+      "leads": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7",
+      "revision": "gfs_20261018195536_2b650af4"
+    },
+    "hrrr": {
+      "init": "2026-10-18T19:00:00.000000000",
+      "leads": [
+        0,
+        1
+      ],
+      "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1",
+      "revision": "hrrr_20261018195441_f5a3a274"
+    },
+    "rrfs": {
+      "init": "2026-10-18T18:00:00.000000000",
+      "leads": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "table": "rrfs_run_bc0db782261546759f0edff7d583361c",
+      "revision": "rrfs_20261018195453_16fe4ee1"
+    }
+  },
+  "end_current": {
+    "aifs": {
+      "init": "2026-10-18T12:00:00.000000000",
+      "leads": [
+        0,
+        6,
+        12,
+        18,
+        24,
+        30,
+        36,
+        42,
+        48,
+        54,
+        60,
+        66,
+        72,
+        78,
+        84,
+        90,
+        96,
+        102
+      ],
+      "table": "aifs_run_37c63455572948ed9882e8133c069d59",
+      "revision": "aifs_20261018195830_47a6ac47"
+    },
+    "gfs": {
+      "init": "2026-10-18T12:00:00.000000000",
+      "leads": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7",
+      "revision": "gfs_20261018195808_2cc5616d"
+    },
+    "hrrr": {
+      "init": "2026-10-18T19:00:00.000000000",
+      "leads": [
+        0,
+        1,
+        2
+      ],
+      "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1",
+      "revision": "hrrr_20261018195641_5cdec2dd"
+    },
+    "rrfs": {
+      "init": "2026-10-18T18:00:00.000000000",
+      "leads": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "table": "rrfs_run_bc0db782261546759f0edff7d583361c",
+      "revision": "rrfs_20261018195806_9bb65532"
+    }
+  },
+  "completed_polls": [
+    {
+      "completed_leads": 10,
+      "failures": [],
+      "implementation": "rust",
+      "incremental": true,
+      "started": 1792353251.521835,
+      "time": 1792353306.2684999
+    },
+    {
+      "completed_leads": 7,
+      "failures": [],
+      "implementation": "rust",
+      "incremental": true,
+      "started": 1792353311.6901956,
+      "time": 1792353365.819202
+    },
+    {
+      "completed_leads": 10,
+      "failures": [],
+      "implementation": "rust",
+      "incremental": true,
+      "started": 1792353371.911356,
+      "time": 1792353436.8140051
+    },
+    {
+      "completed_leads": 7,
+      "failures": [],
+      "implementation": "rust",
+      "incremental": true,
+      "started": 1792353438.1930232,
+      "time": 1792353491.9052634
+    }
+  ],
+  "note": "One-second samples of asynchronous database metrics are observations, not a guaranteed instantaneous peak. Samples precede the final executable restart."
+}

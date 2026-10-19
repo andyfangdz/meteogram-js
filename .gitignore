@@ -20,6 +20,7 @@
 # misc
 .DS_Store
 *.pem
+__pycache__/
 
 # debug
 npm-debug.log*
@@ -38,3 +39,7 @@ next-env.d.ts
 find-an-approach.github.io
 .playwright-mcp
 .claude/
+
+# Native forecast service build artifacts and local state
+/native/target/
+/native/.local/

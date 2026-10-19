@@ -1,0 +1,40 @@
+{
+  "database": "meteogram_native",
+  "decoded_finite_proof": "every_palette_value_finite_and_every_stored_index_in_its_slot_bounds",
+  "finite_validation_mode": "each_inserted_cell_range",
+  "full_values_checked": true,
+  "init_time": "2026-10-18T06:00:00.000000000",
+  "logical_weather_values": 638598870,
+  "palette_values_checked": 61092751,
+  "rows": 3508785,
+  "samples": 10,
+  "snapshot_id": "C1ZJYPP8XXY76JW0RQSG",
+  "staged_comparison": true,
+  "staged_sample_origin": "immutable_ingestion_buffers",
+  "storage": {
+    "axes": "level_lead",
+    "codec": "delta",
+    "compression": "ZSTD(1)",
+    "delta_bytes": 2,
+    "dictionary": {
+      "encoded_bytes": 169063408,
+      "entries": 61092751,
+      "file": "values.dict.zst",
+      "sha256": "a818327068f2f0de154b31bec99c85f1a33057a09dc6c91744aa5fa91ffbdbbf",
+      "version": 1
+    },
+    "element_type": "UInt128",
+    "encoding": "float32_dictionary_v1",
+    "index_granularity": 1,
+    "index_type": "UInt16",
+    "layout": "cell_tiles_v1",
+    "packing": "uint16x8_le",
+    "tile_size": 256,
+    "words_per_slot": 32,
+    "writer": "rust_native"
+  },
+  "storage_rows": 98,
+  "stored_indices_checked": 643808256,
+  "table": "bench_gfs_dict_v2_packed_r1",
+  "validated_at": 1792346247.9509287
+}

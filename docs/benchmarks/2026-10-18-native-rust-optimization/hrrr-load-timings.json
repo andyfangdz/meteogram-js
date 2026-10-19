@@ -1,0 +1,11 @@
+{
+  "pack_seconds": 261.04978460026905,
+  "insert_seconds": 212.49206198728643,
+  "encode_seconds": 12.107068416662514,
+  "pack_wait_seconds": 133.5406854560133,
+  "packing_pipeline": true,
+  "kernel": "neon",
+  "total_insert_seconds": 359.02399977110326,
+  "validation_seconds": 32.66389773786068,
+  "total_seconds": 391.68789750896394
+}

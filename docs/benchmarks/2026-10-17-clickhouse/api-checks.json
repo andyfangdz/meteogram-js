@@ -1,0 +1,58 @@
+[
+  {
+    "lat": 37.017,
+    "lon": -120.023,
+    "status": 200,
+    "elapsed_ms": 37.49836499991943,
+    "gzip_bytes": 6740,
+    "cell_id": 905136,
+    "lead_times": [0, 1, 2, 3],
+    "pressure_levels": 30
+  },
+  {
+    "lat": 40.013,
+    "lon": -105.027,
+    "status": 200,
+    "elapsed_ms": 34.65035800036276,
+    "gzip_bytes": 6678,
+    "cell_id": 835422,
+    "lead_times": [0, 1, 2, 3],
+    "pressure_levels": 30
+  },
+  {
+    "lat": 37.019,
+    "lon": -97.021,
+    "status": 200,
+    "elapsed_ms": 29.61863699965761,
+    "gzip_bytes": 6732,
+    "cell_id": 1051529,
+    "lead_times": [0, 1, 2, 3],
+    "pressure_levels": 30
+  },
+  {
+    "lat": 41.013,
+    "lon": -74.027,
+    "status": 200,
+    "elapsed_ms": 27.499150000949157,
+    "gzip_bytes": 6663,
+    "cell_id": 634797,
+    "lead_times": [0, 1, 2, 3],
+    "pressure_levels": 30
+  },
+  {
+    "input": "lat=0&lon=0",
+    "status": 404
+  },
+  {
+    "input": "lat=nan&lon=-74",
+    "status": 400
+  },
+  {
+    "input": "lat=35&lon=-80",
+    "status": 404
+  },
+  {
+    "input": "lat=91&lon=-74",
+    "status": 400
+  }
+]

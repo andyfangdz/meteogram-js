@@ -1,0 +1,249 @@
+{
+  "complete": {
+    "started": 1792295265.379033,
+    "ended": 1792296225.1990733,
+    "seconds": 959.8200402259827,
+    "source_profile_comparisons": {
+      "hrrr": 100,
+      "gfs": 100,
+      "aifs": 100
+    },
+    "candidate_query_ms": {
+      "hrrr": {
+        "count": 100,
+        "min": 7.52905011177063,
+        "p50": 14.29649197962135,
+        "p95": 24.163310695439577,
+        "p99": 84.14803308202099,
+        "max": 365.59493909589946
+      },
+      "gfs": {
+        "count": 100,
+        "min": 8.988986955955625,
+        "p50": 13.286847970448434,
+        "p95": 15.719349146820605,
+        "p99": 27.07254202803601,
+        "max": 35.3442020714283
+      },
+      "aifs": {
+        "count": 100,
+        "min": 5.604913923889399,
+        "p50": 6.698330398648977,
+        "p95": 11.00055130664259,
+        "p99": 12.963952636346272,
+        "max": 22.846200969070196
+      }
+    },
+    "server_events_delta": {
+      "OSReadBytes": 23819337728,
+      "OSWriteBytes": 44104097792
+    }
+  },
+  "models": {
+    "hrrr": {
+      "phase_times": {
+        "select": 1792295265.42093,
+        "fetch": 1792295265.4301977,
+        "staged": 1792295792.5662951,
+        "load": 1792295792.87285,
+        "published": 1792296185.4768133
+      },
+      "fetch_seconds": 527.1360974311829,
+      "load_publish_seconds": 392.60396337509155,
+      "load_timings": {
+        "pack_seconds": 261.04978460026905,
+        "insert_seconds": 212.49206198728643,
+        "encode_seconds": 12.107068416662514,
+        "pack_wait_seconds": 133.5406854560133,
+        "packing_pipeline": true,
+        "kernel": "neon",
+        "total_insert_seconds": 359.02399977110326,
+        "validation_seconds": 32.66389773786068,
+        "total_seconds": 391.68789750896394
+      },
+      "validation": {
+        "rows": 80299093,
+        "storage_rows": 1638757,
+        "layout": "cell_profile_v1",
+        "table": "hrrr_20261018034745_4b182b13",
+        "database": "meteogram_native",
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "snapshot_id": "G2DVQ244H9B0DTPYSY80",
+        "samples": 10,
+        "staged_comparison": true,
+        "storage": {
+          "encoding": "float32_bits",
+          "writer": "rust_native",
+          "layout": "cell_profile_v1",
+          "axes": "level_lead",
+          "codec": "t64",
+          "index_granularity": 4
+        },
+        "validated_at": 1792296185.444957
+      },
+      "source": {
+        "grib_bytes": 6581884530,
+        "cpu_seconds": 964.7406359690004,
+        "map_retries": 0,
+        "process_write_bytes": 65057988608,
+        "seconds": 521.2697875779122
+      },
+      "table": {
+        "storage_rows": 1638757,
+        "bytes": 24322228889,
+        "parts": 204,
+        "partitions": 59
+      }
+    },
+    "gfs": {
+      "phase_times": {
+        "select": 1792295265.4189007,
+        "fetch": 1792295265.423505,
+        "staged": 1792295911.620793,
+        "load": 1792296186.3605094,
+        "published": 1792296198.8890526
+      },
+      "fetch_seconds": 646.1972880363464,
+      "load_publish_seconds": 12.52854323387146,
+      "load_timings": {
+        "pack_seconds": 2.8519659370649606,
+        "insert_seconds": 9.126611914951354,
+        "encode_seconds": 0.4113380149938166,
+        "pack_wait_seconds": 0.2440839351620525,
+        "packing_pipeline": true,
+        "kernel": "neon",
+        "total_insert_seconds": 9.854011749848723,
+        "validation_seconds": 2.3075827318243682,
+        "total_seconds": 12.161594481673092
+      },
+      "validation": {
+        "rows": 3508785,
+        "storage_rows": 24885,
+        "layout": "cell_profile_v1",
+        "table": "gfs_20261018034745_29873cb3",
+        "database": "meteogram_native",
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+        "samples": 10,
+        "staged_comparison": true,
+        "storage": {
+          "encoding": "float32_bits",
+          "writer": "rust_native",
+          "layout": "cell_profile_v1",
+          "axes": "level_lead",
+          "codec": "t64",
+          "index_granularity": 4
+        },
+        "validated_at": 1792296198.8615499
+      },
+      "source": {
+        "grib_bytes": 17531170214,
+        "cpu_seconds": 820.1294294809999,
+        "map_retries": 0,
+        "process_write_bytes": 20139069440,
+        "seconds": 632.0553693105467
+      },
+      "table": {
+        "storage_rows": 24885,
+        "bytes": 1540907222,
+        "parts": 17,
+        "partitions": 5
+      }
+    },
+    "aifs": {
+      "phase_times": {
+        "select": 1792296186.4107466,
+        "fetch": 1792296186.4162738,
+        "staged": 1792296223.4298496,
+        "load": 1792296223.4303603,
+        "published": 1792296225.0669043
+      },
+      "fetch_seconds": 37.01357579231262,
+      "load_publish_seconds": 1.6365439891815186,
+      "load_timings": {
+        "pack_seconds": 0.1285468430723995,
+        "insert_seconds": 1.039935969049111,
+        "encode_seconds": 0.014444789849221706,
+        "pack_wait_seconds": 0.01831889571622014,
+        "packing_pipeline": true,
+        "kernel": "neon",
+        "total_insert_seconds": 1.0998229149263352,
+        "validation_seconds": 0.4468801789917052,
+        "total_seconds": 1.5467030939180404
+      },
+      "validation": {
+        "rows": 771435,
+        "storage_rows": 24885,
+        "layout": "cell_profile_v1",
+        "table": "aifs_20261018040306_e8d660fc",
+        "database": "meteogram_native",
+        "init_time": "2026-10-17T18:00:00.000000000",
+        "snapshot_id": "KGX0VQA3TPWZRWK9Q7G0",
+        "samples": 10,
+        "staged_comparison": true,
+        "storage": {
+          "encoding": "float32_bits",
+          "writer": "rust_native",
+          "layout": "cell_profile_v1",
+          "axes": "level_lead",
+          "codec": "t64",
+          "index_granularity": 4
+        },
+        "validated_at": 1792296225.0352015
+      },
+      "source": {
+        "grib_bytes": 850290876,
+        "cpu_seconds": 35.634954619999995,
+        "map_retries": 0,
+        "process_write_bytes": 982732800,
+        "seconds": 32.87385726161301
+      },
+      "table": {
+        "storage_rows": 24885,
+        "bytes": 72212996,
+        "parts": 11,
+        "partitions": 5
+      }
+    }
+  },
+  "resources_partial": {
+    "samples": 94,
+    "start": 1792295298.2282379,
+    "end": 1792296230.3852751,
+    "min_free_bytes": 251989204992,
+    "min_available_memory_bytes": 25326686208,
+    "max_cpu_percent": 59.1,
+    "peak_inactive_part_bytes": 12517797118
+  },
+  "http": {
+    "requests": 1350,
+    "errors": [],
+    "min_free_bytes": 251989204992,
+    "latency_ms": {
+      "hrrr": {
+        "count": 450,
+        "min": 48.707901034504175,
+        "p50": 62.39997851662338,
+        "p95": 106.831346976105,
+        "p99": 199.5845987135541,
+        "max": 637.4908520374447
+      },
+      "gfs": {
+        "count": 450,
+        "min": 46.41175293363631,
+        "p50": 63.177939504384995,
+        "p95": 90.84854018874466,
+        "p99": 255.50903358962387,
+        "max": 396.3800158817321
+      },
+      "aifs": {
+        "count": 450,
+        "min": 11.141951894387603,
+        "p50": 16.217146534472704,
+        "p95": 36.199533578474046,
+        "p99": 146.12351646414015,
+        "max": 262.31193798594177
+      }
+    }
+  }
+}

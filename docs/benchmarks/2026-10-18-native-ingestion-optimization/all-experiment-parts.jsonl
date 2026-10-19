@@ -1,0 +1,7 @@
+{"table":"tiling_baseline_hrrr_20261018","storage_rows":1638757,"bytes_on_disk":24268196425,"parts":204}
+{"table":"tiling_candidate_aifs_20261018","storage_rows":24885,"bytes_on_disk":72083755,"parts":11}
+{"table":"tiling_candidate_gfs_20261018","storage_rows":24885,"bytes_on_disk":1541250655,"parts":17}
+{"table":"tiling_candidate_hrrr_20261018","storage_rows":1638757,"bytes_on_disk":24268196425,"parts":204}
+{"table":"tiling_prefetch_aifs_20261018","storage_rows":24885,"bytes_on_disk":72083755,"parts":11}
+{"table":"tiling_prefetch_gfs_20261018","storage_rows":24885,"bytes_on_disk":1541250655,"parts":17}
+{"table":"tiling_prefetch_hrrr_20261018","storage_rows":1638757,"bytes_on_disk":24268196425,"parts":204}

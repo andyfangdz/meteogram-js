@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "dtype": "float32_le",
+  "shape": [
+    24885,
+    30,
+    6
+  ],
+  "block_cells": 4096,
+  "encoding": "byte_shuffle32",
+  "blocks": [
+    {
+      "offset": 0,
+      "bytes": 1937133,
+      "values": 737280
+    },
+    {
+      "offset": 1937133,
+      "bytes": 1912580,
+      "values": 737280
+    },
+    {
+      "offset": 3849713,
+      "bytes": 1918746,
+      "values": 737280
+    },
+    {
+      "offset": 5768459,
+      "bytes": 1947359,
+      "values": 737280
+    },
+    {
+      "offset": 7715818,
+      "bytes": 1931175,
+      "values": 737280
+    },
+    {
+      "offset": 9646993,
+      "bytes": 1943963,
+      "values": 737280
+    },
+    {
+      "offset": 11590956,
+      "bytes": 154167,
+      "values": 55620
+    }
+  ]
+}

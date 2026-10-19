@@ -1,0 +1,87 @@
+{
+  "queries": 7,
+  "validated_physical_rows": 24885,
+  "validated_cells": 24885,
+  "logical_cell_lead_rows": 771435,
+  "full_float32_values": 32400270,
+  "overlap": false,
+  "ranges": [
+    {
+      "query_id": "b9c48880-6e69-4420-b99b-0d0c86569aed",
+      "expected_rows": 4096,
+      "key": "cell_id",
+      "min": 230620,
+      "max": 255166,
+      "read_rows": 4096,
+      "read_bytes": 10928128,
+      "query_duration_ms": 40,
+      "memory_usage": 6629310
+    },
+    {
+      "query_id": "56aa1d88-dda8-4468-9a6c-439e102767b1",
+      "expected_rows": 4096,
+      "key": "cell_id",
+      "min": 255167,
+      "max": 279713,
+      "read_rows": 4096,
+      "read_bytes": 10928128,
+      "query_duration_ms": 25,
+      "memory_usage": 6866566
+    },
+    {
+      "query_id": "4e3060c1-842b-41bf-b9d9-47d9665e0819",
+      "expected_rows": 4096,
+      "key": "cell_id",
+      "min": 279714,
+      "max": 304260,
+      "read_rows": 4096,
+      "read_bytes": 10928128,
+      "query_duration_ms": 28,
+      "memory_usage": 6865286
+    },
+    {
+      "query_id": "ad76716e-0419-4304-acb8-7069d8d63ee8",
+      "expected_rows": 4096,
+      "key": "cell_id",
+      "min": 304261,
+      "max": 330010,
+      "read_rows": 4096,
+      "read_bytes": 10928128,
+      "query_duration_ms": 39,
+      "memory_usage": 6865766
+    },
+    {
+      "query_id": "1b56de63-a853-4454-aee1-0f151abf997a",
+      "expected_rows": 4096,
+      "key": "cell_id",
+      "min": 330011,
+      "max": 354557,
+      "read_rows": 4096,
+      "read_bytes": 10928128,
+      "query_duration_ms": 26,
+      "memory_usage": 6628654
+    },
+    {
+      "query_id": "6b38b560-b97c-442f-9473-f2b2e0839ad6",
+      "expected_rows": 4096,
+      "key": "cell_id",
+      "min": 354558,
+      "max": 379104,
+      "read_rows": 4096,
+      "read_bytes": 10928128,
+      "query_duration_ms": 24,
+      "memory_usage": 6872446
+    },
+    {
+      "query_id": "8e70b56d-102e-4dd3-b7ba-3717d92d47bb",
+      "expected_rows": 309,
+      "key": "cell_id",
+      "min": 379105,
+      "max": 380616,
+      "read_rows": 309,
+      "read_bytes": 824412,
+      "query_duration_ms": 10,
+      "memory_usage": 6628510
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "success": true,
+  "time": 1792344754.088,
+  "json_files": 215,
+  "jsonl_files": 60,
+  "local_links": 10,
+  "full_loads": 24,
+  "configurations": 8,
+  "warmup_and_measured_queries_per_configuration": 600,
+  "gfs_load_speedup": 2.5387045813586098,
+  "aifs_raw_load_speedup": 2.1333333333333333,
+  "aifs_tile_storage_reduction": 0.4076812966763842,
+  "service_preserved": true,
+  "cleanup_verified": true
+}

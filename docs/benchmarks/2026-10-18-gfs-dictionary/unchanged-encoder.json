@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "changed_sources": [
+    "native/src/db.rs",
+    "native/src/tests.rs"
+  ],
+  "unchanged_encoder_sources": [
+    "native/src/dictionary.rs",
+    "native/src/prepare.rs",
+    "native/src/main.rs"
+  ],
+  "prepared_data_reused": true
+}

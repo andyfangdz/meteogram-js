@@ -1,0 +1,56 @@
+   Compiling meteogram-native v0.1.0 (/home/andy/.local/share/meteogram-benchmark/repo/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.56s
+     Running unittests src/main.rs (/home/andy/.cache/meteogram-native-target/debug/deps/meteogram_native-dd176668d42e4c5a)
+
+running 49 tests
+test dictionary::tests::sorted_spatial_codes_preserve_zero_signs_subnormals_and_extremes ... ok
+test pack::tests::native_uint16_keeps_boundary_and_rejects_overflow ... ok
+test dictionary::tests::palettes_preserve_bits_and_reject_nonfinite_and_bad_indices ... ok
+test pack::tests::vector_uint16_rejects_overflow_in_vector_and_tail ... ok
+test pack::tests::uint16_native_wire_preserves_the_entire_code_domain ... ok
+test dictionary::tests::compact_book_budget_is_global_and_checked_before_allocation ... ok
+test dictionary::tests::codebook_roundtrip_checks_hash_checksum_shape_and_finite_values ... ok
+test stage::tests::cells_native_and_legacy_match_and_check_truncation ... ok
+test stage::tests::bounded_stage_preserves_every_bit_and_checks_corruption ... ok
+test tests::cache_pruning_keeps_uncheckpointed_maps_and_is_resumable ... ok
+test tests::cancellation_drains_source_before_unlock ... ok
+test tests::catalog_lock_drains_readers ... ok
+test tests::coordinate_resolver_rejects_just_outside_conus ... ok
+test packed::tests::packed_words_preserve_all_lanes_slots_tails_and_reject_overflow ... ok
+test tests::existing_float_pressure_metadata_is_accepted ... ok
+test tests::freshness_rejects_future_stale_and_short_horizon ... ok
+test tests::full_source_schema_has_no_silent_drift ... ok
+test stage::tests::spatial_delta_codes_cover_partial_blocks_wraps_and_u32_fallback ... ok
+test tests::hourly_hrrr_is_complete_only_at_its_declared_horizon ... ok
+test tests::garbage_collection_respects_ownership_and_live_references ... ok
+test tests::incremental_readiness_requires_every_field_but_not_previous_hours ... ok
+test tests::lead_book_reader_enforces_remaining_run_budget_before_allocation ... ok
+test prepare::mapwise_tests::mapwise_rejects_nonfinite_wide_palettes_and_oversized_matrices ... ok
+test stage::tests::spatial_codes_reconstruct_every_slot_with_full_hrrr_strides ... ok
+test tests::malformed_npy_is_an_error ... ok
+test tests::legacy_null_storage_marker_remains_publishable ... ok
+test tests::numpy_cells_roundtrip_without_python ... ok
+test prepare::mapwise_tests::mapwise_codes_preserve_every_bit_axis_and_partial_frame ... ok
+test tests::metadata_mutation_never_publishes ... ok
+test tests::preflight_checks_late_missing_chunks_and_propagates_errors ... ok
+test tests::public_s3_never_requests_host_credentials ... ok
+test tests::old_failure_evidence_expires_but_published_revisions_remain ... ok
+test tests::parallel_load_failure_drains_insert_workers_before_returning ... ok
+test tests::rrfs_has_its_own_complete_horizon_and_freshness_policy ... ok
+test tests::rrfs_manifest_cache_is_bounded_without_retaining_weather_payloads ... ok
+test tests::legacy_validation_covers_sparse_ranges_and_balanced_duplicates ... ok
+test tests::publication_requires_validation_and_advancing_identity ... ok
+test tests::simd_rejects_nonfinite_in_all_tail_positions ... ok
+test tests::spherical_lambert_roundtrip_matches_known_origin ... ok
+test tests::unknown_catalog_version_is_rejected ... ok
+test tests::unsafe_identifiers_and_revisions_are_rejected ... ok
+test tests::zarr_temperature_decode_uses_float64_before_float32 ... ok
+test packed::tests::direct_stage_tiles_match_normalized_native_bytes_across_frame_and_cell_tails ... ok
+test tests::retention_keeps_two_complete_runs_and_deduplicates_hrrr_long ... ok
+test tests::simd_rejects_nonfinite_across_cell_tiles ... ok
+test packed::tests::database_packed_validation_covers_every_u16_value_boundaries_and_id_order ... ok
+test tests::simd_preserves_every_float_bit_including_tails ... ok
+test tests::database_native_roundtrip_and_corruption_gate ... ok
+test tests::incremental_database_publication_recovers_without_duplicates_or_losing_prior_hours ... ok
+
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.84s

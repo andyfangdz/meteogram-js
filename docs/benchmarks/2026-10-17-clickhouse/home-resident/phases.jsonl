@@ -1,0 +1,12 @@
+{"phase": "hrrr-fetch", "elapsed_seconds": 4.142376899719238, "exit_code": 0, "log": "hrrr-fetch-1792279601833660045.log"}
+{"phase": "hrrr-benchmark", "elapsed_seconds": 746.4882395267487, "exit_code": 0, "log": "hrrr-benchmark-1792279605976658293.log"}
+{"phase": "gfs-fetch", "elapsed_seconds": 586.9397597312927, "exit_code": 0, "log": "gfs-fetch-1792280352474052518.log"}
+{"phase": "gfs-benchmark", "elapsed_seconds": 2.7258596420288086, "exit_code": 1, "log": "gfs-benchmark-1792280939414916296.log"}
+{"phase": "gfs-fetch", "elapsed_seconds": 2.903778076171875, "exit_code": 0, "log": "gfs-fetch-1792281005490075852.log"}
+{"phase": "gfs-benchmark", "elapsed_seconds": 26.35063099861145, "exit_code": 0, "log": "gfs-benchmark-1792281008394104306.log"}
+{"phase": "aifs-fetch", "elapsed_seconds": 33.700764179229736, "exit_code": 0, "log": "aifs-fetch-1792281034746490539.log"}
+{"phase": "aifs-benchmark", "elapsed_seconds": 7.70494270324707, "exit_code": 0, "log": "aifs-benchmark-1792281068447742313.log"}
+{"phase": "hrrr-staging", "elapsed_seconds": 306.25157594680786, "exit_code": 0, "log": "hrrr-staging-1792281076152976465.log"}
+{"phase": "gfs-staging", "elapsed_seconds": 12.455504655838013, "exit_code": 0, "log": "gfs-staging-1792281382404992507.log"}
+{"phase": "aifs-staging", "elapsed_seconds": 0.9733395576477051, "exit_code": 0, "log": "aifs-staging-1792281394860768110.log"}
+{"phase": "api-verification", "elapsed_seconds": 71.33296966552734, "exit_code": 0, "log": "api-verification-1792281395834393999.log"}

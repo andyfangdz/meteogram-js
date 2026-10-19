@@ -1,0 +1,15 @@
+{
+  "missing_cache_chunk_raises": true,
+  "conus_bounds_verified": true,
+  "shard_cell_counts": [
+    204844,
+    204845,
+    204844,
+    204845,
+    204845,
+    204844,
+    204845,
+    204845
+  ],
+  "total_cells": 1638757
+}

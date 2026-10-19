@@ -1,0 +1,40 @@
+{"time": 1792295342.998662, "phase": "prefetch_deferred", "model": "gfs", "reason": "disk_budget"}
+{"time": 1792295342.999051, "phase": "load", "model": "hrrr"}
+{"time": 1792295342.9992037, "phase": "published", "model": "hrrr", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "hrrr"}
+{"time": 1792295342.9994252, "phase": "prefetch_deferred", "model": "aifs", "reason": "disk_budget"}
+{"time": 1792295342.9995873, "phase": "load", "model": "gfs"}
+{"time": 1792295342.9996688, "phase": "published", "model": "gfs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "gfs"}
+{"time": 1792295342.9998147, "phase": "load", "model": "aifs"}
+{"time": 1792295342.999892, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792295343.0178835, "phase": "load", "model": "hrrr"}
+{"time": 1792295343.0181262, "phase": "published", "model": "hrrr", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "hrrr"}
+{"time": 1792295343.0197768, "phase": "load", "model": "aifs"}
+{"time": 1792295343.0199258, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792295343.0328708, "phase": "load", "model": "hrrr"}
+{"time": 1792295343.0330884, "phase": "failed", "model": "hrrr", "revision": "hrrr", "error": "validation failed"}
+{"time": 1792295343.045063, "phase": "load", "model": "gfs"}
+{"time": 1792295343.045328, "phase": "published", "model": "gfs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "gfs"}
+{"time": 1792295343.0457423, "phase": "load", "model": "aifs"}
+{"time": 1792295343.0458443, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792295343.1303468, "phase": "load", "model": "hrrr"}
+{"time": 1792295343.130562, "phase": "published", "model": "hrrr", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "hrrr"}
+{"time": 1792295343.1309717, "phase": "load", "model": "gfs"}
+{"time": 1792295343.131107, "phase": "published", "model": "gfs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "gfs"}
+{"time": 1792295343.1311738, "phase": "load", "model": "aifs"}
+{"time": 1792295343.1312304, "phase": "published", "model": "aifs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "aifs"}
+.{"time": 1792295343.1480408, "phase": "load", "model": "hrrr"}
+.{"time": 1792295343.1502872, "phase": "load", "model": "hrrr"}
+{"time": 1792295343.1506324, "phase": "published", "model": "hrrr", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "hrrr"}
+{"time": 1792295343.1508558, "phase": "load", "model": "gfs"}
+{"time": 1792295343.1509476, "phase": "published", "model": "gfs", "init_time": "2026-10-18T00:00:00", "generation": 1, "revision": "gfs"}
+.{"time": 1792295343.1910975, "phase": "select", "model": "hrrr", "revision": "hrrr_20261018034903_c8d1b576", "offset": 1}
+{"time": 1792295343.1919768, "phase": "fetch", "model": "hrrr", "init_time": "2026-10-18T00:00:00"}
+{"time": 1792295343.1922536, "phase": "failed", "model": "hrrr", "revision": "hrrr_20261018034903_c8d1b576", "error": "Missing source values: try an older complete run"}
+{"time": 1792295343.2370837, "phase": "select", "model": "hrrr", "revision": "hrrr_20261018034903_e8b6b159", "offset": 2}
+{"time": 1792295343.2374473, "phase": "fetch", "model": "hrrr", "init_time": "2026-10-18T00:00:00"}
+{"time": 1792295343.237606, "phase": "staged", "model": "hrrr", "revision": "hrrr_20261018034903_e8b6b159"}
+.
+----------------------------------------------------------------------
+Ran 7 tests in 0.241s
+
+OK

@@ -1,6 +1,6 @@
 import range from "lodash/range";
 import { RADIUS, POLAR_RADIUS } from "wgs84";
-import { CloudColumn, WeatherModel } from "../types/weather";
+import { CloudCell, CloudColumn, WeatherModel } from "../types/weather";
 import {
   FEET_PER_METER,
   MODEL_CONFIGS,
@@ -40,7 +40,7 @@ function getWGS84LocalRadius(latitudeDegrees: number): number {
  * @param latitudeDegrees - Latitude in degrees
  * @returns MSL geometric height in meters
  */
-function geopotentialToMsl(
+export function geopotentialToMsl(
   geopotentialMeters: number,
   latitudeDegrees: number,
 ): number {
@@ -99,7 +99,10 @@ export function transformWeatherData(
         );
         const temperature = getValue(temperatureBaseIndex + hpaIndex, index);
         const windSpeed = getValue(windSpeedBaseIndex + hpaIndex, index);
-        const windDirection = getValue(windDirectionBaseIndex + hpaIndex, index);
+        const windDirection = getValue(
+          windDirectionBaseIndex + hpaIndex,
+          index,
+        );
         const dewPoint = getValue(dewPointBaseIndex + hpaIndex, index);
 
         // Only return valid data
@@ -123,7 +126,8 @@ export function transformWeatherData(
         return {
           hpa,
           geopotentialFt: geopotentialMeters * FEET_PER_METER,
-          mslFt: geopotentialToMsl(geopotentialMeters, latitude) * FEET_PER_METER,
+          mslFt:
+            geopotentialToMsl(geopotentialMeters, latitude) * FEET_PER_METER,
           cloudCoverage,
           temperature,
           dewPoint,
@@ -136,52 +140,76 @@ export function transformWeatherData(
     groundDewPoint: getValue(groundDewPointIndex, index)!,
   }));
 
-  return cloudData.map((dateAndCloud) => {
-    // Filter out null entries and sort by pressure (height)
-    const validClouds = dateAndCloud.cloud
-      .filter((cloud) => cloud != null)
-      .sort((a, b) => b!.hpa - a!.hpa);
+  return cloudData.map((column) =>
+    completeCloudColumn({
+      ...column,
+      cloud: column.cloud.filter((cell) => cell != null),
+    }),
+  );
+}
 
-    return {
-      date: dateAndCloud.date,
-      cloud: validClouds.map((cloud, index) => {
-        const prevCloud = index > 0 ? validClouds[index - 1] : null;
-        const nextCloud =
-          index < validClouds.length - 1 ? validClouds[index + 1] : null;
+export type BaseCloudCell = Pick<
+  CloudCell,
+  | "hpa"
+  | "geopotentialFt"
+  | "mslFt"
+  | "cloudCoverage"
+  | "temperature"
+  | "dewPoint"
+  | "windSpeed"
+  | "windDirection"
+>;
 
-        // Calculate mslFtBottom and mslFtTop using available adjacent levels
-        const mslFtBottom = prevCloud
-          ? (prevCloud.mslFt + cloud!.mslFt) / 2
-          : cloud!.mslFt - 500; // If no lower level, go 500ft below
+export function completeCloudColumn(dateAndCloud: {
+  date: Date;
+  cloud: BaseCloudCell[];
+  groundTemp: number;
+  groundDewPoint: number;
+}): CloudColumn {
+  // Filter out null entries and sort by pressure (height)
+  const validClouds = dateAndCloud.cloud
+    .filter((cloud) => cloud != null)
+    .sort((a, b) => b!.hpa - a!.hpa);
 
-        const mslFtTop = nextCloud
-          ? (cloud!.mslFt + nextCloud.mslFt) / 2
-          : cloud!.mslFt + 500; // If no upper level, go 500ft above
+  return {
+    date: dateAndCloud.date,
+    cloud: validClouds.map((cloud, index) => {
+      const prevCloud = index > 0 ? validClouds[index - 1] : null;
+      const nextCloud =
+        index < validClouds.length - 1 ? validClouds[index + 1] : null;
 
-        // For the topmost cell there's no layer above, so reuse the lapse
-        // rate from the layer just below — the tint should still cover it.
-        const lapseRateAboveCPerKm = nextCloud
-          ? computeELR(cloud!, nextCloud)
-          : prevCloud
-            ? computeELR(prevCloud, cloud!)
-            : null;
-        const instabilityKPerKm = nextCloud
-          ? computeInstability(cloud!, nextCloud)
-          : prevCloud
-            ? computeInstability(prevCloud, cloud!)
-            : null;
+      // Calculate mslFtBottom and mslFtTop using available adjacent levels
+      const mslFtBottom = prevCloud
+        ? (prevCloud.mslFt + cloud!.mslFt) / 2
+        : cloud!.mslFt - 500; // If no lower level, go 500ft below
 
-        return {
-          ...cloud!,
-          mslFtBottom,
-          mslFtTop,
-          lapseRateAboveCPerKm,
-          malrCPerKm: computeMALR(cloud!.temperature, cloud!.hpa),
-          instabilityKPerKm,
-        };
-      }),
-      groundTemp: dateAndCloud.groundTemp,
-      groundDewPoint: dateAndCloud.groundDewPoint,
-    };
-  });
+      const mslFtTop = nextCloud
+        ? (cloud!.mslFt + nextCloud.mslFt) / 2
+        : cloud!.mslFt + 500; // If no upper level, go 500ft above
+
+      // For the topmost cell there's no layer above, so reuse the lapse
+      // rate from the layer just below — the tint should still cover it.
+      const lapseRateAboveCPerKm = nextCloud
+        ? computeELR(cloud!, nextCloud)
+        : prevCloud
+          ? computeELR(prevCloud, cloud!)
+          : null;
+      const instabilityKPerKm = nextCloud
+        ? computeInstability(cloud!, nextCloud)
+        : prevCloud
+          ? computeInstability(prevCloud, cloud!)
+          : null;
+
+      return {
+        ...cloud!,
+        mslFtBottom,
+        mslFtTop,
+        lapseRateAboveCPerKm,
+        malrCPerKm: computeMALR(cloud!.temperature, cloud!.hpa),
+        instabilityKPerKm,
+      };
+    }),
+    groundTemp: dateAndCloud.groundTemp,
+    groundDewPoint: dateAndCloud.groundDewPoint,
+  };
 }

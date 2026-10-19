@@ -1,0 +1,17 @@
+{
+  "time": 1792346961.733,
+  "success": true,
+  "json_files": 104,
+  "jsonl_files": 16,
+  "local_links": 14,
+  "final_complete_loads": 9,
+  "configurations": 3,
+  "repeats": 3,
+  "full_bit_values_per_dictionary_layout": 638598870,
+  "full_bit_files_per_layout": 565,
+  "profile_storage_reduction": 0.4387304575670292,
+  "packed_storage_reduction": 0.4991188695389698,
+  "encoding_peak_rss_mib": 310.109375,
+  "service_preserved": true,
+  "owned_cleanup_verified": true
+}

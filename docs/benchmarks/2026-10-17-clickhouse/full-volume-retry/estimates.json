@@ -1,0 +1,37 @@
+{
+  "status": "projections from two real times across the full CONUS rectangle; not a complete-cycle benchmark",
+  "measured": {
+    "cells": 1638757,
+    "leads": [
+      0,
+      1
+    ],
+    "rows": 3277514,
+    "raw_value_bytes": 2386030192,
+    "clickhouse_bytes": 1295976337,
+    "compressed_staging_bytes": 1272412552,
+    "staging_ratio": 0.5332759645147022,
+    "clickhouse_to_raw_value_ratio": 0.543151692440948,
+    "load_seconds": 31.127628842001286,
+    "source_grib_bytes_for_two_times": 265368795,
+    "offline_replay_source_download_bytes": 0
+  },
+  "projected": {
+    "hrrr_49_times_raw_bytes": 58457739704,
+    "hrrr_49_times_clickhouse_bytes": 31751420256.5,
+    "hrrr_49_times_compressed_staging_bytes": 31174107524.0,
+    "hrrr_49_times_load_seconds": 762.6269066290315,
+    "hrrr_49_times_successful_grib_bytes": 6501535477.5,
+    "all_models_one_cycle_clickhouse_bytes": 33209237530.569683,
+    "all_models_one_cycle_compressed_staging_bytes": 32605418378.288143,
+    "two_retained_plus_new_plus_equal_merge_allowance_plus_staging_bytes": 165442368500.56686,
+    "hrrr_monthly_clickhouse_process_write_bytes_at_4_runs_day": 12275269386240.0
+  },
+  "caveats": [
+    "GFS/AIFS sizes still use HRRR compression as a scenario, without measured data.",
+    "Two-time insertion batches and compression differ from 49-time cell profiles.",
+    "Server process write bytes include merges/logs and do not measure SSD physical writes.",
+    "Source byte projections exclude retries, metadata and transport overhead.",
+    "The regional query timings return only two times and do not establish 49-time latency."
+  ]
+}

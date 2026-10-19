@@ -1,0 +1,15 @@
+{
+  "models": {
+    "gfs": {
+      "clients": 1,
+      "count": 300,
+      "max_ms": 12.67986,
+      "p50_ms": 9.230428,
+      "p95_ms": 11.091283,
+      "p99_ms": 11.82547,
+      "queries_per_second": 115.29862083952032
+    }
+  },
+  "time": 1792345925.3886664,
+  "warmup_queries_per_model": 300
+}

@@ -1,0 +1,19 @@
+<clickhouse>
+    <logger><level>warning</level><log>./ch/log/server.log</log><errorlog>./ch/log/error.log</errorlog><size>20M</size><count>2</count></logger>
+    <listen_host>127.0.0.1</listen_host>
+    <http_port>18123</http_port><tcp_port>19000</tcp_port>
+    <path>./ch/data/</path><tmp_path>./ch/tmp/</tmp_path>
+    <max_server_memory_usage>12884901888</max_server_memory_usage>
+    <background_pool_size>8</background_pool_size>
+    <background_merges_mutations_concurrency_ratio>4</background_merges_mutations_concurrency_ratio>
+    <background_schedule_pool_size>16</background_schedule_pool_size>
+    <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
+    <background_message_broker_schedule_pool_size>4</background_message_broker_schedule_pool_size>
+    <background_distributed_schedule_pool_size>4</background_distributed_schedule_pool_size>
+    <mark_cache_size>67108864</mark_cache_size>
+    <uncompressed_cache_size>0</uncompressed_cache_size>
+    <profiles><default><max_threads>4</max_threads><max_memory_usage>2147483648</max_memory_usage><log_queries>1</log_queries><log_query_threads>0</log_query_threads></default></profiles>
+    <users><default><password></password><networks><ip>127.0.0.1</ip><ip>::1</ip></networks><profile>default</profile><quota>default</quota><access_management>1</access_management></default></users>
+    <quotas><default><interval><duration>3600</duration><queries>0</queries><errors>0</errors><result_rows>0</result_rows><read_rows>0</read_rows><execution_time>0</execution_time></interval></default></quotas>
+    <query_log><database>system</database><table>query_log</table><ttl>event_date + INTERVAL 7 DAY DELETE</ttl><flush_interval_milliseconds>1000</flush_interval_milliseconds></query_log>
+</clickhouse>

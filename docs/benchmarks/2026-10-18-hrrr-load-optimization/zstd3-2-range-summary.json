@@ -1,0 +1,15 @@
+{
+  "queries": 401,
+  "read_rows": 1638757,
+  "expected_rows": 1638757,
+  "read_bytes": 58575730208,
+  "os_read_bytes": 12288,
+  "user_seconds": 98.94186399999995,
+  "system_seconds": 6.346647,
+  "wall_work_seconds": 102.061,
+  "all_range_rows_match": true,
+  "ranges_disjoint": true,
+  "minimum_expected_rows": 357,
+  "first_cell": 1560,
+  "last_cell": 1904539
+}

@@ -1,0 +1,16 @@
+{
+  "requested": [
+    49.99870527918694,
+    -69.94576534654809
+  ],
+  "cell_id": 1560,
+  "projected_xy": [
+    1982479.857478072,
+    1586693.8474433357
+  ],
+  "y_max": 1586693.847443335,
+  "excess_metres": 6.984919309616089e-10,
+  "old_check_would_reject": true,
+  "fixed_cell_index": 0,
+  "tolerance_metres": 1e-06
+}

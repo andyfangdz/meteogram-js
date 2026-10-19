@@ -1,0 +1,8 @@
+{
+  "arrays": 98,
+  "blocks": "4096 cells",
+  "encoded_bytes": 26183140784,
+  "format": "indexed_zstd_v1",
+  "raw_bytes": 58457739704,
+  "seconds": 275.216833671
+}

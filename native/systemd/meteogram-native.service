@@ -1,0 +1,15 @@
+[Unit]
+Description=Local native CONUS forecast ingestion and query service (Rust)
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/meteogram-native service --root %h/.local/share/meteogram-native --server-root %h/.local/share/meteogram-benchmark --binary %h/.local/share/meteogram-benchmark/clickhouse
+Restart=always
+RestartSec=15
+TimeoutStopSec=120
+KillMode=mixed
+
+[Install]
+WantedBy=default.target

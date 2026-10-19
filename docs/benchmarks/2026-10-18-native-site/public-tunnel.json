@@ -1,0 +1,42 @@
+{
+  "hostname": "weather-api.andyfang.app",
+  "success": true,
+  "report": [
+    {
+      "check": "public TLS and unauthorized request",
+      "status": 401
+    },
+    {
+      "model": "hrrr",
+      "status": 200,
+      "leads": 19,
+      "expected": 19,
+      "complete": true,
+      "elapsed_ms": 459
+    },
+    {
+      "model": "gfs",
+      "status": 200,
+      "leads": 103,
+      "expected": 141,
+      "complete": false,
+      "elapsed_ms": 1100
+    },
+    {
+      "model": "aifs",
+      "status": 200,
+      "leads": 31,
+      "expected": 31,
+      "complete": true,
+      "elapsed_ms": 95
+    },
+    {
+      "model": "rrfs",
+      "status": 200,
+      "leads": 59,
+      "expected": 85,
+      "complete": false,
+      "elapsed_ms": 2151
+    }
+  ]
+}

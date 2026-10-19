@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "report": [
+    {
+      "url": "https://meteogram.vercel.app/KCDW/rrfs",
+      "status": 200,
+      "manualRefresh": "passed",
+      "source": "Dynamical · RRFS · Run 2026-10-18 18:00 UTC · Partial (67/85 forecast hours) · Clouds estimated from humidity",
+      "cells": 1950
+    },
+    {
+      "url": "https://meteogram.flyingclub.org/KCDW/rrfs",
+      "status": 200,
+      "manualRefresh": "passed",
+      "source": "Dynamical · RRFS · Run 2026-10-18 18:00 UTC · Partial (67/85 forecast hours) · Clouds estimated from humidity",
+      "cells": 1950
+    },
+    {
+      "check": "custom CONUS coordinates",
+      "provider": "dynamical",
+      "cells": 540
+    }
+  ],
+  "errors": []
+}

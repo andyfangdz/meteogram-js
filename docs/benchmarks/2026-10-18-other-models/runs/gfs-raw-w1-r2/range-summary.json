@@ -1,0 +1,153 @@
+{
+  "queries": 13,
+  "validated_physical_rows": 24885,
+  "validated_cells": 24885,
+  "logical_cell_lead_rows": 3508785,
+  "full_float32_values": 638598870,
+  "overlap": false,
+  "ranges": [
+    {
+      "query_id": "59b57b2f-56bb-44fa-824d-88115e1bc25f",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 230620,
+      "max": 242291,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 395,
+      "memory_usage": 5939110
+    },
+    {
+      "query_id": "2d215aa0-b48c-460c-8e9a-c034f8b882aa",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 242292,
+      "max": 255166,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 385,
+      "memory_usage": 5935174
+    },
+    {
+      "query_id": "34661027-7882-4127-afa7-46f5c17549f6",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 255167,
+      "max": 266838,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 224,
+      "memory_usage": 6041278
+    },
+    {
+      "query_id": "36a51245-81ca-4d70-8ee5-5dfb8f5dadb9",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 266839,
+      "max": 279713,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 398,
+      "memory_usage": 5936390
+    },
+    {
+      "query_id": "ba37eb77-8bfb-4e82-8b81-825df58929d9",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 279714,
+      "max": 292588,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 381,
+      "memory_usage": 5936662
+    },
+    {
+      "query_id": "0ec70438-fc02-40fc-8395-4a2ecb38225a",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 292589,
+      "max": 304260,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 334,
+      "memory_usage": 6042590
+    },
+    {
+      "query_id": "9e26c6d9-969a-42c5-bda1-d4c5d2041f5c",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 304261,
+      "max": 317135,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 407,
+      "memory_usage": 5937510
+    },
+    {
+      "query_id": "015e1909-d9e3-442d-9748-02e437f3473a",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 317136,
+      "max": 330010,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 345,
+      "memory_usage": 6044302
+    },
+    {
+      "query_id": "717fa921-c98f-4ca7-bb3b-525e84741a8b",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 330011,
+      "max": 341682,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 394,
+      "memory_usage": 5939094
+    },
+    {
+      "query_id": "2014b44e-cafe-4ef5-9d9b-48c39df02062",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 341683,
+      "max": 354557,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 390,
+      "memory_usage": 5940134
+    },
+    {
+      "query_id": "a23a4ec1-a2ed-4b32-a8e1-7be520619b9c",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 354558,
+      "max": 367432,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 213,
+      "memory_usage": 6045038
+    },
+    {
+      "query_id": "a858cdf9-e6c5-4890-b870-87be7022fc5a",
+      "expected_rows": 2048,
+      "key": "cell_id",
+      "min": 367433,
+      "max": 379104,
+      "read_rows": 2048,
+      "read_bytes": 210370560,
+      "query_duration_ms": 390,
+      "memory_usage": 5940822
+    },
+    {
+      "query_id": "f8e7c157-87e7-4508-a134-589c584efd75",
+      "expected_rows": 309,
+      "key": "cell_id",
+      "min": 379105,
+      "max": 380616,
+      "read_rows": 309,
+      "read_bytes": 31740480,
+      "query_duration_ms": 66,
+      "memory_usage": 5941526
+    }
+  ]
+}

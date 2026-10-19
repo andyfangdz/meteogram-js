@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "generation": 9,
+  "current": {
+    "aifs": {
+      "revision": "aifs_20261018044223_340237af",
+      "database": "meteogram_native",
+      "table": "aifs_20261018044223_340237af",
+      "owned": true
+    },
+    "gfs": {
+      "revision": "gfs_20261018042858_eff7d542",
+      "database": "meteogram_native",
+      "table": "gfs_20261018042858_eff7d542",
+      "owned": true
+    },
+    "hrrr": {
+      "revision": "hrrr_20261018042858_55e4282b",
+      "database": "meteogram_native",
+      "table": "hrrr_20261018042858_55e4282b",
+      "owned": true
+    }
+  },
+  "previous": {
+    "aifs": {
+      "revision": "borrowed_aifs_20261018013225_0f88f7b8",
+      "database": "meteogram_native",
+      "table": "aifs_20261018013225_0f88f7b8",
+      "owned": false
+    },
+    "gfs": {
+      "revision": "borrowed_gfs_20261018013223_864282c8",
+      "database": "meteogram_native",
+      "table": "gfs_20261018013223_864282c8",
+      "owned": false
+    },
+    "hrrr": {
+      "revision": "borrowed_hrrr_20261018013136_f14ebb9d",
+      "database": "meteogram_native",
+      "table": "hrrr_20261018013136_f14ebb9d",
+      "owned": false
+    }
+  },
+  "retired": [],
+  "published_at": 1792298736.1591568
+}

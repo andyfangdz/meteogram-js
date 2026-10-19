@@ -1,10 +1,11 @@
 import React from "react";
-import { CloudCell } from "../../types/weather";
+import { CloudCell, NativeCloudLayer } from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
 
 interface HoverIndicatorsProps {
   date: Date;
   cloudCell: CloudCell;
+  nativeCloudLayer?: NativeCloudLayer;
   scales: {
     dateScale: any;
     mslScale: any;
@@ -18,6 +19,7 @@ interface HoverIndicatorsProps {
 const HoverIndicators: React.FC<HoverIndicatorsProps> = ({
   date,
   cloudCell,
+  nativeCloudLayer,
   scales,
   bounds,
 }) => {
@@ -37,8 +39,12 @@ const HoverIndicators: React.FC<HoverIndicatorsProps> = ({
         className="hover-line hover-line-horizontal"
         x1={0}
         x2={formatNumber(bounds.xMax)}
-        y1={formatNumber(scales.mslScale(cloudCell.mslFt))}
-        y2={formatNumber(scales.mslScale(cloudCell.mslFt))}
+        y1={formatNumber(
+          scales.mslScale((nativeCloudLayer ?? cloudCell).mslFt),
+        )}
+        y2={formatNumber(
+          scales.mslScale((nativeCloudLayer ?? cloudCell).mslFt),
+        )}
         stroke="#000000"
         strokeWidth={1}
         pointerEvents="none"

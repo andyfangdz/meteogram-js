@@ -1,0 +1,98 @@
+[
+  {
+    "lead": 0,
+    "layout": "interleaved",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 15881329,
+    "encode_seconds": 0.07680946699838387,
+    "decode_seconds": 0.03415124700040906
+  },
+  {
+    "lead": 0,
+    "layout": "by_field",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 11877691,
+    "encode_seconds": 0.08145008399878861,
+    "decode_seconds": 0.0323408290023508
+  },
+  {
+    "lead": 1,
+    "layout": "interleaved",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 15666456,
+    "encode_seconds": 0.07182653800191474,
+    "decode_seconds": 0.03296683200096595
+  },
+  {
+    "lead": 1,
+    "layout": "by_field",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 11884493,
+    "encode_seconds": 0.07959812300032354,
+    "decode_seconds": 0.03031930599900079
+  },
+  {
+    "lead": 2,
+    "layout": "interleaved",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 15434287,
+    "encode_seconds": 0.0804069689984317,
+    "decode_seconds": 0.028427055000065593
+  },
+  {
+    "lead": 2,
+    "layout": "by_field",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 11641809,
+    "encode_seconds": 0.08535950100122136,
+    "decode_seconds": 0.027607132997218287
+  },
+  {
+    "lead": 3,
+    "layout": "interleaved",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 15421955,
+    "encode_seconds": 0.07855650999772479,
+    "decode_seconds": 0.036401631998160155
+  },
+  {
+    "lead": 3,
+    "layout": "by_field",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 11462231,
+    "encode_seconds": 0.0844863889979024,
+    "decode_seconds": 0.028648424002312822
+  },
+  {
+    "lead": 0,
+    "layout": "by_field_4096_cell_blocks",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 12053781,
+    "encode_seconds": 0.0910946670192061,
+    "decode_seconds": 0.029714434003835777
+  },
+  {
+    "lead": 1,
+    "layout": "by_field_4096_cell_blocks",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 12058977,
+    "encode_seconds": 0.08475211200493504,
+    "decode_seconds": 0.02727079300530022
+  },
+  {
+    "lead": 2,
+    "layout": "by_field_4096_cell_blocks",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 11815759,
+    "encode_seconds": 0.08445909200236201,
+    "decode_seconds": 0.026818466998520307
+  },
+  {
+    "lead": 3,
+    "layout": "by_field_4096_cell_blocks",
+    "raw_bytes": 26836992,
+    "compressed_bytes": 11663323,
+    "encode_seconds": 0.08679170599862118,
+    "decode_seconds": 0.02751666400945396
+  }
+]

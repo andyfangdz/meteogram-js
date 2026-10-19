@@ -1,0 +1,5 @@
+{
+  "different_equal_size_shard_rejected": true,
+  "metadata_unmodified_on_rejection": true,
+  "completed_times_reused_offline": true
+}

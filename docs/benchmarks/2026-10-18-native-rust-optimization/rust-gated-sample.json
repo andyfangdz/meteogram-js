@@ -1,0 +1,34 @@
+{
+  "seconds": 5.310608820989728,
+  "validation": {
+    "rows": 802816,
+    "storage_rows": 16384,
+    "layout": "cell_profile_v1",
+    "table": "rust_gated_sample",
+    "database": "meteogram_native",
+    "init_time": "2026-10-17T18:00:00.000000000",
+    "snapshot_id": "G2DVQ244H9B0DTPYSY80",
+    "samples": 10,
+    "staged_comparison": true,
+    "storage": {
+      "encoding": "float32_bits",
+      "writer": "rust_native",
+      "layout": "cell_profile_v1",
+      "axes": "level_lead",
+      "codec": "t64",
+      "index_granularity": 4
+    },
+    "validated_at": 1792295530.5526881
+  },
+  "timings": {
+    "pack_seconds": 0.750768359284848,
+    "insert_seconds": 2.7714709157589823,
+    "encode_seconds": 0.19264451321214437,
+    "pack_wait_seconds": 0.1441043778322637,
+    "packing_pipeline": true,
+    "kernel": "neon",
+    "total_insert_seconds": 3.589651851914823,
+    "validation_seconds": 1.0212036869488657,
+    "total_seconds": 4.610855538863689
+  }
+}

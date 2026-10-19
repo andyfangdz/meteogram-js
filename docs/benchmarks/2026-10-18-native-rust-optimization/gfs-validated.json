@@ -1,0 +1,20 @@
+{
+  "rows": 3508785,
+  "storage_rows": 24885,
+  "layout": "cell_profile_v1",
+  "table": "gfs_20261018034745_29873cb3",
+  "database": "meteogram_native",
+  "init_time": "2026-10-17T18:00:00.000000000",
+  "snapshot_id": "V5SK6H0M0RF697RTBZZ0",
+  "samples": 10,
+  "staged_comparison": true,
+  "storage": {
+    "encoding": "float32_bits",
+    "writer": "rust_native",
+    "layout": "cell_profile_v1",
+    "axes": "level_lead",
+    "codec": "t64",
+    "index_granularity": 4
+  },
+  "validated_at": 1792296198.8615499
+}

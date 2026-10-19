@@ -1,0 +1,15 @@
+{"time": 1792290285.8215148, "phase": "select", "model": "hrrr", "revision": "hrrr_20261018022445_c6b18181", "offset": 1}
+{"time": 1792290285.8310685, "phase": "fetch", "model": "hrrr", "init_time": "2026-10-17T18:00:00.000000000"}
+{"time": 1792290793.9774501, "phase": "staged", "model": "hrrr", "revision": "hrrr_20261018022445_c6b18181"}
+{"time": 1792290794.173162, "phase": "load", "model": "hrrr"}
+{"time": 1792290794.3792753, "phase": "select", "model": "gfs", "revision": "gfs_20261018023314_7630fe39", "offset": 1}
+{"time": 1792290794.386655, "phase": "fetch", "model": "gfs", "init_time": "2026-10-17T18:00:00.000000000"}
+{"time": 1792291398.5361204, "phase": "staged", "model": "gfs", "revision": "gfs_20261018023314_7630fe39"}
+{"time": 1792291457.4314327, "phase": "published", "model": "hrrr", "init_time": "2026-10-17T18:00:00.000000000", "generation": 1, "revision": "hrrr_20261018022445_c6b18181"}
+{"time": 1792291458.0953295, "phase": "load", "model": "gfs"}
+{"time": 1792291458.131812, "phase": "select", "model": "aifs", "revision": "aifs_20261018024418_bce922a9", "offset": 1}
+{"time": 1792291458.136354, "phase": "fetch", "model": "aifs", "init_time": "2026-10-17T18:00:00.000000000"}
+{"time": 1792291486.40309, "phase": "published", "model": "gfs", "init_time": "2026-10-17T18:00:00.000000000", "generation": 2, "revision": "gfs_20261018023314_7630fe39"}
+{"time": 1792291494.1464076, "phase": "staged", "model": "aifs", "revision": "aifs_20261018024418_bce922a9"}
+{"time": 1792291494.1477191, "phase": "load", "model": "aifs"}
+{"time": 1792291496.1640322, "phase": "published", "model": "aifs", "init_time": "2026-10-17T18:00:00.000000000", "generation": 3, "revision": "aifs_20261018024418_bce922a9"}

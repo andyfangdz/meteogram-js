@@ -1,0 +1,37 @@
+{
+  "started": 1792287217.6574578,
+  "models": {
+    "hrrr": {
+      "current": "hrrr_20261018005542_c13c1f40",
+      "previous": "hrrr_20261018013136_f14ebb9d",
+      "current_init": "2026-10-17T18:00:00.000000000",
+      "previous_init": "2026-10-17T12:00:00.000000000",
+      "restored_exactly": true,
+      "current_sha256": "b58d51dd6a50699c65935534677131b65e55bc65c36620cffef6edb08e22aa09",
+      "previous_sha256": "19cee99f04e449c5b8f9474ff95dd1ea4d0b0350692dc4c69a9620ed4a5be008",
+      "leads": 49
+    },
+    "gfs": {
+      "current": "gfs_20261018011859_19e2797e",
+      "previous": "gfs_20261018013223_864282c8",
+      "current_init": "2026-10-17T18:00:00.000000000",
+      "previous_init": "2026-10-17T12:00:00.000000000",
+      "restored_exactly": true,
+      "current_sha256": "d342a7d4c604eab3a6b03517163a53fb24eec0222c336bd51fab7e7065dd080c",
+      "previous_sha256": "24c9d2b87b0d4db1e87d1e1eab75e0d963671a53e97b8e8ca69448cd38b1728a",
+      "leads": 141
+    },
+    "aifs": {
+      "current": "aifs_20261018012917_143ac186",
+      "previous": "aifs_20261018013225_0f88f7b8",
+      "current_init": "2026-10-17T18:00:00.000000000",
+      "previous_init": "2026-10-17T12:00:00.000000000",
+      "restored_exactly": true,
+      "current_sha256": "7d7d276eedd332ec4b45e2a3e7a8d0203b1434410d1b56fa6964679745aeede9",
+      "previous_sha256": "4ba66d87651e8a47303d316bfabd67d7a2d14f738c30a1a234bcab84dfb5d2bb",
+      "leads": 31
+    }
+  },
+  "ended": 1792287219.6577077,
+  "catalog_restored": true
+}

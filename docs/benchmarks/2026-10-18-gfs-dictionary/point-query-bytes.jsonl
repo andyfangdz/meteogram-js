@@ -1,0 +1,2 @@
+{"reader":"projected","queries":738,"mean_result_bytes":416036,"min_result_bytes":415228,"max_result_bytes":416040,"mean_read_bytes":13140040}
+{"reader":"whole_tile","queries":738,"mean_result_bytes":13142340,"min_result_bytes":13141532,"max_result_bytes":13142344,"mean_read_bytes":13140040}

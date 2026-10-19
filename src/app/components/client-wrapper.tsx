@@ -12,6 +12,7 @@ import {
   WeatherModel,
   CloudColumn,
   VisualizationPreferences,
+  WeatherSource,
 } from "../../types/weather";
 import { useRouter } from "next/navigation";
 import { getWeatherData } from "../actions/weather";
@@ -29,6 +30,7 @@ interface ClientWrapperProps {
   initialWeatherDataStr: string;
   initialTimestamp: string;
   initialElevationFt: number | null;
+  initialSource?: WeatherSource;
   initialPreferences: VisualizationPreferences;
   cookieReadSuccess?: boolean;
 }
@@ -39,6 +41,7 @@ function ClientWrapperInternal({
   initialWeatherDataStr,
   initialTimestamp,
   initialElevationFt,
+  initialSource,
 }: Omit<ClientWrapperProps, "initialPreferences">) {
   const router = useRouter();
   const { preferences } = usePreferences();
@@ -60,11 +63,15 @@ function ClientWrapperInternal({
   const [weatherData, setWeatherData] =
     useState<CloudColumn[]>(parsedInitialData);
   const [timestamp, setTimestamp] = useState<string>(initialTimestamp);
+  const [source, setSource] = useState<WeatherSource | undefined>(
+    initialSource,
+  );
 
   // Synchronize state with parsedInitialData if it changes (e.g. on navigation)
   useEffect(() => {
     setWeatherData(parsedInitialData);
-  }, [parsedInitialData]);
+    setSource(initialSource);
+  }, [parsedInitialData, initialSource]);
   const [elevationFt, setElevationFt] = useState<number | null>(
     initialElevationFt,
   );
@@ -81,10 +88,12 @@ function ClientWrapperInternal({
         data,
         timestamp: newTimestamp,
         elevationFt: newElevationFt,
+        source: newSource,
       } = await getWeatherData(model, initialLocation);
       setWeatherData(data);
       setTimestamp(newTimestamp);
       setElevationFt(newElevationFt);
+      setSource(newSource);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch weather data"),
@@ -100,10 +109,12 @@ function ClientWrapperInternal({
         data,
         timestamp: newTimestamp,
         elevationFt: newElevationFt,
+        source: newSource,
       } = await getWeatherData(model, initialLocation);
       setWeatherData(data);
       setTimestamp(newTimestamp);
       setElevationFt(newElevationFt);
+      setSource(newSource);
     } catch (error) {
       console.error("Error refreshing data:", error);
     }
@@ -151,6 +162,7 @@ function ClientWrapperInternal({
       isLoading={isLoading}
       error={error}
       elevationFt={elevationFt}
+      source={source}
     />
   );
 }
@@ -168,6 +180,7 @@ export default function ClientWrapper(props: ClientWrapperProps) {
           initialWeatherDataStr={props.initialWeatherDataStr}
           initialTimestamp={props.initialTimestamp}
           initialElevationFt={props.initialElevationFt}
+          initialSource={props.initialSource}
         />
       </PreferencesProvider>
     </HeroUIProvider>

@@ -1,0 +1,413 @@
+{
+  "time": 1792350491.3847342,
+  "success": true,
+  "since_unix": 1792350231.2521791,
+  "completed_predicate_audits": 40,
+  "exceptions": [],
+  "maximum_per_query_peak_tracked_bytes": 692598019,
+  "query_limit_bytes": 2147483648,
+  "total_reported_read_rows": 172854,
+  "queries": [
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:03:52.863469",
+      "query_duration_ms": 4,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 5393683,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE revision_id != 1 SETTINGS max_threads=2,max_block_size=1,compile_expressions=1,min",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:03:52.868562",
+      "query_duration_ms": 116,
+      "read_rows": 6402,
+      "read_bytes": 76824,
+      "memory_usage": 6089626,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(cell_ids)!=if(tile_id=6401,101,256) SETTINGS max_threads=2,max_block_size=1",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:03:52.985859",
+      "query_duration_ms": 18399,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 199026600,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(geopotential_height)!=81600 OR arrayExists((word,bound)->(greatest(toUInt16",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:04:11.386427",
+      "query_duration_ms": 7928,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 227872376,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(temperature)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,t",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:04:19.316160",
+      "query_duration_ms": 9848,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 655489492,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(wind_u)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,toUInt",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:04:29.165010",
+      "query_duration_ms": 9525,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 642788858,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(wind_v)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,toUInt",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:04:38.691265",
+      "query_duration_ms": 7454,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 229604731,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(relative_humidity)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:04:46.146015",
+      "query_duration_ms": 21240,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 328799299,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(dew_point_temperature)!=81600 OR arrayExists((word,bound)->(greatest(toUInt",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:07.388168",
+      "query_duration_ms": 596,
+      "read_rows": 6402,
+      "read_bytes": 278666256,
+      "memory_usage": 7771498,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:07.985517",
+      "query_duration_ms": 569,
+      "read_rows": 6402,
+      "read_bytes": 278666256,
+      "memory_usage": 7813914,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(dew_point_temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bitOr(",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:14.991433",
+      "query_duration_ms": 3,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 5393683,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE revision_id != 1 SETTINGS max_threads=2,max_block_size=1,compile_expressions=1",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:14.995463",
+      "query_duration_ms": 119,
+      "read_rows": 6402,
+      "read_bytes": 76824,
+      "memory_usage": 6091274,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(cell_ids)!=if(tile_id=6401,101,256) SETTINGS max_threads=2,max_block_si",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:15.115555",
+      "query_duration_ms": 17253,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 137921214,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(geopotential_height)!=81600 OR arrayExists((word,bound)->(greatest(toUI",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:32.369800",
+      "query_duration_ms": 7268,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 119231064,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(temperature)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(wo",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:39.639068",
+      "query_duration_ms": 7389,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 241209373,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(wind_u)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,to",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:47.028676",
+      "query_duration_ms": 7309,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 237641417,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(wind_v)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,to",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:05:54.339363",
+      "query_duration_ms": 6675,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 114562301,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(relative_humidity)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bi",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:01.015693",
+      "query_duration_ms": 17447,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 114784713,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(dew_point_temperature)!=81600 OR arrayExists((word,bound)->(greatest(to",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:18.463974",
+      "query_duration_ms": 499,
+      "read_rows": 6402,
+      "read_bytes": 278666256,
+      "memory_usage": 8359626,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:18.964078",
+      "query_duration_ms": 479,
+      "read_rows": 6402,
+      "read_bytes": 278666256,
+      "memory_usage": 8381194,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190152_4e17ff13 WHERE length(dew_point_temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bi",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.016722",
+      "query_duration_ms": 3,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 5393683,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE revision_id != 1 SETTINGS max_threads=2,max_block_size=1,compile_expressions=1,min",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.020736",
+      "query_duration_ms": 5,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 5424722,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(cell_ids)!=if(tile_id=6401,101,256) SETTINGS max_threads=2,max_block_size=1",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.026603",
+      "query_duration_ms": 22,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 7287895,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(geopotential_height)!=81600 OR arrayExists((word,bound)->(greatest(toUInt16",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.049119",
+      "query_duration_ms": 21,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 8274007,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(temperature)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,t",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.071066",
+      "query_duration_ms": 22,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 8274039,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(wind_u)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,toUInt",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.093730",
+      "query_duration_ms": 22,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 8273527,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(wind_v)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,toUInt",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.116717",
+      "query_duration_ms": 21,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 8274359,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(relative_humidity)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.138784",
+      "query_duration_ms": 21,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 7288455,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(dew_point_temperature)!=81600 OR arrayExists((word,bound)->(greatest(toUInt",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.161036",
+      "query_duration_ms": 6,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 5606442,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:27.168277",
+      "query_duration_ms": 4,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 5608218,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_initial_20261018_12 WHERE length(dew_point_temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bitOr(",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:41.934484",
+      "query_duration_ms": 3,
+      "read_rows": 0,
+      "read_bytes": 0,
+      "memory_usage": 5393683,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE revision_id != 1 SETTINGS max_threads=2,max_block_size=1,compile_expressions=1",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:41.938808",
+      "query_duration_ms": 206,
+      "read_rows": 6402,
+      "read_bytes": 76824,
+      "memory_usage": 7093418,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(cell_ids)!=if(tile_id=6401,101,256) SETTINGS max_threads=2,max_block_si",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:42.145799",
+      "query_duration_ms": 17546,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 147284096,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(geopotential_height)!=81600 OR arrayExists((word,bound)->(greatest(toUI",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:06:59.694134",
+      "query_duration_ms": 7973,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 255477171,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(temperature)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(wo",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:07:07.668303",
+      "query_duration_ms": 9853,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 692598019,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(wind_u)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,to",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:07:17.522091",
+      "query_duration_ms": 10066,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 686083614,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(wind_v)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(word,to",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:07:27.589928",
+      "query_duration_ms": 7591,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 256096644,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(relative_humidity)!=81600 OR arrayExists((word,bound)->(bitAnd(bitOr(bi",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:07:35.182438",
+      "query_duration_ms": 21118,
+      "read_rows": 6402,
+      "read_bytes": 8358502416,
+      "memory_usage": 317837896,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(dew_point_temperature)!=81600 OR arrayExists((word,bound)->(greatest(to",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:07:56.302086",
+      "query_duration_ms": 642,
+      "read_rows": 6402,
+      "read_bytes": 278666256,
+      "memory_usage": 9106874,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bitOr(bitOr(",
+      "exception_code": 0
+    },
+    {
+      "type": "QueryFinish",
+      "started": "2026-10-18 15:07:56.946122",
+      "query_duration_ms": 616,
+      "read_rows": 6402,
+      "read_bytes": 278666256,
+      "memory_usage": 9211706,
+      "predicate": "SELECT count() FROM meteogram_native.rrfs_20261018190636_ef01686e WHERE length(dew_point_temperature_2m)!=2720 OR arrayExists((word,bound)->(bitAnd(bi",
+      "exception_code": 0
+    }
+  ],
+  "scope": "ClickHouse per-query peak memory for the final one-column packed predicates on the original RRFS table, merged clone, API preview and publication clone; not whole-server resident memory. Query-condition caching may skip granules on repeated immutable-table predicates."
+}

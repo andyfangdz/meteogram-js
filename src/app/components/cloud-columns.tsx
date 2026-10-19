@@ -1,6 +1,11 @@
 import React from "react";
 import { Group } from "@visx/group";
-import { CloudColumn, CloudCell } from "../../types/weather";
+import {
+  CloudColumn,
+  CloudCell,
+  NativeCloudLayer,
+  HoveredCloud,
+} from "../../types/weather";
 import { formatNumber } from "../../utils/meteogram";
 import {
   getInstabilityColor,
@@ -28,9 +33,13 @@ interface CloudColumnsProps {
   showParcelBuoyancy: boolean;
   parcelProfiles: ParcelProfile[];
   model: WeatherModel;
-  frozenRect: { date: Date; cloudCell: CloudCell } | null;
-  onHover: (date: Date | null, cloudCell: CloudCell | null) => void;
-  onFreezeChange: (rect: { date: Date; cloudCell: CloudCell } | null) => void;
+  frozenRect: HoveredCloud | null;
+  onHover: (
+    date: Date | null,
+    cloudCell: CloudCell | null,
+    nativeCloudLayer?: NativeCloudLayer,
+  ) => void;
+  onFreezeChange: (rect: HoveredCloud | null) => void;
 }
 
 const CloudColumns: React.FC<CloudColumnsProps> = ({
@@ -49,11 +58,23 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   onHover,
   onFreezeChange,
 }) => {
+  const widthFor = (column: CloudColumn) =>
+    column.durationMinutes
+      ? Math.max(
+          0,
+          scales.dateScale(
+            new Date(column.date.getTime() + column.durationMinutes * 60_000),
+          ) - scales.dateScale(column.date),
+        )
+      : barWidth;
   // Convert pressureLevels array to Set for O(1) lookups during filtering
   // This optimization is beneficial when filtering large datasets (many cloud cells per column)
   // Trade-off: Set creation has overhead, but pays off when pressureLevels.length > ~10
   // and when weatherData contains many columns with many cloud cells each
-  const pressureLevelsSet = React.useMemo(() => new Set(pressureLevels), [pressureLevels]);
+  const pressureLevelsSet = React.useMemo(
+    () => new Set(pressureLevels),
+    [pressureLevels],
+  );
 
   // Memoize filtered weather data to avoid recomputing on every render.
   // We also carry a parallel filteredParcelTemps array — parcelProfiles is
@@ -79,11 +100,14 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
   // The parent component MUST memoize these callbacks (e.g., with useCallback)
   // to prevent these handlers from being recreated on every render.
   // Currently verified: meteogram.tsx memoizes both callbacks correctly.
-  const handleMouseEnter = React.useCallback((date: Date, cloud: CloudCell) => {
-    if (!frozenRect) {
-      onHover(date, cloud);
-    }
-  }, [frozenRect, onHover]);
+  const handleMouseEnter = React.useCallback(
+    (date: Date, cloud: CloudCell, nativeCloudLayer?: NativeCloudLayer) => {
+      if (!frozenRect) {
+        onHover(date, cloud, nativeCloudLayer);
+      }
+    },
+    [frozenRect, onHover],
+  );
 
   const handleMouseLeave = React.useCallback(() => {
     if (!frozenRect) {
@@ -103,33 +127,38 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
       const next =
         idx < filteredClouds.length - 1 ? filteredClouds[idx + 1] : null;
       return {
-        tintBottom: prev
-          ? (prev.mslFt + cloud.mslFt) / 2
-          : cloud.mslFtBottom,
-        tintTop: next
-          ? (cloud.mslFt + next.mslFt) / 2
-          : cloud.mslFtTop,
+        tintBottom: prev ? (prev.mslFt + cloud.mslFt) / 2 : cloud.mslFtBottom,
+        tintTop: next ? (cloud.mslFt + next.mslFt) / 2 : cloud.mslFtTop,
       };
     },
     [],
   );
 
-  const handleClick = React.useCallback((date: Date, cloud: CloudCell, event: React.MouseEvent) => {
-    if ((event.nativeEvent as PointerEvent).pointerType === "mouse") {
-      if (frozenRect) {
-        onFreezeChange(null);
-        onHover(date, cloud);
-      } else {
-        onFreezeChange({ date, cloudCell: cloud });
-        onHover(date, cloud);
+  const handleClick = React.useCallback(
+    (
+      date: Date,
+      cloud: CloudCell,
+      event: React.MouseEvent,
+      nativeCloudLayer?: NativeCloudLayer,
+    ) => {
+      if ((event.nativeEvent as PointerEvent).pointerType === "mouse") {
+        if (frozenRect) {
+          onFreezeChange(null);
+          onHover(date, cloud, nativeCloudLayer);
+        } else {
+          onFreezeChange({ date, cloudCell: cloud, nativeCloudLayer });
+          onHover(date, cloud, nativeCloudLayer);
+        }
       }
-    }
-  }, [frozenRect, onFreezeChange, onHover]);
+    },
+    [frozenRect, onFreezeChange, onHover],
+  );
 
   return (
     <>
       {filteredWeatherData.map((d) => {
         const { filteredClouds, filteredParcelTemps } = d;
+        const columnWidth = widthFor(d);
 
         return (
           <Group
@@ -137,7 +166,29 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
             left={formatNumber(scales.dateScale(d.date))}
             className="cloud-column"
           >
-            {filteredClouds?.map((cloud) => {
+            {(d.nativeCloudLayers ?? filteredClouds).map((cloud) => {
+              const nativeLayer = "modelLevel" in cloud ? cloud : undefined;
+              const atmosphere = nativeLayer
+                ? d.cloud.reduce((a, b) =>
+                    Math.abs(a.mslFt - cloud.mslFt) <=
+                    Math.abs(b.mslFt - cloud.mslFt)
+                      ? a
+                      : b,
+                  )
+                : (cloud as CloudCell);
+              // Native model layers extend well above the displayed 20,000 ft.
+              const top = nativeLayer
+                ? Math.max(
+                    scales.mslScale(20_000),
+                    scales.mslScale(cloud.mslFtTop),
+                  )
+                : scales.mslScale(cloud.mslFtTop);
+              const bottom = nativeLayer
+                ? Math.min(
+                    scales.mslScale(0),
+                    scales.mslScale(cloud.mslFtBottom),
+                  )
+                : scales.mslScale(cloud.mslFtBottom);
               const coverage = clampCloudCoverageAt50Pct
                 ? Math.min(cloud.cloudCoverage, 50)
                 : cloud.cloudCoverage;
@@ -149,22 +200,28 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
 
               return (
                 <rect
-                  className={`cloud-cell cloud-cell-${cloud.hpa}`}
-                  key={`cloud-${cloud.hpa}`}
+                  className={
+                    nativeLayer
+                      ? `cloud-cell native-cloud-cell native-cloud-level-${nativeLayer.modelLevel}`
+                      : `cloud-cell cloud-cell-${cloud.hpa}`
+                  }
+                  data-model-level={nativeLayer?.modelLevel}
+                  key={`cloud-${nativeLayer?.modelLevel ?? cloud.hpa}`}
                   x={formatNumber(0)}
-                  y={formatNumber(scales.mslScale(cloud.mslFtTop))}
-                  width={formatNumber(barWidth)}
-                  height={formatNumber(
-                    scales.mslScale(cloud.mslFtBottom) -
-                      scales.mslScale(cloud.mslFtTop),
-                  )}
+                  y={formatNumber(top)}
+                  width={formatNumber(columnWidth)}
+                  height={formatNumber(Math.max(0, bottom - top))}
                   fill={fillColor}
                   stroke="transparent"
                   strokeWidth={0}
                   style={{ cursor: "default" }}
-                  onMouseEnter={() => handleMouseEnter(d.date, cloud)}
+                  onMouseEnter={() =>
+                    handleMouseEnter(d.date, atmosphere, nativeLayer)
+                  }
                   onMouseLeave={handleMouseLeave}
-                  onClick={(event) => handleClick(d.date, cloud, event)}
+                  onClick={(event) =>
+                    handleClick(d.date, atmosphere, event, nativeLayer)
+                  }
                 />
               );
             })}
@@ -193,7 +250,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                     key={`stability-${cloud.hpa}`}
                     x={formatNumber(0)}
                     y={formatNumber(scales.mslScale(tintTop))}
-                    width={formatNumber(barWidth)}
+                    width={formatNumber(columnWidth)}
                     height={formatNumber(
                       scales.mslScale(tintBottom) - scales.mslScale(tintTop),
                     )}
@@ -221,7 +278,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                     key={`parcel-${cloud.hpa}`}
                     x={formatNumber(0)}
                     y={formatNumber(scales.mslScale(tintTop))}
-                    width={formatNumber(barWidth)}
+                    width={formatNumber(columnWidth)}
                     height={formatNumber(
                       scales.mslScale(tintBottom) - scales.mslScale(tintTop),
                     )}
@@ -239,7 +296,19 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
         model &&
         MODEL_CONFIGS[model] &&
         weatherData
-          .filter((_, index) => index % MODEL_CONFIGS[model].windBarbStep === 0)
+          .filter((d, index) => {
+            if (!d.durationMinutes)
+              return index % MODEL_CONFIGS[model].windBarbStep === 0;
+            const config = MODEL_CONFIGS[model];
+            const minutes =
+              config.windBarbStep *
+              (config.forecastDataKey === "minutely15" ? 15 : 60);
+            return (
+              d.date.getTime() %
+                (Math.max(minutes, d.durationMinutes) * 60_000) ===
+              0
+            );
+          })
           .map((d) =>
             d.cloud
               ?.filter(
@@ -258,7 +327,7 @@ const CloudColumns: React.FC<CloudColumnsProps> = ({
                   className={`wind-barb-group wind-barb-${cloud.hpa}`}
                 >
                   <WindBarb
-                    x={formatNumber(scales.dateScale(d.date) + barWidth / 2)}
+                    x={formatNumber(scales.dateScale(d.date) + widthFor(d) / 2)}
                     y={formatNumber(scales.mslScale(cloud.geopotentialFt))}
                     speed={cloud.windSpeed}
                     direction={cloud.windDirection}

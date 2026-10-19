@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "report": [
+    {
+      "check": "model navigation",
+      "passed": true
+    },
+    {
+      "check": "manual refresh",
+      "passed": true
+    },
+    {
+      "check": "preference reload",
+      "passed": true
+    },
+    {
+      "check": "Point@40.7,-74.0",
+      "provider": "dynamical",
+      "cells": 1410
+    },
+    {
+      "check": "London@51.5,-0.1",
+      "provider": "open-meteo",
+      "cells": 5040
+    }
+  ],
+  "errors": [],
+  "browserDirectApiRequests": 0
+}

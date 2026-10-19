@@ -1,5 +1,5 @@
 import range from "lodash/range";
-import { Locations, WeatherModel } from "../types/weather";
+import { Locations, WeatherModel, NativeWeatherModel } from "../types/weather";
 
 export const API_URL = "https://api.open-meteo.com/v1/forecast";
 
@@ -14,6 +14,7 @@ export const MODEL_NAMES: WeatherModel[] = [
   "best_match",
   "gfs_seamless",
   "gfs_hrrr",
+  "rrfs",
   "ecmwf_ifs",
   "ecmwf_aifs025_single",
   "gem_seamless",
@@ -34,6 +35,8 @@ export class ModelConfig {
     windBarbPressureLevelStep,
     maxIsothermStepDistance,
     hpaLevels,
+    nativeModel,
+    fallbackModel,
   }: {
     varsKey: string;
     stepKey: string;
@@ -43,6 +46,8 @@ export class ModelConfig {
     windBarbPressureLevelStep: number;
     maxIsothermStepDistance: number;
     hpaLevels: number[];
+    nativeModel?: NativeWeatherModel;
+    fallbackModel?: WeatherModel;
   }) {
     this.varsKey = varsKey;
     this.stepKey = stepKey;
@@ -52,6 +57,8 @@ export class ModelConfig {
     this.windBarbPressureLevelStep = windBarbPressureLevelStep;
     this.maxIsothermStepDistance = maxIsothermStepDistance;
     this.hpaLevels = hpaLevels;
+    this.nativeModel = nativeModel;
+    this.fallbackModel = fallbackModel;
   }
 
   varsKey: string;
@@ -62,6 +69,8 @@ export class ModelConfig {
   windBarbPressureLevelStep: number;
   maxIsothermStepDistance: number;
   hpaLevels: number[];
+  nativeModel?: NativeWeatherModel;
+  fallbackModel?: WeatherModel;
 
   getCloudCoverVars() {
     return this.hpaLevels.map((hpa) => `cloud_cover_${hpa}hPa`);
@@ -107,6 +116,7 @@ export class ModelConfig {
 
 export const MODEL_CONFIGS: ModelConfigs = {
   best_match: new ModelConfig({
+    nativeModel: "hrrr",
     varsKey: "minutely_15",
     stepKey: "forecast_minutely_15",
     stepSize: 4 * 80, // 4 times per hour * 40 hours
@@ -117,6 +127,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
   gfs_hrrr: new ModelConfig({
+    nativeModel: "hrrr",
     varsKey: "minutely_15",
     stepKey: "forecast_minutely_15",
     stepSize: 4 * 40, // 4 times per hour * 40 hours
@@ -127,6 +138,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
   gfs_seamless: new ModelConfig({
+    nativeModel: "gfs",
     varsKey: "hourly",
     stepKey: "forecast_hourly",
     stepSize: 24 * 7, // 24 hours * 7 days
@@ -147,6 +159,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
   ecmwf_aifs025_single: new ModelConfig({
+    nativeModel: "aifs",
     varsKey: "hourly",
     stepKey: "forecast_hourly",
     stepSize: 24 * 7, // 24 hours * 7 days
@@ -154,6 +167,18 @@ export const MODEL_CONFIGS: ModelConfigs = {
     windBarbStep: 3, // Show wind barbs every 3 hours
     windBarbPressureLevelStep: 1, // Show wind barbs for every pressure level
     maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
+    hpaLevels: DEFAULT_HPA_LEVELS,
+  }),
+  rrfs: new ModelConfig({
+    nativeModel: "rrfs",
+    fallbackModel: "gfs_seamless",
+    varsKey: "hourly",
+    stepKey: "forecast_hourly",
+    stepSize: 85,
+    forecastDataKey: "hourly",
+    windBarbStep: 1,
+    windBarbPressureLevelStep: 4,
+    maxIsothermStepDistance: 6,
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
   gem_seamless: new ModelConfig({
@@ -207,4 +232,3 @@ export const DEFAULT_PARAMS = {
 
 export const FEET_PER_METER = 3.28084;
 export const MAX_VARIABLES_PER_REQUEST = 80;
-

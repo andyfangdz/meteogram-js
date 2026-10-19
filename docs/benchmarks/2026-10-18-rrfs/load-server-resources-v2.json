@@ -1,0 +1,10 @@
+{
+  "samples": 344,
+  "first_time": 1792349715.2026732,
+  "last_time": 1792350060.7968585,
+  "max_resident_bytes": 2476630016,
+  "max_tracked_bytes": 2311249006,
+  "minimum_free_bytes": 264449986560,
+  "errors": [],
+  "scope": "ClickHouse asynchronous resident and tracked-memory counters sampled approximately once a second during RRFS load and standalone validation; does not capture every transient peak"
+}

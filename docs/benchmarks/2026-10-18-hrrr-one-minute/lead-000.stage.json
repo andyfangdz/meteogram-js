@@ -1,0 +1,2018 @@
+{
+  "version": 2,
+  "dtype": "uint16_le",
+  "shape": [
+    1638757,
+    30,
+    6
+  ],
+  "block_cells": 4096,
+  "encoding": "spatial_delta_shuffle16",
+  "blocks": [
+    {
+      "offset": 0,
+      "bytes": 343784,
+      "values": 737280
+    },
+    {
+      "offset": 343784,
+      "bytes": 346581,
+      "values": 737280
+    },
+    {
+      "offset": 690365,
+      "bytes": 338178,
+      "values": 737280
+    },
+    {
+      "offset": 1028543,
+      "bytes": 330751,
+      "values": 737280
+    },
+    {
+      "offset": 1359294,
+      "bytes": 329607,
+      "values": 737280
+    },
+    {
+      "offset": 1688901,
+      "bytes": 333661,
+      "values": 737280
+    },
+    {
+      "offset": 2022562,
+      "bytes": 328700,
+      "values": 737280
+    },
+    {
+      "offset": 2351262,
+      "bytes": 327410,
+      "values": 737280
+    },
+    {
+      "offset": 2678672,
+      "bytes": 322388,
+      "values": 737280
+    },
+    {
+      "offset": 3001060,
+      "bytes": 326845,
+      "values": 737280
+    },
+    {
+      "offset": 3327905,
+      "bytes": 323820,
+      "values": 737280
+    },
+    {
+      "offset": 3651725,
+      "bytes": 323570,
+      "values": 737280
+    },
+    {
+      "offset": 3975295,
+      "bytes": 326320,
+      "values": 737280
+    },
+    {
+      "offset": 4301615,
+      "bytes": 322152,
+      "values": 737280
+    },
+    {
+      "offset": 4623767,
+      "bytes": 318578,
+      "values": 737280
+    },
+    {
+      "offset": 4942345,
+      "bytes": 316274,
+      "values": 737280
+    },
+    {
+      "offset": 5258619,
+      "bytes": 318435,
+      "values": 737280
+    },
+    {
+      "offset": 5577054,
+      "bytes": 317793,
+      "values": 737280
+    },
+    {
+      "offset": 5894847,
+      "bytes": 316902,
+      "values": 737280
+    },
+    {
+      "offset": 6211749,
+      "bytes": 315320,
+      "values": 737280
+    },
+    {
+      "offset": 6527069,
+      "bytes": 318519,
+      "values": 737280
+    },
+    {
+      "offset": 6845588,
+      "bytes": 318499,
+      "values": 737280
+    },
+    {
+      "offset": 7164087,
+      "bytes": 316441,
+      "values": 737280
+    },
+    {
+      "offset": 7480528,
+      "bytes": 318485,
+      "values": 737280
+    },
+    {
+      "offset": 7799013,
+      "bytes": 319445,
+      "values": 737280
+    },
+    {
+      "offset": 8118458,
+      "bytes": 322456,
+      "values": 737280
+    },
+    {
+      "offset": 8440914,
+      "bytes": 320498,
+      "values": 737280
+    },
+    {
+      "offset": 8761412,
+      "bytes": 324183,
+      "values": 737280
+    },
+    {
+      "offset": 9085595,
+      "bytes": 323694,
+      "values": 737280
+    },
+    {
+      "offset": 9409289,
+      "bytes": 320525,
+      "values": 737280
+    },
+    {
+      "offset": 9729814,
+      "bytes": 321092,
+      "values": 737280
+    },
+    {
+      "offset": 10050906,
+      "bytes": 321313,
+      "values": 737280
+    },
+    {
+      "offset": 10372219,
+      "bytes": 319747,
+      "values": 737280
+    },
+    {
+      "offset": 10691966,
+      "bytes": 316975,
+      "values": 737280
+    },
+    {
+      "offset": 11008941,
+      "bytes": 320633,
+      "values": 737280
+    },
+    {
+      "offset": 11329574,
+      "bytes": 319441,
+      "values": 737280
+    },
+    {
+      "offset": 11649015,
+      "bytes": 319214,
+      "values": 737280
+    },
+    {
+      "offset": 11968229,
+      "bytes": 320996,
+      "values": 737280
+    },
+    {
+      "offset": 12289225,
+      "bytes": 323328,
+      "values": 737280
+    },
+    {
+      "offset": 12612553,
+      "bytes": 320260,
+      "values": 737280
+    },
+    {
+      "offset": 12932813,
+      "bytes": 321089,
+      "values": 737280
+    },
+    {
+      "offset": 13253902,
+      "bytes": 322175,
+      "values": 737280
+    },
+    {
+      "offset": 13576077,
+      "bytes": 318077,
+      "values": 737280
+    },
+    {
+      "offset": 13894154,
+      "bytes": 318960,
+      "values": 737280
+    },
+    {
+      "offset": 14213114,
+      "bytes": 319404,
+      "values": 737280
+    },
+    {
+      "offset": 14532518,
+      "bytes": 319123,
+      "values": 737280
+    },
+    {
+      "offset": 14851641,
+      "bytes": 321327,
+      "values": 737280
+    },
+    {
+      "offset": 15172968,
+      "bytes": 320169,
+      "values": 737280
+    },
+    {
+      "offset": 15493137,
+      "bytes": 317595,
+      "values": 737280
+    },
+    {
+      "offset": 15810732,
+      "bytes": 320953,
+      "values": 737280
+    },
+    {
+      "offset": 16131685,
+      "bytes": 317855,
+      "values": 737280
+    },
+    {
+      "offset": 16449540,
+      "bytes": 319583,
+      "values": 737280
+    },
+    {
+      "offset": 16769123,
+      "bytes": 324376,
+      "values": 737280
+    },
+    {
+      "offset": 17093499,
+      "bytes": 320242,
+      "values": 737280
+    },
+    {
+      "offset": 17413741,
+      "bytes": 320263,
+      "values": 737280
+    },
+    {
+      "offset": 17734004,
+      "bytes": 323721,
+      "values": 737280
+    },
+    {
+      "offset": 18057725,
+      "bytes": 322397,
+      "values": 737280
+    },
+    {
+      "offset": 18380122,
+      "bytes": 325445,
+      "values": 737280
+    },
+    {
+      "offset": 18705567,
+      "bytes": 322002,
+      "values": 737280
+    },
+    {
+      "offset": 19027569,
+      "bytes": 325042,
+      "values": 737280
+    },
+    {
+      "offset": 19352611,
+      "bytes": 326084,
+      "values": 737280
+    },
+    {
+      "offset": 19678695,
+      "bytes": 321165,
+      "values": 737280
+    },
+    {
+      "offset": 19999860,
+      "bytes": 327605,
+      "values": 737280
+    },
+    {
+      "offset": 20327465,
+      "bytes": 321337,
+      "values": 737280
+    },
+    {
+      "offset": 20648802,
+      "bytes": 324595,
+      "values": 737280
+    },
+    {
+      "offset": 20973397,
+      "bytes": 324215,
+      "values": 737280
+    },
+    {
+      "offset": 21297612,
+      "bytes": 318689,
+      "values": 737280
+    },
+    {
+      "offset": 21616301,
+      "bytes": 326372,
+      "values": 737280
+    },
+    {
+      "offset": 21942673,
+      "bytes": 319802,
+      "values": 737280
+    },
+    {
+      "offset": 22262475,
+      "bytes": 325923,
+      "values": 737280
+    },
+    {
+      "offset": 22588398,
+      "bytes": 325987,
+      "values": 737280
+    },
+    {
+      "offset": 22914385,
+      "bytes": 327463,
+      "values": 737280
+    },
+    {
+      "offset": 23241848,
+      "bytes": 334442,
+      "values": 737280
+    },
+    {
+      "offset": 23576290,
+      "bytes": 328268,
+      "values": 737280
+    },
+    {
+      "offset": 23904558,
+      "bytes": 336406,
+      "values": 737280
+    },
+    {
+      "offset": 24240964,
+      "bytes": 332323,
+      "values": 737280
+    },
+    {
+      "offset": 24573287,
+      "bytes": 335709,
+      "values": 737280
+    },
+    {
+      "offset": 24908996,
+      "bytes": 334489,
+      "values": 737280
+    },
+    {
+      "offset": 25243485,
+      "bytes": 333384,
+      "values": 737280
+    },
+    {
+      "offset": 25576869,
+      "bytes": 335176,
+      "values": 737280
+    },
+    {
+      "offset": 25912045,
+      "bytes": 331544,
+      "values": 737280
+    },
+    {
+      "offset": 26243589,
+      "bytes": 338116,
+      "values": 737280
+    },
+    {
+      "offset": 26581705,
+      "bytes": 328851,
+      "values": 737280
+    },
+    {
+      "offset": 26910556,
+      "bytes": 336860,
+      "values": 737280
+    },
+    {
+      "offset": 27247416,
+      "bytes": 328858,
+      "values": 737280
+    },
+    {
+      "offset": 27576274,
+      "bytes": 332156,
+      "values": 737280
+    },
+    {
+      "offset": 27908430,
+      "bytes": 327234,
+      "values": 737280
+    },
+    {
+      "offset": 28235664,
+      "bytes": 331131,
+      "values": 737280
+    },
+    {
+      "offset": 28566795,
+      "bytes": 330214,
+      "values": 737280
+    },
+    {
+      "offset": 28897009,
+      "bytes": 330696,
+      "values": 737280
+    },
+    {
+      "offset": 29227705,
+      "bytes": 333306,
+      "values": 737280
+    },
+    {
+      "offset": 29561011,
+      "bytes": 332192,
+      "values": 737280
+    },
+    {
+      "offset": 29893203,
+      "bytes": 335308,
+      "values": 737280
+    },
+    {
+      "offset": 30228511,
+      "bytes": 332264,
+      "values": 737280
+    },
+    {
+      "offset": 30560775,
+      "bytes": 335942,
+      "values": 737280
+    },
+    {
+      "offset": 30896717,
+      "bytes": 331990,
+      "values": 737280
+    },
+    {
+      "offset": 31228707,
+      "bytes": 336160,
+      "values": 737280
+    },
+    {
+      "offset": 31564867,
+      "bytes": 333611,
+      "values": 737280
+    },
+    {
+      "offset": 31898478,
+      "bytes": 339400,
+      "values": 737280
+    },
+    {
+      "offset": 32237878,
+      "bytes": 333541,
+      "values": 737280
+    },
+    {
+      "offset": 32571419,
+      "bytes": 339805,
+      "values": 737280
+    },
+    {
+      "offset": 32911224,
+      "bytes": 334217,
+      "values": 737280
+    },
+    {
+      "offset": 33245441,
+      "bytes": 339929,
+      "values": 737280
+    },
+    {
+      "offset": 33585370,
+      "bytes": 333383,
+      "values": 737280
+    },
+    {
+      "offset": 33918753,
+      "bytes": 339188,
+      "values": 737280
+    },
+    {
+      "offset": 34257941,
+      "bytes": 333868,
+      "values": 737280
+    },
+    {
+      "offset": 34591809,
+      "bytes": 336869,
+      "values": 737280
+    },
+    {
+      "offset": 34928678,
+      "bytes": 333608,
+      "values": 737280
+    },
+    {
+      "offset": 35262286,
+      "bytes": 337219,
+      "values": 737280
+    },
+    {
+      "offset": 35599505,
+      "bytes": 334432,
+      "values": 737280
+    },
+    {
+      "offset": 35933937,
+      "bytes": 338230,
+      "values": 737280
+    },
+    {
+      "offset": 36272167,
+      "bytes": 336861,
+      "values": 737280
+    },
+    {
+      "offset": 36609028,
+      "bytes": 337180,
+      "values": 737280
+    },
+    {
+      "offset": 36946208,
+      "bytes": 338427,
+      "values": 737280
+    },
+    {
+      "offset": 37284635,
+      "bytes": 333448,
+      "values": 737280
+    },
+    {
+      "offset": 37618083,
+      "bytes": 340447,
+      "values": 737280
+    },
+    {
+      "offset": 37958530,
+      "bytes": 333773,
+      "values": 737280
+    },
+    {
+      "offset": 38292303,
+      "bytes": 341958,
+      "values": 737280
+    },
+    {
+      "offset": 38634261,
+      "bytes": 332370,
+      "values": 737280
+    },
+    {
+      "offset": 38966631,
+      "bytes": 340233,
+      "values": 737280
+    },
+    {
+      "offset": 39306864,
+      "bytes": 334102,
+      "values": 737280
+    },
+    {
+      "offset": 39640966,
+      "bytes": 339613,
+      "values": 737280
+    },
+    {
+      "offset": 39980579,
+      "bytes": 335737,
+      "values": 737280
+    },
+    {
+      "offset": 40316316,
+      "bytes": 336484,
+      "values": 737280
+    },
+    {
+      "offset": 40652800,
+      "bytes": 339298,
+      "values": 737280
+    },
+    {
+      "offset": 40992098,
+      "bytes": 335179,
+      "values": 737280
+    },
+    {
+      "offset": 41327277,
+      "bytes": 343038,
+      "values": 737280
+    },
+    {
+      "offset": 41670315,
+      "bytes": 335016,
+      "values": 737280
+    },
+    {
+      "offset": 42005331,
+      "bytes": 340990,
+      "values": 737280
+    },
+    {
+      "offset": 42346321,
+      "bytes": 336571,
+      "values": 737280
+    },
+    {
+      "offset": 42682892,
+      "bytes": 339268,
+      "values": 737280
+    },
+    {
+      "offset": 43022160,
+      "bytes": 340952,
+      "values": 737280
+    },
+    {
+      "offset": 43363112,
+      "bytes": 338576,
+      "values": 737280
+    },
+    {
+      "offset": 43701688,
+      "bytes": 343658,
+      "values": 737280
+    },
+    {
+      "offset": 44045346,
+      "bytes": 337577,
+      "values": 737280
+    },
+    {
+      "offset": 44382923,
+      "bytes": 343283,
+      "values": 737280
+    },
+    {
+      "offset": 44726206,
+      "bytes": 339928,
+      "values": 737280
+    },
+    {
+      "offset": 45066134,
+      "bytes": 343335,
+      "values": 737280
+    },
+    {
+      "offset": 45409469,
+      "bytes": 344678,
+      "values": 737280
+    },
+    {
+      "offset": 45754147,
+      "bytes": 342705,
+      "values": 737280
+    },
+    {
+      "offset": 46096852,
+      "bytes": 349092,
+      "values": 737280
+    },
+    {
+      "offset": 46445944,
+      "bytes": 339899,
+      "values": 737280
+    },
+    {
+      "offset": 46785843,
+      "bytes": 345899,
+      "values": 737280
+    },
+    {
+      "offset": 47131742,
+      "bytes": 341281,
+      "values": 737280
+    },
+    {
+      "offset": 47473023,
+      "bytes": 343650,
+      "values": 737280
+    },
+    {
+      "offset": 47816673,
+      "bytes": 345454,
+      "values": 737280
+    },
+    {
+      "offset": 48162127,
+      "bytes": 342487,
+      "values": 737280
+    },
+    {
+      "offset": 48504614,
+      "bytes": 347237,
+      "values": 737280
+    },
+    {
+      "offset": 48851851,
+      "bytes": 340481,
+      "values": 737280
+    },
+    {
+      "offset": 49192332,
+      "bytes": 347421,
+      "values": 737280
+    },
+    {
+      "offset": 49539753,
+      "bytes": 345034,
+      "values": 737280
+    },
+    {
+      "offset": 49884787,
+      "bytes": 346991,
+      "values": 737280
+    },
+    {
+      "offset": 50231778,
+      "bytes": 351856,
+      "values": 737280
+    },
+    {
+      "offset": 50583634,
+      "bytes": 344797,
+      "values": 737280
+    },
+    {
+      "offset": 50928431,
+      "bytes": 349785,
+      "values": 737280
+    },
+    {
+      "offset": 51278216,
+      "bytes": 345976,
+      "values": 737280
+    },
+    {
+      "offset": 51624192,
+      "bytes": 348022,
+      "values": 737280
+    },
+    {
+      "offset": 51972214,
+      "bytes": 351888,
+      "values": 737280
+    },
+    {
+      "offset": 52324102,
+      "bytes": 349025,
+      "values": 737280
+    },
+    {
+      "offset": 52673127,
+      "bytes": 351739,
+      "values": 737280
+    },
+    {
+      "offset": 53024866,
+      "bytes": 346781,
+      "values": 737280
+    },
+    {
+      "offset": 53371647,
+      "bytes": 351898,
+      "values": 737280
+    },
+    {
+      "offset": 53723545,
+      "bytes": 355681,
+      "values": 737280
+    },
+    {
+      "offset": 54079226,
+      "bytes": 349946,
+      "values": 737280
+    },
+    {
+      "offset": 54429172,
+      "bytes": 353817,
+      "values": 737280
+    },
+    {
+      "offset": 54782989,
+      "bytes": 350253,
+      "values": 737280
+    },
+    {
+      "offset": 55133242,
+      "bytes": 354370,
+      "values": 737280
+    },
+    {
+      "offset": 55487612,
+      "bytes": 359682,
+      "values": 737280
+    },
+    {
+      "offset": 55847294,
+      "bytes": 354429,
+      "values": 737280
+    },
+    {
+      "offset": 56201723,
+      "bytes": 358943,
+      "values": 737280
+    },
+    {
+      "offset": 56560666,
+      "bytes": 354860,
+      "values": 737280
+    },
+    {
+      "offset": 56915526,
+      "bytes": 356153,
+      "values": 737280
+    },
+    {
+      "offset": 57271679,
+      "bytes": 359061,
+      "values": 737280
+    },
+    {
+      "offset": 57630740,
+      "bytes": 349691,
+      "values": 737280
+    },
+    {
+      "offset": 57980431,
+      "bytes": 357372,
+      "values": 737280
+    },
+    {
+      "offset": 58337803,
+      "bytes": 356456,
+      "values": 737280
+    },
+    {
+      "offset": 58694259,
+      "bytes": 357685,
+      "values": 737280
+    },
+    {
+      "offset": 59051944,
+      "bytes": 360184,
+      "values": 737280
+    },
+    {
+      "offset": 59412128,
+      "bytes": 350526,
+      "values": 737280
+    },
+    {
+      "offset": 59762654,
+      "bytes": 359714,
+      "values": 737280
+    },
+    {
+      "offset": 60122368,
+      "bytes": 359532,
+      "values": 737280
+    },
+    {
+      "offset": 60481900,
+      "bytes": 358248,
+      "values": 737280
+    },
+    {
+      "offset": 60840148,
+      "bytes": 361327,
+      "values": 737280
+    },
+    {
+      "offset": 61201475,
+      "bytes": 358106,
+      "values": 737280
+    },
+    {
+      "offset": 61559581,
+      "bytes": 363922,
+      "values": 737280
+    },
+    {
+      "offset": 61923503,
+      "bytes": 363377,
+      "values": 737280
+    },
+    {
+      "offset": 62286880,
+      "bytes": 352620,
+      "values": 737280
+    },
+    {
+      "offset": 62639500,
+      "bytes": 363030,
+      "values": 737280
+    },
+    {
+      "offset": 63002530,
+      "bytes": 360487,
+      "values": 737280
+    },
+    {
+      "offset": 63363017,
+      "bytes": 360203,
+      "values": 737280
+    },
+    {
+      "offset": 63723220,
+      "bytes": 360167,
+      "values": 737280
+    },
+    {
+      "offset": 64083387,
+      "bytes": 356035,
+      "values": 737280
+    },
+    {
+      "offset": 64439422,
+      "bytes": 364265,
+      "values": 737280
+    },
+    {
+      "offset": 64803687,
+      "bytes": 364895,
+      "values": 737280
+    },
+    {
+      "offset": 65168582,
+      "bytes": 354258,
+      "values": 737280
+    },
+    {
+      "offset": 65522840,
+      "bytes": 364969,
+      "values": 737280
+    },
+    {
+      "offset": 65887809,
+      "bytes": 364209,
+      "values": 737280
+    },
+    {
+      "offset": 66252018,
+      "bytes": 358736,
+      "values": 737280
+    },
+    {
+      "offset": 66610754,
+      "bytes": 362519,
+      "values": 737280
+    },
+    {
+      "offset": 66973273,
+      "bytes": 357614,
+      "values": 737280
+    },
+    {
+      "offset": 67330887,
+      "bytes": 362780,
+      "values": 737280
+    },
+    {
+      "offset": 67693667,
+      "bytes": 359446,
+      "values": 737280
+    },
+    {
+      "offset": 68053113,
+      "bytes": 353772,
+      "values": 737280
+    },
+    {
+      "offset": 68406885,
+      "bytes": 362844,
+      "values": 737280
+    },
+    {
+      "offset": 68769729,
+      "bytes": 358902,
+      "values": 737280
+    },
+    {
+      "offset": 69128631,
+      "bytes": 350414,
+      "values": 737280
+    },
+    {
+      "offset": 69479045,
+      "bytes": 361022,
+      "values": 737280
+    },
+    {
+      "offset": 69840067,
+      "bytes": 360979,
+      "values": 737280
+    },
+    {
+      "offset": 70201046,
+      "bytes": 353139,
+      "values": 737280
+    },
+    {
+      "offset": 70554185,
+      "bytes": 359909,
+      "values": 737280
+    },
+    {
+      "offset": 70914094,
+      "bytes": 359436,
+      "values": 737280
+    },
+    {
+      "offset": 71273530,
+      "bytes": 356076,
+      "values": 737280
+    },
+    {
+      "offset": 71629606,
+      "bytes": 355299,
+      "values": 737280
+    },
+    {
+      "offset": 71984905,
+      "bytes": 355647,
+      "values": 737280
+    },
+    {
+      "offset": 72340552,
+      "bytes": 357784,
+      "values": 737280
+    },
+    {
+      "offset": 72698336,
+      "bytes": 353746,
+      "values": 737280
+    },
+    {
+      "offset": 73052082,
+      "bytes": 352207,
+      "values": 737280
+    },
+    {
+      "offset": 73404289,
+      "bytes": 356177,
+      "values": 737280
+    },
+    {
+      "offset": 73760466,
+      "bytes": 353679,
+      "values": 737280
+    },
+    {
+      "offset": 74114145,
+      "bytes": 351852,
+      "values": 737280
+    },
+    {
+      "offset": 74465997,
+      "bytes": 358323,
+      "values": 737280
+    },
+    {
+      "offset": 74824320,
+      "bytes": 354777,
+      "values": 737280
+    },
+    {
+      "offset": 75179097,
+      "bytes": 351481,
+      "values": 737280
+    },
+    {
+      "offset": 75530578,
+      "bytes": 358395,
+      "values": 737280
+    },
+    {
+      "offset": 75888973,
+      "bytes": 352864,
+      "values": 737280
+    },
+    {
+      "offset": 76241837,
+      "bytes": 347593,
+      "values": 737280
+    },
+    {
+      "offset": 76589430,
+      "bytes": 353928,
+      "values": 737280
+    },
+    {
+      "offset": 76943358,
+      "bytes": 350808,
+      "values": 737280
+    },
+    {
+      "offset": 77294166,
+      "bytes": 345544,
+      "values": 737280
+    },
+    {
+      "offset": 77639710,
+      "bytes": 352007,
+      "values": 737280
+    },
+    {
+      "offset": 77991717,
+      "bytes": 349488,
+      "values": 737280
+    },
+    {
+      "offset": 78341205,
+      "bytes": 343649,
+      "values": 737280
+    },
+    {
+      "offset": 78684854,
+      "bytes": 351074,
+      "values": 737280
+    },
+    {
+      "offset": 79035928,
+      "bytes": 347951,
+      "values": 737280
+    },
+    {
+      "offset": 79383879,
+      "bytes": 343556,
+      "values": 737280
+    },
+    {
+      "offset": 79727435,
+      "bytes": 350587,
+      "values": 737280
+    },
+    {
+      "offset": 80078022,
+      "bytes": 345828,
+      "values": 737280
+    },
+    {
+      "offset": 80423850,
+      "bytes": 341595,
+      "values": 737280
+    },
+    {
+      "offset": 80765445,
+      "bytes": 347456,
+      "values": 737280
+    },
+    {
+      "offset": 81112901,
+      "bytes": 343671,
+      "values": 737280
+    },
+    {
+      "offset": 81456572,
+      "bytes": 340650,
+      "values": 737280
+    },
+    {
+      "offset": 81797222,
+      "bytes": 343516,
+      "values": 737280
+    },
+    {
+      "offset": 82140738,
+      "bytes": 341098,
+      "values": 737280
+    },
+    {
+      "offset": 82481836,
+      "bytes": 340324,
+      "values": 737280
+    },
+    {
+      "offset": 82822160,
+      "bytes": 341952,
+      "values": 737280
+    },
+    {
+      "offset": 83164112,
+      "bytes": 341580,
+      "values": 737280
+    },
+    {
+      "offset": 83505692,
+      "bytes": 341906,
+      "values": 737280
+    },
+    {
+      "offset": 83847598,
+      "bytes": 338396,
+      "values": 737280
+    },
+    {
+      "offset": 84185994,
+      "bytes": 337712,
+      "values": 737280
+    },
+    {
+      "offset": 84523706,
+      "bytes": 341433,
+      "values": 737280
+    },
+    {
+      "offset": 84865139,
+      "bytes": 336210,
+      "values": 737280
+    },
+    {
+      "offset": 85201349,
+      "bytes": 335125,
+      "values": 737280
+    },
+    {
+      "offset": 85536474,
+      "bytes": 340368,
+      "values": 737280
+    },
+    {
+      "offset": 85876842,
+      "bytes": 333572,
+      "values": 737280
+    },
+    {
+      "offset": 86210414,
+      "bytes": 335300,
+      "values": 737280
+    },
+    {
+      "offset": 86545714,
+      "bytes": 337336,
+      "values": 737280
+    },
+    {
+      "offset": 86883050,
+      "bytes": 330826,
+      "values": 737280
+    },
+    {
+      "offset": 87213876,
+      "bytes": 336149,
+      "values": 737280
+    },
+    {
+      "offset": 87550025,
+      "bytes": 331975,
+      "values": 737280
+    },
+    {
+      "offset": 87882000,
+      "bytes": 333030,
+      "values": 737280
+    },
+    {
+      "offset": 88215030,
+      "bytes": 331536,
+      "values": 737280
+    },
+    {
+      "offset": 88546566,
+      "bytes": 332445,
+      "values": 737280
+    },
+    {
+      "offset": 88879011,
+      "bytes": 338023,
+      "values": 737280
+    },
+    {
+      "offset": 89217034,
+      "bytes": 331828,
+      "values": 737280
+    },
+    {
+      "offset": 89548862,
+      "bytes": 332901,
+      "values": 737280
+    },
+    {
+      "offset": 89881763,
+      "bytes": 340225,
+      "values": 737280
+    },
+    {
+      "offset": 90221988,
+      "bytes": 332314,
+      "values": 737280
+    },
+    {
+      "offset": 90554302,
+      "bytes": 337134,
+      "values": 737280
+    },
+    {
+      "offset": 90891436,
+      "bytes": 336587,
+      "values": 737280
+    },
+    {
+      "offset": 91228023,
+      "bytes": 335250,
+      "values": 737280
+    },
+    {
+      "offset": 91563273,
+      "bytes": 332922,
+      "values": 737280
+    },
+    {
+      "offset": 91896195,
+      "bytes": 331752,
+      "values": 737280
+    },
+    {
+      "offset": 92227947,
+      "bytes": 336583,
+      "values": 737280
+    },
+    {
+      "offset": 92564530,
+      "bytes": 329527,
+      "values": 737280
+    },
+    {
+      "offset": 92894057,
+      "bytes": 329061,
+      "values": 737280
+    },
+    {
+      "offset": 93223118,
+      "bytes": 332985,
+      "values": 737280
+    },
+    {
+      "offset": 93556103,
+      "bytes": 327647,
+      "values": 737280
+    },
+    {
+      "offset": 93883750,
+      "bytes": 328769,
+      "values": 737280
+    },
+    {
+      "offset": 94212519,
+      "bytes": 327825,
+      "values": 737280
+    },
+    {
+      "offset": 94540344,
+      "bytes": 332384,
+      "values": 737280
+    },
+    {
+      "offset": 94872728,
+      "bytes": 324319,
+      "values": 737280
+    },
+    {
+      "offset": 95197047,
+      "bytes": 323885,
+      "values": 737280
+    },
+    {
+      "offset": 95520932,
+      "bytes": 330072,
+      "values": 737280
+    },
+    {
+      "offset": 95851004,
+      "bytes": 321898,
+      "values": 737280
+    },
+    {
+      "offset": 96172902,
+      "bytes": 321262,
+      "values": 737280
+    },
+    {
+      "offset": 96494164,
+      "bytes": 318647,
+      "values": 737280
+    },
+    {
+      "offset": 96812811,
+      "bytes": 323052,
+      "values": 737280
+    },
+    {
+      "offset": 97135863,
+      "bytes": 316951,
+      "values": 737280
+    },
+    {
+      "offset": 97452814,
+      "bytes": 318126,
+      "values": 737280
+    },
+    {
+      "offset": 97770940,
+      "bytes": 321704,
+      "values": 737280
+    },
+    {
+      "offset": 98092644,
+      "bytes": 317968,
+      "values": 737280
+    },
+    {
+      "offset": 98410612,
+      "bytes": 318513,
+      "values": 737280
+    },
+    {
+      "offset": 98729125,
+      "bytes": 315135,
+      "values": 737280
+    },
+    {
+      "offset": 99044260,
+      "bytes": 320439,
+      "values": 737280
+    },
+    {
+      "offset": 99364699,
+      "bytes": 315491,
+      "values": 737280
+    },
+    {
+      "offset": 99680190,
+      "bytes": 319102,
+      "values": 737280
+    },
+    {
+      "offset": 99999292,
+      "bytes": 317118,
+      "values": 737280
+    },
+    {
+      "offset": 100316410,
+      "bytes": 324066,
+      "values": 737280
+    },
+    {
+      "offset": 100640476,
+      "bytes": 320348,
+      "values": 737280
+    },
+    {
+      "offset": 100960824,
+      "bytes": 323069,
+      "values": 737280
+    },
+    {
+      "offset": 101283893,
+      "bytes": 327366,
+      "values": 737280
+    },
+    {
+      "offset": 101611259,
+      "bytes": 324005,
+      "values": 737280
+    },
+    {
+      "offset": 101935264,
+      "bytes": 324849,
+      "values": 737280
+    },
+    {
+      "offset": 102260113,
+      "bytes": 319432,
+      "values": 737280
+    },
+    {
+      "offset": 102579545,
+      "bytes": 327737,
+      "values": 737280
+    },
+    {
+      "offset": 102907282,
+      "bytes": 321642,
+      "values": 737280
+    },
+    {
+      "offset": 103228924,
+      "bytes": 321779,
+      "values": 737280
+    },
+    {
+      "offset": 103550703,
+      "bytes": 321370,
+      "values": 737280
+    },
+    {
+      "offset": 103872073,
+      "bytes": 324697,
+      "values": 737280
+    },
+    {
+      "offset": 104196770,
+      "bytes": 323120,
+      "values": 737280
+    },
+    {
+      "offset": 104519890,
+      "bytes": 323284,
+      "values": 737280
+    },
+    {
+      "offset": 104843174,
+      "bytes": 329012,
+      "values": 737280
+    },
+    {
+      "offset": 105172186,
+      "bytes": 327181,
+      "values": 737280
+    },
+    {
+      "offset": 105499367,
+      "bytes": 328085,
+      "values": 737280
+    },
+    {
+      "offset": 105827452,
+      "bytes": 320334,
+      "values": 737280
+    },
+    {
+      "offset": 106147786,
+      "bytes": 329341,
+      "values": 737280
+    },
+    {
+      "offset": 106477127,
+      "bytes": 324967,
+      "values": 737280
+    },
+    {
+      "offset": 106802094,
+      "bytes": 324997,
+      "values": 737280
+    },
+    {
+      "offset": 107127091,
+      "bytes": 324552,
+      "values": 737280
+    },
+    {
+      "offset": 107451643,
+      "bytes": 327644,
+      "values": 737280
+    },
+    {
+      "offset": 107779287,
+      "bytes": 324736,
+      "values": 737280
+    },
+    {
+      "offset": 108104023,
+      "bytes": 321241,
+      "values": 737280
+    },
+    {
+      "offset": 108425264,
+      "bytes": 328027,
+      "values": 737280
+    },
+    {
+      "offset": 108753291,
+      "bytes": 325984,
+      "values": 737280
+    },
+    {
+      "offset": 109079275,
+      "bytes": 326468,
+      "values": 737280
+    },
+    {
+      "offset": 109405743,
+      "bytes": 322017,
+      "values": 737280
+    },
+    {
+      "offset": 109727760,
+      "bytes": 327485,
+      "values": 737280
+    },
+    {
+      "offset": 110055245,
+      "bytes": 324482,
+      "values": 737280
+    },
+    {
+      "offset": 110379727,
+      "bytes": 320223,
+      "values": 737280
+    },
+    {
+      "offset": 110699950,
+      "bytes": 324641,
+      "values": 737280
+    },
+    {
+      "offset": 111024591,
+      "bytes": 325717,
+      "values": 737280
+    },
+    {
+      "offset": 111350308,
+      "bytes": 326142,
+      "values": 737280
+    },
+    {
+      "offset": 111676450,
+      "bytes": 315449,
+      "values": 737280
+    },
+    {
+      "offset": 111991899,
+      "bytes": 324192,
+      "values": 737280
+    },
+    {
+      "offset": 112316091,
+      "bytes": 321648,
+      "values": 737280
+    },
+    {
+      "offset": 112637739,
+      "bytes": 320226,
+      "values": 737280
+    },
+    {
+      "offset": 112957965,
+      "bytes": 318199,
+      "values": 737280
+    },
+    {
+      "offset": 113276164,
+      "bytes": 321275,
+      "values": 737280
+    },
+    {
+      "offset": 113597439,
+      "bytes": 321449,
+      "values": 737280
+    },
+    {
+      "offset": 113918888,
+      "bytes": 314589,
+      "values": 737280
+    },
+    {
+      "offset": 114233477,
+      "bytes": 319211,
+      "values": 737280
+    },
+    {
+      "offset": 114552688,
+      "bytes": 317980,
+      "values": 737280
+    },
+    {
+      "offset": 114870668,
+      "bytes": 323217,
+      "values": 737280
+    },
+    {
+      "offset": 115193885,
+      "bytes": 315884,
+      "values": 737280
+    },
+    {
+      "offset": 115509769,
+      "bytes": 319928,
+      "values": 737280
+    },
+    {
+      "offset": 115829697,
+      "bytes": 319983,
+      "values": 737280
+    },
+    {
+      "offset": 116149680,
+      "bytes": 315122,
+      "values": 737280
+    },
+    {
+      "offset": 116464802,
+      "bytes": 317113,
+      "values": 737280
+    },
+    {
+      "offset": 116781915,
+      "bytes": 316485,
+      "values": 737280
+    },
+    {
+      "offset": 117098400,
+      "bytes": 320568,
+      "values": 737280
+    },
+    {
+      "offset": 117418968,
+      "bytes": 311682,
+      "values": 737280
+    },
+    {
+      "offset": 117730650,
+      "bytes": 318740,
+      "values": 737280
+    },
+    {
+      "offset": 118049390,
+      "bytes": 317489,
+      "values": 737280
+    },
+    {
+      "offset": 118366879,
+      "bytes": 319428,
+      "values": 737280
+    },
+    {
+      "offset": 118686307,
+      "bytes": 316473,
+      "values": 737280
+    },
+    {
+      "offset": 119002780,
+      "bytes": 317818,
+      "values": 737280
+    },
+    {
+      "offset": 119320598,
+      "bytes": 321522,
+      "values": 737280
+    },
+    {
+      "offset": 119642120,
+      "bytes": 315171,
+      "values": 737280
+    },
+    {
+      "offset": 119957291,
+      "bytes": 322467,
+      "values": 737280
+    },
+    {
+      "offset": 120279758,
+      "bytes": 320777,
+      "values": 737280
+    },
+    {
+      "offset": 120600535,
+      "bytes": 328343,
+      "values": 737280
+    },
+    {
+      "offset": 120928878,
+      "bytes": 318854,
+      "values": 737280
+    },
+    {
+      "offset": 121247732,
+      "bytes": 326813,
+      "values": 737280
+    },
+    {
+      "offset": 121574545,
+      "bytes": 327534,
+      "values": 737280
+    },
+    {
+      "offset": 121902079,
+      "bytes": 326110,
+      "values": 737280
+    },
+    {
+      "offset": 122228189,
+      "bytes": 332607,
+      "values": 737280
+    },
+    {
+      "offset": 122560796,
+      "bytes": 327855,
+      "values": 737280
+    },
+    {
+      "offset": 122888651,
+      "bytes": 333461,
+      "values": 737280
+    },
+    {
+      "offset": 123222112,
+      "bytes": 334886,
+      "values": 737280
+    },
+    {
+      "offset": 123556998,
+      "bytes": 332732,
+      "values": 737280
+    },
+    {
+      "offset": 123889730,
+      "bytes": 326591,
+      "values": 737280
+    },
+    {
+      "offset": 124216321,
+      "bytes": 328747,
+      "values": 737280
+    },
+    {
+      "offset": 124545068,
+      "bytes": 330641,
+      "values": 737280
+    },
+    {
+      "offset": 124875709,
+      "bytes": 326511,
+      "values": 737280
+    },
+    {
+      "offset": 125202220,
+      "bytes": 328667,
+      "values": 737280
+    },
+    {
+      "offset": 125530887,
+      "bytes": 327961,
+      "values": 737280
+    },
+    {
+      "offset": 125858848,
+      "bytes": 325635,
+      "values": 737280
+    },
+    {
+      "offset": 126184483,
+      "bytes": 325223,
+      "values": 737280
+    },
+    {
+      "offset": 126509706,
+      "bytes": 330731,
+      "values": 737280
+    },
+    {
+      "offset": 126840437,
+      "bytes": 329488,
+      "values": 737280
+    },
+    {
+      "offset": 127169925,
+      "bytes": 331379,
+      "values": 737280
+    },
+    {
+      "offset": 127501304,
+      "bytes": 330916,
+      "values": 737280
+    },
+    {
+      "offset": 127832220,
+      "bytes": 336272,
+      "values": 737280
+    },
+    {
+      "offset": 128168492,
+      "bytes": 337663,
+      "values": 737280
+    },
+    {
+      "offset": 128506155,
+      "bytes": 336944,
+      "values": 737280
+    },
+    {
+      "offset": 128843099,
+      "bytes": 340717,
+      "values": 737280
+    },
+    {
+      "offset": 129183816,
+      "bytes": 338922,
+      "values": 737280
+    },
+    {
+      "offset": 129522738,
+      "bytes": 340593,
+      "values": 737280
+    },
+    {
+      "offset": 129863331,
+      "bytes": 340759,
+      "values": 737280
+    },
+    {
+      "offset": 130204090,
+      "bytes": 334932,
+      "values": 737280
+    },
+    {
+      "offset": 130539022,
+      "bytes": 340936,
+      "values": 737280
+    },
+    {
+      "offset": 130879958,
+      "bytes": 333489,
+      "values": 737280
+    },
+    {
+      "offset": 131213447,
+      "bytes": 342881,
+      "values": 737280
+    },
+    {
+      "offset": 131556328,
+      "bytes": 337822,
+      "values": 737280
+    },
+    {
+      "offset": 131894150,
+      "bytes": 334571,
+      "values": 737280
+    },
+    {
+      "offset": 132228721,
+      "bytes": 331189,
+      "values": 737280
+    },
+    {
+      "offset": 132559910,
+      "bytes": 323746,
+      "values": 737280
+    },
+    {
+      "offset": 132883656,
+      "bytes": 318875,
+      "values": 737280
+    },
+    {
+      "offset": 133202531,
+      "bytes": 306393,
+      "values": 737280
+    },
+    {
+      "offset": 133508924,
+      "bytes": 301258,
+      "values": 737280
+    },
+    {
+      "offset": 133810182,
+      "bytes": 25108,
+      "values": 64260
+    }
+  ]
+}

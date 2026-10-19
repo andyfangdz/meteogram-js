@@ -1,0 +1,16 @@
+{
+  "failures": [
+    {
+      "error": "Missing source chunk pressure_level/geopotential_height/c/12073/0/0/0/0: Some(ICError { kind: SessionError(VirtualReferenceError(FetchError(Generic { store: \"S3\", source: RetryError(RetryErrorImpl { method: PUT, uri: Some(http://169.254.169.254/latest/api/token), retries: 9, max_retries: 9, elapsed: 2.674871664s, retry_timeout: 300s, inner: Http(HttpError { kind: Connect, source: reqwest::Error { kind: Request, source: hyper_util::client::legacy::Error(Connect, ConnectError(\"tcp connect error\", 169.254.169.254:80, Os { code: 113, kind: HostUnreachable, message: \"No route to host\" })) } }) }) }))), context: SpanTrace [] }); Missing source chunk pressure_level/geopotential_height/c/12073/0/0/0/0: Some(ICError { kind: SessionError(VirtualReferenceError(FetchError(Generic { store: \"S3\", source: RetryError(RetryErrorImpl { method: PUT, uri: Some(http://169.254.169.254/latest/api/token), retries: 9, max_retries: 9, elapsed: 2.285642702s, retry_timeout: 300s, inner: Http(HttpError { kind: Connect, source: reqwest::Error { kind: Request, source: hyper_util::client::legacy::Error(Connect, ConnectError(\"tcp connect error\", 169.254.169.254:80, Os { code: 113, kind: HostUnreachable, message: \"No route to host\" })) } }) }) }))), context: SpanTrace [] })",
+      "model": "hrrr"
+    },
+    {
+      "error": "Missing source chunk pressure_level/cloud_cover/c/7983/0/0/0/0: Some(ICError { kind: SessionError(VirtualReferenceError(FetchError(Generic { store: \"S3\", source: RetryError(RetryErrorImpl { method: PUT, uri: Some(http://169.254.169.254/latest/api/token), retries: 9, max_retries: 9, elapsed: 2.3919242s, retry_timeout: 300s, inner: Http(HttpError { kind: Connect, source: reqwest::Error { kind: Request, source: hyper_util::client::legacy::Error(Connect, ConnectError(\"tcp connect error\", 169.254.169.254:80, Os { code: 113, kind: HostUnreachable, message: \"No route to host\" })) } }) }) }))), context: SpanTrace [] }); Missing source chunk pressure_level/cloud_cover/c/7983/0/0/0/0: Some(ICError { kind: SessionError(VirtualReferenceError(FetchError(Generic { store: \"S3\", source: RetryError(RetryErrorImpl { method: PUT, uri: Some(http://169.254.169.254/latest/api/token), retries: 9, max_retries: 9, elapsed: 6.140236751s, retry_timeout: 300s, inner: Http(HttpError { kind: Connect, source: reqwest::Error { kind: Request, source: hyper_util::client::legacy::Error(Connect, ConnectError(\"tcp connect error\", 169.254.169.254:80, Os { code: 113, kind: HostUnreachable, message: \"No route to host\" })) } }) }) }))), context: SpanTrace [] })",
+      "model": "gfs"
+    }
+  ],
+  "implementation": "rust",
+  "prefetch": true,
+  "started": 1792297355.1582692,
+  "time": 1792297657.3221931
+}

@@ -1,0 +1,14 @@
+{
+  "time": 1792296446.2841778,
+  "removed_owned_tables": [
+    "hrrr_20261018034745_4b182b13",
+    "gfs_20261018034745_29873cb3",
+    "aifs_20261018040306_e8d660fc"
+  ],
+  "sample_arrays_removed": 98,
+  "sample_array_bytes": 584462592,
+  "free_bytes_before": 342850932736,
+  "free_bytes_after": 369407787008,
+  "serving_catalog_preserved": true,
+  "borrowed_legacy_tables_preserved": true
+}

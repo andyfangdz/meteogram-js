@@ -1,0 +1,29 @@
+{
+  "models": {
+    "aifs": {
+      "age_hours": 12.058,
+      "available": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "max_age_hours": 48,
+      "min_remaining_hours": 72,
+      "remaining_hours": 167.942
+    },
+    "gfs": {
+      "age_hours": 12.058,
+      "available": true,
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "max_age_hours": 48,
+      "min_remaining_hours": 72,
+      "remaining_hours": 167.942
+    },
+    "hrrr": {
+      "age_hours": 6.058,
+      "available": true,
+      "init_time": "2026-10-18T12:00:00.000000000",
+      "max_age_hours": 24,
+      "min_remaining_hours": 12,
+      "remaining_hours": 41.942
+    }
+  },
+  "native_fields": true
+}

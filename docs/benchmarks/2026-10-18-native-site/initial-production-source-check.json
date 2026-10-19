@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-10-18T20:36:35.955Z",
+  "url": "https://meteogram.vercel.app/KCDW/gfs_hrrr",
+  "deployment": "dpl_GDC6C4Gb7oRsuffbhojbodKwwbaC",
+  "status": 200,
+  "sourceMetadata": [
+    "\"provider\":\"open-meteo\",\"model\":\"gfs_hrrr\",\"cloudMethod\":\"model\",\"cadenceMinutes\":15,\"fallback\":false"
+  ],
+  "nativeVerified": false
+}

@@ -1,0 +1,34 @@
+{
+  "complete": true,
+  "minimum_free_bytes": 244436357120,
+  "minimum_host_available_memory_bytes": 26047348736,
+  "models": {
+    "aifs": {
+      "error_examples": [],
+      "errors": 0,
+      "max_ms": 285.07020500000004,
+      "p50_ms": 14.292295,
+      "p95_ms": 29.721624,
+      "successes": 341
+    },
+    "gfs": {
+      "error_examples": [],
+      "errors": 0,
+      "max_ms": 3993.710869,
+      "p50_ms": 38.213598000000005,
+      "p95_ms": 77.853337,
+      "successes": 341
+    },
+    "hrrr": {
+      "error_examples": [],
+      "errors": 0,
+      "max_ms": 303.76579799999996,
+      "p50_ms": 51.612703,
+      "p95_ms": 106.209658,
+      "successes": 341
+    }
+  },
+  "scope": "One fixed NY point/model over loopback; does not establish publication or WAN latency",
+  "started": 1792297738.5137272,
+  "time": 1792298566.3550513
+}

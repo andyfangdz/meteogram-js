@@ -1,0 +1,2 @@
+SOURCE                            FSTYPE   SIZE  AVAIL
+/dev/nvme0n1p2[/home/andy/.local] ext4   467.3G 393.4G

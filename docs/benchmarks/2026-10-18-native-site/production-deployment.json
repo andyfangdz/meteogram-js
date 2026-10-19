@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-10-18T20:41:45.785048+00:00",
+  "id": "dpl_3b88RLf36s3nW2XEzyaQGLDGSypK",
+  "url": "meteogram-box8k98fz-andyfangs-projects.vercel.app",
+  "target": "production",
+  "state": "READY",
+  "commit": "9684287eee0719d5638469978862e837cdaa6ab3",
+  "aliases": ["meteogram.vercel.app", "meteogram.flyingclub.org"],
+  "native_models_verified": ["hrrr", "gfs", "aifs", "rrfs"]
+}

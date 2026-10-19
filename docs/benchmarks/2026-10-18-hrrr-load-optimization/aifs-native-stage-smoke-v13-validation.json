@@ -1,0 +1,23 @@
+{
+  "database": "meteogram_native",
+  "finite_validation_mode": "each_inserted_cell_range",
+  "full_values_checked": true,
+  "init_time": "2026-10-18T00:00:00.000000000",
+  "rows": 24885,
+  "samples": 10,
+  "snapshot_id": "TMCJG4BMMWRVTBVBJK7G",
+  "staged_comparison": true,
+  "staged_sample_origin": "immutable_ingestion_buffers",
+  "storage": {
+    "axes": "level_lead",
+    "codec": "t64",
+    "compression": "ZSTD(1)",
+    "encoding": "float32_bits",
+    "index_granularity": 4,
+    "layout": "cell_profile_v1",
+    "writer": "rust_native"
+  },
+  "storage_rows": 24885,
+  "table": "goal_aifs_native_stage_smoke_v13",
+  "validated_at": 1792328946.9475627
+}

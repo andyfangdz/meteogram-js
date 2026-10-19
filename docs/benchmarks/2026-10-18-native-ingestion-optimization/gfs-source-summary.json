@@ -1,0 +1,8 @@
+{
+  "leads": 141,
+  "chunks": 25662,
+  "encoded_map_bytes": 17487460384,
+  "staged_value_bytes": 2554395480,
+  "all_finite": true,
+  "largest_lead_bytes": 135770385
+}

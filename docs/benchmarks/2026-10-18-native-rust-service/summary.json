@@ -1,0 +1,16 @@
+{
+  "cycle_seconds": 826.9240283966064,
+  "cycle_failures": [],
+  "resident_bytes": 25935349107,
+  "physical_rows": 1688527,
+  "db_restart_observed_seconds": 33.31415581703186,
+  "db_pid_before": 11,
+  "db_pid_after": 253,
+  "api_pid_before": 241,
+  "api_pid_after": 462,
+  "next_update_unchanged": true,
+  "observed_http_successes": 1023,
+  "observed_http_errors": 0,
+  "minimum_free_bytes": 244436357120,
+  "minimum_host_available_memory_bytes": 26047348736
+}

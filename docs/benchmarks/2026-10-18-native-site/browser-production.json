@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "report": [
+    {
+      "model": "gfs_hrrr",
+      "status": 200,
+      "provider": "dynamical",
+      "source": "Dynamical · HRRR · Run 2026-10-18 19:00 UTC · Complete (19/19 forecast hours) · Clouds estimated from humidity",
+      "cells": 540
+    },
+    {
+      "model": "gfs_seamless",
+      "status": 200,
+      "provider": "dynamical",
+      "source": "Dynamical · GFS · Run 2026-10-18 12:00 UTC · Complete (141/141 forecast hours)",
+      "cells": 3990
+    },
+    {
+      "model": "ecmwf_aifs025_single",
+      "status": 200,
+      "provider": "dynamical",
+      "source": "Dynamical · AIFS · Run 2026-10-18 12:00 UTC · Complete (31/31 forecast hours) · Clouds estimated from humidity",
+      "cells": 240
+    },
+    {
+      "model": "rrfs",
+      "status": 200,
+      "provider": "dynamical",
+      "source": "Dynamical · RRFS · Run 2026-10-18 18:00 UTC · Partial (67/85 forecast hours) · Clouds estimated from humidity",
+      "cells": 1950
+    }
+  ],
+  "errors": []
+}

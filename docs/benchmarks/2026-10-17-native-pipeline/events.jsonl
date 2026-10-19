@@ -1,0 +1,27 @@
+{"time": 1792284874.7426827, "phase": "adopted", "model": "hrrr"}
+{"time": 1792284876.96688, "phase": "adopted", "model": "gfs"}
+{"time": 1792284877.3190682, "phase": "adopted", "model": "aifs"}
+{"time": 1792284892.8462815, "phase": "select", "model": "hrrr", "revision": "hrrr_20261018005452_0fe0e63d", "offset": 1}
+{"time": 1792284898.8532648, "phase": "fetch", "model": "hrrr", "init_time": "2026-10-18T00:00:00.000000000"}
+{"time": 1792284941.8701286, "phase": "failed", "model": "hrrr", "revision": "hrrr_20261018005452_0fe0e63d", "error": "Source extraction failed (1); see /home/andy/.local/share/meteogram-native/revisions/hrrr_20261018005452_0fe0e63d/fetch.log"}
+{"time": 1792284942.523601, "phase": "select", "model": "hrrr", "revision": "hrrr_20261018005542_c13c1f40", "offset": 2}
+{"time": 1792284947.5313563, "phase": "fetch", "model": "hrrr", "init_time": "2026-10-17T18:00:00.000000000"}
+{"time": 1792285434.6846209, "phase": "load", "model": "hrrr"}
+{"time": 1792286338.4671838, "phase": "published", "model": "hrrr", "init_time": "2026-10-17T18:00:00.000000000", "generation": 4, "revision": "hrrr_20261018005542_c13c1f40"}
+{"time": 1792286339.4105566, "phase": "select", "model": "gfs", "revision": "gfs_20261018011859_19e2797e", "offset": 1}
+{"time": 1792286353.4205391, "phase": "fetch", "model": "gfs", "init_time": "2026-10-17T18:00:00.000000000"}
+{"time": 1792286936.532895, "phase": "load", "model": "gfs"}
+{"time": 1792286955.6957922, "phase": "published", "model": "gfs", "init_time": "2026-10-17T18:00:00.000000000", "generation": 5, "revision": "gfs_20261018011859_19e2797e"}
+{"time": 1792286957.2790246, "phase": "select", "model": "aifs", "revision": "aifs_20261018012917_143ac186", "offset": 1}
+{"time": 1792286961.2851028, "phase": "fetch", "model": "aifs", "init_time": "2026-10-17T18:00:00.000000000"}
+{"time": 1792286994.2929304, "phase": "load", "model": "aifs"}
+{"time": 1792286996.563971, "phase": "published", "model": "aifs", "init_time": "2026-10-17T18:00:00.000000000", "generation": 6, "revision": "aifs_20261018012917_143ac186"}
+{"time": 1792287143.438096, "phase": "isolated_import", "model": "hrrr", "section": "previous", "revision": "hrrr_20261018013136_f14ebb9d"}
+{"time": 1792287145.8020365, "phase": "isolated_import", "model": "gfs", "section": "previous", "revision": "gfs_20261018013223_864282c8"}
+{"time": 1792287146.3385005, "phase": "isolated_import", "model": "aifs", "section": "previous", "revision": "aifs_20261018013225_0f88f7b8"}
+{"time": 1792287217.9400759, "phase": "rollback", "model": "hrrr", "revision": "hrrr_20261018013136_f14ebb9d"}
+{"time": 1792287218.2659333, "phase": "rollback", "model": "hrrr", "revision": "hrrr_20261018005542_c13c1f40"}
+{"time": 1792287218.697995, "phase": "rollback", "model": "gfs", "revision": "gfs_20261018013223_864282c8"}
+{"time": 1792287219.0073693, "phase": "rollback", "model": "gfs", "revision": "gfs_20261018011859_19e2797e"}
+{"time": 1792287219.3277018, "phase": "rollback", "model": "aifs", "revision": "aifs_20261018013225_0f88f7b8"}
+{"time": 1792287219.5937948, "phase": "rollback", "model": "aifs", "revision": "aifs_20261018012917_143ac186"}

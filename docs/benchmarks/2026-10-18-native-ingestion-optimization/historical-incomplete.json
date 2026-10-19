@@ -1,0 +1,26 @@
+{
+  "events": [
+    {
+      "model": "hrrr",
+      "offset": 1,
+      "phase": "select",
+      "revision": "hrrr_20261018072959_25fb56b5",
+      "time": 1792308599.585608
+    },
+    {
+      "init_time": "2026-10-18T06:00:00.000000000",
+      "model": "hrrr",
+      "phase": "fetch",
+      "revision": "hrrr_20261018072959_25fb56b5",
+      "time": 1792308601.989666
+    },
+    {
+      "error": "Missing source chunk pressure_level/geopotential_height/c/12075/25/0/0/0: Some(ICError { kind: NotFound(ChunkNotFound { key: \"pressure_level/geopotential_height/c/12075/25/0/0/0\", path: /pressure_level/geopotential_height, coords: ChunkIndices([12075, 25, 0, 0, 0]) }), context: SpanTrace [] })",
+      "model": "hrrr",
+      "phase": "failed",
+      "revision": "hrrr_20261018072959_25fb56b5",
+      "time": 1792308834.2693524
+    }
+  ],
+  "elapsed_seconds": 234.683744430542
+}

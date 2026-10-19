@@ -57,11 +57,13 @@ export default async function Page({ params, searchParams }: PageProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <ClientWrapper
+        key={decodedLocation + ":" + model}
         initialLocation={decodedLocation}
         initialModel={model as WeatherModel}
         initialWeatherDataStr={JSON.stringify(initialData.data)}
         initialTimestamp={initialData.timestamp}
         initialElevationFt={initialData.elevationFt}
+        initialSource={initialData.source}
         initialPreferences={preferencesResult.preferences}
         cookieReadSuccess={preferencesResult.cookieReadSuccess}
       />

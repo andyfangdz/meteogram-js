@@ -1,0 +1,32 @@
+[
+  {
+    "path": "/forecast?model=hrrr&lat=33.64&lon=-84.43",
+    "status": 200,
+    "revision": "hrrr_20261018005348_82eb4dfe",
+    "error": null
+  },
+  {
+    "path": "/forecast?model=gfs&lat=0&lon=0",
+    "status": 404,
+    "revision": null,
+    "error": "Outside the retained region"
+  },
+  {
+    "path": "/forecast?model=aifs&lat=nan&lon=-84",
+    "status": 400,
+    "revision": null,
+    "error": "Invalid model or coordinates"
+  },
+  {
+    "path": "/forecast?model=unknown&lat=40&lon=-74",
+    "status": 400,
+    "revision": null,
+    "error": "Invalid model or coordinates"
+  },
+  {
+    "path": "/forecast?model=hrrr&lat=24&lon=-125.00001",
+    "status": 404,
+    "revision": null,
+    "error": "Outside the retained region"
+  }
+]

@@ -1,0 +1,2214 @@
+{
+  "catalog": {
+    "building": {
+      "aifs": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "aifs_20261018200148_956994db",
+          "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+        }
+      ],
+      "gfs": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "gfs_20261018200158_f830f1be",
+          "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+        }
+      ],
+      "hrrr": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "hrrr_20261018200004_c250aaa7",
+          "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1"
+        },
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "hrrr_20261018200200_68eaf056",
+          "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+        }
+      ],
+      "rrfs": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "rrfs_20261018200154_ab40eaea",
+          "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+        }
+      ]
+    },
+    "complete_runs": {
+      "aifs": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "aifs_20261018135757_414d1e3b",
+          "table": "aifs_20261018135757_414d1e3b"
+        },
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "aifs_20261018074734_12c3fcfe",
+          "table": "aifs_20261018074734_12c3fcfe"
+        }
+      ],
+      "gfs": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "gfs_20261018134756_7d24c140",
+          "table": "gfs_20261018134756_7d24c140"
+        },
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "gfs_20261018072959_02449bca",
+          "table": "gfs_20261018072959_02449bca"
+        }
+      ],
+      "hrrr": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "hrrr_20261018134756_c90afbd3",
+          "table": "hrrr_20261018134756_c90afbd3"
+        },
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "hrrr_20261018073354_ac063ce1",
+          "table": "hrrr_20261018073354_ac063ce1"
+        }
+      ],
+      "rrfs": [
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "rrfs_20261018190636_ef01686e",
+          "table": "rrfs_20261018190636_ef01686e"
+        },
+        {
+          "database": "meteogram_native",
+          "owned": true,
+          "revision": "rrfs_20261018194905_261f6559",
+          "table": "rrfs_20261018194905_261f6559"
+        }
+      ]
+    },
+    "current": {
+      "aifs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "aifs_20261018200148_956994db",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      "gfs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "gfs_20261018200158_f830f1be",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      "hrrr": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "hrrr_20261018200004_c250aaa7",
+        "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1"
+      },
+      "rrfs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "rrfs_20261018200154_ab40eaea",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      }
+    },
+    "generation": 106,
+    "hrrr_long": {
+      "database": "meteogram_native",
+      "owned": true,
+      "revision": "hrrr_20261018134756_c90afbd3",
+      "table": "hrrr_20261018134756_c90afbd3"
+    },
+    "previous": {
+      "aifs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "aifs_20261018135757_414d1e3b",
+        "table": "aifs_20261018135757_414d1e3b"
+      },
+      "gfs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "gfs_20261018134756_7d24c140",
+        "table": "gfs_20261018134756_7d24c140"
+      },
+      "hrrr": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "hrrr_20261018134756_c90afbd3",
+        "table": "hrrr_20261018134756_c90afbd3"
+      },
+      "rrfs": {
+        "database": "meteogram_native",
+        "owned": true,
+        "revision": "rrfs_20261018190636_ef01686e",
+        "table": "rrfs_20261018190636_ef01686e"
+      }
+    },
+    "published_at": 1792353721.2011077,
+    "retired": [
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353121.373531,
+        "revision": "aifs_20261018195116_461d10c2",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353135.8538258,
+        "revision": "gfs_20261018195131_339a8fb9",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353144.6834695,
+        "revision": "aifs_20261018195201_a7a9f597",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353152.0664947,
+        "revision": "rrfs_20261018195148_e47ea837",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353156.7956717,
+        "revision": "gfs_20261018195215_20dd8575",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353159.4265933,
+        "revision": "aifs_20261018195224_6b78db3a",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353160.4774337,
+        "revision": "hrrr_20261018195134_e0752699",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353175.8640485,
+        "revision": "rrfs_20261018195231_e1fc0710",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353192.042092,
+        "revision": "aifs_20261018195239_e23c6835",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353197.994505,
+        "revision": "gfs_20261018195236_f7bd8d97",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353205.9070187,
+        "revision": "aifs_20261018195312_7e71f193",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353213.659627,
+        "revision": "rrfs_20261018195255_ee9b4ffc",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353218.2978263,
+        "revision": "gfs_20261018195317_985f813f",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353219.25671,
+        "revision": "hrrr_20261018195240_87eb3b3e",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353220.5929542,
+        "revision": "aifs_20261018195325_97adb0b7",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353241.341688,
+        "revision": "gfs_20261018195338_5a729c81",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353250.2713857,
+        "revision": "rrfs_20261018195333_8f0f1dd3",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353264.5740206,
+        "revision": "aifs_20261018195340_4bc1271d",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353276.707055,
+        "revision": "gfs_20261018195401_6be7937b",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353281.5453727,
+        "revision": "hrrr_20261018195315_cf883c3b",
+        "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353284.6120832,
+        "revision": "aifs_20261018195424_52a41e02",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353288.4350455,
+        "revision": "gfs_20261018195436_ffa3d814",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353289.5796304,
+        "revision": "hrrr_20261018195339_6a1f6fa2",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353290.735019,
+        "revision": "aifs_20261018195444_390d36c4",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353293.8432438,
+        "revision": "rrfs_20261018195410_ea3b299d",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353301.9623034,
+        "revision": "gfs_20261018195448_2e1bbf88",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353306.1494808,
+        "revision": "hrrr_20261018195449_54ccfa80",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353323.7503314,
+        "revision": "aifs_20261018195450_30329e0c",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353336.2195213,
+        "revision": "gfs_20261018195501_6a7d628a",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353344.6135647,
+        "revision": "hrrr_20261018195505_8beb3fda",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353348.1349273,
+        "revision": "aifs_20261018195523_553c0256",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353362.846396,
+        "revision": "gfs_20261018195536_2b650af4",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353363.2003272,
+        "revision": "rrfs_20261018195453_16fe4ee1",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353365.690816,
+        "revision": "hrrr_20261018195544_c70a2fb6",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353384.4327886,
+        "revision": "aifs_20261018195548_27518668",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353389.6723764,
+        "revision": "gfs_20261018195602_48852769",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353397.186508,
+        "revision": "aifs_20261018195624_665b717e",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353401.3877015,
+        "revision": "hrrr_20261018195441_f5a3a274",
+        "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353407.9181113,
+        "revision": "gfs_20261018195629_525276a5",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353414.5723062,
+        "revision": "rrfs_20261018195603_d225058e",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353417.2600474,
+        "revision": "aifs_20261018195637_38181e7e",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353421.4308164,
+        "revision": "hrrr_20261018195605_95bcc000",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353428.5698988,
+        "revision": "gfs_20261018195647_868595a2",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353436.665914,
+        "revision": "rrfs_20261018195654_8f27c47f",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353448.3081262,
+        "revision": "aifs_20261018195657_851272cf",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353472.4064558,
+        "revision": "hrrr_20261018195701_96175bb9",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353473.4143944,
+        "revision": "gfs_20261018195708_9ffb05e4",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353478.1060867,
+        "revision": "aifs_20261018195728_05141412",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353486.5496962,
+        "revision": "rrfs_20261018195716_b57c46c2",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353489.046489,
+        "revision": "gfs_20261018195753_026ae96b",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353491.6968787,
+        "revision": "hrrr_20261018195752_9013c63d",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353510.7523177,
+        "revision": "aifs_20261018195757_62195be5",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353523.4021723,
+        "revision": "gfs_20261018195808_2cc5616d",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353527.5172682,
+        "revision": "hrrr_20261018195811_118d12e1",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353533.1557107,
+        "revision": "aifs_20261018195830_47a6ac47",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353541.206146,
+        "revision": "rrfs_20261018195806_9bb65532",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353544.461976,
+        "revision": "gfs_20261018195843_b37d44c7",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353547.314737,
+        "revision": "hrrr_20261018195847_f6d6bc6a",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353547.399215,
+        "revision": "aifs_20261018195853_ad301bbb",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353563.923673,
+        "revision": "rrfs_20261018195900_6333ead2",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353579.813635,
+        "revision": "aifs_20261018195907_216f8858",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353596.2229037,
+        "revision": "gfs_20261018195904_fa80bf36",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353604.6463826,
+        "revision": "hrrr_20261018195641_5cdec2dd",
+        "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353607.5629444,
+        "revision": "aifs_20261018195939_ed01c862",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353615.9756343,
+        "revision": "rrfs_20261018195923_38811d9d",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353618.8626096,
+        "revision": "gfs_20261018195956_d8e15839",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353622.3199806,
+        "revision": "hrrr_20261018195907_0c4253ce",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353635.773937,
+        "revision": "aifs_20261018200007_087f3c6e",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353651.3835828,
+        "revision": "hrrr_20261018200022_d62f1ab0",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353655.3288288,
+        "revision": "gfs_20261018200018_da2736fa",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353663.4702935,
+        "revision": "rrfs_20261018200015_c4e5a0de",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353685.060323,
+        "revision": "aifs_20261018200035_6e6440dc",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353702.8805666,
+        "revision": "hrrr_20261018200051_2b1fd953",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353705.303521,
+        "revision": "gfs_20261018200055_91f13432",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353708.3623314,
+        "revision": "aifs_20261018200124_950e4fef",
+        "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353714.8513157,
+        "revision": "rrfs_20261018200103_5d0b6695",
+        "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353718.1830032,
+        "revision": "gfs_20261018200145_b6050d17",
+        "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+      },
+      {
+        "database": "meteogram_native",
+        "owned": true,
+        "retired_at": 1792353721.2011065,
+        "revision": "hrrr_20261018200142_46c167e4",
+        "table": "hrrr_run_32d797782bbc4ee8aa080b4faca5b7fe"
+      }
+    ],
+    "version": 1
+  },
+  "models": {
+    "aifs": {
+      "freshness": {
+        "age_hours": 8.034,
+        "available": true,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "partial": true,
+        "remaining_hours": 135.966
+      },
+      "progress": {
+        "available_leads": [
+          0,
+          6,
+          12,
+          18,
+          24,
+          30,
+          36,
+          42,
+          48,
+          54,
+          60,
+          66,
+          72,
+          78,
+          84,
+          90,
+          96,
+          102,
+          108,
+          114,
+          120,
+          126,
+          132,
+          138,
+          144
+        ],
+        "complete": false,
+        "dataset": "ecmwf-aifs-single-forecast-virtual",
+        "expected_leads": [
+          0,
+          6,
+          12,
+          18,
+          24,
+          30,
+          36,
+          42,
+          48,
+          54,
+          60,
+          66,
+          72,
+          78,
+          84,
+          90,
+          96,
+          102,
+          108,
+          114,
+          120,
+          126,
+          132,
+          138,
+          144,
+          150,
+          156,
+          162,
+          168,
+          174,
+          180
+        ],
+        "freshness": {
+          "age_hours": 8.034,
+          "available": true,
+          "init_time": "2026-10-18T12:00:00.000000000",
+          "max_age_hours": 48,
+          "min_remaining_hours": 72,
+          "partial": true,
+          "remaining_hours": 135.966
+        },
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "missing_leads": [
+          150,
+          156,
+          162,
+          168,
+          174,
+          180
+        ],
+        "revision": "aifs_20261018200148_956994db"
+      },
+      "revision": "aifs_20261018200148_956994db",
+      "storage": {
+        "axes": "level",
+        "books": [
+          {
+            "entries": 124183,
+            "lead": 0,
+            "metadata_sha256": "503d41922778a27c47e434553a959706848a82fab490c399a0e4e7c050ff360d",
+            "revision": "aifs_20261018195116_c97e1bde",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 118418,
+            "lead": 6,
+            "metadata_sha256": "0c7e009a2f497269110206421b97c81ed6bc850eb9f835894bc9cabd788b2ec9",
+            "revision": "aifs_20261018195201_082b77ca",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 117792,
+            "lead": 12,
+            "metadata_sha256": "260fafb3d06cd99dc69d3ff93357e6b45d7277f3d166b4c3646b8164631a9167",
+            "revision": "aifs_20261018195224_9b03226d",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 116819,
+            "lead": 18,
+            "metadata_sha256": "ab7c1739f7a671c497aeeb33b50a46e25bd7662ee057e212efd6ee3b5cde1ce4",
+            "revision": "aifs_20261018195239_fbd609a6",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 119351,
+            "lead": 24,
+            "metadata_sha256": "4dd9ecf288f9792d2e9023b1081b98c5205e82a5446e3a9f5464e21ea6bec2a2",
+            "revision": "aifs_20261018195311_abadc613",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 110031,
+            "lead": 30,
+            "metadata_sha256": "f6e6594c4ba10c1187b3f7025c65944e22d4a536d927f3a666ea4da835308fde",
+            "revision": "aifs_20261018195325_68967d5e",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 103236,
+            "lead": 36,
+            "metadata_sha256": "3cee34a88a0496af92701e313974bd6677ae2c18347c3d582516137c6a907053",
+            "revision": "aifs_20261018195340_1422fd08",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 117145,
+            "lead": 42,
+            "metadata_sha256": "5c3f73d8038f97dcffd4aa93eb0674ef32f8d1210bd5a9f403da365ee1764dd9",
+            "revision": "aifs_20261018195424_3c50de5a",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 115540,
+            "lead": 48,
+            "metadata_sha256": "3d392fd97bd601b32591d6551073e63c3256758a6029bf936b4af5acf46f38f9",
+            "revision": "aifs_20261018195444_54afcf7d",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 117499,
+            "lead": 54,
+            "metadata_sha256": "5372b55ee39d3eb5836c15d264bd1ba09e39ae9f8e30f084bfbe4ce093c91860",
+            "revision": "aifs_20261018195450_6719d3bd",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 117331,
+            "lead": 60,
+            "metadata_sha256": "7e1ace0e7338226f1af8b774bd518dc4bd7b03675a2f5f3918cab8ffeaf6c9ba",
+            "revision": "aifs_20261018195523_3a57d28c",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 118305,
+            "lead": 66,
+            "metadata_sha256": "bce90f19f634a4a49c2988ab690a1da48cdf260745b1ff120cf65586029688c3",
+            "revision": "aifs_20261018195547_f87ab249",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 116021,
+            "lead": 72,
+            "metadata_sha256": "0d4c3f392e9aa70d01532955e39a70fc4bbd83ad299f36a685303379d53f42e9",
+            "revision": "aifs_20261018195624_3e76d4b4",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 115997,
+            "lead": 78,
+            "metadata_sha256": "deb71007dc9f39c3f544c4dc5d6cf681a4b3952842fe9cb109c4b0397a0f61d9",
+            "revision": "aifs_20261018195637_a0bf022e",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 117990,
+            "lead": 84,
+            "metadata_sha256": "869ee68af9de120b8d06aadb12bcdc2682ebdb52109169cdc608512dc8a5a14a",
+            "revision": "aifs_20261018195657_12c070ef",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 118765,
+            "lead": 90,
+            "metadata_sha256": "1649ddd8c0e5637d233d4f688f956dba57d2cc1a257a359aa1419b351a04c8da",
+            "revision": "aifs_20261018195728_7fa4698f",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 120917,
+            "lead": 96,
+            "metadata_sha256": "c0b8a242cbe3fd4f3d6f463538eb23e224d369ad8314884c58322ea543491027",
+            "revision": "aifs_20261018195757_e296f405",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 123447,
+            "lead": 102,
+            "metadata_sha256": "dab5f5d80e8b8de853353bf9e3fa7f863cc5f92deb1119d312811b0ae31e723e",
+            "revision": "aifs_20261018195830_fb8e0165",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 124104,
+            "lead": 108,
+            "metadata_sha256": "8a9e78878e9b221ed5d11f0a1843ccbd362b2c859b4a8c0a984da0b27a0a331b",
+            "revision": "aifs_20261018195852_44e2fb7d",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 131804,
+            "lead": 114,
+            "metadata_sha256": "082003a7550ea0214a6c1a2f1b34bf5c3cc1488d3e01d976fda32ad200026608",
+            "revision": "aifs_20261018195907_4b264a72",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 125352,
+            "lead": 120,
+            "metadata_sha256": "745de9e31bd49577520435ef1e519f818f5f5f99a81ae5471de616ce3cd36025",
+            "revision": "aifs_20261018195939_2ba9b779",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 124580,
+            "lead": 126,
+            "metadata_sha256": "808d253e4af7ef2c440ba7b45ec06c636099891015250b5f0ea61ac287e9c1c5",
+            "revision": "aifs_20261018200007_84601c80",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 125106,
+            "lead": 132,
+            "metadata_sha256": "c35e49acee411279a4e8685b6cbcb383376414493c3d60b02f84976debdcec09",
+            "revision": "aifs_20261018200035_e841a894",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 125103,
+            "lead": 138,
+            "metadata_sha256": "761327c2a12f3b66ac0b32caeb2bee77ae7d8979727b87dd3660fd3f8b4eb2e7",
+            "revision": "aifs_20261018200124_92dc221a",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          },
+          {
+            "entries": 113847,
+            "lead": 144,
+            "metadata_sha256": "5c6255798ca0abe5dee15fe954466f594225909b79270d129931e745f1097f28",
+            "revision": "aifs_20261018200148_085f0656",
+            "snapshot_id": "9KCPRKP2MPTX90MTD5Q0"
+          }
+        ],
+        "codebook_entries": 2978683,
+        "complete": false,
+        "element_type": "UInt128",
+        "encoding": "float32_dictionary_per_lead_v1",
+        "expected_leads": [
+          0,
+          6,
+          12,
+          18,
+          24,
+          30,
+          36,
+          42,
+          48,
+          54,
+          60,
+          66,
+          72,
+          78,
+          84,
+          90,
+          96,
+          102,
+          108,
+          114,
+          120,
+          126,
+          132,
+          138,
+          144,
+          150,
+          156,
+          162,
+          168,
+          174,
+          180
+        ],
+        "index_type": "UInt16",
+        "layout": "lead_partition_tiles_v1",
+        "packing": "uint16x8_le",
+        "tile_size": 256,
+        "version": 1
+      },
+      "storage_rows": 2450,
+      "table": "aifs_run_37c63455572948ed9882e8133c069d59"
+    },
+    "gfs": {
+      "freshness": {
+        "age_hours": 8.034,
+        "available": true,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "max_age_hours": 48,
+        "min_remaining_hours": 72,
+        "partial": true,
+        "remaining_hours": 13.966
+      },
+      "progress": {
+        "available_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ],
+        "complete": false,
+        "dataset": "noaa-gfs-forecast-virtual",
+        "expected_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          123,
+          126,
+          129,
+          132,
+          135,
+          138,
+          141,
+          144,
+          147,
+          150,
+          153,
+          156,
+          159,
+          162,
+          165,
+          168,
+          171,
+          174,
+          177,
+          180
+        ],
+        "freshness": {
+          "age_hours": 8.034,
+          "available": true,
+          "init_time": "2026-10-18T12:00:00.000000000",
+          "max_age_hours": 48,
+          "min_remaining_hours": 72,
+          "partial": true,
+          "remaining_hours": 13.966
+        },
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "missing_leads": [
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          123,
+          126,
+          129,
+          132,
+          135,
+          138,
+          141,
+          144,
+          147,
+          150,
+          153,
+          156,
+          159,
+          162,
+          165,
+          168,
+          171,
+          174,
+          177,
+          180
+        ],
+        "revision": "gfs_20261018200158_f830f1be"
+      },
+      "revision": "gfs_20261018200158_f830f1be",
+      "storage": {
+        "axes": "level",
+        "books": [
+          {
+            "entries": 448045,
+            "lead": 0,
+            "metadata_sha256": "5f2d52088b2c323fd0bb772898199e521e4cd31ecd2c6761e27ca1392340c5d2",
+            "revision": "gfs_20261018195131_ff079372",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 461420,
+            "lead": 1,
+            "metadata_sha256": "3b826b51388ad5c6e462aa69ac97def2dd8ecbb873f9a2e84cdfae67eee76cd1",
+            "revision": "gfs_20261018195215_caf7b2cc",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 430840,
+            "lead": 2,
+            "metadata_sha256": "0f4838d6d4122f4543eb056fa8a1744b4e9c8d31727b7d1ed4e7e4af7b7d63e8",
+            "revision": "gfs_20261018195236_9e0f5767",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 427596,
+            "lead": 3,
+            "metadata_sha256": "90f256cc3d4a9de2bdf921582bdabe4c89c8193becf55bddf24dd2ece365f6d2",
+            "revision": "gfs_20261018195317_485a1286",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 446866,
+            "lead": 4,
+            "metadata_sha256": "c5974025dab41be063f93097a9c6bc67b3462c873b1b7aeaaac35ebe81ae2500",
+            "revision": "gfs_20261018195338_bfc7ba36",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 424069,
+            "lead": 5,
+            "metadata_sha256": "45d1aaedc46f0f6e141d1bf05c2af6ad100f6025bc6597509d9d90d4b2d11bff",
+            "revision": "gfs_20261018195401_1e514e81",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 419399,
+            "lead": 6,
+            "metadata_sha256": "3e97dc1d8fbb629f2254068ecce79d3cf32cabd452908a033e3c28147f16ba03",
+            "revision": "gfs_20261018195436_19a09db0",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 432680,
+            "lead": 7,
+            "metadata_sha256": "d3a7ee9c06686760ed3d825d7e59ee32493d06d107b53de2dbae24cfb91689ae",
+            "revision": "gfs_20261018195448_ec9a60e8",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 410162,
+            "lead": 8,
+            "metadata_sha256": "ede2a1ac01cdb7b7660b6b88ab38504126cfb83f228057f9202f08a09335a0a8",
+            "revision": "gfs_20261018195501_85ef242a",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 423382,
+            "lead": 9,
+            "metadata_sha256": "7140a8d869c51fcefdc8eae0355a7e71e50adaca1b908868e00f257948dc1540",
+            "revision": "gfs_20261018195536_e199572a",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 410637,
+            "lead": 10,
+            "metadata_sha256": "d31213c4a2bc31fa5a6b7d1d9f99d5b7fe4157a3a8f33dd9d79917bd612fe466",
+            "revision": "gfs_20261018195602_d7442026",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 413787,
+            "lead": 11,
+            "metadata_sha256": "8a4786ae9035a77e0d63a816f505343ae143aadd7457d8ddf996c953afb9a3c1",
+            "revision": "gfs_20261018195629_b2b00fbe",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 413729,
+            "lead": 12,
+            "metadata_sha256": "914b7ec7a635773aa4ab06bf84b6a888cca6af5a37770c900a6647e6808a7a4b",
+            "revision": "gfs_20261018195647_478a9ab5",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 412826,
+            "lead": 13,
+            "metadata_sha256": "58a5c794ef388049aceb97ef6773aed85bad336db18c645b1f57c15204853212",
+            "revision": "gfs_20261018195708_9bca208d",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 411487,
+            "lead": 14,
+            "metadata_sha256": "5ddd2bbe1109ed5f1662e2acef85ed6cc7a62167402b4c3a7a9ca5c56cbaa93c",
+            "revision": "gfs_20261018195753_c7954fc7",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 413185,
+            "lead": 15,
+            "metadata_sha256": "8e48113ffabbcc22b5f1a45c3dd5d07a6edd8222aecf3dd3ce431d1bb593c68a",
+            "revision": "gfs_20261018195808_1a00ccd1",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 413086,
+            "lead": 16,
+            "metadata_sha256": "1b69e1889d23024da8a007533ee472408252ffa386c3c54a624c0aff13ff0ca7",
+            "revision": "gfs_20261018195843_29030efe",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 414721,
+            "lead": 17,
+            "metadata_sha256": "2ea52dfa2406d70664dc473a11f3efa15e6894a6dd94f43ab242d451e78d0270",
+            "revision": "gfs_20261018195904_204c452b",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 416075,
+            "lead": 18,
+            "metadata_sha256": "36842a6474639bb761edff8735602ba25b20c77ff5d6738f87ef83b22b71416b",
+            "revision": "gfs_20261018195956_856401c9",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 416648,
+            "lead": 19,
+            "metadata_sha256": "3ceb9d88fde0fc0dfbcc97b2afd31956e2bae26525a17167093aed9715e69b9b",
+            "revision": "gfs_20261018200018_a2e74518",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 414668,
+            "lead": 20,
+            "metadata_sha256": "1dadd1b19a6664b87117e977bf48f58f8fc9287e6c92beecdaf5dd8943781131",
+            "revision": "gfs_20261018200055_b3d3b0aa",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 413503,
+            "lead": 21,
+            "metadata_sha256": "06462e96a96a0843616964f01e82f2d720f8ba045b09c83c23726a68e65a7544",
+            "revision": "gfs_20261018200145_c005404c",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          },
+          {
+            "entries": 414439,
+            "lead": 22,
+            "metadata_sha256": "a2ee8287714f2efc6d8f6ef14fc9b752daf6dc6d8dbdd4ffab810997956cfd51",
+            "revision": "gfs_20261018200158_20dbfc02",
+            "snapshot_id": "98MX4ZVDXFJWS4D6Q7HG"
+          }
+        ],
+        "codebook_entries": 9703250,
+        "complete": false,
+        "element_type": "UInt128",
+        "encoding": "float32_dictionary_per_lead_v1",
+        "expected_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          123,
+          126,
+          129,
+          132,
+          135,
+          138,
+          141,
+          144,
+          147,
+          150,
+          153,
+          156,
+          159,
+          162,
+          165,
+          168,
+          171,
+          174,
+          177,
+          180
+        ],
+        "index_type": "UInt16",
+        "layout": "lead_partition_tiles_v1",
+        "packing": "uint16x8_le",
+        "tile_size": 256,
+        "version": 1
+      },
+      "storage_rows": 2254,
+      "table": "gfs_run_c678d640f1514b5cbe5901b173f1cec7"
+    },
+    "hrrr": {
+      "freshness": {
+        "age_hours": 1.034,
+        "available": true,
+        "init_time": "2026-10-18T19:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 12,
+        "partial": true,
+        "remaining_hours": 2.966
+      },
+      "progress": {
+        "available_leads": [
+          0,
+          1,
+          2,
+          4
+        ],
+        "complete": false,
+        "dataset": "noaa-hrrr-forecast-18-hour-virtual",
+        "expected_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ],
+        "freshness": {
+          "age_hours": 1.034,
+          "available": true,
+          "init_time": "2026-10-18T19:00:00.000000000",
+          "max_age_hours": 24,
+          "min_remaining_hours": 12,
+          "partial": true,
+          "remaining_hours": 2.966
+        },
+        "init_time": "2026-10-18T19:00:00.000000000",
+        "missing_leads": [
+          3,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ],
+        "revision": "hrrr_20261018200004_c250aaa7"
+      },
+      "revision": "hrrr_20261018200004_c250aaa7",
+      "storage": {
+        "axes": "level",
+        "books": [
+          {
+            "entries": 399081,
+            "lead": 0,
+            "metadata_sha256": "a14ca6946659d1a23c0b8b7b81e0b9ce012e80342205fd34dfcbc3390d80f2d8",
+            "revision": "hrrr_20261018195315_94f684b5",
+            "snapshot_id": "CSRV638141A4JGSX5XF0"
+          },
+          {
+            "entries": 389228,
+            "lead": 1,
+            "metadata_sha256": "ae2e13e5e062cb02938cac83d79e9be29dabf71dea3d6ddf33cd5bc04ea5b1e7",
+            "revision": "hrrr_20261018195441_16543d60",
+            "snapshot_id": "04N5RQM78W6AX96T7YNG"
+          },
+          {
+            "entries": 386477,
+            "lead": 2,
+            "metadata_sha256": "786c5303ab361fc1ed5721604473d4a5b35a60c2da0e06170a6e5d934c042da8",
+            "revision": "hrrr_20261018195640_63a29112",
+            "snapshot_id": "WWP0C7FFTYNRPAY803JG"
+          },
+          {
+            "entries": 383974,
+            "lead": 4,
+            "metadata_sha256": "cb43ad51093be446b08b311846a200de4aa58a6782a0ce40d573730a665a7ded",
+            "revision": "hrrr_20261018200003_bb901dbc",
+            "snapshot_id": "8VRV4EXZHGNH3HF2MC6G"
+          }
+        ],
+        "codebook_entries": 1558760,
+        "complete": false,
+        "element_type": "UInt128",
+        "encoding": "float32_dictionary_per_lead_v1",
+        "expected_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ],
+        "index_type": "UInt16",
+        "layout": "lead_partition_tiles_v1",
+        "packing": "uint16x8_le",
+        "tile_size": 256,
+        "version": 1
+      },
+      "storage_rows": 25608,
+      "table": "hrrr_run_b1743a72644e40d682391cc7cffdb8a1"
+    },
+    "rrfs": {
+      "freshness": {
+        "age_hours": 2.034,
+        "available": true,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "max_age_hours": 24,
+        "min_remaining_hours": 48,
+        "partial": true,
+        "remaining_hours": 11.966
+      },
+      "progress": {
+        "available_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "complete": false,
+        "dataset": "noaa-rrfs-forecast-84-hour-virtual",
+        "expected_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84
+        ],
+        "freshness": {
+          "age_hours": 2.034,
+          "available": true,
+          "init_time": "2026-10-18T18:00:00.000000000",
+          "max_age_hours": 24,
+          "min_remaining_hours": 48,
+          "partial": true,
+          "remaining_hours": 11.966
+        },
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "missing_leads": [
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84
+        ],
+        "revision": "rrfs_20261018200154_ab40eaea"
+      },
+      "revision": "rrfs_20261018200154_ab40eaea",
+      "storage": {
+        "axes": "level",
+        "books": [
+          {
+            "entries": 1700753,
+            "lead": 0,
+            "metadata_sha256": "3af6e088fa2a0bced6b3400a1f4655f19229f76cec274fe797f0ce9e41993063",
+            "revision": "rrfs_20261018195148_cb37962a",
+            "snapshot_id": "VW94HT1T084C8256WA60"
+          },
+          {
+            "entries": 1658924,
+            "lead": 1,
+            "metadata_sha256": "711b4afb28baa3bfb42599dd0e7379f3eb03f4aa38470f02bce97077ab77a91b",
+            "revision": "rrfs_20261018195231_0052f20e",
+            "snapshot_id": "WP0T2MSCYFCVPR194YC0"
+          },
+          {
+            "entries": 1685839,
+            "lead": 2,
+            "metadata_sha256": "d5b69ff899d16afcb8f4c7575e681b5d8c1378a0ebce01819a34855f39596ef6",
+            "revision": "rrfs_20261018195255_b01a8da6",
+            "snapshot_id": "WP0T2MSCYFCVPR194YC0"
+          },
+          {
+            "entries": 1670480,
+            "lead": 3,
+            "metadata_sha256": "c56fa75a06a549085886bf5908bc8c169fdfbd2535ab566e5bbaf693686a62a6",
+            "revision": "rrfs_20261018195333_56601662",
+            "snapshot_id": "7YFRFK065YB2KW7WPSAG"
+          },
+          {
+            "entries": 1686312,
+            "lead": 4,
+            "metadata_sha256": "464f384753f513d54791fd36190dab5c64bbae14abfbd4daa93a2a5bef534a8f",
+            "revision": "rrfs_20261018195409_518fe511",
+            "snapshot_id": "7YFRFK065YB2KW7WPSAG"
+          },
+          {
+            "entries": 1701807,
+            "lead": 5,
+            "metadata_sha256": "d5b91636e3ebf744698abcc78db2e9259aea6b7a8cd8c07ab949fa33e4570bd3",
+            "revision": "rrfs_20261018195453_86c74982",
+            "snapshot_id": "N72JXKHWJ6VP8YXFRQ70"
+          },
+          {
+            "entries": 1706193,
+            "lead": 6,
+            "metadata_sha256": "1186a19b3dff35f4fe5f05b87b75378b58f36d4f53c0238a0f09017d0b869cd0",
+            "revision": "rrfs_20261018195602_f590fb2e",
+            "snapshot_id": "RAY8KVG4M4D25Q8MR960"
+          },
+          {
+            "entries": 1664187,
+            "lead": 7,
+            "metadata_sha256": "3e719dd2d0926be0864df865888671f421a693d48fd43d93d41f958cc1602fdc",
+            "revision": "rrfs_20261018195654_3c47888d",
+            "snapshot_id": "8BB2K8EHGYYY3W7GJPWG"
+          },
+          {
+            "entries": 1677083,
+            "lead": 8,
+            "metadata_sha256": "0c20ebb5aa6a64e5b6fd7845085ad21d1be8225610223e77d1021b9e14764708",
+            "revision": "rrfs_20261018195716_f8390d30",
+            "snapshot_id": "8BB2K8EHGYYY3W7GJPWG"
+          },
+          {
+            "entries": 1668694,
+            "lead": 9,
+            "metadata_sha256": "69135653f611a0b9c86a8f2463db02ed99f9506f2ca8e490f1f84631acc90012",
+            "revision": "rrfs_20261018195806_01e98d77",
+            "snapshot_id": "7XQWBD6AAAM8PY2KZ8C0"
+          },
+          {
+            "entries": 1660376,
+            "lead": 10,
+            "metadata_sha256": "8b9be0de3f7a4094a6e8c7a36066927e08afc7a3b669a9fea019e0be1a2e83fc",
+            "revision": "rrfs_20261018195900_338fa676",
+            "snapshot_id": "YJ16B0RBAWQNJZFXRCJG"
+          },
+          {
+            "entries": 1695261,
+            "lead": 11,
+            "metadata_sha256": "fc6bb4445e992176346ac82388f70044cdc610e931e9b122fc800c204b9063ba",
+            "revision": "rrfs_20261018195923_a34ca86c",
+            "snapshot_id": "YJ16B0RBAWQNJZFXRCJG"
+          },
+          {
+            "entries": 1666096,
+            "lead": 12,
+            "metadata_sha256": "0ca44dfbc04c189c9d22418264da959489639b7b3d8c51e2ef64c713d99c35a2",
+            "revision": "rrfs_20261018200015_85ce3ec0",
+            "snapshot_id": "WRQTTTGZMBGAGQ1A7K0G"
+          },
+          {
+            "entries": 1692316,
+            "lead": 13,
+            "metadata_sha256": "31543f1e4d931563ddc17d79aad9ebd194208a30ad939acab598424ea3d7f901",
+            "revision": "rrfs_20261018200103_1785fdb5",
+            "snapshot_id": "PN1R86NXVWS253CHQ470"
+          },
+          {
+            "entries": 1694443,
+            "lead": 14,
+            "metadata_sha256": "70cf8d90d95eb54656612b33111b1f42a3b5842e765fefa9ce6542b9b1abdfa4",
+            "revision": "rrfs_20261018200154_f5eca99a",
+            "snapshot_id": "2Q03HHY3QQ8H9QYXZTB0"
+          }
+        ],
+        "codebook_entries": 25228764,
+        "complete": false,
+        "element_type": "UInt128",
+        "encoding": "float32_dictionary_per_lead_v1",
+        "expected_leads": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84
+        ],
+        "index_type": "UInt16",
+        "layout": "lead_partition_tiles_v1",
+        "packing": "uint16x8_le",
+        "tile_size": 256,
+        "version": 1
+      },
+      "storage_rows": 96030,
+      "table": "rrfs_run_bc0db782261546759f0edff7d583361c"
+    }
+  }
+}

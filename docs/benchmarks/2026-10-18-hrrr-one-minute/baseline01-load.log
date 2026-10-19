@@ -1,0 +1,65 @@
+{"cells":8192,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":53248,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":90112,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":122880,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":176128,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":208896,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":249856,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":311296,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":344064,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":376832,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":413696,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":462848,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":495616,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":536576,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":585728,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":634880,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":655360,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":704512,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":737280,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":778240,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":819200,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":868352,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":905216,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":950272,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":983040,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1028096,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1064960,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1105920,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1150976,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1196032,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1228800,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1277952,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1318912,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1347584,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1396736,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1437696,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1478656,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1503232,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1560576,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1622373,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1626469,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{"cells":1638757,"model":"hrrr","phase":"load","readers":3,"total":1638757,"workers":4}
+{
+  "database": "meteogram_native",
+  "finite_validation_mode": "each_inserted_cell_range",
+  "full_values_checked": true,
+  "init_time": "2026-10-18T12:00:00.000000000",
+  "rows": 80299093,
+  "samples": 10,
+  "snapshot_id": "WX5GN6QXSDKTBPQQP96G",
+  "staged_comparison": true,
+  "staged_sample_origin": "immutable_ingestion_buffers",
+  "storage": {
+    "axes": "level_lead",
+    "codec": "t64",
+    "compression": "ZSTD(3)",
+    "encoding": "float32_bits",
+    "index_granularity": 4,
+    "layout": "cell_profile_v1",
+    "writer": "rust_native"
+  },
+  "storage_rows": 1638757,
+  "table": "goal_hrrr_60_baseline01",
+  "validated_at": 1792336828.4888766
+}
