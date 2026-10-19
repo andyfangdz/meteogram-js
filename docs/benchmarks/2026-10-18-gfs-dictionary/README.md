@@ -1,6 +1,10 @@
 # Full GFS dictionary evidence
 
-Interpretation and exact scope: [report](../../plans/2026-10-18-gfs-dictionary.md).
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+Interpretation and exact scope: [report](../../archive/2026-10-18-gfs-dictionary.md).
 The final configuration matrix contains nine complete fresh-table staged loads,
 three repeats each of raw bits, dictionary profiles and 256-cell tiles. All use
 four workers and the same frozen final binary. Acquisition/preparation and

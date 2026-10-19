@@ -5,19 +5,17 @@ use crate::{
     db::{varuint, Db},
     state::ident,
 };
-use anyhow::{Context, Result};
+#[cfg(test)]
+use anyhow::Context;
+use anyhow::Result;
 use serde_json::Value;
 use std::io::{Cursor, Read};
 pub const LANES: usize = 8;
 pub const CELLS: usize = 256;
 pub const GROUPS: usize = CELLS / LANES;
 pub fn tile_cells(m: &Value) -> Result<usize> {
-    match m["storage"]["tile_size"].as_u64() {
-        Some(8) => Ok(8),
-        Some(64) => Ok(64),
-        Some(256) => Ok(256),
-        _ => anyhow::bail!("Unknown tile size"),
-    }
+    anyhow::ensure!(m["storage"]["tile_size"] == CELLS, "Unsupported tile size");
+    Ok(CELLS)
 }
 pub fn tiled(m: &Value) -> bool {
     m["storage"]["layout"] == "cell_tiles_v1"
@@ -30,87 +28,17 @@ pub fn valid_layout(m: &Value) -> bool {
         && m["storage"]["element_type"] == "UInt128"
         && m["storage"]["index_type"] == "UInt16"
         && m["storage"]["axes"] == "level_lead"
-}
-pub fn export_range(
-    db: &Db,
-    database: &str,
-    table: &str,
-    ids: &[u32],
-    m: &Value,
-    dictionary: &crate::dictionary::Dictionary,
-    range: std::ops::Range<usize>,
-) -> Result<Vec<Vec<u32>>> {
-    let start = range.start;
-    let tile_cells = tile_cells(m)?;
-    let groups = tile_cells / LANES;
-    let count = range
-        .end
-        .checked_sub(start)
-        .context("Reversed packed export range")?;
-    ident(database)?;
-    ident(table)?;
-    anyhow::ensure!(
-        start.is_multiple_of(tile_cells)
-            && count > 0
-            && start + count <= ids.len()
-            && ((start + count).is_multiple_of(tile_cells) || start + count == ids.len()),
-        "Packed export range"
-    );
-    let names = crate::state::fields(m);
-    for name in &names {
-        ident(name)?;
-    }
-    let widths = crate::dictionary::widths(m)?;
-    let bytes=db.bytes(&format!("SELECT tile_id,cell_ids,{} FROM {database}.{table} WHERE tile_id>={} AND tile_id<={} ORDER BY tile_id SETTINGS max_threads=2,max_block_size=16 FORMAT RowBinary",names.join(","),start/tile_cells,(start+count-1)/tile_cells))?;
-    let mut cursor = Cursor::new(bytes.as_slice());
-    let mut columns: Vec<_> = widths
-        .iter()
-        .map(|width| vec![0u32; count * width])
-        .collect();
-    for tile in start / tile_cells..=(start + count - 1) / tile_cells {
-        let mut b = [0u8; 4];
-        cursor.read_exact(&mut b)?;
-        anyhow::ensure!(
-            u32::from_le_bytes(b) as usize == tile,
-            "Packed export tile order"
-        );
-        let cells = tile_cells.min(ids.len() - tile * tile_cells);
-        anyhow::ensure!(varuint(&mut cursor)? == cells, "Packed export cell count");
-        for id in &ids[tile * tile_cells..tile * tile_cells + cells] {
-            cursor.read_exact(&mut b)?;
-            anyhow::ensure!(u32::from_le_bytes(b) == *id, "Packed export IDs");
-        }
-        for (field, width) in widths.iter().enumerate() {
-            anyhow::ensure!(
-                varuint(&mut cursor)? == *width * groups,
-                "Packed export array shape"
-            );
-            for slot in 0..*width {
-                for group in 0..groups {
-                    let mut b = [0u8; 16];
-                    cursor.read_exact(&mut b)?;
-                    let word = u128::from_le_bytes(b);
-                    for lane in 0..LANES.min(cells.saturating_sub(group * LANES)) {
-                        columns[field]
-                            [(tile * tile_cells + group * LANES + lane - start) * width + slot] =
-                            dictionary.value(field, slot, code(word, lane))?;
-                    }
-                }
-            }
-        }
-    }
-    anyhow::ensure!(
-        cursor.position() == bytes.len() as u64,
-        "Unexpected packed export rows"
-    );
-    Ok(columns)
+        && m["storage"]["partitioned_lead"] == true
+        && m["storage"]["lead_hour"]
+            .as_u64()
+            .is_some_and(|lead| m["leads"] == serde_json::json!([lead]))
 }
 pub fn code(word: u128, lane: usize) -> u32 {
     ((word >> (lane * 16)) & 65535) as u32
 }
 pub struct LeadInput<'a> {
-    pub profiles: &'a [Vec<u16>],
-    pub surfaces: &'a [Vec<u16>],
+    pub profiles: &'a [u16],
+    pub surfaces: &'a [u16],
     pub levels: usize,
     pub fields: usize,
     pub cells: usize,
@@ -121,7 +49,7 @@ pub fn slot_offset(cells: usize, stride: usize, cell: usize, slot: usize) -> usi
     let count = crate::stage::BLOCK_CELLS.min(cells - first);
     first * stride + slot * count + cell - first
 }
-pub fn encode_leads(
+pub fn encode_lead(
     names: &[String],
     widths: &[usize],
     ids: &[u32],
@@ -135,19 +63,13 @@ pub fn encode_leads(
             && input.cells == ids.len()
             && names.len() == input.fields + 2
             && names.len() == widths.len()
-            && input.profiles.len() == input.surfaces.len(),
+            && input.levels > 0
+            && input.fields > 0,
         "Direct packed input dimensions"
     );
-    let nt = input.profiles.len();
     anyhow::ensure!(
-        nt > 0
-            && input.levels > 0
-            && input.fields > 0
-            && input
-                .profiles
-                .iter()
-                .all(|v| v.len() >= input.cells * input.levels * input.fields)
-            && input.surfaces.iter().all(|v| v.len() >= input.cells * 2),
+        input.profiles.len() >= input.cells * input.levels * input.fields
+            && input.surfaces.len() >= input.cells * 2,
         "Direct packed buffers"
     );
     let rows = ids.len().div_ceil(CELLS);
@@ -188,12 +110,12 @@ pub fn encode_leads(
         } else {
             2
         };
-        let leads = if pressure {
+        let values = if pressure {
             input.profiles
         } else {
             input.surfaces
         };
-        let width = levels * nt;
+        let width = levels;
         anyhow::ensure!(width == widths[field], "Direct packed slot shape");
         text(&mut out, name);
         text(&mut out, "Array(UInt128)");
@@ -203,7 +125,7 @@ pub fn encode_leads(
         let data = out.len();
         out.resize(data + rows * width * GROUPS * 16, 0);
         let full_rows = input.cells / CELLS;
-        // Group sixteen tiles, keeping target cache lines hot across leads.
+        // Group sixteen tiles, keeping adjacent output cache lines hot.
         // Full words use a fixed-size copy; only the final short tile pads.
         for first_row in (0..full_rows).step_by(16) {
             let group_rows = 16.min(full_rows - first_row);
@@ -215,17 +137,18 @@ pub fn encode_leads(
                     field - input.fields
                 };
                 let source = slot_offset(input.cells, stride, cell, source_slot);
-                for (t, lead) in leads.iter().enumerate() {
-                    let values = &lead[source..source + group_rows * CELLS];
-                    let bytes = unsafe {
-                        std::slice::from_raw_parts(values.as_ptr().cast::<u8>(), values.len() * 2)
-                    };
-                    for row in 0..group_rows {
-                        let target =
-                            data + ((first_row + row) * width + level * nt + t) * GROUPS * 16;
-                        out[target..target + CELLS * 2]
-                            .copy_from_slice(&bytes[row * CELLS * 2..(row + 1) * CELLS * 2]);
-                    }
+                let bytes = unsafe {
+                    std::slice::from_raw_parts(
+                        values[source..source + group_rows * CELLS]
+                            .as_ptr()
+                            .cast::<u8>(),
+                        group_rows * CELLS * 2,
+                    )
+                };
+                for row in 0..group_rows {
+                    let target = data + ((first_row + row) * width + level) * GROUPS * 16;
+                    out[target..target + CELLS * 2]
+                        .copy_from_slice(&bytes[row * CELLS * 2..(row + 1) * CELLS * 2]);
                 }
             }
         }
@@ -239,14 +162,14 @@ pub fn encode_leads(
                     field - input.fields
                 };
                 let source = slot_offset(input.cells, stride, cell, source_slot);
-                for (t, lead) in leads.iter().enumerate() {
-                    let target = data + (full_rows * width + level * nt + t) * GROUPS * 16;
-                    let values = &lead[source..source + take];
-                    let bytes = unsafe {
-                        std::slice::from_raw_parts(values.as_ptr().cast::<u8>(), take * 2)
-                    };
-                    out[target..target + bytes.len()].copy_from_slice(bytes);
-                }
+                let target = data + (full_rows * width + level) * GROUPS * 16;
+                let bytes = unsafe {
+                    std::slice::from_raw_parts(
+                        values[source..source + take].as_ptr().cast::<u8>(),
+                        take * 2,
+                    )
+                };
+                out[target..target + bytes.len()].copy_from_slice(bytes);
             }
         }
     }
@@ -392,7 +315,8 @@ fn text(out: &mut Vec<u8>, s: &str) {
     var(out, s.len());
     out.extend_from_slice(s.as_bytes());
 }
-fn words(values: &[f32], width: usize, cells: usize, out: &mut [u8]) -> Result<()> {
+#[cfg(test)]
+fn reference_words(values: &[f32], width: usize, cells: usize, out: &mut [u8]) -> Result<()> {
     anyhow::ensure!(
         values.len() == width * cells && out.len() == cells.div_ceil(CELLS) * width * GROUPS * 16,
         "Packed buffer dimensions"
@@ -418,7 +342,8 @@ fn words(values: &[f32], width: usize, cells: usize, out: &mut [u8]) -> Result<(
     }
     Ok(())
 }
-pub fn encode(
+#[cfg(test)]
+fn reference_block(
     names: &[String],
     columns: &[&[f32]],
     widths: &[usize],
@@ -473,7 +398,7 @@ pub fn encode(
         }
         let start = out.len();
         out.resize(start + rows * width * GROUPS * 16, 0);
-        words(columns[f], width, ids.len(), &mut out[start..])?;
+        reference_words(columns[f], width, ids.len(), &mut out[start..])?;
     }
     Ok(out)
 }
@@ -485,7 +410,7 @@ mod tests {
     fn direct_stage_tiles_match_normalized_native_bytes_across_frame_and_cell_tails() -> Result<()>
     {
         let root = tempfile::tempdir()?;
-        let nt = 3;
+        let nt = 1;
         let nl = 2;
         let nf = 2;
         let names: Vec<_> = ["p0", "p1", "s0", "s1"]
@@ -516,16 +441,16 @@ mod tests {
                         )
                     })
                     .collect();
-                let pp = root.path().join(format!("p-{nc}-{t}.npy"));
-                let sp = root.path().join(format!("s-{nc}-{t}.npy"));
+                let pp = root.path().join(format!("p-{nc}-{t}"));
+                let sp = root.path().join(format!("s-{nc}-{t}"));
                 crate::stage::write_codes(&pp, &[nc, nl, nf], &p)?;
                 crate::stage::write_codes(&sp, &[nc, 2], &s)?;
                 profiles.push(crate::stage::Array::open_as(
                     &pp,
                     &[nc, nl, nf],
-                    "uint32_le",
+                    "uint16_le",
                 )?);
-                surfaces.push(crate::stage::Array::open_as(&sp, &[nc, 2], "uint32_le")?);
+                surfaces.push(crate::stage::Array::open_as(&sp, &[nc, 2], "uint16_le")?);
                 original_p.push(p);
                 original_s.push(s);
             }
@@ -555,15 +480,15 @@ mod tests {
                     }
                 }
                 let columns: Vec<_> = canonical.iter().map(Vec::as_slice).collect();
-                let reference = encode(&names, &columns, &widths, &ids, first)?;
-                let direct = encode_leads(
+                let reference = reference_block(&names, &columns, &widths, &ids, first)?;
+                let direct = encode_lead(
                     &names,
                     &widths,
                     &ids,
                     first,
                     &LeadInput {
-                        profiles: &p,
-                        surfaces: &s,
+                        profiles: &p[0],
+                        surfaces: &s[0],
                         levels: nl,
                         fields: nf,
                         cells,
@@ -585,7 +510,7 @@ mod tests {
             let values: Vec<_> = ids.iter().map(|i| f32::from_bits(*i)).collect();
             db.insert(
                 &table,
-                encode(&["value".to_owned()], &[&values], &[1], &ids, 0).unwrap(),
+                reference_block(&["value".to_owned()], &[&values], &[1], &ids, 0).unwrap(),
             )
             .unwrap();
             verify_cells(&db, "meteogram_native", &table, &ids, CELLS).unwrap();
@@ -630,7 +555,7 @@ mod tests {
                 .unwrap();
             db.insert(
                 &table,
-                encode(&["value".to_owned()], &[&values], &[1], &ids, 0).unwrap(),
+                reference_block(&["value".to_owned()], &[&values], &[1], &ids, 0).unwrap(),
             )
             .unwrap();
             db.command(&format!("ALTER TABLE meteogram_native.{table} UPDATE cell_ids=arrayReverse(cell_ids) WHERE tile_id=0 SETTINGS mutations_sync=2")).unwrap();
@@ -655,7 +580,7 @@ mod tests {
                 .map(|i| f32::from_bits((i as u32).wrapping_mul(2654435761) & 65535))
                 .collect();
             let mut out = vec![0u8; cells.div_ceil(CELLS) * width * GROUPS * 16];
-            words(&input, width, cells, &mut out)?;
+            reference_words(&input, width, cells, &mut out)?;
             for (tile, slots) in out.chunks_exact(width * GROUPS * 16).enumerate() {
                 for (word_index, bytes) in slots.as_chunks::<16>().0.iter().enumerate() {
                     let slot = word_index / GROUPS;
@@ -678,7 +603,7 @@ mod tests {
         for lane in 0..8 {
             let mut input = vec![f32::from_bits(65535); 8 * 4];
             input[lane * 4] = f32::from_bits(65536);
-            assert!(words(&input, 4, 8, &mut vec![0u8; 4 * GROUPS * 16]).is_err());
+            assert!(reference_words(&input, 4, 8, &mut vec![0u8; 4 * GROUPS * 16]).is_err());
         }
         Ok(())
     }

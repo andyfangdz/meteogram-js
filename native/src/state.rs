@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use std::{
     collections::BTreeMap,
     fs::{self, File, OpenOptions},
-    io::{Read, Write},
+    io::Write,
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -85,7 +85,6 @@ pub struct Entry {
     pub revision: String,
     pub database: String,
     pub table: String,
-    #[serde(default)]
     pub owned: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retired_at: Option<f64>,
@@ -97,9 +96,7 @@ pub struct Catalog {
     pub current: BTreeMap<String, Entry>,
     pub previous: BTreeMap<String, Entry>,
     pub retired: Vec<Entry>,
-    #[serde(default)]
     pub complete_runs: BTreeMap<String, Vec<Entry>>,
-    #[serde(default)]
     pub building: BTreeMap<String, Vec<Entry>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hrrr_long: Option<Entry>,
@@ -289,35 +286,22 @@ fn check_schema(m: &Value, partial: bool) -> Result<()> {
         if partitioned(m) {
             anyhow::ensure!(
                 s["version"] == 1
+                    && s["encoding"] == crate::runs::ENCODING
+                    && s["tile_size"] == 256
+                    && s["axes"] == "level"
+                    && s["packing"] == "uint16x8_le"
+                    && s["element_type"] == "UInt128"
+                    && s["index_type"] == "UInt16"
                     && s["expected_leads"] == json!(expected)
                     && s["complete"] == json!(actual == expected),
                 "Invalid incremental run manifest"
             );
             return Ok(());
         }
-        crate::dictionary::index_bytes(m)?;
-        if crate::packed::tiled(m) {
-            anyhow::ensure!(
-                crate::packed::valid_layout(m)
-                    && s["encoding"] == crate::dictionary::ENCODING
-                    && s["codec"] == "delta"
-                    && s["delta_bytes"] == 2,
-                "Unknown packed storage layout"
-            );
-        } else if s["layout"] != "cell_profile_v1"
-            || !["level_lead", "lead_level"].iter().any(|v| s["axes"] == *v)
-            || !["float32_bits", "float32", crate::dictionary::ENCODING]
-                .iter()
-                .any(|v| s["encoding"] == *v)
-            || !["t64", "delta", "zstd", "lz4", "gorilla"]
-                .iter()
-                .any(|v| s["codec"] == *v)
-            || (["t64", "delta"].iter().any(|v| s["codec"] == *v)
-                != (s["encoding"] == "float32_bits"
-                    || s["encoding"] == crate::dictionary::ENCODING))
-        {
-            bail!("Unknown storage layout");
-        }
+        anyhow::ensure!(
+            crate::packed::valid_layout(m) && s["codec"] == "delta" && s["delta_bytes"] == 2,
+            "Unsupported hourly tile layout"
+        );
     }
     Ok(())
 }
@@ -332,9 +316,6 @@ pub fn numeric_array_eq(a: &Value, b: &Value) -> bool {
         _ => false,
     }
 }
-pub fn publish(root: &Path, model: &str, e: Entry, rollback: bool) -> Result<Catalog> {
-    crate::runs::publish(root, model, e, rollback, false)
-}
 pub fn disk_guard(root: &Path, extra: u64) -> Result<u64> {
     let free = fs2::available_space(root)?;
     if free < RESERVE + extra {
@@ -344,14 +325,6 @@ pub fn disk_guard(root: &Path, extra: u64) -> Result<u64> {
         );
     }
     Ok(free)
-}
-pub fn admission(model: &str) -> u64 {
-    match model {
-        "hrrr" => 210 << 30,
-        "rrfs" => 160 << 30,
-        "gfs" => 35 << 30,
-        _ => 5 << 30,
-    }
 }
 pub fn candidate(root: &Path, model: &str) -> Result<(PathBuf, Entry)> {
     dataset(model)?;
@@ -389,108 +362,6 @@ pub fn event(root: &Path, v: Value) -> Result<()> {
     writeln!(f, "{line}")?;
     Ok(())
 }
-pub struct Npy {
-    pub dtype: String,
-    pub bytes: Vec<u8>,
-}
-pub fn parse_npy(b: &[u8]) -> Result<(Vec<usize>, String, usize)> {
-    if b.len() < 12 || &b[..6] != b"\x93NUMPY" {
-        bail!("Invalid NPY");
-    }
-    let (n, start) = if b[6] == 1 {
-        (u16::from_le_bytes(b[8..10].try_into()?) as usize, 10)
-    } else if b[6] == 2 {
-        (u32::from_le_bytes(b[8..12].try_into()?) as usize, 12)
-    } else {
-        bail!("Unsupported NPY version")
-    };
-    let h = std::str::from_utf8(b.get(start..start + n).context("Truncated header")?)?;
-    if !h.contains("'fortran_order': False") {
-        bail!("Fortran NPY unsupported");
-    }
-    let dtype = h
-        .split("'descr': '")
-        .nth(1)
-        .context("Missing dtype")?
-        .split('\'')
-        .next()
-        .unwrap()
-        .to_owned();
-    let dims = h
-        .split("'shape': (")
-        .nth(1)
-        .context("Missing shape")?
-        .split(')')
-        .next()
-        .unwrap();
-    let shape = dims
-        .split(',')
-        .filter(|s| !s.trim().is_empty())
-        .map(|s| s.trim().parse())
-        .collect::<std::result::Result<Vec<usize>, _>>()?;
-    Ok((shape, dtype, start + n))
-}
-#[cfg(test)]
-pub fn npy_bytes(dtype: &str, shape: &[usize], bytes: &[u8]) -> Vec<u8> {
-    let dims = shape
-        .iter()
-        .map(usize::to_string)
-        .collect::<Vec<_>>()
-        .join(", ");
-    let mut h = format!("{{'descr': '{dtype}', 'fortran_order': False, 'shape': ({dims},), }}");
-    while (10 + h.len() + 1) % 64 != 0 {
-        h.push(' ');
-    }
-    h.push('\n');
-    let mut b = b"\x93NUMPY\x01\x00".to_vec();
-    b.extend_from_slice(&(h.len() as u16).to_le_bytes());
-    b.extend_from_slice(h.as_bytes());
-    b.extend_from_slice(bytes);
-    b
-}
-pub fn load_npz(p: &Path) -> Result<BTreeMap<String, Npy>> {
-    let mut z = zip::ZipArchive::new(File::open(p)?)?;
-    let mut out = BTreeMap::new();
-    for i in 0..z.len() {
-        let mut f = z.by_index(i)?;
-        let mut b = vec![];
-        f.read_to_end(&mut b)?;
-        let (_shape, dtype, start) = parse_npy(&b)?;
-        out.insert(
-            f.name().trim_end_matches(".npy").to_owned(),
-            Npy {
-                dtype,
-                bytes: b[start..].to_vec(),
-            },
-        );
-    }
-    Ok(out)
-}
-#[cfg(test)]
-pub fn save_cells(p: &Path, ids: &[u32], lat: &[f64], lon: &[f64]) -> Result<()> {
-    let mut z = zip::ZipWriter::new(File::create(p)?);
-    let opts =
-        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
-    let idb: Vec<u8> = ids.iter().flat_map(|v| v.to_le_bytes()).collect();
-    for (name, dtype, b) in [
-        ("cell_id", "<u4", idb),
-        (
-            "latitude",
-            "<f8",
-            lat.iter().flat_map(|v| v.to_le_bytes()).collect(),
-        ),
-        (
-            "longitude",
-            "<f8",
-            lon.iter().flat_map(|v| v.to_le_bytes()).collect(),
-        ),
-    ] {
-        z.start_file(format!("{name}.npy"), opts)?;
-        z.write_all(&npy_bytes(dtype, &[ids.len()], &b))?;
-    }
-    z.finish()?.sync_all()?;
-    Ok(())
-}
 pub fn clean_workspace(p: &Path) -> Result<()> {
     for item in fs::read_dir(p)? {
         let item = item?;
@@ -500,7 +371,7 @@ pub fn clean_workspace(p: &Path) -> Result<()> {
             continue;
         }
         if (s.starts_with("lead-") || s.starts_with("surface-"))
-            && [".npy", ".stage.zst", ".stage.json", ".stage.zst.tmp"]
+            && [".stage.zst", ".stage.json", ".stage.zst.tmp"]
                 .iter()
                 .any(|suffix| s.ends_with(suffix))
         {

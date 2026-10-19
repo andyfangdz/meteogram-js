@@ -1,6 +1,10 @@
 # Home native pipeline deployment evidence
 
-See the [deployment report](../../plans/2026-10-17-native-pipeline-deployment.md)
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+See the [deployment report](../../archive/2026-10-17-native-pipeline-deployment.md)
 for results, operating commands and limitations.
 
 - `summary.json`: accepted source identities/volumes, retained table sizes,

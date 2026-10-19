@@ -1,6 +1,10 @@
 # Rust/profile ingestion evidence
 
-See the [measured report](../../plans/2026-10-18-native-rust-optimization.md).
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+See the [measured report](../../archive/2026-10-18-native-rust-optimization.md).
 The pinned full cycle took 959.820 seconds. It retained 84,579,313 logical
 cell/lead records in 1,688,527 physical cell rows, occupying 25.935 GB.
 

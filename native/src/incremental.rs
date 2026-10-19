@@ -48,7 +48,7 @@ pub fn find(root: &Path, model: &str, product: &str, init: &str) -> Result<Optio
 }
 pub fn shared_cells(root: &Path, source: &Path, target: &Path) -> Result<()> {
     fs::create_dir_all(target)?;
-    for name in ["cells.bin.zst", "cells.npz"] {
+    for name in ["cells.bin.zst"] {
         let src = source.join(name);
         if !src.exists() {
             continue;
@@ -231,7 +231,7 @@ pub fn attach_lead(
         fault != Some("before_publish"),
         "Injected interruption before publication"
     );
-    runs::publish(root, model, parent.clone(), false, false)?;
+    runs::publish(root, model, parent.clone(), false)?;
     anyhow::ensure!(
         fault != Some("after_publish"),
         "Injected interruption after publication"
@@ -351,21 +351,7 @@ async fn ingest(
         && read_json(&metadata)?["staging"]["complete"] == true
         && path.join(format!("lead-{lead:03}.json")).exists();
     if !ready {
-        let existing = metadata.exists();
-        let options = source::FetchOptions {
-            source: if existing { None } else { Some(&source) },
-            dictionary: true,
-        };
-        source::fetch_with(
-            model,
-            &path,
-            1,
-            Some(w.pin.clone()),
-            false,
-            Some(vec![lead]),
-            options,
-        )
-        .await?;
+        source::fetch_hour(model, &path, w.pin.clone(), lead, &source).await?;
     }
     if model == "hrrr" {
         source::fetch_clouds(&path, Some(&source)).await?;
@@ -406,7 +392,6 @@ async fn poll_with_stop(
     let _lock = Lock::acquire(&root, "update", true, true)?;
     let r = root.clone();
     tokio::task::spawn_blocking(move || -> Result<()> {
-        runs::migrate(&r)?;
         recover(&r)?;
         store::collect(&r, 600.)?;
         let c = catalog(&r)?;

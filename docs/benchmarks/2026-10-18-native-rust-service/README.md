@@ -1,6 +1,10 @@
 # Full Rust service migration evidence
 
-See the [migration report](../../plans/2026-10-18-native-rust-service.md) for
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+See the [migration report](../../archive/2026-10-18-native-rust-service.md) for
 interpretation and limits. All files describe actual host checks; large source
 arrays, caches, database files and executables are excluded.
 

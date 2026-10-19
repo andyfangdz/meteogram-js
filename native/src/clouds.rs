@@ -86,7 +86,7 @@ pub fn binding(path: &Path, meta: &Value) -> Result<Option<Reader>> {
             .as_str()
             .context("Pressure snapshot")?
             .to_owned(),
-        array: stage::Array::open(&path.join("native-clouds.npy"), &[cells, LEVELS, 3])?,
+        array: stage::Array::open(&path.join("native-clouds"), &[cells, LEVELS, 3])?,
         snapshot: c["snapshot_id"]
             .as_str()
             .context("Cloud snapshot")?
@@ -202,7 +202,7 @@ pub fn check_upgrade(root: &Path, prior: &Entry, next: &Entry) -> Result<()> {
                 "Cloud upgrade changed pressure proof/codebook"
             );
         }
-        let coordinates = ["cells.bin.zst", "cells.npz"]
+        let coordinates = ["cells.bin.zst"]
             .into_iter()
             .find(|name| ap.join(name).exists())
             .context("Missing pressure coordinates")?;
@@ -300,7 +300,7 @@ mod tests {
             })
             .collect::<Vec<_>>();
         let shape = [cells, LEVELS, 3];
-        stage::write(&path.join("native-clouds.npy"), &shape, &values).unwrap();
+        stage::write(&path.join("native-clouds"), &shape, &values).unwrap();
         let mut meta = json!({"model":"hrrr","dataset":"noaa-hrrr-forecast-18-hour-virtual","init_time":"2026-10-18T21:00:00","snapshot_id":"test_snapshot","leads":[0],"cells":cells,"grid":{"test":true}});
         let mut cloud = json!({"version":1,"shape":shape,"model_levels":(1..=LEVELS).collect::<Vec<_>>(),"fields":FIELDS,"units":units(),"full_values_checked":true,"data_bytes":fs::metadata(path.join(FILES[0])).unwrap().len(),"index_sha256":file_hash(&path.join(FILES[1])).unwrap()});
         for key in [
@@ -374,17 +374,24 @@ mod tests {
         let shared = root.path().join("shared");
         fs::create_dir(&shared).unwrap();
         copy(&path, &shared, &meta).unwrap();
-        let mut c = Catalog::default();
-        c.current.insert(
-            "hrrr".into(),
-            Entry {
-                owned: false,
-                ..e.clone()
-            },
-        );
         // The candidate descriptor itself must use non-owned storage for this disk-only test.
         let e = Entry { owned: false, ..e };
         atomic(path.join("entry.json"), &e).unwrap();
+        let (parent_path, mut parent) = candidate(root.path(), "hrrr").unwrap();
+        parent.owned = false;
+        parent.table = e.table.clone();
+        let mut manifest = meta.clone();
+        manifest["storage"] = json!({"layout":"lead_partition_tiles_v1","books":[crate::runs::Book {
+            lead: 0,
+            revision: e.revision.clone(),
+            entries: 1,
+            metadata_sha256: file_hash(&path.join("metadata.json")).unwrap(),
+            snapshot_id: meta["snapshot_id"].as_str().unwrap().to_owned(),
+        }]});
+        atomic(parent_path.join("metadata.json"), &manifest).unwrap();
+        atomic(parent_path.join("entry.json"), &parent).unwrap();
+        let mut c = Catalog::default();
+        c.current.insert("hrrr".into(), parent);
         atomic(root.path().join("catalog.json"), &c).unwrap();
         crate::store::discard(root.path(), &path).unwrap();
         assert!(path.join(FILES[0]).exists());

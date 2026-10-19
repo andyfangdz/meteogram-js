@@ -1,5 +1,9 @@
 # ClickHouse prototype: measured results and home-server estimates
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 **Later home benchmark completed:** [full-resident HRRR/GFS/AIFS results](2026-10-17-clickhouse-home-resident.md)
 now replace the full-run projections and outstanding acquisition limits in this
 historical report. The original sample measurements below are preserved.
@@ -46,7 +50,7 @@ The app still uses Open-Meteo. The prototype returns native source fields,
 including explicitly grid-relative HRRR winds; production meteorological
 transforms, publication, retention, public access and app integration remain work.
 
-Reproduction instructions: [prototype README](../../scripts/clickhouse-prototype/README.md).
+Reproduction instructions: [prototype README](https://github.com/andyfangdz/meteogram-js/blob/5f4ae08/scripts/clickhouse-prototype/README.md).
 Machine-readable evidence: [source](../benchmarks/2026-10-17-clickhouse/source-measurements.json),
 [layout comparison](../benchmarks/2026-10-17-clickhouse/layout-comparison.json),
 [larger inserts](../benchmarks/2026-10-17-clickhouse/bulk-insert-comparison.json),

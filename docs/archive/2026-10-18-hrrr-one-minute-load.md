@@ -1,5 +1,9 @@
 # Full HRRR loading under one minute
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The complete staged HRRR load, including all validation and resuming merges,
 finished in **50.21 seconds**, with a **53.70-second** fresh-table repeat on
 this server. Both used the same frozen executable and default settings. Every

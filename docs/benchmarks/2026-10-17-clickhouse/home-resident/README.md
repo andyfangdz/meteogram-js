@@ -1,6 +1,10 @@
 # Home full-resident evidence, October 17, 2026
 
-The [report](../../../plans/2026-10-17-clickhouse-home-resident.md) describes one
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../../native/README.md)
+> for supported operation.
+
+The [report](../../../archive/2026-10-17-clickhouse-home-resident.md) describes one
 complete resident CONUS HRRR/GFS/AIFS cycle on the home ARM host. This bundle is
 approximately 1 MB; forecast arrays, encoded source chunks, executables, Python
 environment and full logs remain outside Git.

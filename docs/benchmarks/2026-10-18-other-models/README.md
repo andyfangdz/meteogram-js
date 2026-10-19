@@ -1,6 +1,10 @@
 # GFS/AIFS full loader benchmark evidence
 
-Results and interpretation: [dated report](../../plans/2026-10-18-other-model-load-benchmarks.md).
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+Results and interpretation: [dated report](../../archive/2026-10-18-other-model-load-benchmarks.md).
 This bundle records complete local staged loads, not network refresh timings.
 
 `summary.json` contains source pins, full scope, preparation sizes, all 24

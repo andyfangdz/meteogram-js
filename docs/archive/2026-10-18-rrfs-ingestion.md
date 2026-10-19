@@ -1,5 +1,9 @@
 # RRFS ingestion and uniform codebook allowance
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The native Rust service adds RRFS to HRRR, GFS and AIFS. Default six-hour
 refreshes include all four models; `update --models rrfs` updates RRFS alone.
 The Next.js weather provider remains Open-Meteo.

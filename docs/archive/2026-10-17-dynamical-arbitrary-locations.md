@@ -1,5 +1,9 @@
 # Arbitrary US locations from a home forecast server
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 Design date: 2026-10-17. The user wants arbitrary coordinates, initially in the
 continental US, and has a spare Linux computer. Interpret the initial coverage
 as the contiguous lower 48 (CONUS); Alaska and Hawaii are outside this first

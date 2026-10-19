@@ -141,6 +141,7 @@ pub fn load_books(
     m: &Value,
     cache: Option<&BookCache>,
 ) -> Result<BTreeMap<u16, Arc<Dictionary>>> {
+    validate_manifest(root, e, m, false)?;
     crate::dictionary::widths(m)?;
     let mut result = BTreeMap::new();
     let mut entries = 0;
@@ -157,14 +158,11 @@ pub fn load_books(
                 "Lead table differs"
             );
             binding(&p, &child, &cm)?;
-            let d = Arc::new(
-                Dictionary::load_values_budget(
-                    &p,
-                    &cm,
-                    crate::dictionary::MAX_DICTIONARY_ENTRIES - before,
-                )?
-                .context("Missing lead dictionary")?,
-            );
+            let d = Arc::new(Dictionary::load_values_budget(
+                &p,
+                &cm,
+                crate::dictionary::MAX_DICTIONARY_ENTRIES - before,
+            )?);
             if let Some(cache) = cache {
                 let mut cache = cache.lock().unwrap();
                 cache.retain(|_, w| w.strong_count() > 0);
@@ -191,41 +189,31 @@ pub fn load_books(
     Ok(result)
 }
 pub struct Reader {
-    dictionary: Option<Dictionary>,
     books: BTreeMap<u16, Arc<Dictionary>>,
     ids: Vec<u32>,
 }
 impl Reader {
     pub fn load(root: &Path, e: &Entry, m: &Value) -> Result<Self> {
-        let (books, ids) = if partitioned(m) {
-            let arrays = crate::stage::load_cells(&descriptor(root, e)?)?;
-            let ids = arrays["cell_id"]
-                .bytes
-                .as_chunks::<4>()
-                .0
-                .iter()
-                .map(|b| u32::from_le_bytes(*b))
-                .collect();
-            (load_books(root, e, m, None)?, ids)
-        } else {
-            (BTreeMap::new(), Vec::new())
-        };
+        anyhow::ensure!(partitioned(m), "Unsupported forecast run layout");
+        let arrays = crate::stage::load_cells(&descriptor(root, e)?)?;
+        let ids = arrays["cell_id"]
+            .bytes
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|b| u32::from_le_bytes(*b))
+            .collect();
         Ok(Self {
-            dictionary: Dictionary::load(&descriptor(root, e)?, m)?,
-            books,
+            books: load_books(root, e, m, None)?,
             ids,
         })
     }
     pub fn profile(&self, db: &Db, e: &Entry, m: &Value, cell: u32) -> Result<(Vec<Value>, f64)> {
-        if partitioned(m) {
-            let point = self
-                .ids
-                .binary_search(&cell)
-                .map_err(|_| anyhow::anyhow!("Unknown cell"))?;
-            db.profile_leads(&e.database, &e.table, m, cell, point, &self.books)
-        } else {
-            db.profile_with_dictionary(&e.database, &e.table, m, cell, self.dictionary.as_ref())
-        }
+        let point = self
+            .ids
+            .binary_search(&cell)
+            .map_err(|_| anyhow::anyhow!("Unknown cell"))?;
+        db.profile_leads(&e.database, &e.table, m, cell, point, &self.books)
     }
 }
 pub fn direct(c: &Catalog, retired: bool) -> Vec<Entry> {
@@ -250,10 +238,9 @@ pub fn references(root: &Path, c: &Catalog, retired: bool) -> Result<Vec<Entry>>
     for e in all.clone() {
         let path = descriptor(root, &e)?;
         let m = read_json(path.join("metadata.json"))?;
-        if partitioned(&m) {
-            for b in books(&m)? {
-                all.push(book_entry(root, &b)?.0);
-            }
+        anyhow::ensure!(partitioned(&m), "Unsupported retained run layout");
+        for b in books(&m)? {
+            all.push(book_entry(root, &b)?.0);
         }
     }
     all.sort_by(|a, b| a.revision.cmp(&b.revision));
@@ -272,7 +259,7 @@ fn long(m: &Value) -> bool {
         && m["dataset"] == "noaa-hrrr-forecast-48-hour-virtual"
         && m["leads"].as_array().is_some_and(|l| l.len() == 49)
 }
-fn normalize(root: &Path, c: &mut Catalog, extra: Option<(&str, &Entry)>) -> Result<()> {
+pub(crate) fn normalize(root: &Path, c: &mut Catalog, extra: Option<(&str, &Entry)>) -> Result<()> {
     let mut pool = direct(c, true);
     if let Some((_, e)) = extra {
         pool.push(e.clone());
@@ -351,39 +338,18 @@ fn prune_building(root: &Path, c: &mut Catalog) -> Result<()> {
     }
     Ok(())
 }
-pub fn migrate(root: &Path) -> Result<Catalog> {
-    let _l = Lock::acquire(root, "catalog", true, false)?;
-    let mut c = catalog(root)?;
-    let before = serde_json::to_value(&c)?;
-    let roots = direct(&c, false);
-    normalize(root, &mut c, None)?;
-    prune_building(root, &mut c)?;
-    retire_removed(&mut c, roots);
-    if serde_json::to_value(&c)? != before {
-        c.generation += 1;
-        atomic(root.join("catalog.json"), &c)?;
-    }
-    Ok(c)
-}
-pub fn publish(
-    root: &Path,
-    model: &str,
-    e: Entry,
-    rollback: bool,
-    retain_only: bool,
-) -> Result<Catalog> {
-    publish_with(root, model, e, rollback, retain_only, None)
+pub fn publish(root: &Path, model: &str, e: Entry, rollback: bool) -> Result<Catalog> {
+    publish_with(root, model, e, rollback, None)
 }
 pub fn publish_cloud_upgrade(root: &Path, prior: &Entry, next: Entry) -> Result<Catalog> {
     crate::clouds::check_upgrade(root, prior, &next)?;
-    publish_with(root, "hrrr", next, false, false, Some(prior))
+    publish_with(root, "hrrr", next, false, Some(prior))
 }
 fn publish_with(
     root: &Path,
     model: &str,
     e: Entry,
     rollback: bool,
-    retain_only: bool,
     cloud_prior: Option<&Entry>,
 ) -> Result<Catalog> {
     let p = descriptor(root, &e)?;
@@ -391,9 +357,7 @@ fn publish_with(
     check_metadata(&m)?;
     anyhow::ensure!(m["model"] == model, "Wrong model");
     binding(&p, &e, &m)?;
-    if partitioned(&m) {
-        validate_manifest(root, &e, &m, false)?;
-    }
+    validate_manifest(root, &e, &m, false)?;
     let _l = Lock::acquire(root, "catalog", true, false)?;
     let mut c = catalog(root)?;
     let mut before = direct(&c, false);
@@ -401,10 +365,10 @@ fn publish_with(
     let t = timestamp(m["init_time"].as_str().context("Missing init")?)?;
     let old = c.current.get(model).cloned();
     let old_time = old.as_ref().map(|e| time(root, e)).transpose()?;
-    if !retain_only && !rollback {
+    if !rollback {
         if let Some(old) = &old {
             let om = read_json(descriptor(root, old)?.join("metadata.json"))?;
-            if old_time == Some(t) && partitioned(&m) && partitioned(&om) {
+            if old_time == Some(t) {
                 let prior = books(&om)?;
                 let next = books(&m)?;
                 anyhow::ensure!(
@@ -416,15 +380,10 @@ fn publish_with(
                         },
                     "Incremental publication must preserve and advance validated hours"
                 );
-            } else if !partitioned(&m) {
-                anyhow::ensure!(
-                    t > old_time.unwrap(),
-                    "Publication must advance initialization"
-                );
             }
         }
     }
-    let select = !retain_only && (rollback || old_time.is_none_or(|old| t >= old));
+    let select = rollback || old_time.is_none_or(|old| t >= old);
     if select {
         anyhow::ensure!(freshness(&m)?["available"] == true, "Selected run is stale");
     }
@@ -488,4 +447,37 @@ pub fn summary(root: &Path, e: &Entry) -> Result<Value> {
     Ok(
         json!({"revision":e.revision,"init_time":m["init_time"],"dataset":m["dataset"],"available_leads":have,"expected_leads":expected,"missing_leads":missing,"complete":complete(&m)?,"freshness":freshness(&m)?}),
     )
+}
+
+pub fn rollback(root: &Path, model: &str) -> Result<()> {
+    let _l = Lock::acquire(root, "update", true, true)?;
+    let c = catalog(root)?;
+    let e = c
+        .previous
+        .get(model)
+        .context("No previous revision")?
+        .clone();
+    publish(root, model, e, true)?;
+    Ok(())
+}
+pub fn status(root: &Path) -> Result<Value> {
+    let _l = Lock::acquire(root, "catalog", false, false)?;
+    let c = catalog(root)?;
+    let db = Db::new()?;
+    let mut models = serde_json::Map::new();
+    for (name, e) in &c.current {
+        let m = read_json(descriptor(root, e)?.join("metadata.json"))?;
+        let scope = format!(
+            " WHERE lead_hour IN ({})",
+            m["leads"]
+                .as_array()
+                .context("Leads")?
+                .iter()
+                .map(Value::to_string)
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        models.insert(name.clone(),json!({"revision":e.revision,"table":e.table,"storage":m.get("storage"),"freshness":freshness(&m)?,"progress":crate::runs::summary(root,e)?,"storage_rows":db.scalar(&format!("SELECT count() FROM {}.{}{scope}",ident(&e.database)?,ident(&e.table)?))?}));
+    }
+    Ok(json!({"catalog":c,"models":models}))
 }

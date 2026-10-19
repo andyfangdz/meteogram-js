@@ -1,6 +1,10 @@
 # Ingestion optimization evidence
 
-See the [measured report](../../plans/2026-10-17-native-ingestion-optimization.md).
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+See the [measured report](../../archive/2026-10-17-native-ingestion-optimization.md).
 The full pinned 18Z cycle completed in 1,210.524 seconds and loaded 84,579,313 rows.
 
 - `baseline-events.jsonl`: earlier live-update phase timestamps, including rejected HRRR candidate.

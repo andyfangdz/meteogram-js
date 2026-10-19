@@ -14,7 +14,6 @@ use std::{
 
 pub const ENCODING: &str = "float32_dictionary_v1";
 const FILE: &str = "values.dict.zst";
-const MAX_FIELD_ENTRIES: usize = 32_000_000;
 // Lookup builders retain hash tables as well as values. Finished codebooks do
 // not: uniformly bound their aggregate Float32 payload to 1 GB (decimal)
 // across every field, for every model.
@@ -74,6 +73,10 @@ pub fn encode_spatial(values: Vec<f32>) -> Result<(Vec<f32>, Vec<u32>)> {
     for value in values {
         codes.push(f32::from_bits(palette.index(value.to_bits())?));
     }
+    anyhow::ensure!(
+        palette.values.len() <= 65536,
+        "Spatial palette must fit UInt16"
+    );
     let (values, remap) = sorted_palette(&palette.values);
     for code in &mut codes {
         *code = f32::from_bits(remap[code.to_bits() as usize]);
@@ -95,41 +98,8 @@ fn sorted_palette(values: &[u32]) -> (Vec<u32>, Vec<u32>) {
         .collect();
     (sorted, remap)
 }
-pub struct FieldBuilder {
-    pub palettes: Vec<Palette>,
-    entries: usize,
-}
-impl FieldBuilder {
-    pub fn new(width: usize) -> Self {
-        Self {
-            palettes: (0..width).map(|_| Palette::default()).collect(),
-            entries: 0,
-        }
-    }
-    pub fn encode(&mut self, values: &[u32]) -> Result<Vec<u32>> {
-        let width = self.palettes.len();
-        anyhow::ensure!(values.len().is_multiple_of(width), "Dictionary field width");
-        let mut out = Vec::with_capacity(values.len());
-        for cell in values.chunks_exact(width) {
-            for (value, palette) in cell.iter().zip(&mut self.palettes) {
-                let before = palette.values.len();
-                out.push(palette.index(*value)?);
-                self.entries += palette.values.len() - before;
-            }
-        }
-        anyhow::ensure!(
-            self.entries <= MAX_FIELD_ENTRIES,
-            "Dictionary field exceeds bounded palette budget"
-        );
-        Ok(out)
-    }
-    pub fn finish(self) -> Vec<Vec<u32>> {
-        self.palettes.into_iter().map(|p| p.values).collect()
-    }
-}
 pub struct Dictionary {
     pub fields: Vec<Vec<Vec<u32>>>,
-    point_ids: Option<Vec<u32>>,
 }
 pub fn widths(m: &Value) -> Result<Vec<usize>> {
     let nt = m["leads"].as_array().context("Leads")?.len();
@@ -155,19 +125,6 @@ pub fn encoded(m: &Value) -> bool {
 }
 pub fn staged(m: &Value) -> bool {
     m["staging"]["encoding"] == ENCODING
-}
-pub fn index_bytes(m: &Value) -> Result<usize> {
-    anyhow::ensure!(
-        !encoded(m)
-            || ((m["storage"]["layout"] == "cell_profile_v1" || crate::packed::valid_layout(m))
-                && m["storage"]["axes"] == "level_lead"),
-        "Dictionary requires level/lead profile axes"
-    );
-    match m["storage"]["index_type"].as_str() {
-        None | Some("UInt32") => Ok(4),
-        Some("UInt16") if encoded(m) => Ok(2),
-        _ => anyhow::bail!("Unknown dictionary index type"),
-    }
 }
 fn info(m: &Value) -> Option<&Value> {
     if encoded(m) {
@@ -198,33 +155,7 @@ fn u32read(reader: &mut impl Read) -> Result<u32> {
 }
 impl Dictionary {
     pub fn new(fields: Vec<Vec<Vec<u32>>>) -> Self {
-        Self {
-            fields,
-            point_ids: None,
-        }
-    }
-    pub fn point_index(&self, cell: u32) -> Result<usize> {
-        self.point_ids
-            .as_ref()
-            .context("Missing packed coordinate index")?
-            .binary_search(&cell)
-            .map_err(|_| anyhow::anyhow!("Unknown packed cell ID"))
-    }
-    pub fn sorted(&self) -> (Self, Vec<Vec<Vec<u32>>>) {
-        let mut fields = Vec::with_capacity(self.fields.len());
-        let mut maps = Vec::with_capacity(self.fields.len());
-        for field in &self.fields {
-            let mut values = Vec::with_capacity(field.len());
-            let mut remaps = Vec::with_capacity(field.len());
-            for palette in field {
-                let (sorted, remap) = sorted_palette(palette);
-                values.push(sorted);
-                remaps.push(remap);
-            }
-            fields.push(values);
-            maps.push(remaps);
-        }
-        (Self::new(fields), maps)
+        Self { fields }
     }
     pub fn value(&self, field: usize, slot: usize, index: u32) -> Result<u32> {
         self.fields
@@ -267,6 +198,10 @@ impl Dictionary {
         )
     }
     fn validate(&self, m: &Value) -> Result<()> {
+        anyhow::ensure!(
+            m["leads"].as_array().map(Vec::len) == Some(1),
+            "A codebook must describe exactly one forecast hour"
+        );
         let expected = widths(m)?;
         anyhow::ensure!(
             self.fields.len() == expected.len(),
@@ -281,6 +216,7 @@ impl Dictionary {
                 anyhow::ensure!(
                     !palette.is_empty()
                         && palette.len() <= nc
+                        && palette.len() <= 65536
                         && palette.iter().all(|b| f32::from_bits(*b).is_finite()),
                     "Invalid dictionary palette"
                 );
@@ -288,11 +224,11 @@ impl Dictionary {
         }
         Ok(())
     }
-    pub fn load(dir: &Path, m: &Value) -> Result<Option<Self>> {
-        Self::load_impl(dir, m, true, MAX_DICTIONARY_ENTRIES)
+    pub fn load(dir: &Path, m: &Value) -> Result<Self> {
+        Self::load_impl(dir, m, MAX_DICTIONARY_ENTRIES)
     }
-    pub fn load_values_budget(dir: &Path, m: &Value, budget: usize) -> Result<Option<Self>> {
-        Self::load_impl(dir, m, false, budget)
+    pub fn load_values_budget(dir: &Path, m: &Value, budget: usize) -> Result<Self> {
+        Self::load_impl(dir, m, budget)
     }
     pub fn entry_count(&self) -> Result<usize> {
         let mut count = 0;
@@ -301,10 +237,12 @@ impl Dictionary {
         }
         Ok(count)
     }
-    fn load_impl(dir: &Path, m: &Value, with_cells: bool, budget: usize) -> Result<Option<Self>> {
-        let Some(meta) = info(m) else {
-            return Ok(None);
-        };
+    fn load_impl(dir: &Path, m: &Value, budget: usize) -> Result<Self> {
+        anyhow::ensure!(
+            m["leads"].as_array().map(Vec::len) == Some(1),
+            "A codebook must describe exactly one forecast hour"
+        );
+        let meta = info(m).context("Missing hourly dictionary")?;
         anyhow::ensure!(
             meta["version"] == 1 && meta["file"] == FILE,
             "Unknown dictionary format"
@@ -343,7 +281,7 @@ impl Dictionary {
                 let n = u32read(&mut reader)? as usize;
                 count_entries(&mut entries, n)?;
                 anyhow::ensure!(entries <= budget, "Run exceeds aggregate codebook budget");
-                anyhow::ensure!(n > 0 && n <= nc, "Dictionary palette/budget");
+                anyhow::ensure!(n > 0 && n <= nc && n <= 65536, "Dictionary palette/budget");
                 let mut palette = Vec::with_capacity(n);
                 for _ in 0..n {
                     palette.push(u32read(&mut reader)?);
@@ -358,30 +296,9 @@ impl Dictionary {
             meta["entries"].as_u64().is_none_or(|n| n == entries as u64),
             "Dictionary entry count differs"
         );
-        let mut dictionary = Self::new(result);
+        let dictionary = Self::new(result);
         dictionary.validate(m)?;
-        if with_cells && crate::packed::tiled(m) {
-            anyhow::ensure!(crate::packed::valid_layout(m), "Unknown packed layout");
-            let cells = crate::stage::load_cells(dir)?;
-            let ids = cells.get("cell_id").context("Missing packed cell IDs")?;
-            anyhow::ensure!(
-                ids.dtype == "<u4" && ids.bytes.len().is_multiple_of(4),
-                "Packed cell ID dtype"
-            );
-            let ids: Vec<_> = ids
-                .bytes
-                .as_chunks::<4>()
-                .0
-                .iter()
-                .map(|b| u32::from_le_bytes(*b))
-                .collect();
-            anyhow::ensure!(
-                ids.len() == nc && ids.windows(2).all(|v| v[0] < v[1]),
-                "Packed cell ID coverage/order"
-            );
-            dictionary.point_ids = Some(ids);
-        }
-        Ok(Some(dictionary))
+        Ok(dictionary)
     }
 }
 pub fn copy(source: &Path, target: &Path, m: &Value) -> Result<()> {
@@ -394,7 +311,7 @@ pub fn copy(source: &Path, target: &Path, m: &Value) -> Result<()> {
 }
 pub fn inspect(dir: &Path) -> Result<Value> {
     let m = read_json(dir.join("metadata.json"))?;
-    let d = Dictionary::load(dir, &m)?.context("No dictionary")?;
+    let d = Dictionary::load(dir, &m)?;
     Ok(
         json!({"fields":d.fields.iter().map(|f|json!({"slots":f.len(),"entries":f.iter().map(Vec::len).sum::<usize>(),"max_cardinality":f.iter().map(Vec::len).max()})).collect::<Vec<_>>()}),
     )
@@ -406,9 +323,8 @@ mod tests {
     #[test]
     fn compact_book_budget_is_global_and_checked_before_allocation() -> Result<()> {
         let mut entries = 0;
-        // A compact field can exceed the hash-builder budget without retaining
-        // its lookup tables. The aggregate codebook still has a strict cap.
-        count_entries(&mut entries, MAX_FIELD_ENTRIES + 1)?;
+        // The run-wide budget is independent of each UInt16 palette's cardinality.
+        count_entries(&mut entries, 32_000_001)?;
         let remaining = MAX_DICTIONARY_ENTRIES - entries;
         count_entries(&mut entries, remaining)?;
         assert!(count_entries(&mut entries, 1).is_err());
@@ -463,7 +379,7 @@ mod tests {
         let mut m = json!({"cells":4,"leads":[0],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
         let info = d.save(temp.path(), &m)?;
         m["staging"] = json!({"encoding":ENCODING,"dictionary":info});
-        assert_eq!(Dictionary::load(temp.path(), &m)?.unwrap().fields, d.fields);
+        assert_eq!(Dictionary::load(temp.path(), &m)?.fields, d.fields);
         let mut wrong = m.clone();
         wrong["staging"]["dictionary"]["sha256"] = json!("wrong");
         assert!(Dictionary::load(temp.path(), &wrong).is_err());
@@ -498,18 +414,16 @@ mod tests {
     #[test]
     fn palettes_preserve_bits_and_reject_nonfinite_and_bad_indices() -> Result<()> {
         let bits = [0u32, 0x80000000, 1, 0x7f7fffff, 0xff7fffff, 0x3f812345];
-        let mut builder = FieldBuilder::new(2);
-        let input: Vec<_> = bits.iter().copied().cycle().take(30).collect();
-        let encoded = builder.encode(&input)?;
-        let d = Dictionary::new(vec![builder.finish()]);
-        for (i, code) in encoded.into_iter().enumerate() {
-            assert_eq!(d.value(0, i % 2, code)?, input[i]);
+        let input = bits.iter().copied().cycle().take(30).collect::<Vec<_>>();
+        let (codes, values) = encode_spatial(input.iter().copied().map(f32::from_bits).collect())?;
+        let dictionary = Dictionary::new(vec![vec![values]]);
+        for (code, original) in codes.into_iter().zip(input) {
+            assert_eq!(dictionary.value(0, 0, code.to_bits())?, original);
         }
-        assert!(d.value(0, 0, u32::MAX).is_err());
-        assert!(FieldBuilder::new(1).encode(&[f32::NAN.to_bits()]).is_err());
-        assert!(FieldBuilder::new(1)
-            .encode(&[f32::INFINITY.to_bits()])
-            .is_err());
+        assert!(dictionary.value(0, 0, u32::MAX).is_err());
+        assert!(encode_spatial(vec![f32::NAN]).is_err());
+        assert!(encode_spatial(vec![f32::INFINITY]).is_err());
+        assert!(encode_spatial((0..65537).map(|v| v as f32).collect()).is_err());
         Ok(())
     }
 }

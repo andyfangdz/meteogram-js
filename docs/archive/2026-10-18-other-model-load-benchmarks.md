@@ -1,5 +1,9 @@
 # Full GFS and AIFS loader benchmarks — 2026-10-18
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 Four insert workers reduced median complete GFS loading from **16.07 to 6.33
 seconds (2.54×)** and raw AIFS from **1.60 to 0.75 seconds (2.13×)**. AIFS's
 256-cell layout saved **40.8%** of database-plus-codebook storage, but warm

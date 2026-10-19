@@ -1,8 +1,7 @@
 //! Local immutable Float32 staging: independently checksummed Zstd frames,
 //! indexed by a versioned JSON sidecar. No Python or array runtime is involved.
-use crate::state::{atomic, load_npz, parse_npy, Npy};
+use crate::state::atomic;
 use anyhow::{Context, Result};
-use memmap2::MmapOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 #[cfg(target_arch = "aarch64")]
@@ -34,13 +33,9 @@ struct Index {
     encoding: String,
     blocks: Vec<Block>,
 }
-enum Format {
-    Legacy { offset: usize },
-    Blocks(Index),
-}
 pub struct Array {
     file: File,
-    format: Format,
+    index: Index,
     values: usize,
     block_values: usize,
 }
@@ -191,11 +186,11 @@ fn product(shape: &[usize]) -> Result<usize> {
 }
 pub fn exists(logical: &Path) -> bool {
     let (data, index) = paths(logical);
-    (data.exists() && index.exists()) || logical.exists()
+    data.exists() && index.exists()
 }
 impl Array {
     pub fn short_codes(&self) -> bool {
-        matches!(&self.format,Format::Blocks(index) if index.version==2 && index.dtype=="uint16_le")
+        self.index.version == 2 && self.index.dtype == "uint16_le"
     }
     /// Complete aligned frames, retaining their [block][slot][cell] layout.
     pub fn read_codes_aligned(
@@ -209,9 +204,7 @@ impl Array {
             self.short_codes(),
             "Direct codes require typed UInt16 staging"
         );
-        let Format::Blocks(index) = &self.format else {
-            unreachable!()
-        };
+        let index = &self.index;
         let stride = self.block_values / BLOCK_CELLS;
         let total_cells = self.values / stride;
         anyhow::ensure!(
@@ -258,12 +251,10 @@ impl Array {
         Ok(())
     }
     pub fn format_name(&self) -> &'static str {
-        match self.format {
-            Format::Legacy { .. } => "legacy_npy_buffered_pread",
-            Format::Blocks(ref index) if index.version == 2 => {
-                "indexed_zstd_v2_spatial_delta16_buffered_pread"
-            }
-            Format::Blocks(_) => "indexed_zstd_v1_buffered_pread",
+        if self.index.version == 2 {
+            "indexed_zstd_v2_spatial_delta16_buffered_pread"
+        } else {
+            "indexed_zstd_v1_buffered_pread"
         }
     }
     pub fn open(logical: &Path, expected: &[usize]) -> Result<Self> {
@@ -272,77 +263,55 @@ impl Array {
     pub fn open_as(logical: &Path, expected: &[usize], dtype: &str) -> Result<Self> {
         let values = product(expected)?;
         let (data, index) = paths(logical);
-        if data.exists() || index.exists() {
-            let idx: Index = serde_json::from_reader(BufReader::new(File::open(index)?))?;
-            let short_codes = dtype == "uint32_le"
-                && idx.dtype == "uint16_le"
-                && idx.version == 2
-                && idx.encoding == "spatial_delta_shuffle16";
-            anyhow::ensure!(
-                ((idx.version == 1
-                    && ["float32_le", "uint32_le"].contains(&idx.dtype.as_str())
-                    && idx.dtype == dtype
-                    && idx.encoding == "byte_shuffle32")
-                    || short_codes)
-                    && idx.shape == expected
-                    && idx.block_cells == BLOCK_CELLS,
-                "Invalid staged index"
-            );
-            let value_bytes = if short_codes { 2 } else { 4 };
-            let stride = if expected.len() > 1 {
-                product(&expected[1..])?
-            } else {
-                1
-            };
-            let block_values = BLOCK_CELLS.checked_mul(stride).context("Block overflow")?;
-            anyhow::ensure!(
-                idx.blocks.len() == values.div_ceil(block_values),
-                "Invalid staged block count"
-            );
-            let file = File::open(data)?;
-            let mut offset = 0u64;
-            for (i, b) in idx.blocks.iter().enumerate() {
-                anyhow::ensure!(
-                    b.offset == offset
-                        && b.bytes > 0
-                        && b.bytes <= block_values * value_bytes + 1024 * 1024
-                        && b.values == block_values.min(values - i * block_values),
-                    "Invalid staged block bounds"
-                );
-                offset = offset
-                    .checked_add(b.bytes as u64)
-                    .context("Offset overflow")?;
-            }
-            anyhow::ensure!(
-                file.metadata()?.len() == offset,
-                "Invalid staged file length"
-            );
-            return Ok(Self {
-                file,
-                format: Format::Blocks(idx),
-                values,
-                block_values,
-            });
-        }
-        let file = File::open(logical)?;
+        let idx: Index = serde_json::from_reader(BufReader::new(File::open(index)?))?;
+        let short_codes = dtype == "uint16_le"
+            && idx.dtype == "uint16_le"
+            && idx.version == 2
+            && idx.encoding == "spatial_delta_shuffle16";
         anyhow::ensure!(
-            dtype == "float32_le",
-            "Dictionary indices require typed native staging"
+            ((idx.version == 1
+                && idx.dtype == "float32_le"
+                && idx.dtype == dtype
+                && idx.encoding == "byte_shuffle32")
+                || short_codes)
+                && idx.shape == expected
+                && idx.block_cells == BLOCK_CELLS,
+            "Invalid staged index"
         );
-        let map = unsafe { MmapOptions::new().map(&file)? };
-        let (shape, dtype, offset) = parse_npy(&map)?;
+        let value_bytes = if short_codes { 2 } else { 4 };
+        let stride = if expected.len() > 1 {
+            product(&expected[1..])?
+        } else {
+            1
+        };
+        let block_values = BLOCK_CELLS.checked_mul(stride).context("Block overflow")?;
         anyhow::ensure!(
-            shape == expected
-                && dtype == "<f4"
-                && map.len() == offset + values * 4
-                && offset % 4 == 0,
-            "Invalid legacy staged array"
+            idx.blocks.len() == values.div_ceil(block_values),
+            "Invalid staged block count"
+        );
+        let file = File::open(data)?;
+        let mut offset = 0u64;
+        for (i, b) in idx.blocks.iter().enumerate() {
+            anyhow::ensure!(
+                b.offset == offset
+                    && b.bytes > 0
+                    && b.bytes <= block_values * value_bytes + 1024 * 1024
+                    && b.values == block_values.min(values - i * block_values),
+                "Invalid staged block bounds"
+            );
+            offset = offset
+                .checked_add(b.bytes as u64)
+                .context("Offset overflow")?;
+        }
+        anyhow::ensure!(
+            file.metadata()?.len() == offset,
+            "Invalid staged file length"
         );
         Ok(Self {
             file,
-            format: Format::Legacy { offset },
+            index: idx,
             values,
-            block_values: 0,
+            block_values,
         })
     }
     pub fn read_into(&self, start: usize, out: &mut [f32]) -> Result<u64> {
@@ -361,59 +330,49 @@ impl Array {
         if out.is_empty() {
             return Ok(0);
         }
-        match &self.format {
-            Format::Legacy { offset, .. } => {
-                let offset = offset + start * 4;
-                let len = out.len() * 4;
-                let bytes =
-                    unsafe { std::slice::from_raw_parts_mut(out.as_mut_ptr().cast::<u8>(), len) };
-                self.file.read_exact_at(bytes, offset as u64)?;
-                Ok(discard(&self.file, offset as u64, len))
-            }
-            Format::Blocks(index) => {
-                let value_bytes = if index.dtype == "uint16_le" { 2 } else { 4 };
-                let end = start + out.len();
-                let mut failures = 0;
-                for bi in start / self.block_values..=(end - 1) / self.block_values {
-                    let b = &index.blocks[bi];
-                    scratch.decode(&self.file, b, value_bytes)?;
-                    let Scratch { decoded, codes, .. } = scratch;
-                    let base = bi * self.block_values;
-                    let lo = start.max(base);
-                    let hi = end.min(base + b.values);
-                    if value_bytes == 2 {
-                        let stride = self.block_values / BLOCK_CELLS;
-                        let cells = b.values / stride;
-                        codes.resize(b.values, 0);
-                        reconstruct_codes(&decoded[..b.values * 2], stride, codes);
-                        if lo == base && hi == base + b.values {
-                            transpose_codes(codes, stride, &mut out[lo - start..hi - start]);
-                        } else {
-                            for i in lo..hi {
-                                let local = i - base;
-                                out[i - start] = f32::from_bits(u32::from(
-                                    codes[(local % stride) * cells + local / stride],
-                                ));
-                            }
-                        }
-                    } else {
-                        for i in lo..hi {
-                            let j = i - base;
-                            out[i - start] = f32::from_bits(u32::from_le_bytes([
-                                decoded[j],
-                                decoded[b.values + j],
-                                decoded[2 * b.values + j],
-                                decoded[3 * b.values + j],
-                            ]));
-                        }
+        let index = &self.index;
+        let value_bytes = if index.dtype == "uint16_le" { 2 } else { 4 };
+        let end = start + out.len();
+        let mut failures = 0;
+        for bi in start / self.block_values..=(end - 1) / self.block_values {
+            let b = &index.blocks[bi];
+            scratch.decode(&self.file, b, value_bytes)?;
+            let Scratch { decoded, codes, .. } = scratch;
+            let base = bi * self.block_values;
+            let lo = start.max(base);
+            let hi = end.min(base + b.values);
+            if value_bytes == 2 {
+                let stride = self.block_values / BLOCK_CELLS;
+                let cells = b.values / stride;
+                codes.resize(b.values, 0);
+                reconstruct_codes(&decoded[..b.values * 2], stride, codes);
+                if lo == base && hi == base + b.values {
+                    transpose_codes(codes, stride, &mut out[lo - start..hi - start]);
+                } else {
+                    for i in lo..hi {
+                        let local = i - base;
+                        out[i - start] = f32::from_bits(u32::from(
+                            codes[(local % stride) * cells + local / stride],
+                        ));
                     }
-                    failures += discard(&self.file, b.offset, b.bytes);
                 }
-                Ok(failures)
+            } else {
+                for i in lo..hi {
+                    let j = i - base;
+                    out[i - start] = f32::from_bits(u32::from_le_bytes([
+                        decoded[j],
+                        decoded[b.values + j],
+                        decoded[2 * b.values + j],
+                        decoded[3 * b.values + j],
+                    ]));
+                }
             }
+            failures += discard(&self.file, b.offset, b.bytes);
         }
+        Ok(failures)
     }
 }
+
 pub struct BlockWriter {
     file: File,
     logical: PathBuf,
@@ -430,7 +389,7 @@ pub struct BlockWriter {
 impl BlockWriter {
     pub fn new(logical: &Path, shape: &[usize], dtype: &str) -> Result<Self> {
         anyhow::ensure!(
-            ["float32_le", "uint32_le", "uint16_le"].contains(&dtype),
+            ["float32_le", "uint16_le"].contains(&dtype),
             "Unsupported staged dtype"
         );
         let count = product(shape)?;
@@ -557,12 +516,11 @@ pub fn write(logical: &Path, shape: &[usize], values: &[f32]) -> Result<Value> {
 pub fn write_codes(logical: &Path, shape: &[usize], values: &[f32]) -> Result<Value> {
     anyhow::ensure!(values.len() == product(shape)?, "Code staging shape");
     let words = unsafe { std::slice::from_raw_parts(values.as_ptr().cast::<u32>(), values.len()) };
-    let short = words.iter().all(|v| *v <= u16::MAX as u32);
-    let mut writer = BlockWriter::new(
-        logical,
-        shape,
-        if short { "uint16_le" } else { "uint32_le" },
-    )?;
+    anyhow::ensure!(
+        words.iter().all(|v| *v <= u16::MAX as u32),
+        "Dictionary indices must fit UInt16"
+    );
+    let mut writer = BlockWriter::new(logical, shape, "uint16_le")?;
     for chunk in words.chunks(writer.block_values) {
         writer.append(chunk)?;
     }
@@ -624,11 +582,12 @@ where
         json!({"raw_bytes":count*4,"encoded_bytes":offset,"seconds":started.elapsed().as_secs_f64(),"format":"indexed_zstd_v1","checksum":true}),
     )
 }
-pub fn load_cells(dir: &Path) -> Result<BTreeMap<String, Npy>> {
+pub struct CellArray {
+    pub dtype: String,
+    pub bytes: Vec<u8>,
+}
+pub fn load_cells(dir: &Path) -> Result<BTreeMap<String, CellArray>> {
     let p = dir.join("cells.bin.zst");
-    if !p.exists() {
-        return load_npz(&dir.join("cells.npz"));
-    }
     let file = File::open(p)?;
     let mut frame = [0u8; 5];
     file.read_exact_at(&mut frame, 0)?;
@@ -652,7 +611,7 @@ pub fn load_cells(dir: &Path) -> Result<BTreeMap<String, Npy>> {
         reader.read_exact(&mut bytes)?;
         result.insert(
             name.into(),
-            Npy {
+            CellArray {
                 dtype: dtype.into(),
                 bytes,
             },
@@ -688,69 +647,8 @@ pub fn save_cells(dir: &Path, ids: &[u32], lat: &[f64], lon: &[f64]) -> Result<(
     Ok(())
 }
 pub fn copy_cells(source: &Path, target: &Path) -> Result<()> {
-    let name = if source.join("cells.bin.zst").exists() {
-        "cells.bin.zst"
-    } else {
-        "cells.npz"
-    };
-    fs::copy(source.join(name), target.join(name))?;
+    fs::copy(source.join("cells.bin.zst"), target.join("cells.bin.zst"))?;
     Ok(())
-}
-pub fn convert(source: &Path, target: &Path) -> Result<Value> {
-    anyhow::ensure!(
-        source != target && !target.exists(),
-        "Conversion needs a fresh output directory"
-    );
-    fs::create_dir_all(target)?;
-    let meta: Value =
-        serde_json::from_reader(BufReader::new(File::open(source.join("metadata.json"))?))?;
-    let nc = meta["cells"].as_u64().context("Cells")? as usize;
-    let nl = meta["levels"].as_array().context("Levels")?.len();
-    let nf = meta["variables"].as_array().context("Fields")?.len();
-    let started = Instant::now();
-    let mut reports = Vec::new();
-    for lead in meta["leads"].as_array().context("Leads")? {
-        let lead = lead.as_u64().context("Lead")?;
-        for (name, shape) in [
-            (format!("lead-{lead:03}.npy"), vec![nc, nl, nf]),
-            (format!("surface-{lead:03}.npy"), vec![nc, 2]),
-        ] {
-            let array = Array::open(&source.join(&name), &shape)?;
-            let report = write_blocks(&target.join(&name), &shape, |start, out| {
-                array.read_into(start, out)?;
-                Ok(())
-            })?;
-            reports.push(report);
-        }
-        println!("{}", json!({"phase":"convert_stage","lead":lead}));
-    }
-    let cells = load_cells(source)?;
-    let ids: Vec<_> = cells["cell_id"]
-        .bytes
-        .as_chunks::<4>()
-        .0
-        .iter()
-        .map(|b| u32::from_le_bytes(*b))
-        .collect();
-    let lat: Vec<_> = cells["latitude"]
-        .bytes
-        .as_chunks::<8>()
-        .0
-        .iter()
-        .map(|b| f64::from_le_bytes(*b))
-        .collect();
-    let lon: Vec<_> = cells["longitude"]
-        .bytes
-        .as_chunks::<8>()
-        .0
-        .iter()
-        .map(|b| f64::from_le_bytes(*b))
-        .collect();
-    save_cells(target, &ids, &lat, &lon)?;
-    atomic(target.join("metadata.json"), &meta)?;
-    let report = json!({"arrays":reports.len(),"raw_bytes":reports.iter().map(|v|v["raw_bytes"].as_u64().unwrap()).sum::<u64>(),"encoded_bytes":reports.iter().map(|v|v["encoded_bytes"].as_u64().unwrap()).sum::<u64>(),"seconds":started.elapsed().as_secs_f64(),"blocks":"4096 cells","format":"indexed_zstd_v1"});
-    atomic(target.join("conversion.json"), &report)?;
-    Ok(report)
 }
 
 #[cfg(test)]
@@ -760,7 +658,7 @@ mod tests {
     fn spatial_codes_reconstruct_every_slot_with_full_hrrr_strides() -> Result<()> {
         let temp = tempfile::tempdir()?;
         for stride in [1, 2, 6, 180] {
-            let logical = temp.path().join(format!("stride-{stride}.npy"));
+            let logical = temp.path().join(format!("stride-{stride}"));
             let values: Vec<_> = (0..4101 * stride)
                 .map(|i| {
                     f32::from_bits(
@@ -772,7 +670,7 @@ mod tests {
                 })
                 .collect();
             write_codes(&logical, &[4101, stride], &values)?;
-            let array = Array::open_as(&logical, &[4101, stride], "uint32_le")?;
+            let array = Array::open_as(&logical, &[4101, stride], "uint16_le")?;
             let mut out = vec![0f32; values.len()];
             array.read_into(0, &mut out)?;
             assert!(out
@@ -791,9 +689,9 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn spatial_delta_codes_cover_partial_blocks_wraps_and_u32_fallback() -> Result<()> {
+    fn spatial_delta_codes_cover_partial_blocks_wraps_and_reject_overflow() -> Result<()> {
         let temp = tempfile::tempdir()?;
-        let p = temp.path().join("lead-000.npy");
+        let p = temp.path().join("lead-000");
         let shape = [4101, 2, 3];
         let values: Vec<_> = (0..4101 * 6)
             .map(|i| f32::from_bits([0u32, 65535, 1, 32768, 17, 65400][(i + i / 6) % 6]))
@@ -804,7 +702,7 @@ mod tests {
         assert_eq!(idx["version"], 2);
         assert_eq!(idx["dtype"], "uint16_le");
         assert!(Array::open(&p, &shape).is_err());
-        let array = Array::open_as(&p, &shape, "uint32_le")?;
+        let array = Array::open_as(&p, &shape, "uint16_le")?;
         assert!(array
             .read_codes_aligned(1, 4100, &mut vec![0u16; 4100 * 6], &mut Scratch::new()?)
             .is_err());
@@ -828,24 +726,20 @@ mod tests {
         let mut bytes = fs::read(&data)?;
         bytes[20] ^= 1;
         fs::write(&data, bytes)?;
-        assert!(Array::open_as(&p, &shape, "uint32_le")?
+        assert!(Array::open_as(&p, &shape, "uint16_le")?
             .read_into(0, &mut [0f32; 6])
             .is_err());
-        assert!(Array::open_as(&p, &shape, "uint32_le")?
+        assert!(Array::open_as(&p, &shape, "uint16_le")?
             .read_codes_aligned(0, 4101, &mut vec![0u16; 4101 * 6], &mut Scratch::new()?)
             .is_err());
         let values = [f32::from_bits(65536), f32::from_bits(65535)];
-        write_codes(&p, &[2], &values)?;
-        assert_eq!(crate::state::read_json(index)?["dtype"], "uint32_le");
-        let mut out = [0f32; 2];
-        Array::open_as(&p, &[2], "uint32_le")?.read_into(0, &mut out)?;
-        assert_eq!(out.map(f32::to_bits), [65536, 65535]);
+        assert!(write_codes(&p, &[2], &values).is_err());
         Ok(())
     }
     #[test]
     fn bounded_stage_preserves_every_bit_and_checks_corruption() -> Result<()> {
         let temp = tempfile::tempdir()?;
-        let p = temp.path().join("lead-000.npy");
+        let p = temp.path().join("lead-000");
         let n = 4101 * 6;
         let values: Vec<_> = (0..n)
             .map(|i| {
@@ -884,19 +778,25 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn cells_native_and_legacy_match_and_check_truncation() -> Result<()> {
+    fn cell_index_preserves_coordinate_bits_and_rejects_truncation() -> Result<()> {
         let temp = tempfile::tempdir()?;
         let ids = [3, 8];
         let lat = [-0.0, 49.333];
         let lon = [-120.123, 1e-10];
-        crate::state::save_cells(&temp.path().join("cells.npz"), &ids, &lat, &lon)?;
-        let old = load_cells(temp.path())?;
         save_cells(temp.path(), &ids, &lat, &lon)?;
-        let new = load_cells(temp.path())?;
-        for k in old.keys() {
-            assert_eq!(old[k].dtype, new[k].dtype);
-            assert_eq!(old[k].bytes, new[k].bytes);
-        }
+        let index = load_cells(temp.path())?;
+        assert_eq!(
+            index["cell_id"].bytes,
+            ids.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            index["latitude"].bytes,
+            lat.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            index["longitude"].bytes,
+            lon.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<_>>()
+        );
         let p = temp.path().join("cells.bin.zst");
         let mut b = fs::read(&p)?;
         b.pop();

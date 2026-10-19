@@ -1,6 +1,10 @@
 # Complete RRFS ingestion evidence — 2026-10-18
 
-See the [results and operating notes](../../plans/2026-10-18-rrfs-ingestion.md).
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+See the [results and operating notes](../../archive/2026-10-18-rrfs-ingestion.md).
 This is the complete retained 85-lead, 30-level, six-pressure-field/two-surface-field
 selection over 1,638,757 CONUS cells. It does not claim all variables/levels in
 the upstream product or a deployed Next.js weather-provider adapter.
