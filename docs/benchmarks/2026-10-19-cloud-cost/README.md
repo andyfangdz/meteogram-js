@@ -95,8 +95,12 @@ Selected cloud files total **1,086,870,394 bytes (1.012 GiB)**, down from
 30,495,641,064 bytes (28.401 GiB). The mean is **11,562,451 bytes (11.03 MiB)**
 and the largest hour is **12,469,027 bytes (11.89 MiB)**; every hour is below the
 17.25 MiB average-variable target. Replaced files become eligible for normal GC
-at 04:26:22 UTC; the selected footprint and physically reclaimed disk are
-reported separately. See [retained-conversion.json](retained-conversion.json).
+at 04:26:22 UTC. By 04:31 UTC, normal cleanup had removed all **184 original
+cloud files**, totaling **30,473,181,144 unique bytes**. The 92 converted hours
+use 1,064,410,474 bytes, giving a net saving of **29,408,770,670 bytes
+(27.39 GiB)**. No original cloud payload files remain in the managed store.
+See [retained-conversion.json](retained-conversion.json) and
+[physical-cleanup.json](physical-cleanup.json).
 
 The native test suite includes database integration checks, exact codec
 roundtrips, CRC rejection, conversion proof forgery rejection, binding checks,
@@ -110,3 +114,10 @@ comparison requires original version-1 hourly files; migrated descriptors are
 not interchangeable inputs. Immutable source snapshot IDs are recorded above;
 the large original payloads are not committed or retained just for this test.
 Current commands and source-cache rules are in [native/README.md](../../../native/README.md).
+
+Version 0.3.0 is installed on the home service. All four models passed authenticated
+local and public API checks with the required retained runs. Twelve complete
+logical API payloads (three locations and all four HRRR selectors) matched before
+and after conversion, including every weather and derived cloud value; only
+revision, query duration and wall-clock freshness fields were excluded. See
+[native-install-and-api.json](native-install-and-api.json).

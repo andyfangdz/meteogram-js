@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-10-19T04:31:23.875679+00:00",
+  "normal_retirement_grace_seconds": 600,
+  "remaining_original_cloud_files": 0,
+  "original_files_removed": 184,
+  "original_unique_cloud_bytes_removed": 30473181144,
+  "new_cloud_bytes_for_92_converted_hours": 1064410474,
+  "net_cloud_storage_saved_bytes": 29408770670,
+  "all_selected_forecasts_verified_after_conversion": true
+}
