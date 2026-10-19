@@ -94,7 +94,7 @@ Meteogram → CloudColumns, WeatherLines, etc.
 
 1. **ModelConfig** (`src/config/weather.ts`): Encapsulates per-model differences (time resolution, pressure levels, display parameters). Extend this class rather than branching in rendering code.
 
-2. **CloudColumn/CloudCell** (`src/types/weather.ts`): The normalized data structure passed to visualization components. Each column is a native display interval with initialization provenance; each atmospheric cell is a pressure level with cloud cover, temp, wind. Optional native cloud layers retain independent model heights.
+2. **CloudColumn/CloudCell** (`src/types/weather.ts`): The normalized data structure passed to visualization components. Each column is a native display interval with initialization provenance; each atmospheric cell is a pressure level with cloud cover, temp, wind. Optional native cloud layers retain all 50 source coverages with explicitly derived layer geometry.
 
 3. **PreferencesContext**: Client-side state for visualization toggles. Auto-syncs to cookies and URL query params.
 
@@ -274,8 +274,10 @@ yarn test:watch   # Test watch mode
 
 Native CI (`.github/workflows/native.yml`) checks formatting, Clippy with warnings
 denied and unit tests on x86. Local ARM verification also exercises the NEON
-path; use `cargo test -- --include-ignored` with the loopback ClickHouse service
-for database integration coverage. Frontend CI lives in
+path; use `cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness`
+with the loopback ClickHouse service for database integration coverage. The separate
+ignored full-CONUS cloud benchmark requires explicit resident source paths and a
+fresh output directory; see `native/README.md`. Frontend CI lives in
 `.github/workflows/tests.yml`.
 
 ### What to Verify
@@ -370,6 +372,9 @@ measurements describe their recorded versions.
 | Availability polling, durable hourly recovery and partition attachment           | `native/src/incremental.rs`            |
 | Immutable manifests/books, retention, publication, rollback and status           | `native/src/runs.rs`                   |
 | HRRR model-level clouds, provenance, cloud-only upgrades and point reads         | `native/src/clouds.rs`                 |
+| Exact cloud-coverage palettes, constant levels and checked spatial frames        | `native/src/cloud_coverage.rs`         |
+| Derived hybrid-pressure/log-height cloud coordinates and native anchors          | `native/src/cloud_geometry.rs`         |
+| Fully compared resident-cloud conversion and immutable catalog replacement       | `native/src/cloud_compaction.rs`       |
 | Loopback ClickHouse HTTP/RowBinary access and hourly profile decoding            | `native/src/db.rs`                     |
 | Authenticated point API, catalog selections, model/book caches and health        | `native/src/api.rs`                    |
 | ClickHouse/API/updater supervision and persisted schedule                        | `native/src/service.rs`                |
@@ -395,8 +400,8 @@ field, pressure level and forecast hour. Do not thin data to fit a budget.
 
 HRRR/RRFS use their source-declared spherical Lambert grid and retain native
 grid-relative winds. This projection is separate from the site's WGS84 height
-conversion. RRFS opens its repository with a bounded eight-million-reference
-manifest cache and weather payload caching disabled. Configure it at the first
+conversion. HRRR and RRFS open their repositories with bounded eight-million-reference
+manifest caches and weather payload caching disabled. Configure it at the first
 repository open: Icechunk `reopen` shares the original asset manager.
 
 Two regional extractors and one global extractor may run concurrently, with one
@@ -430,9 +435,10 @@ lanes in the final short tile. Physical tile rows are distinct from logical
 cells and cell/hour rows. Only this hourly format is accepted.
 
 Weather staging uses indexed Zstd v2 frames with UInt16 spatial deltas and byte
-shuffling. Cloud serving files use indexed Float32 Zstd v1 frames. Coordinates
-use checksummed `cells.bin.zst` with original UInt32 IDs and Float64 coordinates.
-Both frame codecs are current: do not remove the Float32 cloud codec when
+shuffling. Cloud fractions use their own exact palette/spatial-frame codec;
+cloud anchors use indexed Float32 Zstd v1 frames. Coordinates use checksummed
+`cells.bin.zst` with original UInt32 IDs and Float64 coordinates. The UInt16 and
+Float32 staging codecs are both current: do not remove the anchor codec when
 working on weather indices. Preserve frame CRCs, shape/type/length checks,
 partial-frame reads, delta wrapping and overflow rejection. Encoded source maps
 are evicted only after staged files and their checkpoints are synced.
@@ -457,7 +463,11 @@ count, persisted success flag or source-only check for full value validation.
 The loopback database has a 12 GiB process ceiling and a 2 GiB per-query ceiling.
 Periodic allocator purges and consumed-page discard hints keep memory bounded.
 Optional staged-input prefetch reserves 18 GiB beyond input bytes; otherwise it
-streams. Source staging keeps a 20 GiB free-space floor.
+streams. Source staging keeps a 20 GiB free-space floor. Source instances and their clones
+share only one immutable snapshot's metadata/coordinates. HRRR pressure and cloud
+tasks run together with one shared 16-map semaphore; both drain before returning
+an error. Cloud payload retry directories are snapshot-scoped; a newer cloud
+snapshot cannot reuse another snapshot's partially downloaded maps.
 
 ### Retention and serving
 
@@ -499,40 +509,62 @@ tail. `CloudColumn.durationMinutes` controls actual cell widths and the final
 time-domain extent. Do not synthesize missing layers/hours. The adapter uses
 the existing WGS84 MSL conversion and shared `completeCloudColumn` geometry,
 rotates grid-relative HRRR/RRFS winds using the API's Lambert convergence,
-and converts m/s to the app's km/h. GFS has native pressure-level cloud fraction. New HRRR hours also ingest all
-50 native model-level cloud fractions with their actual geopotential heights
-and pressures, independently of the 30 atmospheric pressure levels. RRFS/AIFS
-and HRRR hours without a supplement use labeled humidity cloud estimates. AIFS specific humidity uses
-Murphy–Koop saturation and ECMWF mixed phase; GFS dew point is derived.
+and converts m/s to the app's km/h. GFS has native pressure-level cloud fraction.
+HRRR retains all 50 native model-level cloud coverages exactly, independently of
+its 30 atmospheric pressure levels. RRFS/AIFS and HRRR hours without a supplement
+use labeled humidity cloud estimates. AIFS specific humidity uses Murphy–Koop
+saturation and ECMWF mixed phase; GFS dew point is derived.
 
-HRRR cloud supplements are immutable `native-clouds.stage.zst`/`.stage.json`
-files in each hourly child descriptor, with cell-major shape `[cells,50,3]`
-(fraction 0..1, geopotential metres, pressure Pa). They use the existing indexed,
-checksummed Float32 staging codec as durable serving data. Full finite/range/
-monotonic-height/pressure checks and bit-exact staged roundtrip precede publication.
-The index hash, file length, source snapshot, initialized hour and exact grid are
-bound to the child's metadata hash. Point reads validate frame CRCs. These files
-must survive staging cleanup and follow their child's catalog retention/GC.
-Cloud references can arrive after pressure references; cloud acquisition pins
-its own Icechunk snapshot for the same dataset/init/lead/grid and records
+HRRR cloud version 2 stores `cloud-coverage.bin.zst`/`cloud-coverage.json` and
+`cloud-anchors.stage.zst`/`cloud-anchors.stage.json` in each hourly child.
+Coverage uses exact Float32 palettes, constant planes and independently
+checksummed 256-cell spatial frames. The two Float32 anchors are native level-1
+pressure (Pa) and level-50 geopotential height (m). Every stored value receives
+bit-exact readback before publication. Source acquisition reads 50 fraction maps,
+the two anchors and a native top-pressure guard map: 53 maps rather than 150.
+Index hashes, file lengths, source snapshots, initialization and exact grid are
+bound to the child's metadata hash. Both data files record SHA-256 hashes, and
+point reads check frame CRCs. All four files survive staging cleanup and follow
+catalog retention/GC.
+
+Cloud layer pressure and height are deliberately derived, as authorized for the
+cloud cost optimization. This exception does not allow quantizing coverages or
+any atmospheric weather field, removing cells, or dropping model levels/hours.
+`cloud_geometry.rs` uses NOAA's 51 HRRR interfaces and WRF's cubic hybrid weights
+with the native bottom pressure. Retained pressure-level dew points estimate
+the moisture-column correction; heights interpolate the retained geopotential
+profile in log pressure. The exact native top height bounds the extension above
+275 hPa. A native level-50 pressure map verifies the configured 15 hPa model lid.
+The API still returns all 50 layer coordinates, declares the derivation in
+`native_clouds.geometry`, and validates finite/monotonic results for each point.
+The site labels derived layer heights and estimated coordinates in the tooltip.
+The existing latitude-dependent WGS84 conversion is unchanged.
+
+Cloud references can arrive after pressure references; acquisition pins its own
+Icechunk snapshot for the same dataset/init/lead/grid and records
 `pressure_snapshot_id` separately. Do not combine different initialized runs.
 `native-clouds --root ROOT --run latest|latest_complete|long [--leads 1,2]` backfills
-existing incremental hours through new child and parent revisions. Its strict
-cloud-only publication gate preserves the full pressure manifest, table,
-codebook and proofs; it never changes a published pressure hour or replaces an
-existing cloud supplement. Normal incremental publication still must advance
-hours and preserve previous books. `cloud-availability --product PRODUCT`
-is a bounded metadata-only diagnostic over the latest 24 runs.
+missing supplements with immutable child and parent revisions.
+`compact-clouds --root ROOT` converts retained three-field cloud arrays without
+source downloads or weather-table writes. It compares every fraction/anchor bit
+again at publication, preserves pressure metadata/codebooks/proofs and selector
+roles, atomically replaces catalog references and converts unpublished incoming
+hours under the update lock. Old published descriptors retain the ten-minute GC
+grace period. Existing version-2 supplements are not replaced. The original
+three-field decoder is limited to conversion; serving uses version 2.
+`cloud-availability --product PRODUCT` is a metadata-only diagnostic over the
+latest 24 runs and four sampled leads, checking the same required references.
 
-`CloudColumn.nativeCloudLayers` carries 50 separate layers. Native shading uses
-midpoints between actual model heights and stops at the outer model centres;
-it is clipped to the chart's altitude range. Time steps remain hourly. Pressure
-profiles, wind barbs and thermodynamics remain on their original levels. The
-hover state carries native cloud and atmospheric pressure cells separately;
-the tooltip explicitly labels the pressure level used for temperature and wind.
-The source badge identifies 50 native cloud levels and any mixed hours still
-using humidity estimates. Cloud schema/provenance/rendering coverage lives in
-`native-cloud-rendering.test.tsx`, `native-weather.test.ts` and `clouds.rs` tests.
+`CloudColumn.nativeCloudLayers` carries 50 separate coverages and their derived
+coordinates. Shading uses midpoints between layer centres and is clipped to the
+chart's altitude range. Time steps remain hourly. Pressure profiles, wind barbs
+and thermodynamics retain their original values and levels. Hover state carries
+cloud layers and atmospheric cells separately; the tooltip labels the pressure
+level used for temperature and wind. The source badge identifies 50 native cloud
+levels, derived layer heights, and any hours still estimated from humidity.
+Schema/provenance/rendering coverage lives in `native-cloud-rendering.test.tsx`,
+`native-weather.test.ts`, `clouds.rs`, `cloud_coverage.rs`, `cloud_geometry.rs` and
+`cloud_compaction.rs` tests.
 
 Native page requests fetch authenticated profiles concurrently. HRRR uses
 `run=long` as the complete 48-hour base, `latest_complete` to retain the previous

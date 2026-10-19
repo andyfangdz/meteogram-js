@@ -68,6 +68,7 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
       width="240"
       height={
         (nativeCloudLayer ? 320 : 280) +
+        (nativeCloudLayer?.geometry === "derived" ? 20 : 0) +
         (initializedAt ? 20 : 0) +
         (sampleDate ? 20 : 0)
       }
@@ -100,6 +101,9 @@ const MeteogramTooltip: React.FC<MeteogramTooltipProps> = ({
         )}
         {nativeCloudLayer && (
           <div>{`Native cloud · model level ${nativeCloudLayer.modelLevel}`}</div>
+        )}
+        {nativeCloudLayer?.geometry === "derived" && (
+          <div>Height and pressure estimated</div>
         )}
         {cloud.hpa != null && (
           <div>{`Pressure: ${hPaToInHg(cloud.hpa)} inHg (${

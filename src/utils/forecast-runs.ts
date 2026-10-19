@@ -123,10 +123,18 @@ export function mergeForecastRuns(
     source.nativeCloudLevels = 50;
     source.nativeCloudHours = nativeHours;
     source.displayedHours = data.length;
+    if (
+      data.some((d) =>
+        d.nativeCloudLayers?.some((l) => l.geometry === "derived"),
+      )
+    ) {
+      source.nativeCloudGeometry = "derived";
+    } else delete source.nativeCloudGeometry;
   } else {
     delete source.nativeCloudLevels;
     delete source.nativeCloudHours;
     delete source.displayedHours;
+    delete source.nativeCloudGeometry;
   }
   if (distinct.length > 1) {
     source.runs = distinct.map(

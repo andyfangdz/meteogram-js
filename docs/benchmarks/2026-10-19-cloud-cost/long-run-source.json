@@ -1,0 +1,280 @@
+{
+  "scope": "All retained CONUS cells, 50 exact fractions and two exact geometry anchors. Each hour uses its own original cloud snapshot. A weather-only primer equalizes reference preparation; independent Source instances and fresh staging directories are used for the timed runs, with A/B order alternated. No cloud metadata is primed. Streams share at most 16 map jobs on a four-worker runtime. Every weather staging byte, fraction, anchor and derived column is checked after the ingestion timer.",
+  "dataset": "48-hour",
+  "host": {
+    "architecture": "aarch64",
+    "runtime_workers": 4,
+    "map_job_limit": 16,
+    "source_chunk_reference_cache": 8000000,
+    "weather_payload_cache_bytes": 0
+  },
+  "mean_added_cloud_source_seconds": -0.10612968833333329,
+  "max_added_cloud_source_seconds": 0.2476576270000006,
+  "mean_cloud_file_bytes": 11532084.0,
+  "hours": [
+    {
+      "added_cloud_source_seconds": 0.2476576270000006,
+      "all_anchors_exact": true,
+      "all_derived_columns_finite_and_monotonic": true,
+      "all_fractions_exact": true,
+      "all_weather_staging_bytes_identical": true,
+      "cloud_branch_wall_seconds": 5.676494294,
+      "full_conus_coverage_values_compared": 81937850,
+      "geometry_comparison": {
+        "height_abs_error_max_all_levels_m": 215.87109375,
+        "height_abs_error_max_m": 41.13714599609375,
+        "height_abs_error_p50_upper_m": 8.7,
+        "height_abs_error_p99_upper_m": 14.2,
+        "height_bias_m": -6.5987151624908185,
+        "height_range_m": [0, 6096],
+        "pressure_abs_error_max_pa": 42.00390625,
+        "pressure_abs_error_p99_upper_pa": 3.3,
+        "values": 30210848
+      },
+      "lead": 0,
+      "pressure_and_cloud_source_seconds": 9.602707424,
+      "pressure_source_seconds": 9.355049797,
+      "cloud": {
+        "version": 2,
+        "format": "cloud_fraction_anchors_v2",
+        "dataset": "noaa-hrrr-forecast-48-hour-virtual",
+        "init_time": "2026-10-19T00:00:00.000000000",
+        "snapshot_id": "H4Y7MGDT2N81JB6PEQ7G",
+        "pressure_snapshot_id": "H4Y7MGDT2N81JB6PEQ7G",
+        "cells": 1638757,
+        "source_maps": 53,
+        "source_top_checked": true,
+        "stored_fraction_values": 81937850,
+        "stored_anchor_values": 3277514,
+        "grib_bytes": 11852855,
+        "data_bytes": 9711196,
+        "setup_seconds": 0.222426057,
+        "preflight_seconds": 4.171145667,
+        "acquisition_seconds": 5.184911014,
+        "total_seconds": 5.676494294,
+        "coverage": {
+          "cells": 1638757,
+          "data_bytes": 3175637,
+          "data_sha256": "49026621d9e64f87a009d82d5126acb391b9d4e6e6139757edfcab283c4a03ee",
+          "format": "cloud_palette_spatial_delta_v1",
+          "full_values_checked": true,
+          "index_bytes": 569202,
+          "index_sha256": "226907bbbf45558d3fb937e079c6f727e247c9244e72e5d3b7e184a120c82d90",
+          "levels": 50,
+          "palette_entries": 4410,
+          "seconds": 0.365337304
+        },
+        "anchors": {
+          "checksum": true,
+          "data_bytes": 6535559,
+          "data_sha256": "9b34084473a2638378c4f0bcf9f00a3ddee7ba83d03d15aec1943cf20b4e1b8d",
+          "encoded_bytes": 6535559,
+          "format": "indexed_zstd_v1",
+          "full_values_checked": true,
+          "index_bytes": 32563,
+          "index_sha256": "a97bf2d7b4ae6254fe59bbdf916811e6bd5983ea40e07ee38110851a0be0efee",
+          "raw_bytes": 13110056,
+          "seconds": 0.105643789
+        },
+        "geometry": {
+          "anchor_fields": [
+            "model_level_1_pressure",
+            "model_level_50_geopotential_height"
+          ],
+          "coverage": "exact_source_float32",
+          "critical_eta": 0.2,
+          "eta_interfaces": [
+            1.0, 0.998, 0.994, 0.987, 0.975, 0.959, 0.939, 0.916, 0.892, 0.865,
+            0.835, 0.802, 0.766, 0.727, 0.685, 0.64, 0.592, 0.542, 0.497,
+            0.4565, 0.4205, 0.3877, 0.3582, 0.3317, 0.3078, 0.2863, 0.267,
+            0.2496, 0.2329, 0.2188, 0.2047, 0.1906, 0.1765, 0.1624, 0.1483,
+            0.1342, 0.1201, 0.106, 0.0919, 0.0778, 0.0657, 0.0568, 0.0486,
+            0.0409, 0.0337, 0.0271, 0.0209, 0.0151, 0.0097, 0.0047, 0.0
+          ],
+          "height": "log_pressure_interpolation",
+          "method": "hrrr_hybrid_moist_log_pressure_v1",
+          "model_top_pa": 1500.0,
+          "pressure": "hybrid_coordinate_with_profile_moisture",
+          "reference_pressure_pa": 100000.0
+        }
+      },
+      "total_cloud_file_bytes": 10312961
+    },
+    {
+      "added_cloud_source_seconds": 0.004277315999999587,
+      "all_anchors_exact": true,
+      "all_derived_columns_finite_and_monotonic": true,
+      "all_fractions_exact": true,
+      "all_weather_staging_bytes_identical": true,
+      "cloud_branch_wall_seconds": 4.398614788,
+      "full_conus_coverage_values_compared": 81937850,
+      "geometry_comparison": {
+        "height_abs_error_max_all_levels_m": 234.1591796875,
+        "height_abs_error_max_m": 43.62109375,
+        "height_abs_error_p50_upper_m": 8.7,
+        "height_abs_error_p99_upper_m": 14.1,
+        "height_bias_m": -6.584682925680828,
+        "height_range_m": [0, 6096],
+        "pressure_abs_error_max_pa": 109.921875,
+        "pressure_abs_error_p99_upper_pa": 4.2,
+        "values": 30299257
+      },
+      "lead": 20,
+      "pressure_and_cloud_source_seconds": 9.311818947999999,
+      "pressure_source_seconds": 9.307541632,
+      "cloud": {
+        "version": 2,
+        "format": "cloud_fraction_anchors_v2",
+        "dataset": "noaa-hrrr-forecast-48-hour-virtual",
+        "init_time": "2026-10-19T00:00:00.000000000",
+        "snapshot_id": "8FBYP2K2JJRWC225Y80G",
+        "pressure_snapshot_id": "8FBYP2K2JJRWC225Y80G",
+        "cells": 1638757,
+        "source_maps": 53,
+        "source_top_checked": true,
+        "stored_fraction_values": 81937850,
+        "stored_anchor_values": 3277514,
+        "grib_bytes": 15362997,
+        "data_bytes": 11643016,
+        "setup_seconds": 0.064387439,
+        "preflight_seconds": 2.553781806,
+        "acquisition_seconds": 3.908150731,
+        "total_seconds": 4.398614788,
+        "coverage": {
+          "cells": 1638757,
+          "data_bytes": 5224914,
+          "data_sha256": "90653f3bfed419901f71e087cb21074422d113be11100d407a9f945354b82973",
+          "format": "cloud_palette_spatial_delta_v1",
+          "full_values_checked": true,
+          "index_bytes": 557061,
+          "index_sha256": "109db044c643b6fde3d84c517969d1c7961b59d59a6c3a364203f4f685243f2b",
+          "levels": 50,
+          "palette_entries": 3550,
+          "seconds": 0.381947215
+        },
+        "anchors": {
+          "checksum": true,
+          "data_bytes": 6418102,
+          "data_sha256": "0dfc0f41ca0a1274d9fe251cf555ebc47f6121e22cc7f3ef06828ec4ca87c869",
+          "encoded_bytes": 6418102,
+          "format": "indexed_zstd_v1",
+          "full_values_checked": true,
+          "index_bytes": 32561,
+          "index_sha256": "a961f96b3c098dba5813ee3ef664e13eeb0e0ebdc465616e0815d936c5114adf",
+          "raw_bytes": 13110056,
+          "seconds": 0.085762769
+        },
+        "geometry": {
+          "anchor_fields": [
+            "model_level_1_pressure",
+            "model_level_50_geopotential_height"
+          ],
+          "coverage": "exact_source_float32",
+          "critical_eta": 0.2,
+          "eta_interfaces": [
+            1.0, 0.998, 0.994, 0.987, 0.975, 0.959, 0.939, 0.916, 0.892, 0.865,
+            0.835, 0.802, 0.766, 0.727, 0.685, 0.64, 0.592, 0.542, 0.497,
+            0.4565, 0.4205, 0.3877, 0.3582, 0.3317, 0.3078, 0.2863, 0.267,
+            0.2496, 0.2329, 0.2188, 0.2047, 0.1906, 0.1765, 0.1624, 0.1483,
+            0.1342, 0.1201, 0.106, 0.0919, 0.0778, 0.0657, 0.0568, 0.0486,
+            0.0409, 0.0337, 0.0271, 0.0209, 0.0151, 0.0097, 0.0047, 0.0
+          ],
+          "height": "log_pressure_interpolation",
+          "method": "hrrr_hybrid_moist_log_pressure_v1",
+          "model_top_pa": 1500.0,
+          "pressure": "hybrid_coordinate_with_profile_moisture",
+          "reference_pressure_pa": 100000.0
+        }
+      },
+      "total_cloud_file_bytes": 12232638
+    },
+    {
+      "added_cloud_source_seconds": -0.570324008,
+      "all_anchors_exact": true,
+      "all_derived_columns_finite_and_monotonic": true,
+      "all_fractions_exact": true,
+      "all_weather_staging_bytes_identical": true,
+      "cloud_branch_wall_seconds": 4.293887991,
+      "full_conus_coverage_values_compared": 81937850,
+      "geometry_comparison": {
+        "height_abs_error_max_all_levels_m": 253.8125,
+        "height_abs_error_max_m": 47.25341796875,
+        "height_abs_error_p50_upper_m": 8.7,
+        "height_abs_error_p99_upper_m": 14.1,
+        "height_bias_m": -6.535701951486466,
+        "height_range_m": [0, 6096],
+        "pressure_abs_error_max_pa": 133.234375,
+        "pressure_abs_error_p99_upper_pa": 3.5,
+        "values": 30299089
+      },
+      "lead": 48,
+      "pressure_and_cloud_source_seconds": 9.294585158,
+      "pressure_source_seconds": 9.864909166,
+      "cloud": {
+        "version": 2,
+        "format": "cloud_fraction_anchors_v2",
+        "dataset": "noaa-hrrr-forecast-48-hour-virtual",
+        "init_time": "2026-10-19T00:00:00.000000000",
+        "snapshot_id": "THYBMZ13GC57T6KNVAT0",
+        "pressure_snapshot_id": "THYBMZ13GC57T6KNVAT0",
+        "cells": 1638757,
+        "source_maps": 53,
+        "source_top_checked": true,
+        "stored_fraction_values": 81937850,
+        "stored_anchor_values": 3277514,
+        "grib_bytes": 14968314,
+        "data_bytes": 11457404,
+        "setup_seconds": 0.069849339,
+        "preflight_seconds": 2.791670114,
+        "acquisition_seconds": 3.802904164,
+        "total_seconds": 4.293887991,
+        "coverage": {
+          "cells": 1638757,
+          "data_bytes": 4962475,
+          "data_sha256": "3c5908db47f2dea3c431b0d2e2bc42d7e74cbd032b2bcfbd1e23168ec88d924a",
+          "format": "cloud_palette_spatial_delta_v1",
+          "full_values_checked": true,
+          "index_bytes": 560687,
+          "index_sha256": "c41b16ede7826ab679b44369361b3d5f270de5af5ba20197fe8cad89eabf287f",
+          "levels": 50,
+          "palette_entries": 3752,
+          "seconds": 0.383318874
+        },
+        "anchors": {
+          "checksum": true,
+          "data_bytes": 6494929,
+          "data_sha256": "ec920e229ac4d8ff72d3843ac078491855381d0b2ea48f6bea645961a72b9469",
+          "encoded_bytes": 6494929,
+          "format": "indexed_zstd_v1",
+          "full_values_checked": true,
+          "index_bytes": 32562,
+          "index_sha256": "1b00fd2c82eb424a786744ed2ce9aa0a2e8466a7fc3c30f6f9ce563b7aa5bc55",
+          "raw_bytes": 13110056,
+          "seconds": 0.084931919
+        },
+        "geometry": {
+          "anchor_fields": [
+            "model_level_1_pressure",
+            "model_level_50_geopotential_height"
+          ],
+          "coverage": "exact_source_float32",
+          "critical_eta": 0.2,
+          "eta_interfaces": [
+            1.0, 0.998, 0.994, 0.987, 0.975, 0.959, 0.939, 0.916, 0.892, 0.865,
+            0.835, 0.802, 0.766, 0.727, 0.685, 0.64, 0.592, 0.542, 0.497,
+            0.4565, 0.4205, 0.3877, 0.3582, 0.3317, 0.3078, 0.2863, 0.267,
+            0.2496, 0.2329, 0.2188, 0.2047, 0.1906, 0.1765, 0.1624, 0.1483,
+            0.1342, 0.1201, 0.106, 0.0919, 0.0778, 0.0657, 0.0568, 0.0486,
+            0.0409, 0.0337, 0.0271, 0.0209, 0.0151, 0.0097, 0.0047, 0.0
+          ],
+          "height": "log_pressure_interpolation",
+          "method": "hrrr_hybrid_moist_log_pressure_v1",
+          "model_top_pa": 1500.0,
+          "pressure": "hybrid_coordinate_with_profile_moisture",
+          "reference_pressure_pa": 100000.0
+        }
+      },
+      "total_cloud_file_bytes": 12050653
+    }
+  ]
+}

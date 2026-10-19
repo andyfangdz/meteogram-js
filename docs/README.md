@@ -12,6 +12,8 @@ layers and initialization-aware overlays, with Open-Meteo fallback.
 
 ## Validation records
 
+- [HRRR cloud cost, exact coverage and derived geometry](benchmarks/2026-10-19-cloud-cost/README.md)
+
 - [Native path cleanup and retained RRFS archive conversion](benchmarks/2026-10-18-native-cleanup/README.md)
 
 ## Historical native investigations and rollout records

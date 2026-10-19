@@ -206,7 +206,7 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
             .iter()
             .map(|b| json!({"lead":b.lead,"snapshot_id":b.snapshot_id}))
             .collect::<Vec<_>>());
-        if let Some(clouds) = crate::clouds::payload(&m.clouds, i)? {
+        if let Some(clouds) = crate::clouds::payload(&m.clouds, i, &payload)? {
             payload["native_clouds"] = clouds;
         }
         payload["freshness"] = freshness;

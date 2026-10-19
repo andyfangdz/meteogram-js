@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "report": [
+    {
+      "location": "KCDW",
+      "status": 200,
+      "provider": "dynamical",
+      "source": "Dynamical · HRRR · Latest 2026-10-19 03:00 UTC (18 h run, partial 1/19) · Previous 2026-10-19 02:00 UTC (18 h run) · Base 2026-10-19 00:00 UTC (48 h run) · Native clouds (50 levels; derived layer heights)",
+      "native": 2300,
+      "tooltip": "Time: 04:00:00 UTC\nInitialized: 2026-10-19 02:00 UTC\nNative cloud · model level 5\nHeight and pressure estimated\nPressure: 29.19 inHg (988.6 hPa)\nMSL Height: 1225 ft\nHeight Range: 1471 - 1038 ft\nCloud Cover: 0%\nAtmosphere at 1000 hPa\nTemperature: 10.4195°C\nDew Point: -0.6698°C\nSpread (T-Td): 11.0893°C\nWind Speed: 3 kt\nWind Direction: 145.9789°\nELR: 1.40 °C/kft\nDALR 2.99 · MALR 1.59 · ISA 1.98 °C/kft",
+      "frozen": true
+    },
+    {
+      "location": "Houston@29.76,-95.37",
+      "status": 200,
+      "provider": "dynamical",
+      "source": "Dynamical · HRRR · Latest 2026-10-19 03:00 UTC (18 h run, partial 1/19) · Previous 2026-10-19 02:00 UTC (18 h run) · Base 2026-10-19 00:00 UTC (48 h run) · Native clouds (50 levels; derived layer heights)",
+      "native": 2300,
+      "tooltip": "Time: 04:00:00 UTC\nInitialized: 2026-10-19 02:00 UTC\nNative cloud · model level 6\nHeight and pressure estimated\nPressure: 28.68 inHg (971.1 hPa)\nMSL Height: 1506 ft\nHeight Range: 1823 - 1244 ft\nCloud Cover: 0%\nAtmosphere at 975 hPa\nTemperature: 17.1768°C\nDew Point: 0.772°C\nSpread (T-Td): 16.4048°C\nWind Speed: 8 kt\nWind Direction: 79.5946°\nStrongly stable: -5.32 K/kft\nELR: 2.77 °C/kft\nDALR 2.99 · MALR 1.35 · ISA 1.98 °C/kft",
+      "frozen": true
+    },
+    {
+      "location": "KDEN@39.8561,-104.6737",
+      "status": 200,
+      "provider": "dynamical",
+      "source": "Dynamical · HRRR · Latest 2026-10-19 03:00 UTC (18 h run, partial 1/19) · Previous 2026-10-19 02:00 UTC (18 h run) · Base 2026-10-19 00:00 UTC (48 h run) · Native clouds (50 levels; derived layer heights)",
+      "native": 2300,
+      "tooltip": "Time: 04:00:00 UTC\nInitialized: 2026-10-19 02:00 UTC\nNative cloud · model level 4\nHeight and pressure estimated\nPressure: 24.36 inHg (824.8 hPa)\nMSL Height: 5879 ft\nHeight Range: 6070 - 5749 ft\nCloud Cover: 0%\nAtmosphere at 825 hPa\nTemperature: 13.9716°C\nDew Point: -2.9025°C\nSpread (T-Td): 16.8741°C\nWind Speed: 9 kt\nWind Direction: 55.3839°\nStrongly stable: -1.98 K/kft\nELR: 0.46 °C/kft\nDALR 2.99 · MALR 1.36 · ISA 1.98 °C/kft",
+      "frozen": true
+    }
+  ],
+  "errors": []
+}

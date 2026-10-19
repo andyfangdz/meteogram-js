@@ -487,12 +487,13 @@ fn rrfs_has_its_own_complete_horizon_and_freshness_policy() {
     assert_eq!(freshness(&incomplete).unwrap()["available"], false);
 }
 #[test]
-fn rrfs_manifest_cache_is_bounded_without_retaining_weather_payloads() {
-    let config = crate::source::initial_config("rrfs");
-    let cache = config.caching.unwrap();
-    assert_eq!(cache.num_chunk_refs, Some(8_000_000));
-    assert_eq!(cache.num_bytes_chunks, Some(0));
-    for model in ["hrrr", "gfs", "aifs"] {
+fn regional_manifest_caches_are_bounded_without_retaining_weather_payloads() {
+    for model in ["hrrr", "rrfs"] {
+        let cache = crate::source::initial_config(model).caching.unwrap();
+        assert_eq!(cache.num_chunk_refs, Some(8_000_000));
+        assert_eq!(cache.num_bytes_chunks, Some(0));
+    }
+    for model in ["gfs", "aifs"] {
         assert!(crate::source::initial_config(model).caching.is_none());
     }
 }

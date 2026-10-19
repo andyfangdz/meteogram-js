@@ -865,6 +865,10 @@ pub fn discard(root: &Path, path: &Path) -> Result<()> {
         "values.dict.zst",
         "native-clouds.stage.zst",
         "native-clouds.stage.json",
+        crate::cloud_coverage::DATA,
+        crate::cloud_coverage::INDEX,
+        "cloud-anchors.stage.zst",
+        "cloud-anchors.stage.json",
     ] {
         let cells = path.join(name);
         if cells.exists() {

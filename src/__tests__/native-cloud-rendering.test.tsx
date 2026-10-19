@@ -66,6 +66,7 @@ describe("native cloud rendering", () => {
       </svg>,
     );
     expect(screen.getByText("Native cloud · model level 49")).toBeTruthy();
+    expect(screen.getByText("Height and pressure estimated")).toBeTruthy();
     expect(screen.getByText("Cloud Cover: 80%")).toBeTruthy();
     expect(screen.getByText("Atmosphere at 975 hPa")).toBeTruthy();
   });
