@@ -53,6 +53,7 @@ function ClientWrapperInternal({
       return JSON.parse(initialWeatherDataStr).map((col: any) => ({
         ...col,
         date: new Date(col.date),
+        sampleDate: col.sampleDate ? new Date(col.sampleDate) : undefined,
       }));
     } catch (e) {
       console.error("Failed to parse initial weather data", e);

@@ -732,10 +732,17 @@ complete short run while a new one arrives, and `latest` as the newest overlay.
 GFS, AIFS and RRFS use `latest_complete` and `latest`. Each response is validated
 independently, including its initialization and cloud provenance. Sparse latest
 runs are allowed during normalization because a complete base supplies the
-remaining horizon. `src/utils/forecast-runs.ts` selects the newest initialization
+remaining horizon. After merging the surviving responses, the provider requires
+continuous coverage from the current time for at least 12 hours (HRRR),
+48 hours (RRFS) or 72 hours (GFS/AIFS), otherwise it falls back to Open-Meteo.
+The API retains lazily loaded current, previous, complete and long-run models
+in its cache until their revision leaves those catalog selections.
+`src/utils/forecast-runs.ts` selects the newest initialization
 for each native interval, fills missing intervals from the base and preserves
 native sample values/cadence. Coarse intervals can be split at overlay edges;
-`sampleDate` retains their original sample time. No weather values are interpolated.
+`sampleDate` retains their original sample time. The client restores both `date`
+and optional `sampleDate` after the initial JSON serialization. No weather values
+are interpolated. `initial-weather.test.tsx` covers the initial tooltip round trip.
 Same-initialization responses are deduplicated with the longest horizon retained.
 `CloudColumn.initializedAt` identifies every displayed interval. The generic
 `run-boundaries.tsx` component marks every change with a colored run strip and
