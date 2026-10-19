@@ -1,5 +1,9 @@
 # Native forecast service: full Rust migration
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The native forecast service now has one Rust/Cargo codebase and one installed
 application executable, `meteogram-native`. Source acquisition, staging,
 ClickHouse ingestion, validation, catalog publication, retention, HTTP serving,

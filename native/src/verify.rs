@@ -3,86 +3,6 @@ use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{fs, path::Path, time::Instant};
-pub fn benchmark_pack(cells: usize, leads: usize, repeats: usize) -> Result<Value> {
-    anyhow::ensure!(
-        (1..=8192).contains(&cells) && (1..=141).contains(&leads) && (1..=100).contains(&repeats),
-        "Invalid packing benchmark size"
-    );
-    let (levels, fields) = (30, 6);
-    let source: Vec<Vec<f32>> = (0..leads)
-        .map(|time| {
-            (0..cells * levels * fields)
-                .map(|i| {
-                    f32::from_bits(0x3f000000 | (((i * 31 + time * 8191) as u32) & 0x007fffff))
-                })
-                .collect()
-        })
-        .collect();
-    let pointers: Vec<_> = source.iter().map(|v| v.as_ptr()).collect();
-    let mut expected = vec![0f32; cells * levels * fields * leads];
-    unsafe {
-        crate::pack::pack_tiled::<{ usize::MAX }>(
-            pointers.as_ptr(),
-            expected.as_mut_ptr(),
-            cells,
-            levels,
-            fields,
-            leads,
-        );
-    }
-    let mut actual = vec![0f32; expected.len()];
-    type Kernel = unsafe fn(*const *const f32, *mut f32, usize, usize, usize, usize) -> i32;
-    let kernels: [(usize, Kernel); 6] = [
-        (cells, crate::pack::pack_tiled::<{ usize::MAX }>),
-        (8, crate::pack::pack_tiled::<8>),
-        (16, crate::pack::pack_tiled::<16>),
-        (32, crate::pack::pack_tiled::<32>),
-        (64, crate::pack::pack_tiled::<64>),
-        (128, crate::pack::pack_tiled::<128>),
-    ];
-    let mut measurements: Vec<Vec<f64>> = vec![vec![]; kernels.len()];
-    for round in 0..=repeats {
-        // Rotate order to avoid giving one kernel every first or last turn.
-        for k in 0..kernels.len() {
-            let i = (k + round) % kernels.len();
-            let t = Instant::now();
-            let bad = unsafe {
-                kernels[i].1(
-                    pointers.as_ptr(),
-                    actual.as_mut_ptr(),
-                    cells,
-                    levels,
-                    fields,
-                    leads,
-                )
-            };
-            let seconds = t.elapsed().as_secs_f64();
-            anyhow::ensure!(
-                bad == 0
-                    && actual
-                        .iter()
-                        .zip(&expected)
-                        .all(|(a, b)| a.to_bits() == b.to_bits()),
-                "Packing benchmark mismatch"
-            );
-            std::hint::black_box(&actual);
-            if round > 0 {
-                measurements[i].push(seconds);
-            }
-        }
-    }
-    let results: Vec<_> = kernels
-        .iter()
-        .zip(measurements)
-        .map(|((tile, _), mut seconds)| {
-            seconds.sort_by(f64::total_cmp);
-            json!({"tile_cells":tile,"seconds":seconds,"median_seconds":seconds[seconds.len()/2]})
-        })
-        .collect();
-    Ok(
-        json!({"cells":cells,"leads":leads,"levels":levels,"fields":fields,"repeats":repeats,"value_bytes":expected.len()*4,"all_bits_equal":true,"results":results,"kind":"resident synthetic packing only; no source or database I/O"}),
-    )
-}
 fn equivalent(a: &Value, b: &Value, key: &str) -> bool {
     if matches!(key, "query_ms" | "revision") {
         return true;
@@ -105,7 +25,7 @@ fn equivalent(a: &Value, b: &Value, key: &str) -> bool {
         _ => a == b,
     }
 }
-pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Result<Value> {
+pub fn verify(root: &Path, base: &str, full: bool) -> Result<Value> {
     // Keep the default HTTP selection and direct database reader on the same
     // manifest while the live updater publishes additional forecast hours.
     let _catalog = Lock::acquire(root, "catalog", false, false)?;
@@ -190,19 +110,7 @@ pub fn verify(root: &Path, base: &str, compare: Option<&str>, full: bool) -> Res
                         == meta["leads"].as_array().unwrap().len(),
                 "HTTP identity/shape mismatch"
             );
-            if let Some(compare) = compare {
-                let expected: Value = http
-                    .get(format!("{compare}/forecast"))
-                    .query(&params)
-                    .send()?
-                    .error_for_status()?
-                    .json()?;
-                anyhow::ensure!(
-                    equivalent(&v, &expected, ""),
-                    "HTTP mismatch {name} at {la},{lo}"
-                );
-            }
-            checks.push(json!({"model":name,"latitude":la,"longitude":lo,"cell_id":cell,"init_time":v["init_time"],"snapshot_id":v["snapshot_id"],"revision":v["revision"],"rows_sha256":format!("{:x}",Sha256::digest(serde_json::to_vec(&v["rows"])?)),"compared":compare.is_some()}));
+            checks.push(json!({"model":name,"latitude":la,"longitude":lo,"cell_id":cell,"init_time":v["init_time"],"snapshot_id":v["snapshot_id"],"revision":v["revision"],"rows_sha256":format!("{:x}",Sha256::digest(serde_json::to_vec(&v["rows"])?))}));
         }
     }
     for path in [
@@ -299,121 +207,7 @@ pub fn benchmark(root: &Path, count: usize, clients: usize) -> Result<Value> {
     }
     Ok(json!({"time":now(),"warmup_queries_per_model":count,"models":out}))
 }
-pub fn staging(path: &Path) -> Result<Value> {
-    let mut original = 0;
-    let mut compressed = 0;
-    let started = Instant::now();
-    for e in fs::read_dir(path)? {
-        let p = e?.path();
-        if p.extension().is_some_and(|e| e == "npy") {
-            let bytes = fs::read(p)?;
-            let encoded = zstd::encode_all(bytes.as_slice(), 1)?;
-            let decoded = zstd::decode_all(encoded.as_slice())?;
-            anyhow::ensure!(decoded == bytes, "Lossless staging compression failed");
-            original += bytes.len();
-            compressed += encoded.len();
-        }
-    }
-    anyhow::ensure!(
-        original > 0,
-        "Legacy compression measurement requires NPY inputs; new staging is already compressed"
-    );
-    Ok(
-        json!({"raw_bytes":original,"zstd_bytes":compressed,"seconds":started.elapsed().as_secs_f64(),"lossless":true}),
-    )
-}
-
-pub fn compare_stores(root: &Path, reference: &Path, samples: usize) -> Result<Value> {
-    anyhow::ensure!(samples > 0, "Need samples");
-    let _a = Lock::acquire(root, "catalog", false, false)?;
-    let _b = Lock::acquire(reference, "catalog", false, false)?;
-    let c = catalog(root)?;
-    let expected = catalog(reference)?;
-    anyhow::ensure!(
-        !c.current.is_empty() && c.current.keys().eq(expected.current.keys()),
-        "Comparison catalogs must contain the same nonempty model set"
-    );
-    let db = Db::new()?;
-    let mut models = serde_json::Map::new();
-    for (name, e) in c.current {
-        let old = expected
-            .current
-            .get(&name)
-            .context("Reference model missing")?;
-        let m = read_json(descriptor(root, &e)?.join("metadata.json"))?;
-        let om = read_json(descriptor(reference, old)?.join("metadata.json"))?;
-        let reader = crate::runs::Reader::load(root, &e, &m)?;
-        let original_reader = crate::runs::Reader::load(reference, old, &om)?;
-        for key in [
-            "dataset",
-            "init_time",
-            "snapshot_id",
-            "leads",
-            "variables",
-            "surface_variables",
-            "units",
-        ] {
-            anyhow::ensure!(
-                equivalent(&m[key], &om[key], key),
-                "Source identity/schema mismatch {name} {key}"
-            );
-        }
-        anyhow::ensure!(
-            numeric_array_eq(&m["levels"], &om["levels"]),
-            "Pressure levels differ"
-        );
-        let arrays = crate::stage::load_cells(&descriptor(root, &e)?)?;
-        let oa = crate::stage::load_cells(&descriptor(reference, old)?)?;
-        anyhow::ensure!(
-            arrays["cell_id"].bytes == oa["cell_id"].bytes,
-            "Cell selection differs {name}"
-        );
-        let mut max_error = 0f64;
-        for field in ["latitude", "longitude"] {
-            anyhow::ensure!(
-                arrays[field].bytes.len() == oa[field].bytes.len(),
-                "Coordinate count mismatch"
-            );
-            for (a, b) in arrays[field]
-                .bytes
-                .as_chunks::<8>()
-                .0
-                .iter()
-                .zip(oa[field].bytes.as_chunks::<8>().0.iter())
-            {
-                let a = f64::from_le_bytes(*a);
-                let b = f64::from_le_bytes(*b);
-                max_error = max_error.max((a - b).abs());
-            }
-        }
-        anyhow::ensure!(
-            max_error < 1e-9,
-            "Projection coordinate mismatch {name}: {max_error}"
-        );
-        let ids: Vec<_> = arrays["cell_id"]
-            .bytes
-            .as_chunks::<4>()
-            .0
-            .iter()
-            .map(|b| u32::from_le_bytes(*b))
-            .collect();
-        let mut compared = 0;
-        for i in 0..samples {
-            let id = ids[(i * 104729) % ids.len()];
-            let (a, _) = reader.profile(&db, &e, &m, id)?;
-            let (b, _) = original_reader.profile(&db, old, &om, id)?;
-            anyhow::ensure!(
-                equivalent(&json!(a), &json!(b), ""),
-                "Source values differ {name} cell {id}"
-            );
-            compared += 1;
-        }
-        models.insert(name,json!({"cells":ids.len(),"complete_profiles_exact":compared,"max_coordinate_error_degrees":max_error,"logical_rows":ids.len()*m["leads"].as_array().unwrap().len(),"storage_rows":db.scalar(&format!("SELECT count() FROM {}.{}",ident(&e.database)?,ident(&e.table)?))?}));
-    }
-    Ok(json!({"time":now(),"models":models,"success":true}))
-}
-
-pub fn check_api(root: &Path, port: u16, compare: Option<&str>, full: bool) -> Result<Value> {
+pub fn check_api(root: &Path, port: u16, full: bool) -> Result<Value> {
     use std::{
         process::{Child, Command, Stdio},
         thread,
@@ -461,7 +255,7 @@ pub fn check_api(root: &Path, port: u16, compare: Option<&str>, full: bool) -> R
         thread::sleep(Duration::from_millis(100));
     }
     anyhow::ensure!(ready, "Temporary API did not become healthy");
-    let report = verify(root, &base, compare, full)?;
+    let report = verify(root, &base, full)?;
     drop(child);
     Ok(report)
 }

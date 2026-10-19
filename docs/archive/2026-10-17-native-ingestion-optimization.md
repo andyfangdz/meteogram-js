@@ -1,5 +1,9 @@
 # Native ingestion optimization — measured on the home server
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 Follow-up: the [Rust/profile implementation](2026-10-18-native-rust-optimization.md)
 completed the same pinned cycle in 16m00s and reduced resident data to 25.935 GB.
 The measurements below remain the baseline for that change.
@@ -154,5 +158,5 @@ Use `benchmark-ingestion.py --source-root ~/.local/share/meteogram-native
 this pinned-cycle experiment. It requires a new directory, substantial disk
 headroom, and the serving updater lock. It leaves its own tables for inspection;
 explicitly remove only those benchmark-owned tables after saving the evidence.
-See the [prototype README](../../scripts/clickhouse-prototype/README.md) for
+See the [prototype README](https://github.com/andyfangdz/meteogram-js/blob/5f4ae08/scripts/clickhouse-prototype/README.md) for
 normal update and service commands.

@@ -352,84 +352,50 @@ async fn cached(store: &Store, dir: &Path, key: &str, bytes: &AtomicU64) -> Resu
     }
     bail!("Missing source chunk {key}: {:?}", last)
 }
-pub async fn fetch(
+pub async fn fetch_hour(
     model: &str,
     out: &Path,
-    offset: usize,
-    pin: Option<Value>,
-    metadata_only: bool,
-    selected_leads: Option<Vec<u16>>,
-) -> Result<Value> {
-    fetch_with(
-        model,
-        out,
-        offset,
-        pin,
-        metadata_only,
-        selected_leads,
-        FetchOptions::default(),
-    )
-    .await
-}
-#[derive(Default)]
-pub struct FetchOptions<'a> {
-    pub source: Option<&'a Source>,
-    pub dictionary: bool,
-}
-pub async fn fetch_with(
-    model: &str,
-    out: &Path,
-    offset: usize,
-    pin: Option<Value>,
-    metadata_only: bool,
-    selected_leads: Option<Vec<u16>>,
-    options: FetchOptions<'_>,
+    pin: Value,
+    lead: u16,
+    available: &Source,
 ) -> Result<Value> {
     fs::create_dir_all(out)?;
-    anyhow::ensure!(offset > 0, "Run offset must be positive");
     let _lock = Lock::acquire(out, "fetch", true, true)?;
     let start = Instant::now();
     let existing = out.join("metadata.json").exists();
     let old = if existing {
-        Some(read_json(out.join("metadata.json"))?)
+        read_json(out.join("metadata.json"))?
     } else {
         pin
     };
-    // Preserve the physical encoding when resuming, including legacy raw runs.
-    let dictionary_mode = if existing {
-        old.as_ref().is_some_and(crate::dictionary::staged)
-    } else {
-        options.dictionary || grid_relative(model)
-    };
-    if let Some(ref p) = old {
-        anyhow::ensure!(
-            p["model"] == model
-                && p["dataset"]
-                    .as_str()
-                    .is_some_and(|d| valid_dataset(model, d)),
-            "Pinned metadata belongs to another model"
-        );
-    }
+    anyhow::ensure!(
+        old["model"] == model
+            && old["dataset"]
+                .as_str()
+                .is_some_and(|d| valid_dataset(model, d)),
+        "Pinned metadata belongs to another model"
+    );
+    anyhow::ensure!(
+        !existing || crate::dictionary::staged(&old),
+        "Resume requires dictionary staging"
+    );
     let opened;
-    let src = if let Some(src) = options.source {
-        src
-    } else {
-        opened = Source::open(model, old.as_ref()).await?;
+    let src = if existing {
+        opened = Source::open(model, Some(&old)).await?;
         &opened
+    } else {
+        available
     };
     let init_seconds = src.init_times().await?;
-    let init_index = if let Some(ref p) = old {
-        let s = timestamp(p["init_time"].as_str().context("Missing pinned init")?)?;
-        init_seconds
-            .iter()
-            .position(|v| (*v - s).abs() < 0.001)
-            .context("Pinned init unavailable")?
-    } else {
-        init_seconds
-            .len()
-            .checked_sub(offset)
-            .context("Run offset out of range")?
-    };
+    let pinned_init = timestamp(
+        old["init_time"]
+            .as_str()
+            .context("Missing pinned initialization")?,
+    )?;
+    let init_index = init_seconds
+        .iter()
+        .position(|v| (*v - pinned_init).abs() < 0.001)
+        .context("Pinned initialization unavailable")?;
     let init_time = chrono::DateTime::from_timestamp(init_seconds[init_index] as i64, 0)
         .context("Bad init")?
         .format("%Y-%m-%dT%H:%M:%S%.9f")
@@ -508,12 +474,14 @@ pub async fn fetch_with(
         .as_str()
         .context("Missing collection id")?;
     anyhow::ensure!(valid_dataset(model, product), "Collection identity differs");
-    let leads = selected_leads.unwrap_or_else(|| product_leads(model, product));
-    let mut meta = json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":src.snapshot,"cells":ids.len(),"levels":levels,"leads":leads,"variables":variables,"surface_variables":surface,"grid":grid,"units":units,"coverage":"conus","spatial_shards":1,"shard_index":0,"workers":16,"zarr_concurrency":16,"open_seconds":start.elapsed().as_secs_f64(),"offline_cache":false});
-    if dictionary_mode {
-        meta["staging"] = json!({"encoding":crate::dictionary::ENCODING,"complete":false});
-    }
-    if let Some(ref old) = old {
+    anyhow::ensure!(
+        product_leads(model, product).contains(&lead),
+        "Invalid forecast hour"
+    );
+    let leads = vec![lead];
+    let mut meta = json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":src.snapshot,"cells":ids.len(),"levels":levels,"leads":leads,"variables":variables,"surface_variables":surface,"grid":grid,"units":units,"coverage":"conus","spatial_shards":1,"shard_index":0,"map_concurrency":16,"open_seconds":start.elapsed().as_secs_f64()});
+    meta["staging"] = json!({"encoding":crate::dictionary::ENCODING,"complete":false});
+    {
         for k in ["init_time", "snapshot_id", "cells", "levels"] {
             if old.get(k).is_none() {
                 continue;
@@ -538,9 +506,6 @@ pub async fn fetch_with(
     atomic(out.join("source-arrays.json"), &metas)?;
     atomic(out.join("metadata.json"), &meta)?;
     crate::stage::save_cells(out, &ids, &lat, &lon)?;
-    if metadata_only {
-        return Ok(meta);
-    }
     // Resolve references in the pinned Icechunk manifests before downloading
     // any whole-map payload. Incomplete recent runs otherwise fail minutes in.
     let mut by_lead = vec![];
@@ -627,11 +592,11 @@ pub async fn fetch_with(
         let report = out.join(format!("lead-{lead:03}.json"));
         if report.exists() {
             anyhow::ensure!(
-                crate::stage::exists(&out.join(format!("lead-{lead:03}.npy")))
-                    && crate::stage::exists(&out.join(format!("surface-{lead:03}.npy"))),
+                crate::stage::exists(&out.join(format!("lead-{lead:03}")))
+                    && crate::stage::exists(&out.join(format!("surface-{lead:03}"))),
                 "Completed arrays removed; use fresh extraction"
             );
-            if dictionary_mode {
+            {
                 let checkpoint = out.join(format!("lead-{lead:03}.palette"));
                 let partial_meta = read_json(checkpoint.join("metadata.json"))?;
                 anyhow::ensure!(
@@ -640,8 +605,7 @@ pub async fn fetch_with(
                         && partial_meta["leads"] == json!([lead]),
                     "Palette checkpoint identity"
                 );
-                let partial = crate::dictionary::Dictionary::load(&checkpoint, &partial_meta)?
-                    .context("Missing palette checkpoint")?;
+                let partial = crate::dictionary::Dictionary::load(&checkpoint, &partial_meta)?;
                 merge_palettes(
                     &mut palettes,
                     partial,
@@ -680,12 +644,7 @@ pub async fn fetch_with(
                             values.push(f);
                         }
                         drop(data);
-                        let (values, palette) = if dictionary_mode {
-                            let (codes, palette) = crate::dictionary::encode_spatial(values)?;
-                            (codes, Some(palette))
-                        } else {
-                            (values, None)
-                        };
+                        let (values, palette) = crate::dictionary::encode_spatial(values)?;
                         Ok((t, values, palette))
                     })
                     .await?
@@ -707,7 +666,7 @@ pub async fn fetch_with(
             })
             .collect();
         for (t, values, palette) in results {
-            if let Some(palette) = palette {
+            {
                 partial_fields[if t.level.is_some() {
                     t.field
                 } else {
@@ -723,22 +682,14 @@ pub async fn fetch_with(
             }
         }
         disk_guard(out, ((profiles.len() + ground.len()) * 4) as u64)?;
-        let write = if dictionary_mode {
-            crate::stage::write_codes
-        } else {
-            crate::stage::write
-        };
+        let write = crate::stage::write_codes;
         let profile_stage = write(
-            &out.join(format!("lead-{lead:03}.npy")),
+            &out.join(format!("lead-{lead:03}")),
             &[nc, nl, nf],
             &profiles,
         )?;
-        let surface_stage = write(
-            &out.join(format!("surface-{lead:03}.npy")),
-            &[nc, 2],
-            &ground,
-        )?;
-        if dictionary_mode {
+        let surface_stage = write(&out.join(format!("surface-{lead:03}")), &[nc, 2], &ground)?;
+        {
             let checkpoint = out.join(format!("lead-{lead:03}.palette"));
             fs::create_dir_all(&checkpoint)?;
             let mut partial_meta = meta.clone();
@@ -765,7 +716,7 @@ pub async fn fetch_with(
         prune_checkpointed_cache(&cache, &completed_keys)?;
         println!("{stats}");
     }
-    if dictionary_mode {
+    {
         let dictionary = crate::dictionary::Dictionary::new(palettes);
         let info = dictionary.save(out, &meta)?;
         meta["staging"] =
@@ -1241,7 +1192,7 @@ pub async fn fetch_clouds(out: &Path, available: Option<&Source>) -> Result<Valu
     }
     crate::clouds::validate(&values)?;
     disk_guard(out, (values.len() * 4) as u64)?;
-    let logical = out.join("native-clouds.npy");
+    let logical = out.join("native-clouds");
     let stats = crate::stage::write(&logical, &shape, &values)?;
     let staged = crate::stage::Array::open(&logical, &shape)?;
     let mut scratch = crate::stage::Scratch::new()?;

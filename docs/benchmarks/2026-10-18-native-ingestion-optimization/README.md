@@ -1,6 +1,10 @@
 # Native ingestion optimization evidence
 
-See the [measured report](../../plans/2026-10-18-native-ingestion-optimization.md).
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+See the [measured report](../../archive/2026-10-18-native-ingestion-optimization.md).
 
 - `pack-*-idle.json`: resident synthetic kernel comparisons, seven timed
   repetitions after warmup; every output bit checked.

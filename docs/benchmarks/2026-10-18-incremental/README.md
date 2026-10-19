@@ -1,5 +1,9 @@
 # Incremental ingestion evidence
 
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
 Small, inspectable records from the 2026-10-18 home-host rollout. Large source
 maps, staged weather, dictionaries and ClickHouse data remain outside Git.
 

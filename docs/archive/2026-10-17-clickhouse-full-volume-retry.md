@@ -1,5 +1,9 @@
 # Full-volume retry: full CONUS geography, incomplete forecast horizon
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 **Later home benchmark completed:** [full-resident HRRR/GFS/AIFS results](2026-10-17-clickhouse-home-resident.md)
 now replace the full-run projections and outstanding acquisition limits in this
 historical report. The original sample measurements below are preserved.
@@ -144,7 +148,7 @@ ingestion/publication service.
 The first two times, partial chunk cache, logs and raw staging remain in
 `/workspace/dynamical-benchmark/full`. The local API currently serves the complete
 two-time CONUS table. Resume instructions are in the
-[prototype README](../../scripts/clickhouse-prototype/README.md#full-volume-retry).
+[prototype README](https://github.com/andyfangdz/meteogram-js/blob/5f4ae08/scripts/clickhouse-prototype/README.md#full-volume-retry).
 
 Evidence is saved under
 [`docs/benchmarks/2026-10-17-clickhouse/full-volume-retry/`](../benchmarks/2026-10-17-clickhouse/full-volume-retry/):

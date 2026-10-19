@@ -1,5 +1,9 @@
 # Dynamical migration investigation
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 Verified against the live Dynamical catalog on 2026-10-14. The requested scope is
 to replace every existing model that Dynamical can support. The app still uses
 Open-Meteo; this investigation adds a runnable access/performance probe, not a

@@ -1,5 +1,9 @@
 # Native forecast site integration — 2026-10-18
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The native forecast integration is live at `meteogram.vercel.app` and
 `meteogram.flyingclub.org`, using `weather-api.andyfang.app`. All four native
 models passed production browser checks. The home API, database, updater and

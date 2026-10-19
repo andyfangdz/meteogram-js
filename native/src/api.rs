@@ -72,7 +72,6 @@ struct Model {
     ids: Vec<u32>,
     lat: Vec<f64>,
     lon: Vec<f64>,
-    dictionary: Option<crate::dictionary::Dictionary>,
     books: BTreeMap<u16, Arc<crate::dictionary::Dictionary>>,
     clouds: BTreeMap<u16, crate::clouds::Reader>,
 }
@@ -110,7 +109,7 @@ fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model
         .iter()
         .map(|b| u32::from_le_bytes(*b))
         .collect::<Vec<_>>();
-    let coords = |n: &str, a: &mut BTreeMap<String, Npy>| -> Result<Vec<f64>> {
+    let coords = |n: &str, a: &mut BTreeMap<String, crate::stage::CellArray>| -> Result<Vec<f64>> {
         let v = a.remove(n).context("Missing coordinates")?;
         anyhow::ensure!(
             v.dtype == "<f8" && v.bytes.len() == ids.len() * 8,
@@ -126,12 +125,7 @@ fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model
     let lat = coords("latitude", &mut arrays)?;
     let lon = coords("longitude", &mut arrays)?;
     anyhow::ensure!(ids.windows(2).all(|w| w[0] < w[1]), "Unsorted cell ids");
-    let dictionary = crate::dictionary::Dictionary::load(&p, &meta)?;
-    let books = if partitioned(&meta) {
-        crate::runs::load_books(root, e, &meta, Some(cache))?
-    } else {
-        BTreeMap::new()
-    };
+    let books = crate::runs::load_books(root, e, &meta, Some(cache))?;
     let clouds = crate::clouds::readers(root, &meta)?;
     Ok(Model {
         clouds,
@@ -139,7 +133,6 @@ fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model
         ids,
         lat,
         lon,
-        dictionary,
         books,
     })
 }
@@ -171,31 +164,8 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
         let _lock = Lock::acquire(&app.root, "catalog", false, false)?;
         let c = catalog(&app.root)?;
         let e = match q.get("run").map(String::as_str).unwrap_or("latest") {
-            "latest_complete" => c
-                .complete_runs
-                .get(&name)
-                .and_then(|v| v.first())
-                .or_else(|| {
-                    c.current.get(&name).filter(|e| {
-                        descriptor(&app.root, e)
-                            .and_then(|p| read_json(p.join("metadata.json")))
-                            .and_then(|m| complete(&m))
-                            .unwrap_or(false)
-                    })
-                }),
-            "previous_complete" => {
-                c.complete_runs
-                    .get(&name)
-                    .and_then(|v| v.get(1))
-                    .or_else(|| {
-                        c.previous.get(&name).filter(|e| {
-                            descriptor(&app.root, e)
-                                .and_then(|p| read_json(p.join("metadata.json")))
-                                .and_then(|m| complete(&m))
-                                .unwrap_or(false)
-                        })
-                    })
-            }
+            "latest_complete" => c.complete_runs.get(&name).and_then(|v| v.first()),
+            "previous_complete" => c.complete_runs.get(&name).and_then(|v| v.get(1)),
             "long" => c.hrrr_long.as_ref(),
             _ => c.current.get(&name),
         }
@@ -219,20 +189,9 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
             Ok(v) => v,
             Err(e) => return Ok((StatusCode::NOT_FOUND, json!({"error":e.to_string()}))),
         };
-        let (rows, elapsed) = if partitioned(&m.meta) {
+        let (rows, elapsed) =
             app.db
-                .profile_leads(&e.database, &e.table, &m.meta, cell, i, &m.books)?
-        } else if m.dictionary.is_some() {
-            app.db.profile_with_dictionary(
-                &e.database,
-                &e.table,
-                &m.meta,
-                cell,
-                m.dictionary.as_ref(),
-            )?
-        } else {
-            app.db.profile(&e.database, &e.table, &m.meta, cell)?
-        };
+                .profile_leads(&e.database, &e.table, &m.meta, cell, i, &m.books)?;
         let mut fields = vec!["lead_hour".to_owned()];
         fields.extend(crate::state::fields(&m.meta));
         let expected = expected_leads(&m.meta)?;
@@ -242,13 +201,11 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
             .filter(|h| !have.contains(h))
             .copied()
             .collect::<Vec<_>>();
-        let mut payload = json!({"model":name,"dataset":m.meta["dataset"],"init_time":m.meta["init_time"],"snapshot_id":m.meta["snapshot_id"],"requested":{"latitude":lat,"longitude":lon},"grid":{"cell_id":cell,"latitude":m.lat[i],"longitude":m.lon[i]},"levels_hpa":m.meta["levels"],"units":m.meta["units"],"fields":fields,"rows":rows,"native_wind_frame":if grid_relative(&name){"grid-relative"}else{"earth-relative"},"query_ms":elapsed,"prototype":true,"revision":e.revision,"forecast_complete":missing.is_empty(),"available_leads":have,"expected_leads":expected,"missing_leads":missing});
-        if partitioned(&m.meta) {
-            payload["lead_sources"] = json!(crate::runs::books(&m.meta)?
-                .iter()
-                .map(|b| json!({"lead":b.lead,"snapshot_id":b.snapshot_id}))
-                .collect::<Vec<_>>());
-        }
+        let mut payload = json!({"model":name,"dataset":m.meta["dataset"],"init_time":m.meta["init_time"],"snapshot_id":m.meta["snapshot_id"],"requested":{"latitude":lat,"longitude":lon},"grid":{"cell_id":cell,"latitude":m.lat[i],"longitude":m.lon[i]},"levels_hpa":m.meta["levels"],"units":m.meta["units"],"fields":fields,"rows":rows,"native_wind_frame":if grid_relative(&name){"grid-relative"}else{"earth-relative"},"query_ms":elapsed,"revision":e.revision,"forecast_complete":missing.is_empty(),"available_leads":have,"expected_leads":expected,"missing_leads":missing});
+        payload["lead_sources"] = json!(crate::runs::books(&m.meta)?
+            .iter()
+            .map(|b| json!({"lead":b.lead,"snapshot_id":b.snapshot_id}))
+            .collect::<Vec<_>>());
         if let Some(clouds) = crate::clouds::payload(&m.clouds, i)? {
             payload["native_clouds"] = clouds;
         }
@@ -441,7 +398,6 @@ mod auth_tests {
                     ids: vec![],
                     lat: vec![],
                     lon: vec![],
-                    dictionary: None,
                     books: BTreeMap::new(),
                     clouds: BTreeMap::new(),
                 }),

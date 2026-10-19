@@ -1,5 +1,9 @@
 # Native HRRR clouds and initialization overlays
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The home service now retains HRRR's actual 50 model-level cloud fractions,
 geopotential heights and pressures for both its 18-hour and 48-hour forecasts.
 Cloud shading uses those model heights; the existing 30 pressure levels continue
@@ -112,9 +116,15 @@ No initialization is inferred from response computation time.
   the bundled Yarn release.
 - The tested native binary is installed and the managed native/tunnel units are
   active and enabled. Public access requires bearer authentication.
-- The new site code is validated locally through the real public API. Production
-  Vercel promotion remains a separate final step; no environment changes are
-  required. This report does not claim the new frontend is already deployed.
+- At this validation stage, the site code had passed local checks through the
+  real public API, with Vercel promotion still pending.
+
+The frontend was subsequently deployed through
+[PR #17](https://github.com/andyfangdz/meteogram-js/pull/17), followed by
+[PR #19](https://github.com/andyfangdz/meteogram-js/pull/19). Production browser
+checks on 2026-10-19 at 00:23 UTC passed all four native models on both public
+domains, including HRRR native clouds, run boundaries, tooltips and refresh.
+Use the [native service guide](../../native/README.md) for current operation.
 
 Evidence is under
 [`docs/benchmarks/2026-10-18-hrrr-native-clouds/`](../benchmarks/2026-10-18-hrrr-native-clouds/).

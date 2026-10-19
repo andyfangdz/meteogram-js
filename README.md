@@ -126,6 +126,13 @@ run. Other native models overlay the latest complete run. Colored run strips,
 initialization-change lines and tooltip timestamps identify each supplying run. See
 [native service setup](native/README.md) for authentication and Cloudflare Tunnel.
 
+### Documentation
+
+The [native service guide](native/README.md) describes supported commands and
+formats. All four native models use per-hour UInt16 dictionaries and 256-cell
+tiles automatically. [Documentation index](docs/README.md) separates current
+guides from dated investigations and rollout evidence.
+
 ### Acknowledgments
 
 - Forecast data provided by [Open‑Meteo](https://open-meteo.com/). Elevation data via Open‑Meteo Elevation API.

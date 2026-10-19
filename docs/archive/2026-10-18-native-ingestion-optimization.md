@@ -1,5 +1,9 @@
 # Native ingestion: packing locality, source preflight and bounded cache
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The Rust service now packs small groups of cells across all forecast leads,
 checks a pinned snapshot's required map references before acquisition, and
 removes encoded maps after durable staging checkpoints. The physical forecast

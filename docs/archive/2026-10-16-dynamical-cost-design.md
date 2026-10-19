@@ -1,5 +1,9 @@
 # Near-zero-cost Dynamical ingestion and serving
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 Design date: 2026-10-16. This is a design, not a deployment or a provider switch.
 It builds on [the live investigation](2026-10-14-dynamical-migration.md).
 

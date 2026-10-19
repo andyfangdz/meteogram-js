@@ -1,5 +1,9 @@
 # Rust, SIMD and profile storage — measured home-server optimization
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The full pinned HRRR/GFS/AIFS build completed in **16m00s**, versus **20m11s** in
 [the previous optimization](2026-10-17-native-ingestion-optimization.md): **20.7%
 less elapsed time**. Active data occupied **25.935 GB**, versus **35.301 GB**,
@@ -160,7 +164,7 @@ is unchanged from the earlier deployment.
 [Evidence bundle](../benchmarks/2026-10-18-native-rust-optimization/README.md)
 contains phase timestamps, validation markers, screening results, emitted SIMD
 proof, query/HTTP/rollback comparisons, restart/cleanup verification and tests.
-See the [prototype README](../../scripts/clickhouse-prototype/README.md) for
+See the [prototype README](https://github.com/andyfangdz/meteogram-js/blob/5f4ae08/scripts/clickhouse-prototype/README.md) for
 operation and compiler/fallback behavior. Format references:
 [ClickHouse Native](https://clickhouse.com/docs/reference/formats/Native),
 [compression guidance](https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/data-compression/compression-in-clickhouse.md),

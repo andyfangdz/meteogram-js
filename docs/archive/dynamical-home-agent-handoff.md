@@ -1,4 +1,8 @@
-# Home Linux agent: resume the Dynamical / ClickHouse experiment
+# Home Linux benchmark handoff (archived)
+
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
 
 Branch: `codex/dynamical-clickhouse-handoff` in
 <https://github.com/andyfangdz/meteogram-js>.
@@ -36,7 +40,7 @@ Read `AGENTS.md`, then these documents in order:
 1. [Latest retry and measurement limits](2026-10-17-clickhouse-full-volume-retry.md).
 2. [Initial benchmark and cost assumptions](2026-10-17-clickhouse-prototype-results.md).
 3. [Arbitrary-location design](2026-10-17-dynamical-arbitrary-locations.md).
-4. [Prototype commands and data formats](../../scripts/clickhouse-prototype/README.md).
+4. [Prototype commands and data formats](https://github.com/andyfangdz/meteogram-js/blob/5f4ae08/scripts/clickhouse-prototype/README.md).
 5. [Field coverage and meteorological constraints](2026-10-14-dynamical-migration.md).
 
 The earlier five-site/static design is superseded by arbitrary CONUS coverage.

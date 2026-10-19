@@ -1,0 +1,218 @@
+{
+  "native_source_commit": "218bfa91114ead7c01173001e212dc6bc7e740b9",
+  "native_version": "0.2.0",
+  "automated_checks": {
+    "rust_tests_including_database": 48,
+    "frontend_tests": 109,
+    "typescript": "passed",
+    "eslint": "passed, with one existing bundled-Yarn warning",
+    "cargo_fmt": "passed",
+    "clippy_all_targets_warnings_denied": "passed"
+  },
+  "cli": {
+    "version": "meteogram-native 0.2.0",
+    "binary_sha256": "838d0b3c016a1e857df3cc59e9788865d932c94868731aa9781590aeb2a53d8e",
+    "retired_commands": [
+      {
+        "command": "load",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "fetch",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "adopt",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "prepare-store",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "encode-stage",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "sort-stage",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "convert-stage",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "benchmark-pack",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "compare-stores",
+        "exit_code": 2,
+        "rejected": true
+      },
+      {
+        "command": "staging-compression",
+        "exit_code": 2,
+        "rejected": true
+      }
+    ],
+    "batch_flag_rejected": true,
+    "source_commit": "218bfa91114ead7c01173001e212dc6bc7e740b9"
+  },
+  "candidate_api": {
+    "success": true,
+    "profiles_compared_to_database": 36,
+    "invalid_inputs": 4,
+    "outside_region": 4,
+    "gzip_bytes": 11637,
+    "full_database_validation_in_this_command": false
+  },
+  "archive_selections": {
+    "success": true,
+    "checked_at": "2026-10-19T01:17:49.572728+00:00",
+    "base_url": "http://127.0.0.1:18082",
+    "results": [
+      {
+        "model": "hrrr",
+        "run": "latest",
+        "status": 200,
+        "init_time": "2026-10-18T23:00:00.000000000",
+        "leads": 6,
+        "native_cloud_hours": 6
+      },
+      {
+        "model": "hrrr",
+        "run": "latest_complete",
+        "status": 200,
+        "init_time": "2026-10-18T22:00:00.000000000",
+        "leads": 19,
+        "native_cloud_hours": 19
+      },
+      {
+        "model": "hrrr",
+        "run": "previous_complete",
+        "status": 200,
+        "init_time": "2026-10-18T21:00:00.000000000",
+        "leads": 19,
+        "native_cloud_hours": 19
+      },
+      {
+        "model": "hrrr",
+        "run": "long",
+        "status": 200,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "leads": 49,
+        "native_cloud_hours": 49
+      },
+      {
+        "model": "gfs",
+        "run": "latest",
+        "status": 200,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "leads": 141
+      },
+      {
+        "model": "gfs",
+        "run": "latest_complete",
+        "status": 200,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "leads": 141
+      },
+      {
+        "model": "gfs",
+        "run": "previous_complete",
+        "status": 200,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "leads": 141
+      },
+      {
+        "model": "aifs",
+        "run": "latest",
+        "status": 200,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "leads": 31
+      },
+      {
+        "model": "aifs",
+        "run": "latest_complete",
+        "status": 200,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "leads": 31
+      },
+      {
+        "model": "aifs",
+        "run": "previous_complete",
+        "status": 200,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "leads": 31
+      },
+      {
+        "model": "rrfs",
+        "run": "latest",
+        "status": 200,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "leads": 85
+      },
+      {
+        "model": "rrfs",
+        "run": "latest_complete",
+        "status": 200,
+        "init_time": "2026-10-18T18:00:00.000000000",
+        "leads": 85
+      },
+      {
+        "model": "rrfs",
+        "run": "previous_complete",
+        "status": 200,
+        "init_time": "2026-10-18T12:00:00.000000000",
+        "leads": 85
+      }
+    ]
+  },
+  "rrfs_archive_conversion": {
+    "catalog_generation_after": 653,
+    "catalog_generation_before": 652,
+    "cells": 1638757,
+    "current_forecasts_unchanged": true,
+    "full_packed_code_sha256": "37f13d4bc64010306eca8aa133009c8e8ea50b911e6d7e469a3f7de30505a0ef",
+    "full_values_checked": true,
+    "init_time": "2026-10-18T12:00:00.000000000",
+    "leads": 85,
+    "new": {
+      "database": "meteogram_native",
+      "owned": true,
+      "revision": "rrfs_20261019010649_3306b462",
+      "table": "rrfs_run_e43f6bd2524d490ea2bb4ecb4175fa8f"
+    },
+    "old": {
+      "database": "meteogram_native",
+      "owned": true,
+      "revision": "rrfs_20261018190636_ef01686e",
+      "table": "rrfs_20261018190636_ef01686e"
+    },
+    "sampled_complete_profiles": 100,
+    "seconds": 2415.148019495,
+    "source_packed_code_sha256": "37f13d4bc64010306eca8aa133009c8e8ea50b911e6d7e469a3f7de30505a0ef",
+    "logical_weather_values": 25351570790,
+    "palette_proof": {
+      "old_revision": "rrfs_20261018190636_ef01686e",
+      "new_revision": "rrfs_20261019010649_3306b462",
+      "leads": 85,
+      "palette_entries": 150185270,
+      "all_float32_palette_bits_identical": true,
+      "canonical_palette_sha256": "9bca87d4a30ce25ec29b47a902fd802673fcd5d84fa40757046ba1ce81e6f7fc"
+    }
+  },
+  "documentation_links": {
+    "checked": 142,
+    "missing": []
+  }
+}

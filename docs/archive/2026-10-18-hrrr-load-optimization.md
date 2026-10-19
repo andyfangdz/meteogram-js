@@ -1,5 +1,9 @@
 # Full HRRR loading and native compressed staging
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The complete HRRR load from staged data, including stored-value validation,
 finished in **116.36 seconds**, with a **118.03-second** fresh-table repeat,
 on this server. New weather staging uses indexed, checksummed Zstd frames instead of

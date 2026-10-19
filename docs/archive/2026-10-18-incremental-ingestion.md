@@ -1,5 +1,9 @@
 # Incremental forecast ingestion and complete-run retention
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The native service now ingests independently available forecast hours, instead
 of waiting for an entire initialization. The default API serves the newest run
 as soon as one hour passes validation. It separately protects the two latest

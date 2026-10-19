@@ -1,5 +1,9 @@
 # Bounded full GFS dictionaries — 2026-10-18
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 The complete GFS forecast now works with lossless UInt16 dictionaries. Dictionary
 encoding completed in **24.81 seconds at 310.11 MiB peak RSS**, replacing the
 all-slots lookup approach that failed at 3.84 GiB. Both dictionary database

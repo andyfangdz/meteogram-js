@@ -1,5 +1,9 @@
 # Native forecast pipeline on the home server
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 Follow-up: [measured ingestion optimization](2026-10-17-native-ingestion-optimization.md)
 reduced a pinned full-cycle build to 20m11s through bounded merges, direct column
 buffers and overlapping the next model's acquisition with loading. The original
@@ -28,7 +32,7 @@ restarts. State, logs, catalog and small revision artifacts are under
 `~/.local/share/meteogram-native/`; the ClickHouse data and installed runtime
 remain under `~/.local/share/meteogram-benchmark/`.
 
-The [operational README](../../scripts/clickhouse-prototype/README.md#managed-native-forecast-pipeline-on-the-home-server)
+The [operational README](https://github.com/andyfangdz/meteogram-js/blob/5f4ae08/scripts/clickhouse-prototype/README.md#managed-native-forecast-pipeline-on-the-home-server)
 contains status, update, rollback, garbage collection, startup and test commands.
 
 ## Publication and retention

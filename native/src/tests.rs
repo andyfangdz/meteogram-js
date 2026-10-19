@@ -1,88 +1,13 @@
+use crate::runs::publish;
 use crate::{
     db::Db,
     grid::{self, Lambert},
-    pack,
     state::*,
     store,
 };
 use serde_json::{json, Value};
 use std::{fs, path::Path};
 
-#[test]
-fn simd_preserves_every_float_bit_including_tails() {
-    for f in [2, 5, 6] {
-        for l in [1, 3, 4, 8, 30] {
-            for t in [1, 3, 4, 7, 49, 141] {
-                let c = 35;
-                let patterns = [
-                    0u32, 0x80000000, 1, 0x007fffff, 0x7f7fffff, 0xff7fffff, 0x3f812345,
-                ];
-                let source: Vec<Vec<f32>> = (0..t)
-                    .map(|time| {
-                        (0..c * l * f)
-                            .map(|i| f32::from_bits(patterns[(i + time) % patterns.len()]))
-                            .collect()
-                    })
-                    .collect();
-                let pointers: Vec<_> = source.iter().map(|v| v.as_ptr()).collect();
-                let mut output = vec![0f32; c * l * f * t];
-                assert_eq!(
-                    unsafe { pack::pack_neon(pointers.as_ptr(), output.as_mut_ptr(), c, l, f, t) },
-                    0
-                );
-                for field in 0..f {
-                    for cell in 0..c {
-                        for level in 0..l {
-                            for time in 0..t {
-                                assert_eq!(
-                                    output[((field * c + cell) * l + level) * t + time].to_bits(),
-                                    source[time][(cell * l + level) * f + field].to_bits()
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-#[test]
-fn simd_rejects_nonfinite_in_all_tail_positions() {
-    for f in [2, 5, 6] {
-        for t in [1, 4, 7] {
-            for bits in [0x7f800000, 0xff800000, 0x7fc00000] {
-                for at in [0, 7, 17] {
-                    let mut source = vec![vec![1f32; 3 * 3 * f]; t];
-                    source[t - 1][at] = f32::from_bits(bits);
-                    let pointers: Vec<_> = source.iter().map(|v| v.as_ptr()).collect();
-                    let mut output = vec![0f32; 3 * 3 * f * t];
-                    assert_ne!(
-                        unsafe {
-                            pack::pack_neon(pointers.as_ptr(), output.as_mut_ptr(), 3, 3, f, t)
-                        },
-                        0
-                    );
-                }
-            }
-        }
-    }
-}
-#[test]
-fn simd_rejects_nonfinite_across_cell_tiles() {
-    for cell in [0, 15, 16, 31, 32, 34] {
-        for time in [0, 3, 4, 48] {
-            let (c, l, f, t) = (35, 30, 6, 49);
-            let mut source = vec![vec![1f32; c * l * f]; t];
-            source[time][(cell * l + 29) * f + 5] = f32::NAN;
-            let pointers: Vec<_> = source.iter().map(|v| v.as_ptr()).collect();
-            let mut output = vec![0f32; c * l * f * t];
-            assert_ne!(
-                unsafe { pack::pack_neon(pointers.as_ptr(), output.as_mut_ptr(), c, l, f, t) },
-                0
-            );
-        }
-    }
-}
 #[tokio::test]
 async fn preflight_checks_late_missing_chunks_and_propagates_errors() {
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -146,32 +71,6 @@ fn cache_pruning_keeps_uncheckpointed_maps_and_is_resumable() {
     );
 }
 #[test]
-fn numpy_cells_roundtrip_without_python() {
-    let root = tempfile::tempdir().unwrap();
-    let ids = [0, 31, u32::MAX];
-    let lat = [24., 41., 50.];
-    let lon = [-125., -74., -66.];
-    save_cells(&root.path().join("cells.npz"), &ids, &lat, &lon).unwrap();
-    let a = load_npz(&root.path().join("cells.npz")).unwrap();
-    assert_eq!(
-        a["cell_id"].bytes,
-        ids.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<_>>()
-    );
-    assert_eq!(
-        a["latitude"].bytes,
-        lat.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<_>>()
-    );
-}
-#[test]
-fn malformed_npy_is_an_error() {
-    assert!(parse_npy(b"bad").is_err());
-    let mut b = npy_bytes("<f4", &[2, 3], &[0; 24]);
-    b.truncate(12);
-    assert!(parse_npy(&b).is_err());
-    let b = b"\x93NUMPY\x01\x00\xff\xff";
-    assert!(parse_npy(b).is_err());
-}
-#[test]
 fn catalog_lock_drains_readers() {
     let root = tempfile::tempdir().unwrap();
     let reader = Lock::acquire(root.path(), "catalog", false, false).unwrap();
@@ -226,9 +125,14 @@ fn hourly_hrrr_is_complete_only_at_its_declared_horizon() {
     assert!(!complete(&m).unwrap());
     assert!(check_metadata(&m).is_err());
 }
-fn archived_fixture(root: &Path, model: &str, product: &str, init: i64) -> Entry {
-    let (p, mut e) = candidate(root, model).unwrap();
-    e.owned = false;
+fn manifest_fixture(
+    root: &Path,
+    model: &str,
+    product: &str,
+    init: i64,
+) -> (std::path::PathBuf, Entry) {
+    let (path, mut entry) = candidate(root, model).unwrap();
+    entry.owned = false;
     let mut m = metadata(model, 1);
     m["dataset"] = json!(product);
     m["leads"] = json!(product_leads(model, product));
@@ -236,11 +140,97 @@ fn archived_fixture(root: &Path, model: &str, product: &str, init: i64) -> Entry
         .unwrap()
         .format("%Y-%m-%dT%H:%M:%S")
         .to_string());
-    atomic(p.join("entry.json"), &e).unwrap();
-    atomic(p.join("metadata.json"), &m).unwrap();
-    atomic(p.join("validated.json"),&json!({"database":e.database,"table":e.table,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"]})).unwrap();
-    crate::runs::publish(root, model, e.clone(), false, true).unwrap();
-    e
+    let entries =
+        m["levels"].as_array().unwrap().len() * m["variables"].as_array().unwrap().len() + 2;
+    let mut books = Vec::new();
+    for lead in product_leads(model, product) {
+        let (child_path, mut child) = candidate(root, model).unwrap();
+        child.table = entry.table.clone();
+        child.owned = false;
+        let mut cm = m.clone();
+        cm["leads"] = json!([lead]);
+        cm["storage"] = json!({"layout":"cell_tiles_v1","encoding":crate::dictionary::ENCODING,"tile_size":256,"axes":"level_lead","packing":"uint16x8_le","element_type":"UInt128","index_type":"UInt16","codec":"delta","delta_bytes":2,"partitioned_lead":true,"lead_hour":lead,"dictionary":{"entries":entries}});
+        let proof = json!({"database":entry.database,"table":entry.table,"init_time":cm["init_time"],"snapshot_id":cm["snapshot_id"],"storage":cm["storage"],"full_values_checked":true,"staged_comparison":true});
+        atomic(child_path.join("entry.json"), &child).unwrap();
+        atomic(child_path.join("metadata.json"), &cm).unwrap();
+        atomic(child_path.join("validated.json"), &proof).unwrap();
+        atomic(child_path.join("source-validation.json"), &proof).unwrap();
+        books.push(crate::runs::Book {
+            lead,
+            revision: child.revision,
+            entries,
+            metadata_sha256: crate::dictionary::file_hash(&child_path.join("metadata.json"))
+                .unwrap(),
+            snapshot_id: cm["snapshot_id"].as_str().unwrap().to_owned(),
+        });
+    }
+    m["storage"] = json!({"layout":"lead_partition_tiles_v1","version":1,"encoding":crate::runs::ENCODING,"tile_size":256,"axes":"level","packing":"uint16x8_le","element_type":"UInt128","index_type":"UInt16","expected_leads":m["leads"],"complete":true,"codebook_entries":entries*books.len(),"books":books});
+    atomic(path.join("entry.json"), &entry).unwrap();
+    atomic(path.join("metadata.json"), &m).unwrap();
+    let proof = crate::runs::validate_manifest(root, &entry, &m, false).unwrap();
+    atomic(path.join("validated.json"), &proof).unwrap();
+    (path, entry)
+}
+
+fn staged_hour(
+    path: &Path,
+    mut m: Value,
+    ids: &[u32],
+    lat: &[f64],
+    lon: &[f64],
+    profiles: &[f32],
+    surfaces: &[f32],
+) {
+    let nc = ids.len();
+    let nl = m["levels"].as_array().unwrap().len();
+    let nf = m["variables"].as_array().unwrap().len();
+    let lead = m["leads"][0].as_u64().unwrap();
+    let mut p = vec![0f32; profiles.len()];
+    let mut s = vec![0f32; surfaces.len()];
+    let mut fields = Vec::new();
+    for f in 0..nf + 2 {
+        let mut palettes = Vec::new();
+        for l in 0..if f < nf { nl } else { 1 } {
+            let values = (0..nc)
+                .map(|cell| {
+                    if f < nf {
+                        profiles[(cell * nl + l) * nf + f]
+                    } else {
+                        surfaces[cell * 2 + f - nf]
+                    }
+                })
+                .collect();
+            let (codes, palette) = crate::dictionary::encode_spatial(values).unwrap();
+            for (cell, code) in codes.into_iter().enumerate() {
+                if f < nf {
+                    p[(cell * nl + l) * nf + f] = code;
+                } else {
+                    s[cell * 2 + f - nf] = code;
+                }
+            }
+            palettes.push(palette);
+        }
+        fields.push(palettes);
+    }
+    fs::create_dir_all(path).unwrap();
+    crate::stage::save_cells(path, ids, lat, lon).unwrap();
+    let info = crate::dictionary::Dictionary::new(fields)
+        .save(path, &m)
+        .unwrap();
+    m["staging"] =
+        json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
+    atomic(path.join("metadata.json"), &m).unwrap();
+    crate::stage::write_codes(&path.join(format!("lead-{lead:03}")), &[nc, nl, nf], &p).unwrap();
+    crate::stage::write_codes(&path.join(format!("surface-{lead:03}")), &[nc, 2], &s).unwrap();
+}
+fn archived_fixture(root: &Path, model: &str, product: &str, init: i64) -> Entry {
+    let (_, entry) = manifest_fixture(root, model, product, init);
+    // Seed retained archives without selecting them as the current forecast.
+    // Retention tests deliberately include old short runs below serving freshness.
+    let mut catalog = catalog(root).unwrap();
+    crate::runs::normalize(root, &mut catalog, Some((model, &entry))).unwrap();
+    atomic(root.join("catalog.json"), &catalog).unwrap();
+    entry
 }
 #[test]
 fn retention_keeps_two_complete_runs_and_deduplicates_hrrr_long() {
@@ -266,6 +256,23 @@ fn retention_keeps_two_complete_runs_and_deduplicates_hrrr_long() {
     .unwrap()));
 }
 #[test]
+fn an_older_complete_long_hrrr_run_is_retained_without_replacing_the_latest_short_run() {
+    let root = tempfile::tempdir().unwrap();
+    let mut short_init = (now() as i64).div_euclid(3600) * 3600;
+    if short_init.rem_euclid(21600) == 0 {
+        short_init -= 3600;
+    }
+    let (_, latest) = manifest_fixture(root.path(), "hrrr", HRRR_SHORT, short_init);
+    publish(root.path(), "hrrr", latest.clone(), false).unwrap();
+    let long_init = short_init.div_euclid(21600) * 21600;
+    let (_, long) = manifest_fixture(root.path(), "hrrr", dataset("hrrr").unwrap(), long_init);
+    publish(root.path(), "hrrr", long.clone(), false).unwrap();
+    let catalog = catalog(root.path()).unwrap();
+    assert_eq!(catalog.current["hrrr"], latest);
+    assert_eq!(catalog.hrrr_long, Some(long));
+    assert_eq!(catalog.complete_runs["hrrr"].len(), 2);
+}
+#[test]
 fn lead_book_reader_enforces_remaining_run_budget_before_allocation() {
     let root = tempfile::tempdir().unwrap();
     let mut m = json!({"cells":2,"leads":[0],"levels":[1000],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
@@ -275,7 +282,6 @@ fn lead_book_reader_enforces_remaining_run_budget_before_allocation() {
         json!({"encoding":crate::dictionary::ENCODING,"dictionary":info,"complete":true});
     assert_eq!(
         crate::dictionary::Dictionary::load_values_budget(root.path(), &m, 6)
-            .unwrap()
             .unwrap()
             .entry_count()
             .unwrap(),
@@ -336,21 +342,14 @@ fn incremental_database_publication_recovers_without_duplicates_or_losing_prior_
             m["snapshot_id"] = json!(format!("test_snapshot_{lead}"));
             m["grid"] = json!({"kind":"latlon","latitude":ys,"longitude":xs,"native_cells":nc,"conus_cells":nc});
             m["units"] = json!({});
-            atomic(raw.join("metadata.json"), &m).unwrap();
-            crate::stage::save_cells(&raw, &ids, &lat, &lon).unwrap();
             let p = (0..nc * nl * nf)
                 .map(|i| incremental_value(i / (nl * nf), (i / nf) % nl, i % nf, lead))
                 .collect::<Vec<_>>();
-            let s = (0..nc * 2)
+            let surfaces = (0..nc * 2)
                 .map(|i| incremental_value(i / 2, 0, nf + i % 2, lead))
                 .collect::<Vec<_>>();
-            crate::stage::write(&raw.join(format!("lead-{lead:03}.npy")), &[nc, nl, nf], &p)
-                .unwrap();
-            crate::stage::write(&raw.join(format!("surface-{lead:03}.npy")), &[nc, 2], &s).unwrap();
             let (path, entry) = candidate(&root.path().join("incoming"), "gfs").unwrap();
-            fs::remove_dir_all(&path).unwrap();
-            crate::prepare::encode_stage(&raw, &path).unwrap();
-            atomic(path.join("entry.json"), &entry).unwrap();
+            staged_hour(&path, m, &ids, &lat, &lon, &p, &surfaces);
             private_tables.push(entry.table.clone());
             store::load_lead(root.path(), &path, &entry.table, lead).unwrap();
             if lead == 2 {
@@ -436,12 +435,12 @@ fn incremental_database_publication_recovers_without_duplicates_or_losing_prior_
         assert_eq!(v["available_leads"], json!([0, 2]));
         assert!(v["missing_leads"].as_array().unwrap().contains(&json!(1)));
         assert_eq!(v["lead_sources"].as_array().unwrap().len(), 2);
-        // Legacy aliases or rollback can point at partial runs. Neither
+        // A rollback can select a partial run. Neither
         // complete-only selector may silently return one without an archive.
-        let mut legacy = catalog(root.path()).unwrap();
-        legacy.complete_runs.clear();
-        legacy.previous.insert("gfs".to_owned(), e);
-        atomic(root.path().join("catalog.json"), &legacy).unwrap();
+        let mut partial_catalog = catalog(root.path()).unwrap();
+        partial_catalog.complete_runs.clear();
+        partial_catalog.previous.insert("gfs".to_owned(), e);
+        atomic(root.path().join("catalog.json"), &partial_catalog).unwrap();
         for run in ["latest_complete", "previous_complete"] {
             let (status, _) = crate::api::test_forecast(
                 root.path(),
@@ -498,11 +497,12 @@ fn rrfs_manifest_cache_is_bounded_without_retaining_weather_payloads() {
     }
 }
 fn candidate_fixture(root: &Path, age: i64) -> (std::path::PathBuf, Entry) {
-    let (p, e) = candidate(root, "gfs").unwrap();
-    let m = metadata("gfs", age);
-    atomic(p.join("metadata.json"), &m).unwrap();
-    atomic(p.join("validated.json"),&json!({"table":e.table,"database":e.database,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"]})).unwrap();
-    (p, e)
+    manifest_fixture(
+        root,
+        "gfs",
+        dataset("gfs").unwrap(),
+        (now() as i64) - age * 3600,
+    )
 }
 #[test]
 fn publication_requires_validation_and_advancing_identity() {
@@ -565,6 +565,22 @@ fn full_source_schema_has_no_silent_drift() {
     }
 }
 #[test]
+fn unsupported_storage_formats_fail_closed() {
+    let mut m = metadata("gfs", 1);
+    for storage in [
+        json!({"layout":"cell_profile_v1","axes":"level_lead","encoding":"float32_bits","codec":"t64"}),
+        json!({"layout":"cell_profile_v1","axes":"level_lead","encoding":crate::dictionary::ENCODING,"index_type":"UInt32","codec":"t64"}),
+        json!({"layout":"cell_tiles_v1","axes":"level_lead","encoding":crate::dictionary::ENCODING,"index_type":"UInt16","tile_size":256,"packing":"uint16x8_le","element_type":"UInt128","codec":"delta","delta_bytes":2}),
+    ] {
+        m["storage"] = storage;
+        assert!(check_metadata(&m).is_err());
+    }
+    let root = tempfile::tempdir().unwrap();
+    assert!(
+        crate::stage::BlockWriter::new(&root.path().join("weather"), &[1], "uint32_le").is_err()
+    );
+}
+#[test]
 fn unsafe_identifiers_and_revisions_are_rejected() {
     for s in ["", "../bad", "a;DROP", "Camel", "a.b", "x-y", "1start"] {
         assert!(ident(s).is_err());
@@ -609,248 +625,79 @@ fn coordinate_resolver_rejects_just_outside_conus() {
 
 #[test]
 #[ignore = "requires the isolated loopback ClickHouse server"]
-fn database_native_roundtrip_and_corruption_gate() {
+fn hourly_tiles_roundtrip_float_bits_and_reject_unselected_corruption() {
     let root = tempfile::tempdir().unwrap();
     let db = Db::new().unwrap();
-    let table = format!("rust_test_{}", uuid::Uuid::new_v4().simple());
-    // Cross 4,096-cell staging/raw-load and 8,192-cell UInt16-load boundaries,
-    // including a short final batch in both representations.
-    let cells = 8197;
-    let ids: Vec<_> = (1..=cells as u32).map(|i| i * 11).collect();
-    save_cells(
-        &root.path().join("cells.npz"),
-        &ids,
-        &vec![41.; cells],
-        &vec![-74.; cells],
-    )
-    .unwrap();
-    let m = json!({"model":"hrrr","init_time":"2026-10-17T18:00:00","snapshot_id":"test","coverage":"conus","cells":cells,"levels":[1000,500],"leads":[0,6,12],"variables":["temperature","wind_u"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
-    atomic(root.path().join("metadata.json"), &m).unwrap();
-    let bits = [0u32, 0x80000000, 1, 0x7f7fffff, 0xff7fffff, 0x3f812345];
-    for (t, lead) in [0, 6, 12].iter().enumerate() {
-        let p: Vec<u8> = (0..cells * 4)
-            .flat_map(|i| bits[(i + t) % bits.len()].to_le_bytes())
-            .collect();
-        let g: Vec<u8> = (0..cells * 2)
-            .flat_map(|i| bits[(i + t) % bits.len()].to_le_bytes())
-            .collect();
-        fs::write(
-            root.path().join(format!("lead-{lead:03}.npy")),
-            npy_bytes("<f4", &[cells, 2, 2], &p),
-        )
-        .unwrap();
-        fs::write(
-            root.path().join(format!("surface-{lead:03}.npy")),
-            npy_bytes("<f4", &[cells, 2], &g),
-        )
-        .unwrap();
-    }
+    let table = format!("rust_hourly_{}", uuid::Uuid::new_v4().simple());
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let compressed = root.path().join("compressed");
-        crate::stage::convert(root.path(), &compressed).unwrap();
-        let v = store::load_with_workers(root.path(), &compressed, &table, Some(4)).unwrap();
-        fs::copy(
-            compressed.join("metadata.json"),
-            root.path().join("metadata.json"),
-        )
-        .unwrap();
-        assert_eq!(v["rows"], cells * 3);
-        assert_eq!(v["storage_rows"], cells);
-        let clone = format!("{table}_clone");
-        db.command(&format!(
-            "CREATE TABLE meteogram_native.{clone} CLONE AS meteogram_native.{table}"
-        ))
-        .unwrap();
-        db.command(&format!("TRUNCATE TABLE meteogram_native.{table}"))
-            .unwrap();
-        store::validate(root.path(), &clone, "meteogram_native", true).unwrap();
-        store::validate(&compressed, &clone, "meteogram_native", true).unwrap();
-        let loaded_metadata = read_json(compressed.join("metadata.json")).unwrap();
-        let coded_dir = root.path().join("dictionary");
-        let recoded_raw = root.path().join("raw_again");
-        crate::prepare::from_store(
-            &compressed,
-            DATABASE,
-            &clone,
-            &coded_dir,
-            Some(&recoded_raw),
-        )
-        .unwrap();
-        let dict_table = format!("{table}_dict");
-        let coded =
-            store::load_with_workers(root.path(), &coded_dir, &dict_table, Some(4)).unwrap();
-        assert_eq!(coded["storage"]["encoding"], crate::dictionary::ENCODING);
-        assert_eq!(coded["storage"]["index_type"], "UInt16");
-        assert_eq!(coded["storage"]["layout"], "cell_tiles_v1");
-        assert_eq!(coded["storage_rows"], cells.div_ceil(crate::packed::CELLS));
-        store::validate(&coded_dir, &dict_table, DATABASE, true).unwrap();
-        db.command(&format!("DROP TABLE {DATABASE}.{dict_table} SYNC"))
-            .unwrap();
-        let sorted_dir = root.path().join("sorted_dictionary");
-        crate::prepare::sorted_stage(&coded_dir, &sorted_dir).unwrap();
-        let coded_dir = sorted_dir;
-        store::load_with_workers(root.path(), &coded_dir, &dict_table, Some(4)).unwrap();
-        store::validate(&coded_dir, &dict_table, DATABASE, true).unwrap();
-        let coded_meta = read_json(coded_dir.join("metadata.json")).unwrap();
-        let dictionary = crate::dictionary::Dictionary::load(&coded_dir, &coded_meta)
-            .unwrap()
-            .unwrap();
-        for index in (0..8).chain([4096, cells - 1]) {
-            let original = db
-                .profile(DATABASE, &clone, &loaded_metadata, ids[index])
-                .unwrap()
-                .0;
-            let restored = db
-                .profile_with_dictionary(
-                    DATABASE,
-                    &dict_table,
-                    &coded_meta,
-                    ids[index],
-                    Some(&dictionary),
-                )
-                .unwrap()
-                .0;
-            assert_eq!(original, restored);
+        let cells = 1030;
+        let lead = 7u16;
+        let nl = 2;
+        let nf = 2;
+        let ids = (0..cells as u32).map(|i| i * 7 + 3).collect::<Vec<_>>();
+        let mut m = metadata("gfs", 1);
+        m["cells"] = json!(cells);
+        m["leads"] = json!([lead]);
+        m["levels"] = json!([1000, 500]);
+        m["variables"] = json!(["temperature", "geopotential_height"]);
+        let bits = [0, 0x80000000, 1, 0x7f7fffff, 0xff7fffff, 0x3f812345];
+        let profiles = (0..cells * nl * nf)
+            .map(|i| f32::from_bits(bits[(i + i / (nl * nf)) % bits.len()]))
+            .collect::<Vec<_>>();
+        let surfaces = (0..cells * 2)
+            .map(|i| f32::from_bits(bits[(i + i / 2) % bits.len()]))
+            .collect::<Vec<_>>();
+        staged_hour(
+            root.path(),
+            m,
+            &ids,
+            &vec![41.; cells],
+            &vec![-74.; cells],
+            &profiles,
+            &surfaces,
+        );
+        let proof = store::load_lead(root.path(), root.path(), &table, lead).unwrap();
+        assert_eq!(proof["full_values_checked"], true);
+        assert_eq!(proof["staged_comparison"], true);
+        let m = read_json(root.path().join("metadata.json")).unwrap();
+        let dictionary = crate::dictionary::Dictionary::load(root.path(), &m).unwrap();
+        let books = std::collections::BTreeMap::from([(lead, &dictionary)]);
+        for i in [0, 255, 256, cells - 1] {
+            let (rows, _) = db
+                .profile_leads(DATABASE, &table, &m, ids[i], i, &books)
+                .unwrap();
+            assert_eq!(rows.len(), 1);
+            assert_eq!(rows[0][0], lead);
+            for f in 0..nf {
+                for l in 0..nl {
+                    assert_eq!(
+                        (rows[0][f + 1][l].as_f64().unwrap() as f32).to_bits(),
+                        profiles[(i * nl + l) * nf + f].to_bits()
+                    );
+                }
+            }
+            for f in 0..2 {
+                assert_eq!(
+                    (rows[0][nf + f + 1].as_f64().unwrap() as f32).to_bits(),
+                    surfaces[i * 2 + f].to_bits()
+                );
+            }
         }
-        let exported = root.path().join("packed_export");
-        let raw_export = root.path().join("packed_raw");
-        crate::prepare::from_store(
-            &coded_dir,
-            DATABASE,
-            &dict_table,
-            &exported,
-            Some(&raw_export),
-        )
-        .unwrap();
-        let mut decoded = vec![0f32; cells * 4];
-        crate::stage::Array::open(&raw_export.join("lead-000.npy"), &[cells, 2, 2])
-            .unwrap()
-            .read_into(0, &mut decoded)
-            .unwrap();
-        assert!(decoded
-            .iter()
-            .enumerate()
-            .all(|(i, v)| v.to_bits() == bits[i % bits.len()]));
-        let raw_only = root.path().join("raw_only");
-        let raw_report = crate::prepare::from_store_with_mode(
-            &coded_dir,
-            DATABASE,
-            &dict_table,
-            &raw_only,
-            None,
-            true,
-        )
-        .unwrap();
-        assert!(raw_report["dictionary"].is_null());
-        assert!(!raw_only.join("values.dict.zst").exists());
-        crate::stage::Array::open(&raw_only.join("lead-000.npy"), &[cells, 2, 2])
-            .unwrap()
-            .read_into(0, &mut decoded)
-            .unwrap();
-        assert!(decoded
-            .iter()
-            .enumerate()
-            .all(|(i, v)| v.to_bits() == bits[i % bits.len()]));
-        let rrfs = root.path().join("rrfs");
-        crate::prepare::encode_stage(&raw_only, &rrfs).unwrap();
-        let mut rrfs_metadata = read_json(rrfs.join("metadata.json")).unwrap();
-        rrfs_metadata["model"] = json!("rrfs");
-        atomic(rrfs.join("metadata.json"), &rrfs_metadata).unwrap();
-        let rrfs_table = format!("{table}_rrfs");
-        let rrfs_result = store::load(root.path(), &rrfs, &rrfs_table).unwrap();
-        assert_eq!(rrfs_result["storage"]["layout"], "cell_tiles_v1");
-        assert_eq!(
-            rrfs_result["storage_rows"],
-            cells.div_ceil(crate::packed::CELLS)
-        );
-        store::validate(&rrfs, &rrfs_table, DATABASE, true).unwrap();
-        db.command(&format!("DROP TABLE {DATABASE}.{rrfs_table} SYNC"))
-            .unwrap();
-        let gfs = root.path().join("experimental_gfs");
-        crate::prepare::encode_stage(&raw_only, &gfs).unwrap();
-        let mut gfs_metadata = read_json(gfs.join("metadata.json")).unwrap();
-        gfs_metadata["model"] = json!("gfs");
-        atomic(gfs.join("metadata.json"), &gfs_metadata).unwrap();
-        let gfs_table = format!("{table}_gfs_packed");
-        let gfs_result =
-            store::load_with_layout(root.path(), &gfs, &gfs_table, Some(4), true).unwrap();
-        assert_eq!(
-            gfs_result["storage_rows"],
-            cells.div_ceil(crate::packed::CELLS)
-        );
-        store::validate(&gfs, &gfs_table, DATABASE, true).unwrap();
-        let gfs_metadata = read_json(gfs.join("metadata.json")).unwrap();
-        let gfs_dictionary = crate::dictionary::Dictionary::load(&gfs, &gfs_metadata)
-            .unwrap()
-            .unwrap();
-        // Removing a different word group still leaves this cell's projected
-        // words intact. The original-length prefix must catch that corruption.
-        db.command(&format!("ALTER TABLE {DATABASE}.{gfs_table} UPDATE temperature=arrayPopBack(temperature) WHERE tile_id=0 SETTINGS mutations_sync=2")).unwrap();
+        store::validate(root.path(), &table, DATABASE, true).unwrap();
+        // The requested cell is unchanged; a different word still must fail the full audit.
+        db.command(&format!("ALTER TABLE {DATABASE}.{table} UPDATE temperature=arrayMap((x,i)->if(i=32,toUInt128(65535),x),temperature,arrayEnumerate(temperature)) WHERE tile_id=0 SETTINGS mutations_sync=2")).unwrap();
         assert!(db
-            .profile_with_dictionary(
-                DATABASE,
-                &gfs_table,
-                &gfs_metadata,
-                ids[0],
-                Some(&gfs_dictionary)
-            )
-            .is_err());
-        db.command(&format!("DROP TABLE {DATABASE}.{gfs_table} SYNC"))
-            .unwrap();
-        let book = coded_dir.join("values.dict.zst");
-        let pristine = fs::read(&book).unwrap();
-        let mut corrupt = pristine.clone();
-        corrupt[10] ^= 1;
-        fs::write(&book, corrupt).unwrap();
-        assert!(crate::dictionary::Dictionary::load(&coded_dir, &coded_meta).is_err());
-        fs::write(&book, pristine).unwrap();
-        let invalid = 65535u128 << 112;
-        db.command(&format!("ALTER TABLE {DATABASE}.{dict_table} UPDATE temperature=arrayConcat([toUInt128('{invalid}')],arrayWithConstant({},toUInt128(0))) WHERE tile_id=0 SETTINGS mutations_sync=2",6*crate::packed::GROUPS-1)).unwrap();
-        assert!(store::validate(&coded_dir, &dict_table, DATABASE, false).is_err());
-        db.command(&format!("DROP TABLE {DATABASE}.{dict_table} SYNC"))
-            .unwrap();
-        store::validate_inserted_batch(
-            &db,
-            &clone,
-            &loaded_metadata,
-            ids[0],
-            ids[cells - 1],
-            cells,
-        )
-        .unwrap();
-        db.command(&format!("ALTER TABLE meteogram_native.{clone} UPDATE temperature=[toUInt32(2139095040),0,0,0,0,0] WHERE cell_id=11 SETTINGS mutations_sync=2")).unwrap();
-        assert!(store::validate(root.path(), &clone, "meteogram_native", false).is_err());
-        assert!(store::validate_inserted_batch(
-            &db,
-            &clone,
-            &loaded_metadata,
-            ids[0],
-            ids[cells - 1],
-            cells
-        )
-        .is_err());
-        assert!(store::validate_inserted_batch(
-            &db,
-            &clone,
-            &loaded_metadata,
-            ids[0],
-            ids[cells - 1],
-            cells + 1
-        )
-        .is_err());
+            .profile_leads(DATABASE, &table, &m, ids[0], 0, &books)
+            .is_ok());
+        assert!(store::validate(root.path(), &table, DATABASE, false).is_err());
         assert!(!root.path().join("validated.json").exists());
-        db.command(&format!("DROP TABLE meteogram_native.{clone} SYNC"))
-            .unwrap();
+        // Projection must also retain the original width check for an unused final word.
+        db.command(&format!("ALTER TABLE {DATABASE}.{table} UPDATE temperature=arrayPopBack(temperature) WHERE tile_id=0 SETTINGS mutations_sync=2")).unwrap();
+        assert!(db
+            .profile_leads(DATABASE, &table, &m, ids[0], 0, &books)
+            .is_err());
     }));
-    let _ = db.command(&format!(
-        "DROP TABLE IF EXISTS meteogram_native.{table} SYNC"
-    ));
-    let _ = db.command(&format!(
-        "DROP TABLE IF EXISTS meteogram_native.{table}_clone SYNC"
-    ));
-    let _ = db.command(&format!(
-        "DROP TABLE IF EXISTS {DATABASE}.{table}_dict SYNC"
-    ));
+    let _ = db.command(&format!("DROP TABLE IF EXISTS {DATABASE}.{table} SYNC"));
     assert!(result.is_ok());
 }
 
@@ -858,45 +705,43 @@ fn database_native_roundtrip_and_corruption_gate() {
 #[ignore = "requires the isolated loopback ClickHouse server"]
 fn parallel_load_failure_drains_insert_workers_before_returning() {
     let root = tempfile::tempdir().unwrap();
+    let db = Db::new().unwrap();
+    let table = format!("rust_failed_load_{}", uuid::Uuid::new_v4().simple());
+    let cells = 5 * 4096 + 3;
+    let ids = (0..cells as u32).collect::<Vec<_>>();
+    let mut m = metadata("gfs", 1);
+    m["cells"] = json!(cells);
+    m["levels"] = json!([1000]);
+    m["variables"] = json!(["temperature"]);
+    m["leads"] = json!([0]);
+    staged_hour(
+        root.path(),
+        m,
+        &ids,
+        &vec![41.; cells],
+        &vec![-74.; cells],
+        &vec![1.; cells],
+        &vec![1.; cells * 2],
+    );
     atomic(
         root.path().join("validated.json"),
         &json!({"table":"stale_prior_attempt"}),
     )
     .unwrap();
-    let db = Db::new().unwrap();
-    let table = format!("rust_failed_load_{}", uuid::Uuid::new_v4().simple());
-    let cells = 8200;
-    let ids: Vec<_> = (0..cells as u32).collect();
-    save_cells(
-        &root.path().join("cells.npz"),
-        &ids,
-        &vec![41.; cells],
-        &vec![-74.; cells],
-    )
-    .unwrap();
-    atomic(root.path().join("metadata.json"),&json!({"model":"hrrr","cells":cells,"levels":[1000],"leads":[0],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]})).unwrap();
-    let mut p: Vec<u8> = (0..cells).flat_map(|_| 1f32.to_le_bytes()).collect();
-    p[..4].copy_from_slice(&f32::NAN.to_le_bytes());
-    fs::write(
-        root.path().join("lead-000.npy"),
-        npy_bytes("<f4", &[cells, 1, 1], &p),
-    )
-    .unwrap();
-    let g: Vec<u8> = (0..cells * 2).flat_map(|_| 1f32.to_le_bytes()).collect();
-    fs::write(
-        root.path().join("surface-000.npy"),
-        npy_bytes("<f4", &[cells, 2], &g),
-    )
-    .unwrap();
+    let index = read_json(root.path().join("lead-000.stage.json")).unwrap();
+    let offset = index["blocks"][2]["offset"].as_u64().unwrap() as usize;
+    let data = root.path().join("lead-000.stage.zst");
+    let mut bytes = fs::read(&data).unwrap();
+    bytes[offset + 20] ^= 1;
+    fs::write(data, bytes).unwrap();
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        assert!(store::load_with_workers(root.path(), root.path(), &table, Some(4)).is_err());
+        assert!(
+            store::load_lead_with_workers(root.path(), root.path(), &table, 0, Some(4)).is_err()
+        );
         assert!(!root.path().join("validated.json").exists());
-        assert_eq!(db.scalar(&format!("SELECT count() FROM system.processes WHERE startsWith(query,'INSERT INTO meteogram_native.{table} ')")).unwrap(),0);
+        assert_eq!(db.scalar(&format!("SELECT count() FROM system.processes WHERE startsWith(query,'INSERT INTO {DATABASE}.{table} ')")).unwrap(),0);
     }));
-    db.command(&format!(
-        "DROP TABLE IF EXISTS meteogram_native.{table} SYNC"
-    ))
-    .unwrap();
+    let _ = db.command(&format!("DROP TABLE IF EXISTS {DATABASE}.{table} SYNC"));
     assert!(result.is_ok());
 }
 
@@ -911,13 +756,13 @@ fn existing_float_pressure_metadata_is_accepted() {
     check_metadata(&m).unwrap();
 }
 #[test]
-fn legacy_null_storage_marker_remains_publishable() {
+fn validation_without_the_current_storage_binding_is_rejected() {
     let root = tempfile::tempdir().unwrap();
     let (p, e) = candidate_fixture(root.path(), 6);
     let mut v = read_json(p.join("validated.json")).unwrap();
     v["storage"] = Value::Null;
     atomic(p.join("validated.json"), &v).unwrap();
-    publish(root.path(), "gfs", e, false).unwrap();
+    assert!(publish(root.path(), "gfs", e, false).is_err());
 }
 #[test]
 fn zarr_temperature_decode_uses_float64_before_float32() {
@@ -954,7 +799,7 @@ fn garbage_collection_respects_ownership_and_live_references() {
         fs::create_dir_all(&p).unwrap();
         atomic(
             p.join("metadata.json"),
-            &json!({"storage":{"layout":"cell_profile_v1"}}),
+            &json!({"storage":{"layout":"lead_partition_tiles_v1","books":[]}}),
         )
         .unwrap();
         entries.push(e);
@@ -1025,34 +870,6 @@ fn public_s3_never_requests_host_credentials() {
     }
 }
 
-#[tokio::test]
-async fn cancellation_drains_source_before_unlock() {
-    let root = tempfile::tempdir().unwrap();
-    let lock = Lock::acquire(root.path(), "update", true, true).unwrap();
-    let (ready_tx, ready_rx) = tokio::sync::oneshot::channel();
-    let (done_tx, done_rx) = tokio::sync::oneshot::channel();
-    struct Done(Option<tokio::sync::oneshot::Sender<()>>);
-    impl Drop for Done {
-        fn drop(&mut self) {
-            let _ = self.0.take().unwrap().send(());
-        }
-    }
-    let task = tokio::spawn(async move {
-        let _done = Done(Some(done_tx));
-        let _ = ready_tx.send(());
-        std::future::pending::<()>().await;
-    });
-    let mut sources = crate::pipeline::SourceTasks::default();
-    sources.track(&task);
-    drop(task);
-    ready_rx.await.unwrap();
-    sources.drain().await;
-    done_rx.await.unwrap();
-    assert!(Lock::acquire(root.path(), "update", true, true).is_err());
-    drop(lock);
-    assert!(Lock::acquire(root.path(), "update", true, true).is_ok());
-}
-
 #[test]
 fn old_failure_evidence_expires_but_published_revisions_remain() {
     let root = tempfile::tempdir().unwrap();
@@ -1077,43 +894,4 @@ fn unknown_catalog_version_is_rejected() {
     };
     atomic(root.path().join("catalog.json"), &c).unwrap();
     assert!(catalog(root.path()).is_err());
-}
-
-#[test]
-#[ignore = "requires the isolated loopback ClickHouse server"]
-fn legacy_validation_covers_sparse_ranges_and_balanced_duplicates() {
-    let root = tempfile::tempdir().unwrap();
-    let db = Db::new().unwrap();
-    let table = format!("rust_legacy_{}", uuid::Uuid::new_v4().simple());
-    let ids = [11, 22, 32770, 65540, 65541];
-    save_cells(&root.path().join("cells.npz"), &ids, &[41.; 5], &[-74.; 5]).unwrap();
-    let m = json!({"model":"gfs","init_time":"2026-10-17T18:00:00","snapshot_id":"test","coverage":"conus","cells":5,"levels":[1000,500],"leads":[0,1,2],"variables":["temperature"],"surface_variables":["temperature_2m","dew_point_temperature_2m"]});
-    atomic(root.path().join("metadata.json"), &m).unwrap();
-    db.command(&format!("CREATE TABLE meteogram_native.{table} (revision_id UInt32,cell_id UInt32,lead_hour UInt16,temperature Array(Float32),temperature_2m Float32,dew_point_temperature_2m Float32) ENGINE=MergeTree ORDER BY (cell_id,lead_hour)")).unwrap();
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let mut values = vec![];
-        for id in ids {
-            for lead in 0..3 {
-                values.push(format!("(1,{id},{lead},[1.0,2.0],3.0,4.0)"));
-            }
-        }
-        db.command(&format!(
-            "INSERT INTO meteogram_native.{table} VALUES {}",
-            values.join(",")
-        ))
-        .unwrap();
-        store::validate(root.path(), &table, DATABASE, false).unwrap();
-        db.command(&format!("ALTER TABLE meteogram_native.{table} DELETE WHERE (cell_id=11 AND lead_hour=0) OR (cell_id=22 AND lead_hour=1) SETTINGS mutations_sync=2")).unwrap();
-        db.command(&format!("INSERT INTO meteogram_native.{table} VALUES (1,11,1,[1.0,2.0],3.0,4.0),(1,22,0,[1.0,2.0],3.0,4.0)")).unwrap();
-        assert_eq!(
-            db.scalar(&format!("SELECT count() FROM meteogram_native.{table}"))
-                .unwrap(),
-            15
-        );
-        assert!(store::validate(root.path(), &table, DATABASE, false).is_err());
-    }));
-    let _ = db.command(&format!(
-        "DROP TABLE IF EXISTS meteogram_native.{table} SYNC"
-    ));
-    assert!(result.is_ok());
 }

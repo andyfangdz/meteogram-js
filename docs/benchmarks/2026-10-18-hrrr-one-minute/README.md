@@ -1,6 +1,10 @@
 # Full HRRR load under one minute
 
-See the [report](../../plans/2026-10-18-hrrr-one-minute-load.md) for the
+> Historical benchmark evidence. Results and implementation details describe the
+> recorded version; use the [current native service guide](../../../native/README.md)
+> for supported operation.
+
+See the [report](../../archive/2026-10-18-hrrr-one-minute-load.md) for the
 measurement boundary, complete dataset, format and deployment details.
 
 The final frozen executable is identified by `candidate-15.sha256`.

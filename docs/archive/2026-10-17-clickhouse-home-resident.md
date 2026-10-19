@@ -1,5 +1,9 @@
 # Full-resident CONUS benchmark on the home ARM host
 
+> Historical record. Measurements, commands and deployment status below apply to
+> the recorded version. See the [current native service guide](../../native/README.md)
+> for supported formats, commands and deployed behavior.
+
 **Completed October 17, 2026: one real, complete HRRR/GFS/AIFS cycle is resident
 and verified.** The three tables contain **84,579,313 rows in 33.01 GiB**.
 Arbitrary-location HTTP checks passed, including full-horizon comparisons with
@@ -253,7 +257,7 @@ is delivered by this benchmark.
 
 ## Reproduction and evidence
 
-See the [prototype commands](../../scripts/clickhouse-prototype/README.md#full-resident-host-runner)
+See the [prototype commands](https://github.com/andyfangdz/meteogram-js/blob/5f4ae08/scripts/clickhouse-prototype/README.md#full-resident-host-runner)
 and [updated handoff](dynamical-home-agent-handoff.md). The runner now keeps the
 server and benchmark in one PID namespace, preserves failed/restart evidence,
 monitors a 20 GiB disk reserve, and supports resuming later models without
