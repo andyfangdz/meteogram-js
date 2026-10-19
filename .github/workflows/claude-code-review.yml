@@ -55,3 +55,41 @@ jobs:
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
           claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
 
+      - name: Diagnose review service failure
+        if: failure() && steps.claude-review.outcome == 'failure'
+        env:
+          CLAUDE_EXECUTION_FILE: ${{ steps.claude-review.outputs.execution_file }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
+
+          path = pathlib.Path(os.environ.get("CLAUDE_EXECUTION_FILE") or
+                              pathlib.Path(os.environ["RUNNER_TEMP"]) / "claude-execution-output.json")
+          if not path.is_file():
+              print("::error::Claude review failed before producing an execution result.")
+              raise SystemExit(0)
+          messages = json.loads(path.read_text())
+          if isinstance(messages, dict):
+              messages = [messages]
+          output = "\n".join(str(message.get("result", "")) + " " +
+                             json.dumps(message.get("errors", []))
+                             for message in messages if message.get("type") == "result")
+          # Report only recognized error categories, never the transcript or credentials.
+          categories = {
+              "expired authentication": r"token.{0,80}expired|expired.{0,80}token",
+              "authentication rejected": r"authentication_error|unauthorized|invalid.{0,20}(api.key|token)|not logged in|please run /login",
+              "HTTP 401": r"\b401\b",
+              "HTTP 403": r"\b403\b",
+              "rate limit": r"rate_limit_error|rate limit|usage limit|limit reached",
+              "insufficient credits": r"credit balance|insufficient.quota",
+              "model unavailable": r"model_not_found|model.{0,80}(not found|does not exist|not available)",
+          }
+          detected = [name for name, pattern in categories.items()
+                      if re.search(pattern, output, re.IGNORECASE)]
+          print("::error::Claude review service failure: " +
+                (", ".join(detected) or "unclassified execution error"))
+          PY
+

@@ -261,6 +261,13 @@ yarn test         # Vitest unit tests
 yarn test:watch   # Test watch mode
 ```
 
+Native CI (`.github/workflows/native.yml`) checks formatting, Clippy with warnings
+denied and unit tests on x86. Local ARM verification also exercises the NEON
+path; use `cargo test -- --include-ignored` with the loopback ClickHouse service
+for database integration coverage. The separate Claude review workflow depends
+on `CLAUDE_CODE_OAUTH_TOKEN`; its failure diagnostic reports recognized service
+error categories without logging the SDK transcript or credentials.
+
 ### What to Verify
 
 | Change Type | Verification Steps |
