@@ -93,7 +93,7 @@ async function nativeWeather(
     return transformNativeForecast(forecast, now, { allowSparse: true });
   };
   const selections =
-    nativeModel === "hrrr"
+    nativeModel === "hrrr" || nativeModel === "ifs"
       ? ["long", "latest_complete", "latest"]
       : ["latest_complete", "latest"];
   const responses = await Promise.allSettled(selections.map(load));

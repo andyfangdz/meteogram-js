@@ -82,10 +82,12 @@ impl Source {
         } else {
             direct.snapshot()?
         };
+        let product = dataset(&direct.model)?;
+        let model = direct.model.clone();
         Ok(Self {
             store: Arc::new(SourceStore::Ecmwf(Arc::new(direct))),
             snapshot,
-            collection: json!({"id":dataset("aifs")?,"source_provider":crate::ecmwf::PROVIDER}),
+            collection: json!({"id":product,"source_provider":crate::ecmwf::provider(&model)}),
             metadata: Arc::new(RwLock::new(HashMap::new())),
             coordinates: Arc::new(RwLock::new(HashMap::new())),
             map_slots: Arc::new(tokio::sync::Semaphore::new(16)),
@@ -98,9 +100,23 @@ impl Source {
         }
     }
     pub async fn open(model: &str, pin: Option<&Value>) -> Result<Self> {
-        if let Some(pin) = pin.filter(|p| p["source_provider"] == crate::ecmwf::PROVIDER) {
-            anyhow::ensure!(model == "aifs", "Direct ECMWF source only supports AIFS");
+        if let Some(pin) = pin.filter(|p| crate::ecmwf::is_direct(&p["source_provider"])) {
+            anyhow::ensure!(
+                matches!(model, "aifs" | "ifs" | "aigfs"),
+                "Invalid direct source model"
+            );
             return Self::from_ecmwf(crate::ecmwf::DirectSource::from_pin(pin)?);
+        }
+        if matches!(model, "ifs" | "aigfs") {
+            anyhow::ensure!(
+                pin.is_none_or(|p| p.get("snapshot_id").is_none()),
+                "Direct model requires its pinned source descriptor"
+            );
+            let latest = (now() as i64).div_euclid(21600) * 21600;
+            return Self::from_ecmwf(
+                crate::ecmwf::discover_model(model, (0..3).map(|n| latest - n * 21600).collect())
+                    .await?,
+            );
         }
         let product = pin
             .and_then(|p| p["dataset"].as_str())
@@ -475,6 +491,9 @@ async fn cached(store: &SourceStore, dir: &Path, key: &str, bytes: &AtomicU64) -
                 return Ok(b);
             }
             Err(e) => {
+                if e.downcast_ref::<crate::noaa::RateLimited>().is_some() {
+                    return Err(e);
+                }
                 last = Some(e);
                 tokio::time::sleep(std::time::Duration::from_secs(1 << attempt)).await;
             }
@@ -534,7 +553,7 @@ async fn fetch_hour_inner(
         "Resume requires dictionary staging"
     );
     let opened;
-    let src = if existing || old["source_provider"] == crate::ecmwf::PROVIDER {
+    let src = if existing || crate::ecmwf::is_direct(&old["source_provider"]) {
         let mut source = Source::open(model, Some(&old)).await?;
         source.map_slots = available.map_slots.clone();
         opened = source;
@@ -614,7 +633,7 @@ async fn fetch_hour_inner(
         json!({"kind":"latlon","latitude":ys,"longitude":xs,"native_cells":ys.len()*xs.len(),"conus_cells":ids.len()})
     };
     let variables = variables(model);
-    let surface = ["temperature_2m", "dew_point_temperature_2m"];
+    let surface = surface_variables(model);
     let mut metas = HashMap::new();
     let mut units = serde_json::Map::new();
     for v in &variables {
@@ -623,7 +642,7 @@ async fn fetch_hour_inner(
         units.insert(v.clone(), m["attributes"]["units"].clone());
         metas.insert(name, m);
     }
-    for v in surface {
+    for &v in &surface {
         metas.insert(v.to_owned(), src.meta(v).await?);
     }
     let product = src.collection["id"]
@@ -639,7 +658,7 @@ async fn fetch_hour_inner(
     if existing {
         meta["open_seconds"] = old["open_seconds"].clone();
     }
-    if old["source_provider"] == crate::ecmwf::PROVIDER {
+    if crate::ecmwf::is_direct(&old["source_provider"]) {
         meta["source_provider"] = old["source_provider"].clone();
         meta["ecmwf_source"] = old["ecmwf_source"].clone();
         if let Some(proofs) = old.get("source_payload_sha256") {
@@ -843,7 +862,9 @@ async fn fetch_hour_inner(
                 if let SourceStore::Ecmwf(direct) = &*src.store {
                     let proofs = direct.proofs();
                     anyhow::ensure!(
-                        proofs.as_object().is_some_and(|p| p.len() == 42),
+                        proofs.as_object().is_some_and(
+                            |p| p.len() == variables.len() * levels.len() + surface.len()
+                        ),
                         "Missing ECMWF payload proofs"
                     );
                     meta["source_payload_sha256"] = proofs;
@@ -853,8 +874,8 @@ async fn fetch_hour_inner(
                 let nl = levels.len();
                 let nf = variables.len();
                 let mut profiles = vec![0f32; nc * nl * nf];
-                let mut ground = vec![0f32; nc * 2];
-                let mut partial_fields: Vec<Vec<Vec<u32>>> = (0..nf + 2)
+                let mut ground = vec![0f32; nc * surface.len()];
+                let mut partial_fields: Vec<Vec<Vec<u32>>> = (0..nf + surface.len())
                     .map(|f| {
                         (0..if f < nf { nl } else { 1 })
                             .map(|_| Vec::new())
@@ -873,7 +894,7 @@ async fn fetch_hour_inner(
                         if let Some(l) = t.level {
                             profiles[(i * nl + l) * nf + t.field] = v;
                         } else {
-                            ground[i * 2 + t.field] = v;
+                            ground[i * surface.len() + t.field] = v;
                         }
                     }
                 }
@@ -884,8 +905,11 @@ async fn fetch_hour_inner(
                     &[nc, nl, nf],
                     &profiles,
                 )?;
-                let surface_stage =
-                    write(&out.join(format!("surface-{lead:03}")), &[nc, 2], &ground)?;
+                let surface_stage = write(
+                    &out.join(format!("surface-{lead:03}")),
+                    &[nc, surface.len()],
+                    &ground,
+                )?;
                 {
                     let checkpoint = out.join(format!("lead-{lead:03}.palette"));
                     fs::create_dir_all(&checkpoint)?;
@@ -905,7 +929,7 @@ async fn fetch_hour_inner(
                     )?;
                 }
                 File::open(out)?.sync_all()?;
-                let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+2,"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"profile_stage":profile_stage,"surface_stage":surface_stage,"source_cache_policy":"uncheckpointed_leads_only"});
+                let stats = json!({"lead":lead,"seconds":started.elapsed().as_secs_f64(),"grib_bytes":bytes.load(Ordering::Relaxed)-before,"chunks":nl*nf+surface.len(),"staged_value_bytes":(profiles.len()+ground.len())*4,"finite":true,"profile_stage":profile_stage,"surface_stage":surface_stage,"source_cache_policy":"uncheckpointed_leads_only"});
                 atomic(&report, &stats)?;
                 // The synced staged arrays and durable checkpoint now replace these
                 // encoded maps for resume. Retain only a partially acquired lead.
@@ -1084,9 +1108,11 @@ pub async fn availability_filtered(
     finished: &[String],
     floor: Option<f64>,
 ) -> Result<Availability> {
-    if model == "aifs" && std::env::var("METEOGRAM_AIFS_SOURCE").as_deref() == Ok("direct") {
-        anyhow::ensure!(product == dataset("aifs")?, "Invalid AIFS product");
-        return direct_availability(tracked, finished, floor).await;
+    if matches!(model, "ifs" | "aigfs")
+        || (model == "aifs" && std::env::var("METEOGRAM_AIFS_SOURCE").as_deref() == Ok("direct"))
+    {
+        anyhow::ensure!(product == dataset(model)?, "Invalid direct product");
+        return direct_availability(model, tracked, finished, floor).await;
     }
     let source = Arc::new(Source::open(model, Some(&json!({"dataset":product}))).await?);
     let times = source.init_times().await?;
@@ -1237,6 +1263,7 @@ pub async fn availability_filtered(
 }
 
 async fn direct_availability(
+    model: &str,
     tracked: &[String],
     finished: &[String],
     floor: Option<f64>,
@@ -1256,7 +1283,7 @@ async fn direct_availability(
     times.retain(|t| !complete.contains(t) && floor.is_none_or(|f| *t as f64 > f));
     times.sort_unstable();
     times.dedup();
-    let direct = crate::ecmwf::discover(times.clone()).await?;
+    let direct = crate::ecmwf::discover_model(model, times.clone()).await?;
     let source = Arc::new(Source::from_ecmwf(direct)?);
     let SourceStore::Ecmwf(direct) = &*source.store else {
         unreachable!()
@@ -1264,7 +1291,8 @@ async fn direct_availability(
     let runs = direct.available_times().into_iter().rev().map(|init| {
         let ready = direct.hours.iter().filter(|h|h.init == init).map(|h|h.lead).collect::<Vec<_>>();
         let init_time = chrono::DateTime::from_timestamp(init,0).unwrap().format("%Y-%m-%dT%H:%M:%S%.9f").to_string();
-        AvailableRun {pin:json!({"model":"aifs","dataset":dataset("aifs").unwrap(),"init_time":init_time,"snapshot_id":source.snapshot,"source_provider":crate::ecmwf::PROVIDER}),expected:leads("aifs"),missing:(31-ready.len())*42,ready,cloud_ready:None}
+        let expected = cycle_leads(model, init);
+        AvailableRun {pin:json!({"model":model,"dataset":dataset(model).unwrap(),"init_time":init_time,"snapshot_id":source.snapshot,"source_provider":crate::ecmwf::provider(model)}),missing:(expected.len()-ready.len())*(variables(model).len()*pressure_levels(model).len()+surface_variables(model).len()),expected,ready,cloud_ready:None}
     }).collect();
     Ok(Availability { source, runs })
 }
@@ -1664,9 +1692,14 @@ mod ecmwf_tests {
     fn direct_ecmwf_staged_database_roundtrip() -> Result<()> {
         let stage =
             PathBuf::from(std::env::var("ECMWF_TEST_STAGE").context("Set ECMWF_TEST_STAGE")?);
+        check_database_roundtrip(&stage)
+    }
+    fn check_database_roundtrip(stage: &Path) -> Result<()> {
+        let metadata = read_json(stage.join("metadata.json"))?;
+        let model = metadata["model"].as_str().context("Model")?;
         let root = tempfile::tempdir()?;
-        let (path, entry) = candidate(&root.path().join("incoming"), "aifs")?;
-        for file in fs::read_dir(&stage)? {
+        let (path, entry) = candidate(&root.path().join("incoming"), model)?;
+        for file in fs::read_dir(stage)? {
             let file = file?;
             if file.file_type()?.is_file() {
                 fs::copy(file.path(), path.join(file.file_name()))?;
@@ -1685,20 +1718,21 @@ mod ecmwf_tests {
                 "Incomplete database comparison"
             );
             let first =
-                crate::incremental::attach_lead(root.path(), "aifs", &path, &entry, &shared, None)?;
+                crate::incremental::attach_lead(root.path(), model, &path, &entry, &shared, None)?;
             let again =
-                crate::incremental::attach_lead(root.path(), "aifs", &path, &entry, &shared, None)?;
+                crate::incremental::attach_lead(root.path(), model, &path, &entry, &shared, None)?;
             anyhow::ensure!(first == again, "Duplicate attachment changed publication");
             let (status, payload) = crate::api::test_forecast(
                 root.path(),
-                [("model", "aifs"), ("lat", "41"), ("lon", "-74")]
+                [("model", model), ("lat", "41"), ("lon", "-74")]
                     .into_iter()
                     .map(|(k, v)| (k.to_owned(), v.to_owned()))
                     .collect(),
             );
             anyhow::ensure!(
                 status == axum::http::StatusCode::OK
-                    && payload["source_providers"] == json!(["ecmwf"])
+                    && payload["source_providers"]
+                        == json!([if model == "aigfs" { "noaa" } else { "ecmwf" }])
                     && payload["available_leads"] == json!([lead]),
                 "Direct API provenance/forecast differs: {payload}"
             );
@@ -1795,6 +1829,120 @@ mod ecmwf_tests {
             "Missing direct source proof"
         );
         let report = json!({"init_time":init,"source_ready_leads":31,"comparisons":reports,"previously_missing_lead":180,"missing_lead_staged":true,"payload_proofs":42});
+        atomic(output.join("verification.json"), &report)?;
+        println!("{report}");
+        Ok(())
+    }
+    #[tokio::test]
+    #[ignore = "Requires DIRECT_TEST_INIT, fresh DIRECT_TEST_OUTPUT, network and loopback ClickHouse"]
+    async fn new_global_sources_live_full_grid_and_database_roundtrip() -> Result<()> {
+        let init = std::env::var("DIRECT_TEST_INIT").context("Set DIRECT_TEST_INIT")?;
+        let output =
+            PathBuf::from(std::env::var("DIRECT_TEST_OUTPUT").context("Set DIRECT_TEST_OUTPUT")?);
+        anyhow::ensure!(!output.exists(), "Use a fresh output directory");
+        fs::create_dir_all(&output)?;
+        let mut reports = Vec::new();
+        for model in ["ifs", "aigfs"] {
+            for lead in [0, 180] {
+                let direct = Source::from_ecmwf(
+                    crate::ecmwf::single_hour(model, timestamp(&init)? as i64, lead).await?,
+                )?;
+                let pin = json!({"model":model,"dataset":dataset(model)?,"init_time":init});
+                let path = output.join(format!("{model}-{lead}"));
+                let start = Instant::now();
+                let metadata =
+                    fetch_pressure_hour(model, &path, pin.clone(), lead, &direct).await?;
+                let seconds = start.elapsed().as_secs_f64();
+                let cells = crate::stage::load_cells(&path)?;
+                let ids = cells["cell_id"]
+                    .bytes
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .map(|b| u32::from_le_bytes(*b) as usize)
+                    .collect::<Vec<_>>();
+                let nf = variables(model).len();
+                let nl = pressure_levels(model).len();
+                let ns = surface_variables(model).len();
+                anyhow::ensure!(ids.len() == 24885, "CONUS cells were lost");
+                let dictionary = crate::dictionary::Dictionary::load(&path, &metadata)?;
+                let mut profiles = vec![0f32; ids.len() * nf * nl];
+                let mut surfaces = vec![0f32; ids.len() * ns];
+                crate::stage::Array::open_as(
+                    &path.join(format!("lead-{lead:03}")),
+                    &[ids.len(), nl, nf],
+                    "uint16_le",
+                )?
+                .read_into(0, &mut profiles)?;
+                crate::stage::Array::open_as(
+                    &path.join(format!("surface-{lead:03}")),
+                    &[ids.len(), ns],
+                    "uint16_le",
+                )?
+                .read_into(0, &mut surfaces)?;
+                let SourceStore::Ecmwf(source) = &*direct.store else {
+                    unreachable!()
+                };
+                let ti = leads(model)
+                    .iter()
+                    .position(|h| *h == lead)
+                    .context("Lead index")?;
+                let results = stream::iter(&source.hours[0].fields)
+                    .map(|field| {
+                        let ids = &ids;
+                        let profiles = &profiles;
+                        let surfaces = &surfaces;
+                        let dictionary = &dictionary;
+                        async move {
+                            let pressure = field.pressure.map(|p| {
+                                pressure_levels(model).iter().position(|v| *v == p).unwrap()
+                            });
+                            let key = format!(
+                                "{}/c/0/{ti}/0/0{}",
+                                field.name,
+                                pressure.map_or(String::new(), |p| format!("/{p}"))
+                            );
+                            let bytes = source.get(&key).await?;
+                            let values = decode(&source.meta(&field.name)?, &bytes)?;
+                            let f = if pressure.is_some() {
+                                variables(model)
+                                    .iter()
+                                    .position(|v| format!("pressure_level/{v}") == field.name)
+                                    .unwrap()
+                            } else {
+                                nf + surface_variables(model)
+                                    .iter()
+                                    .position(|v| *v == field.name)
+                                    .unwrap()
+                            };
+                            for (cell, id) in ids.iter().enumerate() {
+                                let code = if let Some(l) = pressure {
+                                    profiles[(cell * nl + l) * nf + f]
+                                } else {
+                                    surfaces[cell * ns + f - nf]
+                                };
+                                anyhow::ensure!(
+                                    dictionary.value(f, pressure.unwrap_or(0), code.to_bits())?
+                                        == (values[*id] as f32).to_bits(),
+                                    "Source/staging bit mismatch {model}/{lead}/{} cell {cell}",
+                                    field.name
+                                );
+                            }
+                            Ok::<_, anyhow::Error>(ids.len())
+                        }
+                    })
+                    .buffer_unordered(4)
+                    .try_collect::<Vec<_>>()
+                    .await?;
+                let resumed = fetch_pressure_hour(model, &path, pin, lead, &direct).await?;
+                anyhow::ensure!(resumed == metadata, "Resume changed pinned hour");
+                let database_path = path.clone();
+                tokio::task::spawn_blocking(move || check_database_roundtrip(&database_path))
+                    .await??;
+                reports.push(json!({"model":model,"lead":lead,"cells":ids.len(),"compared_values":results.iter().sum::<usize>(),"all_source_bits_equal":true,"full_database_validation":true,"resume_equal":true,"source_seconds":seconds,"source_bytes":read_json(path.join(format!("lead-{lead:03}.json")))?["grib_bytes"]}));
+            }
+        }
+        let report = json!({"init_time":init,"comparisons":reports});
         atomic(output.join("verification.json"), &report)?;
         println!("{report}");
         Ok(())

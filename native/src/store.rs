@@ -168,13 +168,17 @@ pub(crate) fn load_lead_with_workers(
     );
     let nl = m["levels"].as_array().context("Levels")?.len();
     let nf = m["variables"].as_array().context("Fields")?.len();
+    let ns = m["surface_variables"]
+        .as_array()
+        .context("Surface fields")?
+        .len();
     anyhow::ensure!(
         m["leads"] == json!([partition_lead]) && nl > 0 && nf > 0,
         "Expected exactly one forecast hour"
     );
     anyhow::ensure!(
-        m["surface_variables"].as_array().map(Vec::len) == Some(2),
-        "Expected two surface fields"
+        ns == surface_variables(m["model"].as_str().context("Model")?).len(),
+        "Invalid surface fields"
     );
     let nt = 1;
     let dictionary = crate::dictionary::Dictionary::load(path, &m)?;
@@ -197,7 +201,7 @@ pub(crate) fn load_lead_with_workers(
     )?];
     let surfaces = vec![Array::open_as(
         &path.join(format!("surface-{partition_lead:03}")),
-        &[nc, 2],
+        &[nc, ns],
         "uint16_le",
     )?];
     anyhow::ensure!(
@@ -327,7 +331,7 @@ pub(crate) fn load_lead_with_workers(
                     let mut times = Times::default();
                     let mut scratch = crate::stage::Scratch::new()?;
                     let mut code_input = vec![vec![0u16; batch * nl * nf]];
-                    let mut code_ground = vec![vec![0u16; batch * 2]];
+                    let mut code_ground = vec![vec![0u16; batch * ns]];
                     loop {
                         if cancelled.load(Ordering::Relaxed) {
                             break;
@@ -352,7 +356,7 @@ pub(crate) fn load_lead_with_workers(
                                 times.cache_hint_failures += array.read_codes_aligned(
                                     start,
                                     c,
-                                    &mut buffer[..c * 2],
+                                    &mut buffer[..c * ns],
                                     &mut scratch,
                                 )?;
                             }
@@ -378,10 +382,10 @@ pub(crate) fn load_lead_with_workers(
                                     surfaces: code_ground
                                         .iter()
                                         .flat_map(|lead| {
-                                            (0..2).map(move |slot| {
+                                            (0..ns).map(move |slot| {
                                                 f32::from_bits(u32::from(
                                                     lead[crate::packed::slot_offset(
-                                                        c, 2, local, slot,
+                                                        c, ns, local, slot,
                                                     )],
                                                 ))
                                             })
@@ -654,6 +658,10 @@ fn validate_impl(
     );
     let nl = m["levels"].as_array().context("Levels")?.len();
     let nf = m["variables"].as_array().context("Fields")?.len();
+    let ns = m["surface_variables"]
+        .as_array()
+        .context("Surface fields")?
+        .len();
     let db = Db::new()?;
     let storage_rows = db.scalar(&format!("SELECT count() FROM {from}"))?;
     anyhow::ensure!(
@@ -725,7 +733,7 @@ fn validate_impl(
             cached.keys().copied().collect::<BTreeSet<_>>() == samples
                 && cached
                     .values()
-                    .all(|v| v.profiles.len() == nl * nf && v.surfaces.len() == 2),
+                    .all(|v| v.profiles.len() == nl * nf && v.surfaces.len() == ns),
             "Incomplete staged verification samples"
         );
     }
@@ -734,7 +742,7 @@ fn validate_impl(
         let (rows, _) = db.profile_leads(database, table, &m, cell_ids[i], i, &books)?;
         if staged {
             let mut pv = vec![0f32; nl * nf];
-            let mut gv = [0f32; 2];
+            let mut gv = vec![0f32; ns];
             if let Some(cached) = preloaded {
                 pv.copy_from_slice(&cached[&i].profiles);
                 gv.copy_from_slice(&cached[&i].surfaces);
@@ -746,11 +754,11 @@ fn validate_impl(
                 )?;
                 let g = Array::open_as(
                     &path.join(format!("surface-{lead:03}")),
-                    &[nc, 2],
+                    &[nc, ns],
                     "uint16_le",
                 )?;
                 p.read_into(i * nl * nf, &mut pv)?;
-                g.read_into(i * 2, &mut gv)?;
+                g.read_into(i * ns, &mut gv)?;
             }
             for f in 0..nf {
                 let levels = rows[0][f + 1]
@@ -774,7 +782,7 @@ fn validate_impl(
             }
         }
     }
-    let evidence = json!({"rows":nc,"storage_rows":storage_rows,"table":table,"database":database,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"],"samples":samples.len(),"staged_comparison":staged,"staged_sample_origin":if preloaded.is_some(){"immutable_ingestion_buffers"}else{"staging_files"},"full_values_checked":true,"finite_validation_mode":if checked_rows.is_some(){"each_inserted_cell_range"}else{"whole_table_scan"},"storage":m["storage"],"validated_at":now(),"palette_values_checked":dictionary.entry_count()?,"logical_weather_values":nc*(nf*nl+2),"stored_indices_checked":nc.div_ceil(crate::packed::CELLS)*crate::packed::CELLS*(nf*nl+2),"decoded_finite_proof":"every_palette_value_finite_and_every_stored_index_in_its_slot_bounds"});
+    let evidence = json!({"rows":nc,"storage_rows":storage_rows,"table":table,"database":database,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"],"samples":samples.len(),"staged_comparison":staged,"staged_sample_origin":if preloaded.is_some(){"immutable_ingestion_buffers"}else{"staging_files"},"full_values_checked":true,"finite_validation_mode":if checked_rows.is_some(){"each_inserted_cell_range"}else{"whole_table_scan"},"storage":m["storage"],"validated_at":now(),"palette_values_checked":dictionary.entry_count()?,"logical_weather_values":nc*(nf*nl+ns),"stored_indices_checked":nc.div_ceil(crate::packed::CELLS)*crate::packed::CELLS*(nf*nl+ns),"decoded_finite_proof":"every_palette_value_finite_and_every_stored_index_in_its_slot_bounds"});
     atomic(marker, &evidence)?;
     Ok(evidence)
 }

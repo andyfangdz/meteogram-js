@@ -17,6 +17,7 @@ export const MODEL_NAMES: WeatherModel[] = [
   "rrfs",
   "ecmwf_ifs",
   "ecmwf_aifs025_single",
+  "aigfs",
   "gem_seamless",
   "gem_hrdps_continental",
 ];
@@ -149,6 +150,7 @@ export const MODEL_CONFIGS: ModelConfigs = {
     hpaLevels: DEFAULT_HPA_LEVELS,
   }),
   ecmwf_ifs: new ModelConfig({
+    nativeModel: "ifs",
     varsKey: "hourly",
     stepKey: "forecast_hourly",
     stepSize: 24 * 7, // 24 hours * 7 days
@@ -160,6 +162,18 @@ export const MODEL_CONFIGS: ModelConfigs = {
   }),
   ecmwf_aifs025_single: new ModelConfig({
     nativeModel: "aifs",
+    varsKey: "hourly",
+    stepKey: "forecast_hourly",
+    stepSize: 24 * 7, // 24 hours * 7 days
+    forecastDataKey: "hourly",
+    windBarbStep: 3, // Show wind barbs every 3 hours
+    windBarbPressureLevelStep: 1, // Show wind barbs for every pressure level
+    maxIsothermStepDistance: 6, // Allow isotherms to skip up to 6 hours
+    hpaLevels: DEFAULT_HPA_LEVELS,
+  }),
+  aigfs: new ModelConfig({
+    nativeModel: "aigfs",
+    fallbackModel: "gfs_seamless",
     varsKey: "hourly",
     stepKey: "forecast_hourly",
     stepSize: 24 * 7, // 24 hours * 7 days

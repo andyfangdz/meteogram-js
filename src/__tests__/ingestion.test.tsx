@@ -135,11 +135,26 @@ describe("ingestion status", () => {
     expect(duration(125)).toBe("2m");
   });
   it("validates data and rejects misleading completeness or unknown models", () => {
-    expect(parseIngestionStatus(fixture()).models).toHaveLength(4);
+    expect(parseIngestionStatus(fixture()).models).toHaveLength(
+      INGESTION_MODELS.length,
+    );
     const data = fixture();
     data.models[0].runs[0].complete = true;
     expect(() => parseIngestionStatus(data)).toThrow();
     expect(() => parseIngestionStatus({ ...fixture(), models: [] })).toThrow();
+  });
+  it("accepts the prior four-model service during deployment but rejects partial inventories", () => {
+    const legacy = { ...fixture(), models: fixture().models.slice(0, 4) };
+    expect(parseIngestionStatus(legacy).models).toHaveLength(4);
+    expect(() =>
+      parseIngestionStatus({
+        ...fixture(),
+        models: fixture().models.slice(0, 5),
+      }),
+    ).toThrow();
+    expect(() =>
+      parseIngestionStatus({ ...fixture(), models: fixture().models.slice(2) }),
+    ).toThrow();
   });
   it("interprets native timestamps as UTC", () => {
     expect(utcTime("2026-10-21T00:00:00")).toContain("00:00 UTC");
@@ -170,7 +185,9 @@ describe("ingestion status", () => {
       expect(
         screen.getByRole("heading", { name: model.toUpperCase() }),
       ).toBeInTheDocument();
-    expect(screen.getAllByRole("progressbar")).toHaveLength(4);
+    expect(screen.getAllByRole("progressbar")).toHaveLength(
+      INGESTION_MODELS.length,
+    );
     for (const model of INGESTION_MODELS) {
       const article = screen
         .getByRole("heading", { name: model.toUpperCase() })

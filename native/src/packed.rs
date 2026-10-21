@@ -61,7 +61,7 @@ pub fn encode_lead(
             && !ids.is_empty()
             && first.is_multiple_of(CELLS)
             && input.cells == ids.len()
-            && names.len() == input.fields + 2
+            && names.len() > input.fields
             && names.len() == widths.len()
             && input.levels > 0
             && input.fields > 0,
@@ -69,7 +69,7 @@ pub fn encode_lead(
     );
     anyhow::ensure!(
         input.profiles.len() >= input.cells * input.levels * input.fields
-            && input.surfaces.len() >= input.cells * 2,
+            && input.surfaces.len() >= input.cells * (names.len() - input.fields),
         "Direct packed buffers"
     );
     let rows = ids.len().div_ceil(CELLS);
@@ -108,7 +108,7 @@ pub fn encode_lead(
         let stride = if pressure {
             input.levels * input.fields
         } else {
-            2
+            names.len() - input.fields
         };
         let values = if pressure {
             input.profiles

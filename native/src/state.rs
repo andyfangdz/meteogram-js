@@ -11,7 +11,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-pub const MODELS: [&str; 4] = ["hrrr", "gfs", "aifs", "rrfs"];
+pub const MODELS: [&str; 6] = ["hrrr", "gfs", "aifs", "rrfs", "ifs", "aigfs"];
 pub const DATABASE: &str = "meteogram_native";
 pub const RESERVE: u64 = 20 << 30;
 static EVENT_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -100,6 +100,8 @@ pub struct Catalog {
     pub building: BTreeMap<String, Vec<Entry>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hrrr_long: Option<Entry>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub long_runs: BTreeMap<String, Entry>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub published_at: Option<f64>,
 }
@@ -114,6 +116,7 @@ impl Default for Catalog {
             complete_runs: BTreeMap::new(),
             building: BTreeMap::new(),
             hrrr_long: None,
+            long_runs: BTreeMap::new(),
             published_at: None,
         }
     }
@@ -139,8 +142,22 @@ pub fn leads(model: &str) -> Vec<u16> {
         "hrrr" => (0..49).collect(),
         "rrfs" => (0..85).collect(),
         "gfs" => (0..121).chain((123..181).step_by(3)).collect(),
-        "aifs" => (0..181).step_by(6).collect(),
+        "aifs" | "aigfs" => (0..181).step_by(6).collect(),
+        "ifs" => (0..145).step_by(3).chain((150..181).step_by(6)).collect(),
         _ => vec![],
+    }
+}
+pub fn cycle_leads(model: &str, init: i64) -> Vec<u16> {
+    leads(model)
+        .into_iter()
+        .filter(|lead| model != "ifs" || init.rem_euclid(43200) == 0 || *lead <= 144)
+        .collect()
+}
+pub fn surface_variables(model: &str) -> Vec<&'static str> {
+    if model == "aigfs" {
+        vec!["temperature_2m"]
+    } else {
+        vec!["temperature_2m", "dew_point_temperature_2m"]
     }
 }
 pub fn variables(model: &str) -> Vec<String> {
@@ -186,6 +203,8 @@ pub fn dataset(model: &str) -> Result<&'static str> {
         "rrfs" => "noaa-rrfs-forecast-84-hour-virtual",
         "gfs" => "noaa-gfs-forecast-virtual",
         "aifs" => "ecmwf-aifs-single-forecast-virtual",
+        "ifs" => "ecmwf-ifs-forecast-direct",
+        "aigfs" => "noaa-aigfs-forecast-direct",
         _ => bail!("Unknown model"),
     })
 }
@@ -208,7 +227,14 @@ pub fn expected_leads(m: &Value) -> Result<Vec<u16>> {
     let model = m["model"].as_str().context("Missing model")?;
     let product = m["dataset"].as_str().context("Missing dataset")?;
     anyhow::ensure!(valid_dataset(model, product), "Unsupported source product");
-    Ok(product_leads(model, product))
+    if model == "ifs" {
+        Ok(cycle_leads(
+            model,
+            timestamp(m["init_time"].as_str().context("Missing init")?)? as i64,
+        ))
+    } else {
+        Ok(product_leads(model, product))
+    }
 }
 pub fn complete(m: &Value) -> Result<bool> {
     Ok(m["leads"] == json!(expected_leads(m)?))
@@ -244,7 +270,7 @@ pub fn check_segment_metadata(m: &Value) -> Result<()> {
     check_schema(m, true)
 }
 pub fn pressure_levels(model: &str) -> Vec<u16> {
-    if model == "aifs" {
+    if matches!(model, "aifs" | "ifs" | "aigfs") {
         vec![1000, 925, 850, 700, 600, 500, 400, 300]
     } else {
         (275..1001).step_by(25).rev().collect()
@@ -279,7 +305,7 @@ fn check_schema(m: &Value, partial: bool) -> Result<()> {
         || !valid_hours
         || !numeric_array_eq(&m["levels"], &json!(levels))
         || m["variables"] != json!(variables(model))
-        || m["surface_variables"] != json!(["temperature_2m", "dew_point_temperature_2m"])
+        || m["surface_variables"] != json!(surface_variables(model))
     {
         bail!("Source schema/coverage changed");
     }

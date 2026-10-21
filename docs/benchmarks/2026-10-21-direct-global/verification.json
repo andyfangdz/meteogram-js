@@ -1,0 +1,75 @@
+{
+  "comparisons": [
+    {
+      "all_source_bits_equal": true,
+      "cells": 24885,
+      "compared_values": 1045170,
+      "full_database_validation": true,
+      "lead": 0,
+      "model": "ifs",
+      "resume_equal": true,
+      "source_bytes": 23754496,
+      "source_seconds": 5.083515488
+    },
+    {
+      "all_source_bits_equal": true,
+      "cells": 24885,
+      "compared_values": 1045170,
+      "full_database_validation": true,
+      "lead": 180,
+      "model": "ifs",
+      "resume_equal": true,
+      "source_bytes": 22812302,
+      "source_seconds": 4.912363736
+    },
+    {
+      "all_source_bits_equal": true,
+      "cells": 24885,
+      "compared_values": 1020285,
+      "full_database_validation": true,
+      "lead": 0,
+      "model": "aigfs",
+      "resume_equal": true,
+      "source_bytes": 46742223,
+      "source_seconds": 11.808847171
+    },
+    {
+      "all_source_bits_equal": true,
+      "cells": 24885,
+      "compared_values": 1020285,
+      "full_database_validation": true,
+      "lead": 180,
+      "model": "aigfs",
+      "resume_equal": true,
+      "source_bytes": 49649542,
+      "source_seconds": 11.727346247
+    }
+  ],
+  "init_time": "2026-10-21T00:00:00",
+  "method": "Live source GRIB reread and Float32 bit comparison at every retained CONUS cell; isolated database full-index validation, source staging samples, idempotent publication and point API provenance.",
+  "total_compared_values": 4130910,
+  "noaa_replica_check": {
+    "url": "https://nomads.ncep.noaa.gov/pub/data/nccf/com/aigfs/prod/aigfs.20261021/00/model/atmos/grib2/aigfs.t00z.pres.f180.grib2",
+    "range": "bytes=27118165-28437740",
+    "guidance": "https://techdocs.akamai.com/netstorage-usage/reference/usage-details-for-download",
+    "responses": [
+      {
+        "etag": "\"61737cca3e54b7e3a06e37d51d7baf58:1792557765.871091\"",
+        "sha256": "08c5dc7e2630c53ff285148df92fa98237f500a781060a0f6f718bb75625f8e1",
+        "bytes": 1319576
+      },
+      {
+        "etag": "\"61737cca3e54b7e3a06e37d51d7baf58:1792557913.899031\"",
+        "sha256": "08c5dc7e2630c53ff285148df92fa98237f500a781060a0f6f718bb75625f8e1",
+        "bytes": 1319576
+      }
+    ]
+  },
+  "noaa_request_policy": {
+    "interval_ms": 750,
+    "max_requests_per_minute": 80,
+    "cooldown_seconds": 60,
+    "payload_requests_per_hour": 6,
+    "live_grouped_range_roundtrip_passed": true
+  }
+}

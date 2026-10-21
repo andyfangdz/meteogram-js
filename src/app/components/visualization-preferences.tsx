@@ -59,22 +59,26 @@ export default function VisualizationPreferencesComponent({
             <a
               className="underline underline-offset-2"
               href={
-                source.provider === "ecmwf"
-                  ? "https://www.ecmwf.int/en/forecasts/datasets/open-data"
-                  : source.provider === "dynamical"
-                    ? "https://dynamical.org"
-                    : "https://open-meteo.com"
+                source.provider === "noaa"
+                  ? "https://nomads.ncep.noaa.gov/"
+                  : source.provider === "ecmwf"
+                    ? "https://www.ecmwf.int/en/forecasts/datasets/open-data"
+                    : source.provider === "dynamical"
+                      ? "https://dynamical.org"
+                      : "https://open-meteo.com"
               }
               target="_blank"
               rel="noreferrer"
             >
-              {source.provider === "ecmwf"
-                ? source.nativeProviders?.includes("dynamical")
-                  ? "ECMWF direct + Dynamical"
-                  : "ECMWF direct"
-                : source.provider === "dynamical"
-                  ? "Dynamical"
-                  : "Open-Meteo"}
+              {source.provider === "noaa"
+                ? "NOAA direct"
+                : source.provider === "ecmwf"
+                  ? source.nativeProviders?.includes("dynamical")
+                    ? "ECMWF direct + Dynamical"
+                    : "ECMWF direct"
+                  : source.provider === "dynamical"
+                    ? "Dynamical"
+                    : "Open-Meteo"}
             </a>
             {" · "}
             {source.model.toUpperCase()}
@@ -120,6 +124,9 @@ export default function VisualizationPreferencesComponent({
             )}
             {source.nativeCloudLevels && (
               <>{` · Native clouds (${source.nativeCloudLevels} levels${source.nativeCloudGeometry === "derived" ? "; derived layer heights" : ""}${source.cloudMethod === "mixed" ? `, ${source.nativeCloudHours}/${source.displayedHours} displayed hours; remaining hours estimated from humidity` : ""})`}</>
+            )}
+            {source.surfaceDewPointAvailable === false && (
+              <>{" · Surface dew point unavailable"}</>
             )}
             {source.fallback && <>{" · Backup forecast"}</>}
           </div>

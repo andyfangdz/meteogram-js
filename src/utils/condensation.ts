@@ -1,4 +1,9 @@
-import { CloudCell, CloudColumn, ParcelMode, PARCEL_MODES } from "../types/weather";
+import {
+  CloudCell,
+  CloudColumn,
+  ParcelMode,
+  PARCEL_MODES,
+} from "../types/weather";
 import { FEET_PER_METER } from "../config/weather";
 import { DALR_C_PER_KM, computeMALR } from "./lapseRate";
 
@@ -163,6 +168,7 @@ export function computeColumnParcelProfile(
   if (!lowest) return emptyProfile(cells);
 
   if (mode === "surface") {
+    if (column.groundDewPoint === null) return emptyProfile(cells);
     const surfaceTempC = Number.isFinite(column.groundTemp)
       ? column.groundTemp
       : lowest.temperature;

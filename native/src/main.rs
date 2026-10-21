@@ -9,6 +9,7 @@ mod ecmwf;
 mod grid;
 mod incremental;
 mod ingestion;
+mod noaa;
 mod observe;
 mod packed;
 mod runs;
@@ -85,7 +86,11 @@ enum Cmd {
     Update {
         #[arg(long)]
         root: PathBuf,
-        #[arg(long, value_delimiter = ',', default_value = "hrrr,gfs,aifs,rrfs")]
+        #[arg(
+            long,
+            value_delimiter = ',',
+            default_value = "hrrr,gfs,aifs,rrfs,ifs,aigfs"
+        )]
         models: Vec<String>,
         #[arg(long, default_value_t = 50)]
         work_seconds: u64,

@@ -20,7 +20,7 @@ This document provides comprehensive guidance for AI agents working on this code
 
 ## Project Overview
 
-**Meteogram-js** is a Next.js 16 aviation weather visualization app. It fetches atmospheric forecast data from the optional native ECMWF/Dynamical/ClickHouse service with Open-Meteo fallback and renders interactive meteograms (time-height cross-sections) showing clouds, temperature, wind, and pressure.
+**Meteogram-js** is a Next.js 16 aviation weather visualization app. It fetches atmospheric forecast data from the optional native ECMWF/NOAA/Dynamical/ClickHouse service with Open-Meteo fallback and renders interactive meteograms (time-height cross-sections) showing clouds, temperature, wind, and pressure.
 
 ### Tech Stack
 
@@ -274,7 +274,7 @@ yarn test:watch   # Test watch mode
 
 Native CI (`.github/workflows/native.yml`) checks formatting, Clippy with warnings
 denied and unit tests on x86. Local ARM verification also exercises the NEON
-path; use `cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness --skip direct_ecmwf_`
+path; use `cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness --skip direct_ecmwf_ --skip new_global_sources_live_`
 with the loopback ClickHouse service for database integration coverage. The separate
 ignored full-CONUS cloud benchmark requires explicit resident source paths and a
 fresh output directory; see `native/README.md`. Frontend CI lives in
@@ -351,8 +351,7 @@ Server-side cookie reading can fail on Edge. The `cookieReadSuccess` flag trigge
 
 ## Native forecast service
 
-The deployed site uses the Rust service in `native/` for HRRR, GFS, AIFS and
-RRFS within CONUS, with Open-Meteo fallback. Read `native/README.md` for current
+The deployed site uses the Rust service in `native/` for HRRR, GFS, AIFS, RRFS, IFS and AIGFS within CONUS, with Open-Meteo fallback. Read `native/README.md` for current
 setup and operating commands. `docs/README.md` separates current guides from
 dated investigation and rollout evidence. Historical commands and performance
 measurements describe their recorded versions.
@@ -367,7 +366,8 @@ measurements describe their recorded versions.
 | Exact Float32 palettes, sorted spatial encoding and bounded codebook I/O         | `native/src/dictionary.rs`             |
 | UInt16 packing into 256-cell tiles, Native wire encoding and full lane/ID checks | `native/src/packed.rs`                 |
 | Pinned Icechunk/direct-source reads, GRIB decoding and regional gathering        | `native/src/source.rs`                 |
-| Direct AIFS indexes, version-pinned GRIB ranges, identity and payload proofs     | `native/src/ecmwf.rs`                  |
+| Direct AIFS/IFS indexes, shared pinned GRIB validation and payload proofs        | `native/src/ecmwf.rs`                  |
+| NOAA AIGFS indexes and ETag-bound pressure/surface range reads                   | `native/src/noaa.rs`                   |
 | Source-declared spherical Lambert projection and nearest-cell resolution         | `native/src/grid.rs`                   |
 | Bounded hourly ingestion, full database validation and ownership-aware GC        | `native/src/store.rs`                  |
 | Public ingestion snapshot (bounded event tail, sanitized operational data)       | `native/src/ingestion.rs`              |
@@ -414,6 +414,47 @@ share a run only after normal schema/grid checks; source attribution is retained
 per child and exposed as `source_providers` by the API. The frontend permits
 AIFS overlays across those two native providers and labels mixed acquisition.
 The live tests require explicit source/output paths; see `native/README.md`.
+
+IFS and AIGFS always use direct 0.25° source grids. IFS reads ECMWF `ifs/0p25/oper`
+with AIFS's eight pressure levels and fields. Its 00/12 UTC runs retain 55 leads:
+three-hour steps through 144, then six-hour steps through 180. Its 06/18 UTC runs
+retain 49 leads through 144. `expected_leads` is initialization-dependent.
+`Catalog.long_runs["ifs"]` protects the latest complete 180-hour base in addition
+to two complete runs; include it in catalog references, cache retention and GC.
+IFS accepts `run=long` and the site fetches it with `latest_complete`/`latest`.
+
+AIGFS reads NOAA NOMADS pressure/surface indexes, with NetStorage content-MD5/size/index-hash
+pins and exact conditional HTTP 206 ranges. All four cycles retain 31 six-hour
+leads through 180, the same eight pressure levels and all 24,885 CONUS cells.
+GRIB parameter, init, valid time, level and complete grid checks remain mandatory.
+The shared descriptor keeps the legacy `ecmwf_source` key, but its provider is
+`noaa_nomads_v1`. No GCS generation is claimed for NOAA. Known NetStorage ETags can have different
+replica mtime suffixes for identical bytes: accept only matching content MD5, size
+and ranges, retain the full pin ETag, and require the AkamaiNetStorage response.
+Unknown ETag formats or changed content fail closed; payload SHA-256 checks remain.
+Its height is already metres, while ECMWF `z` is divided by 9.80665. Ignore unused
+ECMWF `gh` and min/max fields; validate the step on every retained index entry.
+AIFS pin serialization remains byte-compatible with prior snapshots.
+
+NOAA requests share a process-wide 750 ms gate (at most 80 requests/minute, below
+the published 120/minute limit), including indexes, HEADs and payload ranges.
+Redirects, HTTP 429 and server errors stop the attempt and impose at least a
+60-second cooldown; there are no immediate payload retries. Run one poller and
+avoid concurrent NOAA diagnostic commands. Ready-hour metadata is cached for
+48 hours in the process, and discovery stops after two fully ready cycles.
+The eight adjacent levels for each pressure field share one validated range
+download, giving six payload requests per hour including 2 m temperature.
+Grouped payload buffers belong to one pinned hourly source and are released
+after extraction. Cold discovery can take several minutes.
+
+AIGFS has no 2 m dew point. `surface_variables(model)` defines one surface field
+for AIGFS, two for other models. Every staging, packing, sample and validation
+stride must use that count. `CloudColumn.groundDewPoint` is nullable, and the
+surface parcel calculation returns unavailable for null. Do not substitute
+pressure-level humidity for a missing surface value. Native IFS/AIGFS use the
+existing global extraction slot and 16-map semaphore. The six-model ingestion
+view and `/health` include both. Frontend IFS uses `ecmwf_ifs`; AIGFS uses `aigfs`
+with an explicitly labeled GFS fallback. Both use humidity cloud estimates.
 
 HRRR polls the hourly 18-hour product (19 leads), with the 48-hour product
 (49 leads) for 00/06/12/18 UTC cycles. RRFS retains 85 hourly leads through
@@ -463,7 +504,7 @@ route uses existing `METEOGRAM_API_URL` / `METEOGRAM_API_TOKEN` settings to fetc
 native authenticated `/ingestion` endpoint with no response caching. Credentials
 never reach the browser. Failures retain the last snapshot with an explicit warning.
 The native `ingestion.rs` reads catalog summaries and a bounded 4 MiB event tail,
-never scans forecast tables or downloads source data. It returns all four models,
+never scans forecast tables or downloads source data. It returns all six models,
 completion targets, retained and unpublished source runs, separate publication/wait/
 failure counts, five-minute activity buckets and last-cycle timings. HRRR has
 separate pressure/surface and cloud readiness strips; published cloud leads come
@@ -526,8 +567,8 @@ are evicted only after staged files and their checkpoints are synced.
 
 The hourly loader reads aligned UInt16 frames directly into tile words, using
 bounded readers, buffers and an insert queue. HRRR/RRFS use up to six workers,
-two readers and four concurrent inserts; GFS/AIFS use one worker. Batch sizes
-are 16,384 cells for HRRR, 8,192 for RRFS and 4,096 for GFS/AIFS. Every insert
+two readers and four concurrent inserts; GFS/AIFS/IFS/AIGFS use one worker. Batch sizes
+are 16,384 cells for HRRR, 8,192 for RRFS and 4,096 for GFS/AIFS/IFS/AIGFS. Every insert
 response is drained, including late errors. A disjoint database range query
 checks every stored index, array length, revision and row count before that
 batch counts as complete. Deterministic source samples come from the actual
@@ -562,18 +603,18 @@ State lives in `~/.local/share/meteogram-native`; service-owned tables use
 `meteogram_native`. Readers hold the shared catalog lock through database reads;
 publication and GC use the exclusive lock. Catalog replacement is atomic and
 fsynced. Keep two distinct complete initializations per model plus the latest
-complete 48-hour HRRR run, counting overlap once. Partial runs do not replace
+complete 48-hour HRRR run and complete 180-hour IFS run, counting overlap once. Partial runs do not replace
 complete backups. Retired manifests have a ten-minute grace period. GC follows
 all manifest/book/shared-table references and only drops explicitly owned tables
 inside the service database. Unrelated benchmark tables are outside ownership.
 
-The API selects `latest`, `latest_complete`, `previous_complete` and HRRR `long`
+The API selects `latest`, `latest_complete`, `previous_complete` and HRRR/IFS `long`
 from explicit catalog roles. Complete selectors never substitute partial runs.
 Point queries project the selected eight-lane word per slot and also validate
 the original full array lengths; projecting a valid word must not hide malformed
 unused groups. Current and retained archive models stay cached until their
 catalog selections release them; decoded hourly books are shared across
-manifest advances. `/health` requires all four models to be fresh and checks
+manifest advances. `/health` requires all six models to be fresh and checks
 ClickHouse connectivity. Outside-grid points return 404; HTTP requests never
 ingest data.
 
@@ -582,7 +623,7 @@ ingest data.
 `getWeatherData` reads server-only `METEOGRAM_API_URL` and
 `METEOGRAM_API_TOKEN`. `ModelConfig.nativeModel` maps `best_match`/`gfs_hrrr`
 to HRRR, `gfs_seamless` to GFS, `ecmwf_aifs025_single` to AIFS and `rrfs` to
-RRFS. Other routes and coordinates outside the retained CONUS region keep
+RRFS, `ecmwf_ifs` to IFS and `aigfs` to AIGFS. Other routes and coordinates outside the retained CONUS region keep
 Open-Meteo. `fallbackModel` gives RRFS an explicitly labeled GFS backup.
 Native fetches use HTTPS (loopback HTTP for development), bearer authentication,
 no redirects/cache and a five-second timeout. Invalid schemas, units, freshness
@@ -598,7 +639,7 @@ the existing WGS84 MSL conversion and shared `completeCloudColumn` geometry,
 rotates grid-relative HRRR/RRFS winds using the API's Lambert convergence,
 and converts m/s to the app's km/h. GFS has native pressure-level cloud fraction.
 HRRR retains all 50 native model-level cloud coverages exactly, independently of
-its 30 atmospheric pressure levels. RRFS/AIFS and HRRR hours without a supplement
+its 30 atmospheric pressure levels. RRFS/AIFS/IFS/AIGFS and HRRR hours without a supplement
 use labeled humidity cloud estimates. AIFS specific humidity uses Murphy–Koop
 saturation and ECMWF mixed phase; GFS dew point is derived.
 
@@ -656,12 +697,13 @@ Schema/provenance/rendering coverage lives in `native-cloud-rendering.test.tsx`,
 Native page requests fetch authenticated profiles concurrently. HRRR uses
 `run=long` as the complete 48-hour base, `latest_complete` to retain the previous
 complete short run while a new one arrives, and `latest` as the newest overlay.
-GFS, AIFS and RRFS use `latest_complete` and `latest`. Each response is validated
+IFS uses its 180-hour `long` base with `latest_complete` and `latest`.
+GFS, AIFS, AIGFS and RRFS use `latest_complete` and `latest`. Each response is validated
 independently, including its initialization and cloud provenance. Sparse latest
 runs are allowed during normalization because a complete base supplies the
 remaining horizon. After merging the surviving responses, the provider requires
 continuous coverage from the current time for at least 12 hours (HRRR),
-48 hours (RRFS) or 72 hours (GFS/AIFS), otherwise it falls back to Open-Meteo.
+48 hours (RRFS) or 72 hours (GFS/AIFS/IFS/AIGFS), otherwise it falls back to Open-Meteo.
 The API retains lazily loaded current, previous, complete and long-run models
 in its cache until their revision leaves those catalog selections.
 `src/utils/forecast-runs.ts` selects the newest initialization
@@ -696,7 +738,7 @@ selected grid cell's actual source projection, never a hardcoded HRRR angle.
 
 The active public API hostname is `weather-api.andyfang.app`.
 The production domains `meteogram.vercel.app` and `meteogram.flyingclub.org`
-serve native HRRR/GFS/AIFS/RRFS through that endpoint. Both home units now run
+serve native HRRR/GFS/AIFS/IFS/AIGFS/RRFS through that endpoint. Both home units now run
 under `systemctl --user` and are enabled, with user lingering enabled. Use
 `systemctl --user stop` to stop a managed service; the native CLI stop request
 is for direct supervisors and a managed unit's Restart=always would restart it.

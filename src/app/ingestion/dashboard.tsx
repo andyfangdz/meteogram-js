@@ -27,6 +27,8 @@ import styles from "./ingestion.module.css";
 const META = {
   hrrr: { name: "HRRR", detail: "Hourly regional", color: "#126e82" },
   gfs: { name: "GFS", detail: "Global · 1–3h steps", color: "#3867a8" },
+  ifs: { name: "IFS", detail: "ECMWF · 3–6h steps", color: "#147f86" },
+  aigfs: { name: "AIGFS", detail: "NOAA AI · 6h steps", color: "#bc6941" },
   aifs: { name: "AIFS", detail: "Global AI · 6h steps", color: "#795aa0" },
   rrfs: { name: "RRFS", detail: "Hourly regional", color: "#99651d" },
 };

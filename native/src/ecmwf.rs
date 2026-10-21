@@ -9,8 +9,26 @@ use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, sync::Mutex, time::Duration};
 
 pub const PROVIDER: &str = "ecmwf_open_data_v1";
+pub const NOAA_PROVIDER: &str = "noaa_nomads_v1";
+pub fn provider(model: &str) -> &'static str {
+    if model == "aigfs" {
+        NOAA_PROVIDER
+    } else {
+        PROVIDER
+    }
+}
+pub fn is_direct(value: &Value) -> bool {
+    matches!(value.as_str(), Some(PROVIDER | NOAA_PROVIDER))
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SurfaceObject {
+    pub etag: String,
+    pub object_bytes: u64,
+    pub index_sha256: String,
+}
+
 const BASE: &str = "https://storage.googleapis.com/ecmwf-open-data";
-const MAX_INDEX: usize = 2 * 1024 * 1024;
+pub(crate) const MAX_INDEX: usize = 2 * 1024 * 1024;
 const MAX_MESSAGE: u64 = 16 * 1024 * 1024;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -21,8 +39,19 @@ pub struct Field {
     pub offset: u64,
     pub length: u64,
 }
+fn default_model() -> String {
+    "aifs".to_owned()
+}
+fn is_aifs(model: &str) -> bool {
+    model == "aifs"
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Hour {
+    #[serde(default = "default_model", skip_serializing_if = "is_aifs")]
+    pub model: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub surface_object: Option<SurfaceObject>,
     pub init: i64,
     pub lead: u16,
     pub generation: String,
@@ -32,10 +61,12 @@ pub struct Hour {
     pub fields: Vec<Field>,
 }
 pub struct DirectSource {
+    pub model: String,
     pub hours: Vec<Hour>,
     pub times: Vec<i64>,
     client: reqwest::Client,
     proofs: Mutex<BTreeMap<String, String>>,
+    noaa_payloads: crate::noaa::PayloadCache,
 }
 
 fn client() -> Result<reqwest::Client> {
@@ -47,20 +78,25 @@ fn client() -> Result<reqwest::Client> {
 pub fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
-fn base_url(init: i64, lead: u16) -> Result<String> {
+fn base_url(model: &str, init: i64, lead: u16) -> Result<String> {
     let date = chrono::DateTime::from_timestamp(init, 0).context("Invalid ECMWF initialization")?;
     anyhow::ensure!(
-        init.rem_euclid(21600) == 0 && leads("aifs").contains(&lead),
+        init.rem_euclid(21600) == 0 && cycle_leads(model, init).contains(&lead),
         "Invalid ECMWF cycle/lead"
     );
+    let product = match model {
+        "aifs" => "aifs-single",
+        "ifs" => "ifs",
+        _ => bail!("Invalid ECMWF model"),
+    };
     Ok(format!(
-        "{BASE}/{}/{}z/aifs-single/0p25/oper/{}-{lead}h-oper-fc",
+        "{BASE}/{}/{}z/{product}/0p25/oper/{}-{lead}h-oper-fc",
         date.format("%Y%m%d"),
         date.format("%H"),
         date.format("%Y%m%d%H0000")
     ))
 }
-async fn bounded(mut response: reqwest::Response, limit: usize) -> Result<Vec<u8>> {
+pub(crate) async fn bounded(mut response: reqwest::Response, limit: usize) -> Result<Vec<u8>> {
     anyhow::ensure!(
         response.content_length().is_none_or(|n| n <= limit as u64),
         "Oversized ECMWF response"
@@ -78,9 +114,9 @@ async fn bounded(mut response: reqwest::Response, limit: usize) -> Result<Vec<u8
     }
     Ok(bytes)
 }
-fn mapping(param: &str, pressure: Option<u16>) -> Option<&'static str> {
+pub(crate) fn mapping(param: &str, pressure: Option<u16>) -> Option<&'static str> {
     match (param, pressure.is_some()) {
-        ("z", true) => Some("pressure_level/geopotential_height"),
+        ("z" | "gh", true) => Some("pressure_level/geopotential_height"),
         ("t", true) => Some("pressure_level/temperature"),
         ("u", true) => Some("pressure_level/wind_u"),
         ("v", true) => Some("pressure_level/wind_v"),
@@ -90,7 +126,13 @@ fn mapping(param: &str, pressure: Option<u16>) -> Option<&'static str> {
         _ => None,
     }
 }
-fn parse_index(bytes: &[u8], init: i64, lead: u16, object_bytes: u64) -> Result<Vec<Field>> {
+fn parse_index(
+    model: &str,
+    bytes: &[u8],
+    init: i64,
+    lead: u16,
+    object_bytes: u64,
+) -> Result<Vec<Field>> {
     anyhow::ensure!(
         bytes.len() <= MAX_INDEX && object_bytes <= 512 * 1024 * 1024,
         "ECMWF source exceeds bounds"
@@ -108,11 +150,10 @@ fn parse_index(bytes: &[u8], init: i64, lead: u16, object_bytes: u64) -> Result<
         anyhow::ensure!(
             value["date"] == date.format("%Y%m%d").to_string()
                 && value["time"] == date.format("%H00").to_string()
-                && value["step"].as_str().and_then(|v| v.parse::<u16>().ok()) == Some(lead)
-                && value["model"] == "aifs-single"
+                && ((model == "aifs" && value["model"] == "aifs-single" && value["class"] == "ai")
+                    || (model == "ifs" && value["class"] == "od" && value.get("model").is_none()))
                 && value["type"] == "fc"
-                && value["stream"] == "oper"
-                && value["class"] == "ai",
+                && value["stream"] == "oper",
             "ECMWF index forecast identity differs"
         );
         let offset = value["_offset"].as_u64().context("Missing GRIB offset")?;
@@ -129,7 +170,7 @@ fn parse_index(bytes: &[u8], init: i64, lead: u16, object_bytes: u64) -> Result<
                     .as_str()
                     .context("Missing pressure")?
                     .parse()?;
-                if !pressure_levels("aifs").contains(&p) {
+                if !pressure_levels(model).contains(&p) {
                     continue;
                 }
                 Some(p)
@@ -138,7 +179,15 @@ fn parse_index(bytes: &[u8], init: i64, lead: u16, object_bytes: u64) -> Result<
             _ => continue,
         };
         let param = value["param"].as_str().context("Missing parameter")?;
+        // ECMWF publishes both z and gh; retain z with the existing exact conversion.
+        if param == "gh" {
+            continue;
+        }
         if let Some(name) = mapping(param, pressure) {
+            anyhow::ensure!(
+                value["step"].as_str().and_then(|v| v.parse::<u16>().ok()) == Some(lead),
+                "ECMWF field forecast step differs"
+            );
             let field = Field {
                 name: name.to_owned(),
                 pressure,
@@ -157,8 +206,13 @@ fn parse_index(bytes: &[u8], init: i64, lead: u16, object_bytes: u64) -> Result<
     }
     Ok(fields.into_values().collect())
 }
-async fn discover_hour(client: &reqwest::Client, init: i64, lead: u16) -> Result<Option<Hour>> {
-    let base = base_url(init, lead)?;
+async fn discover_hour(
+    client: &reqwest::Client,
+    model: &str,
+    init: i64,
+    lead: u16,
+) -> Result<Option<Hour>> {
+    let base = base_url(model, init, lead)?;
     let response = client.get(format!("{base}.index")).send().await?;
     if response.status() == reqwest::StatusCode::NOT_FOUND {
         return Ok(None);
@@ -178,12 +232,14 @@ async fn discover_hour(client: &reqwest::Client, init: i64, lead: u16) -> Result
             .to_owned())
     };
     let object_bytes: u64 = header("content-length")?.parse()?;
-    let fields = match parse_index(&bytes, init, lead, object_bytes) {
+    let fields = match parse_index(model, &bytes, init, lead, object_bytes) {
         Ok(fields) => fields,
         Err(e) if e.downcast_ref::<SourcePending>().is_some() => return Ok(None),
         Err(e) => return Err(e),
     };
     let hour = Hour {
+        model: model.to_owned(),
+        surface_object: None,
         init,
         lead,
         generation: header("x-goog-generation")?,
@@ -196,32 +252,65 @@ async fn discover_hour(client: &reqwest::Client, init: i64, lead: u16) -> Result
     Ok(Some(hour))
 }
 fn validate_hour(hour: &Hour) -> Result<()> {
-    base_url(hour.init, hour.lead)?;
+    if hour.model == "aigfs" {
+        crate::noaa::base_url(hour.init, hour.lead, false)?;
+    } else {
+        base_url(&hour.model, hour.init, hour.lead)?;
+    }
     anyhow::ensure!(
-        !hour.generation.is_empty()
-            && hour.generation.bytes().all(|b| b.is_ascii_digit())
+        (hour.model == "aigfs"
+            || (!hour.generation.is_empty()
+                && hour.generation.bytes().all(|b| b.is_ascii_digit())))
             && hour.etag.starts_with('"')
             && hour.etag.ends_with('"')
             && hour.etag.len() <= 128
             && hour.index_sha256.len() == 64
             && hour.index_sha256.bytes().all(|b| b.is_ascii_hexdigit())
             && hour.object_bytes <= 512 * 1024 * 1024
-            && hour.fields.len() == 42,
+            && hour.fields.len() == if hour.model == "aigfs" { 41 } else { 42 },
         "Invalid pinned ECMWF source"
     );
+    anyhow::ensure!(
+        (hour.model == "aigfs") == hour.surface_object.is_some(),
+        "Direct surface object differs"
+    );
+    if hour.model == "aigfs" {
+        crate::noaa::content_identity(&hour.etag)?;
+    }
+    if let Some(object) = &hour.surface_object {
+        crate::noaa::content_identity(&object.etag)?;
+        anyhow::ensure!(
+            object.etag.starts_with('"')
+                && object.etag.ends_with('"')
+                && object.etag.len() <= 128
+                && object.object_bytes <= 512 * 1024 * 1024
+                && object.index_sha256.len() == 64
+                && object.index_sha256.bytes().all(|b| b.is_ascii_hexdigit()),
+            "Invalid NOAA surface object"
+        );
+    }
     let mut seen = std::collections::BTreeSet::new();
     for field in &hour.fields {
         anyhow::ensure!(
             mapping(&field.param, field.pressure) == Some(field.name.as_str())
+                && (if hour.model == "aigfs" {
+                    field.param != "z" && field.param != "2d"
+                } else {
+                    field.param != "gh"
+                })
                 && field
                     .pressure
-                    .is_none_or(|p| pressure_levels("aifs").contains(&p))
+                    .is_none_or(|p| pressure_levels(&hour.model).contains(&p))
                 && seen.insert((&field.name, field.pressure))
                 && (20..=MAX_MESSAGE).contains(&field.length)
-                && field
-                    .offset
-                    .checked_add(field.length)
-                    .is_some_and(|end| end <= hour.object_bytes),
+                && field.offset.checked_add(field.length).is_some_and(|end| end
+                    <= if field.pressure.is_none() {
+                        hour.surface_object
+                            .as_ref()
+                            .map_or(hour.object_bytes, |o| o.object_bytes)
+                    } else {
+                        hour.object_bytes
+                    }),
             "Invalid pinned ECMWF field"
         );
     }
@@ -236,8 +325,9 @@ impl DirectSource {
             .filter(|t| self.hours.iter().any(|h| h.init == *t))
             .collect()
     }
-    pub fn new(hours: Vec<Hour>, mut times: Vec<i64>) -> Result<Self> {
+    pub fn new(model: &str, hours: Vec<Hour>, mut times: Vec<i64>) -> Result<Self> {
         for hour in &hours {
+            anyhow::ensure!(hour.model == model, "Mixed direct-source models");
             validate_hour(hour)?;
         }
         times.sort_unstable();
@@ -247,25 +337,29 @@ impl DirectSource {
             "ECMWF time axis differs"
         );
         Ok(Self {
+            model: model.to_owned(),
             hours,
             times,
             client: client()?,
             proofs: Mutex::new(BTreeMap::new()),
+            noaa_payloads: crate::noaa::PayloadCache::default(),
         })
     }
     pub fn from_pin(pin: &Value) -> Result<Self> {
         anyhow::ensure!(
-            pin["source_provider"] == PROVIDER && pin["model"] == "aifs",
+            pin["source_provider"] == provider(pin["model"].as_str().unwrap_or(""))
+                && matches!(pin["model"].as_str(), Some("aifs" | "ifs" | "aigfs")),
             "Invalid ECMWF pin provider"
         );
         let hour: Hour = serde_json::from_value(pin["ecmwf_source"].clone())?;
         anyhow::ensure!(
-            pin["snapshot_id"] == Self::hour_snapshot(&hour)?
+            pin["model"] == hour.model
+                && pin["snapshot_id"] == Self::hour_snapshot(&hour)?
                 && timestamp(pin["init_time"].as_str().context("Missing init")?)?
                     == hour.init as f64,
             "ECMWF pin identity differs"
         );
-        Self::new(vec![hour.clone()], vec![hour.init])
+        Self::new(&hour.model, vec![hour.clone()], vec![hour.init])
     }
     pub fn hour_snapshot(hour: &Hour) -> Result<String> {
         Ok(format!("ecmwf-{}", digest(&serde_json::to_vec(hour)?)))
@@ -284,7 +378,11 @@ impl DirectSource {
             .find(|h| h.init == init && h.lead == lead)
             .context("ECMWF hour not ready")?;
         let mut pin = pin.clone();
-        pin["source_provider"] = json!(PROVIDER);
+        pin["init_time"] = json!(chrono::DateTime::from_timestamp(hour.init, 0)
+            .context("Invalid initialization")?
+            .format("%Y-%m-%dT%H:%M:%S%.9f")
+            .to_string());
+        pin["source_provider"] = json!(provider(&self.model));
         pin["ecmwf_source"] = serde_json::to_value(hour)?;
         pin["snapshot_id"] = json!(Self::hour_snapshot(hour)?);
         Ok(pin)
@@ -292,11 +390,11 @@ impl DirectSource {
     pub fn coord(&self, name: &str) -> Result<Vec<f64>> {
         Ok(match name {
             "init_time" => self.times.iter().map(|t| *t as f64).collect(),
-            "lead_time" => leads("aifs")
+            "lead_time" => leads(&self.model)
                 .iter()
                 .map(|h| f64::from(*h) * 3600.)
                 .collect(),
-            "pressure_level/pressure_level" => pressure_levels("aifs")
+            "pressure_level/pressure_level" => pressure_levels(&self.model)
                 .iter()
                 .map(|p| f64::from(*p))
                 .collect(),
@@ -315,7 +413,9 @@ impl DirectSource {
             return Ok(json!({"attributes":{"units":units},"shape":[coord.len()]}));
         }
         let (param, units, temperature) = match name {
-            "pressure_level/geopotential_height" => ("z", "m", false),
+            "pressure_level/geopotential_height" => {
+                (if self.model == "aigfs" { "gh" } else { "z" }, "m", false)
+            }
             "pressure_level/temperature" | "temperature_2m" => ("t", "degree_Celsius", true),
             "dew_point_temperature_2m" => ("d", "degree_Celsius", true),
             "pressure_level/wind_u" => ("u", "m s-1", false),
@@ -324,7 +424,7 @@ impl DirectSource {
             _ => bail!("Unknown ECMWF field {name}"),
         };
         let mut dims = vec!["init_time", "lead_time", "latitude", "longitude"];
-        let mut shape = vec![self.times.len(), 31, 721, 1440];
+        let mut shape = vec![self.times.len(), leads(&self.model).len(), 721, 1440];
         let mut chunks = vec![1, 1, 721, 1440];
         if name.starts_with("pressure_level/") {
             dims.push("pressure_level");
@@ -358,12 +458,12 @@ impl DirectSource {
             .times
             .get(coords[0])
             .context("Invalid ECMWF time index")?;
-        let lead = *leads("aifs")
+        let lead = *leads(&self.model)
             .get(coords[1])
             .context("Invalid ECMWF lead index")?;
         let p = if pressure {
             Some(
-                *pressure_levels("aifs")
+                *pressure_levels(&self.model)
                     .get(coords[4])
                     .context("Invalid ECMWF level index")?,
             )
@@ -387,6 +487,11 @@ impl DirectSource {
     }
     pub async fn get(&self, key: &str) -> Result<Vec<u8>> {
         let (hour, field) = self.reference(key)?;
+        if hour.model == "aigfs" {
+            let bytes = self.noaa_payloads.get(&self.client, hour, field).await?;
+            self.validate(key, &bytes)?;
+            return Ok(bytes);
+        }
         let end = field
             .offset
             .checked_add(field.length)
@@ -396,7 +501,7 @@ impl DirectSource {
             .client
             .get(format!(
                 "{}.grib2?generation={}",
-                base_url(hour.init, hour.lead)?,
+                base_url(&hour.model, hour.init, hour.lead)?,
                 hour.generation
             ))
             .header("Range", format!("bytes={}-{end}", field.offset))
@@ -450,6 +555,7 @@ fn validate_message(hour: &Hour, field: &Field, bytes: &[u8]) -> Result<()> {
     let msg = gribberish::message::Message::from_data(bytes, 0).context("Invalid ECMWF GRIB")?;
     let (category, parameter) = match field.param.as_str() {
         "z" => (3, 4),
+        "gh" => (3, 5),
         "t" | "2t" => (0, 0),
         "2d" => (0, 6),
         "u" => (2, 2),
@@ -495,16 +601,19 @@ fn validate_message(hour: &Hour, field: &Field, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub async fn discover(times: Vec<i64>) -> Result<DirectSource> {
+pub async fn discover_model(model: &str, times: Vec<i64>) -> Result<DirectSource> {
+    if model == "aigfs" {
+        return crate::noaa::discover(times).await;
+    }
     let client = client()?;
     let requests = times
         .iter()
-        .flat_map(|t| leads("aifs").into_iter().map(move |h| (*t, h)))
+        .flat_map(|t| cycle_leads(model, *t).into_iter().map(move |h| (*t, h)))
         .collect::<Vec<_>>();
     let hours = stream::iter(requests)
         .map(|(t, h)| {
             let client = client.clone();
-            async move { discover_hour(&client, t, h).await }
+            async move { discover_hour(&client, model, t, h).await }
         })
         .buffer_unordered(4)
         .try_collect::<Vec<_>>()
@@ -514,11 +623,28 @@ pub async fn discover(times: Vec<i64>) -> Result<DirectSource> {
         .collect::<Vec<_>>();
     let mut hours = hours;
     hours.sort_by_key(|h| (h.init, h.lead));
-    DirectSource::new(hours, times)
+    DirectSource::new(model, hours, times)
+}
+
+#[cfg(test)]
+pub async fn single_hour(model: &str, init: i64, lead: u16) -> Result<DirectSource> {
+    let client = client()?;
+    let hour = if model == "aigfs" {
+        crate::noaa::hour(&client, init, lead).await?
+    } else {
+        discover_hour(&client, model, init, lead).await?
+    }
+    .context("Requested source hour unavailable")?;
+    DirectSource::new(model, vec![hour], vec![init])
+}
+
+#[cfg(test)]
+pub async fn discover(times: Vec<i64>) -> Result<DirectSource> {
+    discover_model("aifs", times).await
 }
 
 pub fn check_metadata(meta: &Value) -> Result<()> {
-    if meta["source_provider"] != PROVIDER {
+    if !is_direct(&meta["source_provider"]) {
         return Ok(());
     }
     // Parent manifests describe multiple child hours; each child is independently bound.
@@ -534,7 +660,10 @@ pub fn check_metadata(meta: &Value) -> Result<()> {
         let proofs = meta["source_payload_sha256"]
             .as_object()
             .context("Missing ECMWF payload hashes")?;
-        anyhow::ensure!(proofs.len() == 42, "Incomplete ECMWF payload proof");
+        anyhow::ensure!(
+            proofs.len() == direct.hours[0].fields.len(),
+            "Incomplete ECMWF payload proof"
+        );
         for (key, value) in proofs {
             anyhow::ensure!(
                 direct.exists(key)
@@ -570,11 +699,40 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
         parse_index(
+            "aifs",
             bytes.as_bytes(),
             timestamp("2026-10-21T06:00:00").unwrap() as i64,
             0,
             100000,
         )
+    }
+    #[test]
+    fn ifs_index_requires_operational_identity_and_all_fields() {
+        let mut entries = index();
+        for entry in &mut entries {
+            entry.as_object_mut().unwrap().remove("model");
+            entry["class"] = json!("od");
+        }
+        let bytes = entries
+            .iter()
+            .map(Value::to_string)
+            .collect::<Vec<_>>()
+            .join("\n");
+        let init = timestamp("2026-10-21T06:00:00").unwrap() as i64;
+        assert_eq!(
+            parse_index("ifs", bytes.as_bytes(), init, 0, 100000)
+                .unwrap()
+                .len(),
+            42
+        );
+        assert!(parse_index("aifs", bytes.as_bytes(), init, 0, 100000).is_err());
+        entries[0]["model"] = json!("aifs-single");
+        let bytes = entries
+            .iter()
+            .map(Value::to_string)
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(parse_index("ifs", bytes.as_bytes(), init, 0, 100000).is_err());
     }
     #[test]
     fn direct_index_requires_exact_fields_and_identity() {
@@ -610,6 +768,8 @@ mod tests {
     #[test]
     fn direct_pin_is_bound_to_object_and_hour() {
         let hour = Hour {
+            model: "aifs".into(),
+            surface_object: None,
             init: timestamp("2026-10-21T06:00:00").unwrap() as i64,
             lead: 0,
             generation: "123".into(),
@@ -618,8 +778,12 @@ mod tests {
             index_sha256: "a".repeat(64),
             fields: parse(&index()).unwrap(),
         };
-        let source =
-            DirectSource::new(vec![hour.clone()], vec![hour.init, hour.init + 21600]).unwrap();
+        let source = DirectSource::new(
+            "aifs",
+            vec![hour.clone()],
+            vec![hour.init, hour.init + 21600],
+        )
+        .unwrap();
         assert_eq!(source.available_times(), vec![hour.init]);
         let pin = source
             .pin(

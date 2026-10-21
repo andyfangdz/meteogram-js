@@ -130,7 +130,10 @@ pub fn validate_manifest(root: &Path, e: &Entry, m: &Value, full: bool) -> Resul
         * actual.len() as u64
         * (m["levels"].as_array().context("Levels")?.len() as u64
             * m["variables"].as_array().context("Fields")?.len() as u64
-            + 2);
+            + m["surface_variables"]
+                .as_array()
+                .context("Surface fields")?
+                .len() as u64);
     Ok(
         json!({"database":e.database,"table":e.table,"init_time":m["init_time"],"snapshot_id":m["snapshot_id"],"storage":m["storage"],"rows":nc*actual.len() as u64,"storage_rows":nc.div_ceil(256)*actual.len() as u64,"full_values_checked":true,"staged_comparison":true,"source_proof":"immutable_per_lead_staged_comparisons","palette_values_checked":count,"logical_weather_values":values,"finite_validation_mode":"individually_validated_lead_partitions","complete":complete(m)?,"validated_at":now()}),
     )
@@ -226,6 +229,7 @@ pub fn direct(c: &Catalog, retired: bool) -> Vec<Entry> {
     entries.extend(c.complete_runs.values().flatten().cloned());
     entries.extend(c.building.values().flatten().cloned());
     entries.extend(c.hrrr_long.iter().cloned());
+    entries.extend(c.long_runs.values().cloned());
     if retired {
         entries.extend(c.retired.clone());
     }
@@ -266,6 +270,7 @@ pub(crate) fn normalize(root: &Path, c: &mut Catalog, extra: Option<(&str, &Entr
     }
     let mut complete_by_model: BTreeMap<String, Vec<(f64, Entry)>> = BTreeMap::new();
     let mut newest_long: Option<(f64, Entry)> = None;
+    let mut ifs_long: Option<(f64, Entry)> = None;
     for e in pool {
         let p = descriptor(root, &e)?;
         if !p.join("metadata.json").exists() {
@@ -285,6 +290,16 @@ pub(crate) fn normalize(root: &Path, c: &mut Catalog, extra: Option<(&str, &Entr
         {
             newest_long = Some((t, e.clone()));
         }
+        if m["model"] == "ifs"
+            && m["leads"]
+                .as_array()
+                .is_some_and(|l| l.last() == Some(&json!(180)))
+            && ifs_long
+                .as_ref()
+                .is_none_or(|(old, entry)| t > *old || (t == *old && e.revision > entry.revision))
+        {
+            ifs_long = Some((t, e.clone()));
+        }
         complete_by_model
             .entry(m["model"].as_str().context("Model")?.to_owned())
             .or_default()
@@ -299,6 +314,10 @@ pub(crate) fn normalize(root: &Path, c: &mut Catalog, extra: Option<(&str, &Entr
             .insert(name, entries.into_iter().take(2).map(|(_, e)| e).collect());
     }
     c.hrrr_long = newest_long.map(|(_, e)| e);
+    c.long_runs = ifs_long
+        .into_iter()
+        .map(|(_, e)| ("ifs".to_owned(), e))
+        .collect();
     Ok(())
 }
 fn retire_removed(c: &mut Catalog, before: Vec<Entry>) {
@@ -316,6 +335,7 @@ fn retire_removed(c: &mut Catalog, before: Vec<Entry>) {
 }
 fn prune_building(root: &Path, c: &mut Catalog) -> Result<()> {
     let long_time = c.hrrr_long.as_ref().map(|e| time(root, e)).transpose()?;
+    let ifs_long_time = c.long_runs.get("ifs").map(|e| time(root, e)).transpose()?;
     for (model, pending) in &mut c.building {
         let floor = c
             .complete_runs
@@ -329,7 +349,10 @@ fn prune_building(root: &Path, c: &mut Catalog) -> Result<()> {
             let t = timestamp(m["init_time"].as_str().context("Init")?)?;
             let needed_long = m["model"] == "hrrr"
                 && m["dataset"] == "noaa-hrrr-forecast-48-hour-virtual"
-                && long_time.is_none_or(|old| t > old);
+                && long_time.is_none_or(|old| t > old)
+                || (m["model"] == "ifs"
+                    && (t as i64).rem_euclid(43200) == 0
+                    && ifs_long_time.is_none_or(|old| t > old));
             if now() - t <= 48. * 3600. && (floor.is_none_or(|old| t > old) || needed_long) {
                 keep.push(entry);
             }
@@ -371,6 +394,7 @@ pub fn publish_cloud_replacements(root: &Path, changes: &[(Entry, Entry)]) -> Re
             .chain(catalog.complete_runs.values_mut().flatten())
             .chain(catalog.building.values_mut().flatten())
             .chain(catalog.hrrr_long.iter_mut())
+            .chain(catalog.long_runs.values_mut())
         {
             if entry == prior {
                 *entry = next.clone();

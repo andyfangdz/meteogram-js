@@ -5,16 +5,16 @@ export function nativeFixture(
   model: NativeWeatherModel = "hrrr",
   init = "2026-10-18T19:00:00.000000000",
 ): NativeForecast {
-  const levels =
-    model === "aifs"
-      ? [1000, 925, 850, 700, 600, 500, 400, 300]
-      : Array.from({ length: 30 }, (_, i) => 1000 - i * 25);
+  const specific = ["aifs", "ifs", "aigfs"].includes(model);
+  const levels = specific
+    ? [1000, 925, 850, 700, 600, 500, 400, 300]
+    : Array.from({ length: 30 }, (_, i) => 1000 - i * 25);
   const pressureFields = [
     "geopotential_height",
     "temperature",
     "wind_u",
     "wind_v",
-    ...(model === "aifs"
+    ...(specific
       ? ["specific_humidity"]
       : model === "gfs"
         ? ["relative_humidity", "cloud_cover"]
@@ -24,18 +24,30 @@ export function nativeFixture(
     "lead_hour",
     ...pressureFields,
     "temperature_2m",
-    "dew_point_temperature_2m",
+    ...(model === "aigfs" ? [] : ["dew_point_temperature_2m"]),
   ];
-  const have = model === "aifs" ? [0, 6, 12] : [0, 2, 4];
+  const have =
+    model === "aifs" || model === "aigfs"
+      ? [0, 6, 12]
+      : model === "ifs"
+        ? [0, 3, 6]
+        : [0, 2, 4];
   const expected =
-    model === "aifs"
-      ? Array.from({ length: 31 }, (_, i) => i * 6)
-      : model === "gfs"
-        ? [
-            ...Array.from({ length: 121 }, (_, i) => i),
-            ...Array.from({ length: 20 }, (_, i) => 123 + 3 * i),
-          ]
-        : Array.from({ length: model === "rrfs" ? 85 : 19 }, (_, i) => i);
+    model === "ifs"
+      ? [
+          ...Array.from({ length: 49 }, (_, i) => i * 3),
+          ...(Number(init.slice(11, 13)) % 12 === 0
+            ? [150, 156, 162, 168, 174, 180]
+            : []),
+        ]
+      : model === "aifs" || model === "aigfs"
+        ? Array.from({ length: 31 }, (_, i) => i * 6)
+        : model === "gfs"
+          ? [
+              ...Array.from({ length: 121 }, (_, i) => i),
+              ...Array.from({ length: 20 }, (_, i) => 123 + 3 * i),
+            ]
+          : Array.from({ length: model === "rrfs" ? 85 : 19 }, (_, i) => i);
   const values = (field: string, i: number) => {
     if (field === "geopotential_height") return 100 + i * 250;
     if (field === "temperature") return 20 - i * 2;
@@ -48,14 +60,23 @@ export function nativeFixture(
   };
   return {
     model,
+    ...(model === "aigfs"
+      ? { source_providers: ["noaa"] as ["noaa"] }
+      : model === "ifs"
+        ? { source_providers: ["ecmwf"] as ["ecmwf"] }
+        : {}),
     dataset:
-      model === "hrrr"
-        ? "noaa-hrrr-forecast-18-hour-virtual"
-        : model === "aifs"
-          ? "ecmwf-aifs-single-forecast-virtual"
-          : model === "gfs"
-            ? "noaa-gfs-forecast-virtual"
-            : "noaa-rrfs-forecast-84-hour-virtual",
+      model === "ifs"
+        ? "ecmwf-ifs-forecast-direct"
+        : model === "aigfs"
+          ? "noaa-aigfs-forecast-direct"
+          : model === "hrrr"
+            ? "noaa-hrrr-forecast-18-hour-virtual"
+            : model === "aifs"
+              ? "ecmwf-aifs-single-forecast-virtual"
+              : model === "gfs"
+                ? "noaa-gfs-forecast-virtual"
+                : "noaa-rrfs-forecast-84-hour-virtual",
     init_time: init,
     snapshot_id: "fixture-immutable-snapshot",
     grid: { latitude: 40.872665, longitude: -74.283767, cell_id: 123 },
@@ -65,7 +86,7 @@ export function nativeFixture(
       lead,
       ...pressureFields.map((f) => levels.map((_, i) => values(f, i))),
       20,
-      10,
+      ...(model === "aigfs" ? [] : [10]),
     ]),
     units: {
       geopotential_height: "m",

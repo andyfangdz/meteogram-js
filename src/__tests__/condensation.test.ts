@@ -169,3 +169,11 @@ describe("utils/condensation", () => {
     });
   });
 });
+
+it("keeps the surface parcel unavailable when its dew point is absent", () => {
+  const column = buildColumn(20, 10, [cell({})]);
+  column.groundDewPoint = null;
+  const result = computeColumnParcelProfile(column, 0, "surface");
+  expect(result.lclMslFt).toBeNull();
+  expect(result.lfcMslFt).toBeNull();
+});

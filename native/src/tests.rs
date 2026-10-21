@@ -86,7 +86,7 @@ fn catalog_lock_drains_readers() {
 }
 fn metadata(model: &str, age: i64) -> Value {
     let init = chrono::Utc::now() - chrono::Duration::hours(age);
-    json!({"model":model,"dataset":dataset(model).unwrap(),"init_time":init.format("%Y-%m-%dT%H:%M:%S").to_string(),"snapshot_id":"test_snapshot","coverage":"conus","cells":if grid_relative(model){1638757}else{24885},"spatial_shards":1,"levels":if model=="aifs"{vec![1000,925,850,700,600,500,400,300]}else{(275..1001).step_by(25).rev().collect()},"leads":leads(model),"variables":variables(model),"surface_variables":["temperature_2m","dew_point_temperature_2m"]})
+    json!({"model":model,"dataset":dataset(model).unwrap(),"init_time":init.format("%Y-%m-%dT%H:%M:%S").to_string(),"snapshot_id":"test_snapshot","coverage":"conus","cells":if grid_relative(model){1638757}else{24885},"spatial_shards":1,"levels":pressure_levels(model),"leads":cycle_leads(model,init.timestamp()),"variables":variables(model),"surface_variables":surface_variables(model)})
 }
 #[tokio::test]
 async fn incremental_readiness_requires_every_field_but_not_previous_hours() {
@@ -140,10 +140,11 @@ fn manifest_fixture(
         .unwrap()
         .format("%Y-%m-%dT%H:%M:%S")
         .to_string());
+    m["leads"] = json!(expected_leads(&m).unwrap());
     let entries =
         m["levels"].as_array().unwrap().len() * m["variables"].as_array().unwrap().len() + 2;
     let mut books = Vec::new();
-    for lead in product_leads(model, product) {
+    for lead in expected_leads(&m).unwrap() {
         let (child_path, mut child) = candidate(root, model).unwrap();
         child.table = entry.table.clone();
         child.owned = false;
@@ -933,4 +934,34 @@ fn unknown_catalog_version_is_rejected() {
     };
     atomic(root.path().join("catalog.json"), &c).unwrap();
     assert!(catalog(root.path()).is_err());
+}
+
+#[test]
+fn ifs_short_cycles_do_not_replace_the_complete_long_base() {
+    let root = tempfile::tempdir().unwrap();
+    let base = (now() as i64).div_euclid(43200) * 43200 - 86400;
+    let long = archived_fixture(root.path(), "ifs", dataset("ifs").unwrap(), base);
+    archived_fixture(root.path(), "ifs", dataset("ifs").unwrap(), base + 21600);
+    archived_fixture(root.path(), "ifs", dataset("ifs").unwrap(), base + 64800);
+    let c = catalog(root.path()).unwrap();
+    assert_eq!(c.complete_runs["ifs"].len(), 2);
+    assert_eq!(c.long_runs["ifs"], long);
+    assert_eq!(crate::runs::direct(&c, false).len(), 3);
+    let next = archived_fixture(root.path(), "ifs", dataset("ifs").unwrap(), base + 86400);
+    let c = catalog(root.path()).unwrap();
+    assert_eq!(c.long_runs["ifs"], next);
+    assert_eq!(crate::runs::direct(&c, false).len(), 2);
+}
+#[test]
+fn new_global_models_preserve_native_leads_levels_and_surface_availability() {
+    assert_eq!(cycle_leads("ifs", 0).len(), 55);
+    assert_eq!(cycle_leads("ifs", 21600).len(), 49);
+    assert_eq!(cycle_leads("ifs", 43200).last(), Some(&180));
+    assert_eq!(cycle_leads("ifs", 64800).last(), Some(&144));
+    assert_eq!(leads("aigfs").len(), 31);
+    assert_eq!(surface_variables("aigfs"), vec!["temperature_2m"]);
+    let mut m = metadata("aigfs", 6);
+    check_metadata(&m).unwrap();
+    m["surface_variables"] = json!(["temperature_2m", "dew_point_temperature_2m"]);
+    assert!(check_metadata(&m).is_err());
 }

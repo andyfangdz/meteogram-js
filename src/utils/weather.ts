@@ -164,7 +164,7 @@ export function completeCloudColumn(dateAndCloud: {
   date: Date;
   cloud: BaseCloudCell[];
   groundTemp: number;
-  groundDewPoint: number;
+  groundDewPoint: number | null;
 }): CloudColumn {
   // Filter out null entries and sort by pressure (height)
   const validClouds = dateAndCloud.cloud

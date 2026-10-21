@@ -234,3 +234,37 @@ describe("HRRR native cloud layers", () => {
     expect(() => parseNativeForecast(f, "hrrr")).toThrow(/cloud/i);
   });
 });
+
+it("preserves IFS native cadence and cycle-dependent completeness", () => {
+  for (const [init, count, end] of [
+    ["2026-10-18T00:00:00", 55, 180],
+    ["2026-10-18T06:00:00", 49, 144],
+  ] as const) {
+    const raw = nativeFixture("ifs", init);
+    const f = parseNativeForecast(raw, "ifs");
+    expect(f.expected_leads).toHaveLength(count);
+    expect(f.expected_leads.at(-1)).toBe(end);
+    const result = transformNativeForecast(f, nativeInitTime(init));
+    expect(result.source.provider).toBe("ecmwf");
+    expect(result.data.map((d) => d.durationMinutes)).toEqual([180, 180, 180]);
+    expect(result.data[0].cloud).toHaveLength(8);
+  }
+});
+it("does not fabricate AIGFS surface dew point or hourly samples", () => {
+  const init = "2026-10-18T06:00:00";
+  const raw = nativeFixture("aigfs", init);
+  const result = transformNativeForecast(
+    parseNativeForecast(raw, "aigfs"),
+    nativeInitTime(init),
+  );
+  expect(result.source.provider).toBe("noaa");
+  expect(result.data.map((d) => d.durationMinutes)).toEqual([360, 360, 360]);
+  expect(result.data.every((d) => d.groundDewPoint === null)).toBe(true);
+  expect(result.data[0].cloud).toHaveLength(8);
+  expect(result.data[0].cloud.every((c) => Number.isFinite(c.dewPoint))).toBe(
+    true,
+  );
+  expect(() =>
+    parseNativeForecast({ ...raw, source_providers: ["ecmwf"] }, "aigfs"),
+  ).toThrow(/provider/);
+});

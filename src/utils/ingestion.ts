@@ -1,4 +1,9 @@
-export const INGESTION_MODELS = ["hrrr", "gfs", "aifs", "rrfs"] as const;
+const LEGACY_INGESTION_MODELS = ["hrrr", "gfs", "aifs", "rrfs"] as const;
+export const INGESTION_MODELS = [
+  ...LEGACY_INGESTION_MODELS,
+  "ifs",
+  "aigfs",
+] as const;
 export type IngestionModel = (typeof INGESTION_MODELS)[number];
 export interface IngestionRun {
   init_time: string;
@@ -103,7 +108,8 @@ export function parseIngestionStatus(value: unknown): IngestionStatus {
       ),
     ) ||
     !Array.isArray(value.models) ||
-    value.models.length !== 4
+    (value.models.length !== LEGACY_INGESTION_MODELS.length &&
+      value.models.length !== INGESTION_MODELS.length)
   )
     throw new Error("Invalid ingestion status");
   const names = new Set();
@@ -176,6 +182,8 @@ export function parseIngestionStatus(value: unknown): IngestionStatus {
         throw new Error("Invalid run status");
     }
   }
+  if (!LEGACY_INGESTION_MODELS.every((model) => names.has(model)))
+    throw new Error("Missing model status");
   return value as unknown as IngestionStatus;
 }
 

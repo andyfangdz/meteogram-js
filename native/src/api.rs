@@ -91,6 +91,7 @@ fn retain_models(cache: &mut HashMap<String, Arc<Model>>, c: &Catalog) {
             .chain(c.previous.values())
             .chain(c.complete_runs.values().flatten())
             .chain(c.hrrr_long.iter())
+            .chain(c.long_runs.values())
             .any(|entry| &entry.revision == revision)
     });
 }
@@ -133,6 +134,8 @@ fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model
         let (_, _, child) = crate::runs::book_entry(root, &book)?;
         source_providers.insert(if child["source_provider"] == crate::ecmwf::PROVIDER {
             "ecmwf"
+        } else if child["source_provider"] == crate::ecmwf::NOAA_PROVIDER {
+            "noaa"
         } else {
             "dynamical"
         });
@@ -158,7 +161,8 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
                     q.get("run").map(String::as_str).unwrap_or("latest"),
                     "latest" | "latest_complete" | "previous_complete" | "long"
                 )
-                && (q.get("run").is_none_or(|v| v != "long") || name == "hrrr")
+                && (q.get("run").is_none_or(|v| v != "long")
+                    || matches!(name.as_str(), "hrrr" | "ifs"))
                 && lat.is_finite()
                 && lon.is_finite()
                 && (-90. ..=90.).contains(&lat)
@@ -177,7 +181,13 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
         let e = match q.get("run").map(String::as_str).unwrap_or("latest") {
             "latest_complete" => c.complete_runs.get(&name).and_then(|v| v.first()),
             "previous_complete" => c.complete_runs.get(&name).and_then(|v| v.get(1)),
-            "long" => c.hrrr_long.as_ref(),
+            "long" => {
+                if name == "hrrr" {
+                    c.hrrr_long.as_ref()
+                } else {
+                    c.long_runs.get(&name)
+                }
+            }
             _ => c.current.get(&name),
         }
         .context("Requested forecast run unavailable")?;
@@ -284,10 +294,16 @@ async fn health(State(app): State<App>) -> (StatusCode, Json<Value>) {
                     freshness(&read_json(descriptor(&app.root, e)?.join("metadata.json"))?)?;
                 let count = c.complete_runs.get(name).map_or(0, Vec::len);
                 status["complete_runs_retained"] = json!(count);
-                status["retention_satisfied"] =
-                    json!(count >= 2 && (name != "hrrr" || c.hrrr_long.is_some()));
+                status["retention_satisfied"] = json!(
+                    count >= 2
+                        && (name != "hrrr" || c.hrrr_long.is_some())
+                        && (name != "ifs" || c.long_runs.contains_key(name))
+                );
                 if name == "hrrr" {
                     status["long_run_retained"] = json!(c.hrrr_long.is_some());
+                }
+                if name == "ifs" {
+                    status["long_run_retained"] = json!(c.long_runs.contains_key(name));
                 }
                 models.insert(name.clone(), status);
             }
@@ -376,7 +392,7 @@ async fn list_runs(
             let latest=c.current.get(&name).map(|e|crate::runs::summary(&app.root,e)).transpose()?;
             let complete=c.complete_runs.get(&name).into_iter().flatten().map(|e|crate::runs::summary(&app.root,e)).collect::<Result<Vec<_>>>()?;
             let building=c.building.get(&name).into_iter().flatten().map(|e|crate::runs::summary(&app.root,e)).collect::<Result<Vec<_>>>()?;
-            let long=if name=="hrrr" {c.hrrr_long.as_ref().map(|e|crate::runs::summary(&app.root,e)).transpose()?}else{None};
+            let long=if name=="hrrr" {c.hrrr_long.as_ref().map(|e|crate::runs::summary(&app.root,e)).transpose()?}else{c.long_runs.get(&name).map(|e|crate::runs::summary(&app.root,e)).transpose()?};
             Ok(json!({"model":name,"latest":latest,"complete_runs":complete,"building":building,"long_run":long}))
         };
         match run() {Ok(v)=>(StatusCode::OK,Json(v)),Err(_)=>(StatusCode::SERVICE_UNAVAILABLE,Json(json!({"error":"Run inventory unavailable"})))}

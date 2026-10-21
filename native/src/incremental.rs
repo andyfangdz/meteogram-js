@@ -469,6 +469,7 @@ async fn poll_with_stop(
                 .into_iter()
                 .flatten()
                 .chain(c.hrrr_long.iter())
+                .chain(c.long_runs.values())
                 .filter_map(|e| read_json(descriptor(&root, e).ok()?.join("metadata.json")).ok())
                 .filter(|m| m["model"] == model && m["dataset"] == product)
                 .filter_map(|m| m["init_time"].as_str().map(str::to_owned))
@@ -489,6 +490,19 @@ async fn poll_with_stop(
                     .transpose()?
                     .map(|m| timestamp(m["init_time"].as_str().unwrap()))
                     .transpose()?;
+            }
+            if model == "ifs" {
+                let long_floor = c
+                    .long_runs
+                    .get("ifs")
+                    .map(|e| read_json(descriptor(&root, e)?.join("metadata.json")))
+                    .transpose()?
+                    .map(|m| timestamp(m["init_time"].as_str().unwrap()))
+                    .transpose()?;
+                floor = match (floor, long_floor) {
+                    (Some(a), Some(b)) => Some(a.min(b)),
+                    _ => None,
+                };
             }
             Ok::<_, anyhow::Error>(async move {
                 let result =

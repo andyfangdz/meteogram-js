@@ -14,7 +14,7 @@ import {
 export interface NativeForecast {
   model: NativeWeatherModel;
   dataset: string;
-  source_providers?: ("dynamical" | "ecmwf")[];
+  source_providers?: ("dynamical" | "ecmwf" | "noaa")[];
   init_time: string;
   snapshot_id: string;
   grid: { latitude: number; longitude: number; cell_id: number };
@@ -50,7 +50,9 @@ export interface NativeForecast {
 }
 
 const regionalLevels = Array.from({ length: 30 }, (_, i) => 1000 - i * 25);
-const aifsLevels = [1000, 925, 850, 700, 600, 500, 400, 300];
+const globalLevels = [1000, 925, 850, 700, 600, 500, 400, 300];
+const specificHumidityModel = (model: NativeWeatherModel) =>
+  ["aifs", "ifs", "aigfs"].includes(model);
 const surface = new Set(["temperature_2m", "dew_point_temperature_2m"]);
 const finite = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
@@ -81,31 +83,43 @@ export function parseNativeForecast(
     throw new Error("Invalid or stale native forecast identity");
   }
   const dataset =
-    model === "aifs"
-      ? "ecmwf-aifs-single-forecast-virtual"
-      : model === "gfs"
-        ? "noaa-gfs-forecast-virtual"
-        : model === "rrfs"
-          ? "noaa-rrfs-forecast-84-hour-virtual"
-          : value.dataset === "noaa-hrrr-forecast-18-hour-virtual"
-            ? "noaa-hrrr-forecast-18-hour-virtual"
-            : "noaa-hrrr-forecast-48-hour-virtual";
+    model === "ifs"
+      ? "ecmwf-ifs-forecast-direct"
+      : model === "aigfs"
+        ? "noaa-aigfs-forecast-direct"
+        : model === "aifs"
+          ? "ecmwf-aifs-single-forecast-virtual"
+          : model === "gfs"
+            ? "noaa-gfs-forecast-virtual"
+            : model === "rrfs"
+              ? "noaa-rrfs-forecast-84-hour-virtual"
+              : value.dataset === "noaa-hrrr-forecast-18-hour-virtual"
+                ? "noaa-hrrr-forecast-18-hour-virtual"
+                : "noaa-hrrr-forecast-48-hour-virtual";
   const expected =
     model === "gfs"
       ? [
           ...Array.from({ length: 121 }, (_, i) => i),
           ...Array.from({ length: 20 }, (_, i) => 123 + i * 3),
         ]
-      : model === "aifs"
-        ? Array.from({ length: 31 }, (_, i) => i * 6)
-        : Array.from(
-            {
-              length:
-                model === "rrfs" ? 85 : dataset.includes("18-hour") ? 19 : 49,
-            },
-            (_, i) => i,
-          );
-  const levels = model === "aifs" ? aifsLevels : regionalLevels;
+      : model === "ifs"
+        ? [
+            ...Array.from({ length: 49 }, (_, i) => i * 3),
+            ...(new Date(nativeInitTime(value.init_time)).getUTCHours() % 12 ===
+            0
+              ? Array.from({ length: 6 }, (_, i) => 150 + i * 6)
+              : []),
+          ]
+        : model === "aifs" || model === "aigfs"
+          ? Array.from({ length: 31 }, (_, i) => i * 6)
+          : Array.from(
+              {
+                length:
+                  model === "rrfs" ? 85 : dataset.includes("18-hour") ? 19 : 49,
+              },
+              (_, i) => i,
+            );
+  const levels = specificHumidityModel(model) ? globalLevels : regionalLevels;
   const required = [
     "lead_hour",
     "geopotential_height",
@@ -114,10 +128,10 @@ export function parseNativeForecast(
     "wind_v",
     ...(model === "gfs"
       ? ["relative_humidity", "cloud_cover"]
-      : model === "aifs"
+      : specificHumidityModel(model)
         ? ["specific_humidity"]
         : ["relative_humidity", "dew_point_temperature"]),
-    ...surface,
+    ...(model === "aigfs" ? ["temperature_2m"] : surface),
   ];
   const fields = value.fields;
   const leads = value.available_leads;
@@ -130,6 +144,7 @@ export function parseNativeForecast(
     !fields.every((v) => typeof v === "string") ||
     fields[0] !== "lead_hour" ||
     new Set(fields).size !== fields.length ||
+    fields.length !== required.length ||
     required.some((f) => !fields.includes(f)) ||
     !Array.isArray(leads) ||
     leads.length === 0 ||
@@ -171,7 +186,7 @@ export function parseNativeForecast(
     units.temperature !== "degree_Celsius" ||
     units.wind_u !== "m s-1" ||
     units.wind_v !== "m s-1" ||
-    (model === "aifs"
+    (specificHumidityModel(model)
       ? !["1", "kg kg-1", "kg/kg"].includes(String(units.specific_humidity))
       : units.relative_humidity !== "percent") ||
     (model === "gfs" && units.cloud_cover !== "percent") ||
@@ -191,8 +206,12 @@ export function parseNativeForecast(
     (!Array.isArray(value.source_providers) ||
       value.source_providers.length === 0 ||
       new Set(value.source_providers).size !== value.source_providers.length ||
-      value.source_providers.some(
-        (p) => p !== "dynamical" && (p !== "ecmwf" || model !== "aifs"),
+      value.source_providers.some((p) =>
+        model === "aigfs"
+          ? p !== "noaa"
+          : model === "ifs"
+            ? p !== "ecmwf"
+            : p !== "dynamical" && (p !== "ecmwf" || model !== "aifs"),
       ))
   ) {
     throw new Error("Unsupported native source provider");
@@ -408,7 +427,12 @@ export function transformNativeForecast(
     throw new Error("Native forecast initialization is stale");
   }
   const positions = new Map(forecast.fields.map((f, i) => [f, i]));
-  const cadenceMinutes = forecast.model === "aifs" ? 360 : 60;
+  const cadenceMinutes =
+    forecast.model === "aifs" || forecast.model === "aigfs"
+      ? 360
+      : forecast.model === "ifs"
+        ? 180
+        : 60;
   const cutoff =
     Math.floor(now / (cadenceMinutes * 60_000)) * cadenceMinutes * 60_000;
   const data = forecast.rows.flatMap((row) => {
@@ -419,8 +443,9 @@ export function transformNativeForecast(
       (row[positions.get(name)!] as number[])[level];
     const cloud = forecast.levels_hpa.flatMap((hpa, level): BaseCloudCell[] => {
       const temperature = at("temperature", level);
-      const q =
-        forecast.model === "aifs" ? at("specific_humidity", level) : null;
+      const q = specificHumidityModel(forecast.model)
+        ? at("specific_humidity", level)
+        : null;
       const rh =
         q === null
           ? at("relative_humidity", level)
@@ -478,16 +503,20 @@ export function transformNativeForecast(
           date,
           cloud,
           groundTemp: row[positions.get("temperature_2m")!] as number,
-          groundDewPoint: row[
-            positions.get("dew_point_temperature_2m")!
-          ] as number,
+          groundDewPoint: positions.has("dew_point_temperature_2m")
+            ? (row[positions.get("dew_point_temperature_2m")!] as number)
+            : null,
         }),
         durationMinutes:
-          forecast.model === "aifs"
+          forecast.model === "aifs" || forecast.model === "aigfs"
             ? 360
-            : forecast.model === "gfs" && lead >= 120
-              ? 180
-              : 60,
+            : forecast.model === "ifs"
+              ? lead >= 144 && forecast.expected_leads.at(-1) === 180
+                ? 360
+                : 180
+              : forecast.model === "gfs" && lead >= 120
+                ? 180
+                : 60,
       },
     ];
   });
@@ -501,12 +530,15 @@ export function transformNativeForecast(
   return {
     data,
     source: {
-      provider: forecast.source_providers?.includes("ecmwf")
-        ? "ecmwf"
-        : "dynamical",
+      provider: forecast.source_providers?.includes("noaa")
+        ? "noaa"
+        : forecast.source_providers?.includes("ecmwf")
+          ? "ecmwf"
+          : "dynamical",
       ...(forecast.source_providers
         ? { nativeProviders: forecast.source_providers }
         : {}),
+      surfaceDewPointAvailable: positions.has("dew_point_temperature_2m"),
       model: forecast.model,
       initializedAt: new Date(init).toISOString(),
       forecastLengthHours: forecast.expected_leads.at(-1),

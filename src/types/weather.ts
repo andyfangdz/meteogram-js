@@ -53,7 +53,7 @@ export interface CloudColumn {
   sampleDate?: Date;
   cloudMethod?: "model" | "humidity-estimate";
   groundTemp: number; // Temperature in Celsius at 2m above ground
-  groundDewPoint: number; // Dew point in Celsius at 2m above ground
+  groundDewPoint: number | null; // Dew point in Celsius at 2m above ground
 }
 
 export interface Location {
@@ -81,9 +81,16 @@ export type WeatherModel =
   | "ecmwf_aifs025_single"
   | "gem_seamless"
   | "gem_hrdps_continental"
-  | "rrfs";
+  | "rrfs"
+  | "aigfs";
 
-export type NativeWeatherModel = "hrrr" | "gfs" | "aifs" | "rrfs";
+export type NativeWeatherModel =
+  | "hrrr"
+  | "gfs"
+  | "aifs"
+  | "rrfs"
+  | "ifs"
+  | "aigfs";
 
 export interface ForecastRunSource {
   initializedAt: string;
@@ -94,8 +101,9 @@ export interface ForecastRunSource {
 }
 
 export interface WeatherSource {
-  provider: "dynamical" | "ecmwf" | "open-meteo";
-  nativeProviders?: ("dynamical" | "ecmwf")[];
+  provider: "dynamical" | "ecmwf" | "noaa" | "open-meteo";
+  surfaceDewPointAvailable?: boolean;
+  nativeProviders?: ("dynamical" | "ecmwf" | "noaa")[];
   model: string;
   initializedAt?: string;
   forecastLengthHours?: number;

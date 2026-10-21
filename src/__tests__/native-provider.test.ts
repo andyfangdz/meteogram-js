@@ -126,6 +126,30 @@ describe("server-side native weather provider", () => {
     ).toBe(false);
   });
 
+  it("fetches the IFS long base and serves AIGFS with NOAA attribution", async () => {
+    const ifs = await getWeatherData("ecmwf_ifs", "KCDW");
+    expect(ifs.source).toMatchObject({ provider: "ecmwf", model: "ifs" });
+    const ifsRuns = requests.mock.calls
+      .map(([input]) => new URL(String(input)))
+      .filter((url) => url.searchParams.get("model") === "ifs")
+      .map((url) => url.searchParams.get("run"));
+    expect(ifsRuns).toEqual(["long", "latest_complete", "latest"]);
+    const aigfs = await getWeatherData("aigfs", "KCDW");
+    expect(aigfs.source).toMatchObject({
+      provider: "noaa",
+      model: "aigfs",
+      surfaceDewPointAvailable: false,
+    });
+    expect(aigfs.data.every((d) => d.groundDewPoint === null)).toBe(true);
+    expect(openMeteo).not.toHaveBeenCalled();
+    failure = "unavailable";
+    expect((await getWeatherData("aigfs", "KCDW")).source).toMatchObject({
+      provider: "open-meteo",
+      model: "gfs_seamless",
+      fallback: true,
+    });
+  });
+
   it("exposes RRFS and labels its actual global fallback model", async () => {
     expect((await getWeatherData("rrfs", "KCDW")).source.model).toBe("rrfs");
     failure = "unavailable";

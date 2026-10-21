@@ -6,12 +6,13 @@ Current operation and architecture:
 - [Native service setup, storage, ingestion, API and verification](../native/README.md)
 - [Agent guide and code invariants](../AGENTS.md)
 
-The native service is deployed for HRRR, GFS, AIFS and RRFS. All four use the
+The native service is deployed for HRRR, GFS, AIFS, RRFS, IFS and AIGFS. All six use the
 per-hour UInt16 dictionary/tile format. The site includes native HRRR cloud
 layers and initialization-aware overlays, with Open-Meteo fallback.
 
 ## Validation records
 
+- [Direct operational IFS and NOAA AIGFS full-grid, resume, database and API checks](benchmarks/2026-10-21-direct-global/verification.json)
 - [Direct ECMWF AIFS exactness, resume and database/API checks](benchmarks/2026-10-21-direct-ecmwf/verification.json)
 
 - [HRRR cloud cost, exact coverage and derived geometry](benchmarks/2026-10-19-cloud-cost/README.md)

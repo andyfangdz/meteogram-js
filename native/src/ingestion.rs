@@ -140,6 +140,9 @@ pub fn snapshot(root: &Path) -> Result<Value> {
                 add(e, "long");
             }
         }
+        if let Some(e) = c.long_runs.get(name) {
+            add(e, "long");
+        }
         for e in c.building.get(name).into_iter().flatten() {
             add(e, "building");
         }
@@ -297,7 +300,7 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let result = snapshot(root.path()).unwrap();
         assert_eq!(result["worker_running"], false);
-        assert_eq!(result["models"].as_array().unwrap().len(), 4);
+        assert_eq!(result["models"].as_array().unwrap().len(), MODELS.len());
         std::fs::write(root.path().join("events.jsonl"), format!("{}\n{{unfinished", json!({"time":now()-1.,"phase":"lead_failed","detail":{"model":"gfs","error":"secret token in arbitrary upstream error"}}))).unwrap();
         let result = snapshot(root.path()).unwrap();
         assert_eq!(result["models"][1]["failed_last_hour"], 1);

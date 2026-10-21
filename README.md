@@ -6,7 +6,7 @@ Key tech: HeroUI for UI, Visx for charts, server actions for data fetch/transfor
 
 ### Features
 
-- **Multiple weather models**: HRRR, GFS, AIFS, RRFS and other Open-Meteo models (see `src/config/weather.ts` for route names).
+- **Multiple weather models**: HRRR, GFS, AIFS, RRFS, operational IFS, AIGFS and other Open-Meteo models (see `src/config/weather.ts` for route names).
 - **Flexible locations**: use predefined ICAO sites (e.g., `KFRG`, `KNYC`, `KCDW`) or custom coordinates as `Name@lat,long`.
 - **Rich visualization**: cloud columns, temperature lines/isotherms, pressure lines, wind barbs, hover tooltip, and time axis.
 - **User preferences**: toggle local time, ceiling highlight, cloud coverage clamp, pressure lines, wind barbs, and isotherm lines. Preferences sync to cookies and URL.
@@ -111,32 +111,34 @@ it never receives the API token or calls the home API directly. For local
 development, an ignored `.env.local` can use `http://127.0.0.1:18080`.
 
 `best_match` and `gfs_hrrr` select native HRRR, `gfs_seamless` selects native GFS,
-`ecmwf_aifs025_single` selects native AIFS, and `rrfs` selects native RRFS. Native
+`ecmwf_aifs025_single` selects native AIFS, `rrfs` selects native RRFS,
+`ecmwf_ifs` selects operational IFS and `aigfs` selects NOAA AIGFS. Native
 coverage is 24–50°N, 125–66°W, subject to each model's grid. Other models and
 locations use Open-Meteo. A missing/stale/invalid native forecast or a five-second
-timeout falls back to Open-Meteo; RRFS uses GFS as its backup and labels that
+timeout falls back to Open-Meteo; RRFS and AIGFS use GFS as their backup and labels that
 actual source. Leaving the API URL unset preserves the Open-Meteo path.
 
 The adapter preserves native pressure levels and forecast times, including
-six-hour AIFS and the three-hour GFS tail. HRRR/RRFS grid winds are rotated to
+six-hour AIFS/AIGFS, three-hour IFS (six-hour tail) and the three-hour GFS tail. HRRR/RRFS grid winds are rotated to
 true bearings. HRRR uses 50 exact native cloud coverages with derived layer heights; GFS
-supplies pressure-level cloud fraction. RRFS and AIFS clouds are humidity
+supplies pressure-level cloud fraction. RRFS, AIFS, IFS and AIGFS clouds are humidity
 estimates. The newest HRRR intervals overlay the latest complete 48-hour HRRR
-run. Other native models overlay the latest complete run. Colored run strips,
+run; IFS overlays its latest complete 180-hour run. Other native models overlay the latest complete run. Colored run strips,
 initialization-change lines and tooltip timestamps identify each supplying run. See
 [native service setup](native/README.md) for authentication and Cloudflare Tunnel.
 
 ### Documentation
 
 The [native service guide](native/README.md) describes supported commands and
-formats. All four native models use per-hour UInt16 dictionaries and 256-cell
+formats. All six native models use per-hour UInt16 dictionaries and 256-cell
 tiles automatically. [Documentation index](docs/README.md) separates current
 guides from dated investigations and rollout evidence.
 
 ### Acknowledgments
 
 - Forecast data provided by [Open‑Meteo](https://open-meteo.com/). Elevation data via Open‑Meteo Elevation API.
-- Native forecasts use [Dynamical](https://dynamical.org/) and direct [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data) for AIFS; the source badge identifies acquisition.
+- Native forecasts use [Dynamical](https://dynamical.org/) and direct [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data) for AIFS/IFS, plus direct [NOAA NOMADS](https://nomads.ncep.noaa.gov/) for AIGFS; the source badge identifies acquisition.
+- AIGFS does not provide 2 m dew point, so its surface parcel calculation is unavailable.
 
 ### License
 
