@@ -16,6 +16,7 @@ import {
   latestCloud,
   leadState,
   leadSupersession,
+  leadOutsideChart,
   parseIngestionStatus,
   queuedLeads,
   utcTime,
@@ -45,7 +46,9 @@ function Coverage({
   clouds = false,
   model,
   live,
+  now,
 }: {
+  now: number;
   run: IngestionRun;
   clouds?: boolean;
   model: ModelIngestion;
@@ -74,14 +77,17 @@ function Coverage({
               : supersession === "partial"
                 ? "Partly hidden by a newer initialization"
                 : "";
-          const description = `${LABEL[state]}${overlay ? `; ${overlay}` : ""}`;
+          const past =
+            have.includes(h) && leadOutsideChart(model.model, run, h, now);
+          const description = `${LABEL[state]}${overlay ? `; ${overlay}` : ""}${past ? "; Past — outside the chart window" : ""}`;
           return (
             <span
               key={h}
-              className={`${styles[state]} ${supersession === "full" ? styles.superseded : supersession === "partial" ? styles.partlySuperseded : ""}`}
+              className={`${styles[state]} ${supersession === "full" ? styles.superseded : supersession === "partial" ? styles.partlySuperseded : ""} ${past ? styles.past : ""}`}
               title={`${utcTime(run.init_time)} · +${h}h · valid ${utcTime(epoch(run.init_time) + h * 3600)}: ${description}`}
               data-state={state}
               data-supersession={supersession}
+              data-past={past}
               aria-label={`+${h}h: ${description}`}
             >
               {h}
@@ -99,13 +105,16 @@ function ModelRow({
   data,
   now,
   live,
+  showAllInits,
 }: {
   data: ModelIngestion;
   now: number;
   live: boolean;
+  showAllInits: boolean;
 }) {
   const meta = META[data.model];
-  const runs = displayedRuns(data);
+  const allRuns = displayedRuns(data);
+  const runs = showAllInits ? allRuns : allRuns.slice(0, 1);
   const focus = runs[0];
   const complete = data.runs.find((r) => r.roles.includes("complete"));
   const long = data.runs.find((r) => r.roles.includes("long"));
@@ -158,9 +167,9 @@ function ModelRow({
               max={run.expected_leads.length}
               value={run.available_leads.length}
             />
-            <Coverage run={run} model={data} live={live} />
+            <Coverage run={run} model={data} live={live} now={now} />
             {data.model === "hrrr" && (
-              <Coverage run={run} clouds model={data} live={live} />
+              <Coverage run={run} clouds model={data} live={live} now={now} />
             )}
           </div>
         ))}
@@ -287,6 +296,7 @@ export default function IngestionDashboard() {
   const [data, setData] = useState<IngestionStatus | null>(null);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAllInits, setShowAllInits] = useState(false);
   const [clock, setClock] = useState(() => Date.now() / 1000);
   const request = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
@@ -396,8 +406,20 @@ export default function IngestionDashboard() {
               </span>
               <small>Refreshes every 5s</small>
             </section>
+            <label className={styles.initToggle}>
+              <input
+                type="checkbox"
+                checked={showAllInits}
+                onChange={(event) => setShowAllInits(event.target.checked)}
+              />
+              Show all displayed initializations
+            </label>
             <div className={styles.legend}>
               <span>Forecast lead hours</span>
+              <span>
+                <i className={styles.past} />
+                Past (outside chart)
+              </span>
               {Object.entries(LABEL).map(([state, label]) => (
                 <span key={state}>
                   <i className={styles[state]} />
@@ -416,7 +438,8 @@ export default function IngestionDashboard() {
             <p className={styles.cloudNote}>
               Runs are shown newest first. Hatched times remain stored but are
               hidden in the forecast by newer published data; source-ready times
-              do not supersede them.
+              do not supersede them. Gray times fall outside the current chart
+              window.
             </p>
             {sourceStale && (
               <p className={styles.alert}>
@@ -435,7 +458,8 @@ export default function IngestionDashboard() {
                 <ModelRow
                   key={m.model}
                   data={m}
-                  now={data.generated_at}
+                  now={clock}
+                  showAllInits={showAllInits}
                   live={
                     !error &&
                     data.worker_running &&

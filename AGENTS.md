@@ -792,3 +792,10 @@ fully or partly superseded by newer published weather using absolute valid-time
 overlap and native cadence, not lead-number equality or source readiness. Cloud
 visibility follows the winning weather initialization even before its cloud
 supplement arrives. Hatching does not change stored data or publication counts.
+
+The ingestion dashboard starts with the newest row for each model; its “Show all
+displayed initializations” checkbox expands the supplying runs without changing
+forecast selection. Published samples before the adapter's model-specific current
+window (hourly, three-hour IFS, six-hour AIFS/AIGFS) are gray and labeled past,
+independently of supersession. Hour zero in an older run can be past without ever
+having overlapped a newer initialization.

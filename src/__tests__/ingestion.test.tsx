@@ -3,6 +3,8 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import {
   displayedRuns,
   leadSupersession,
+  leadOutsideChart,
+  epoch,
   isActiveLead,
   latestCloud,
   leadState,
@@ -137,6 +139,48 @@ describe("ingestion status", () => {
       newer.freshness = { available: false };
       expect(leadSupersession(model, older, 3)).toBe("none");
     }
+  });
+  it("distinguishes past times using each model's chart cadence", () => {
+    const run = fixture().models[0].runs[0];
+    const now = epoch(run.init_time) + 5.5 * 3600;
+    expect(leadOutsideChart("hrrr", run, 0, now)).toBe(true);
+    expect(leadOutsideChart("ifs", run, 0, now)).toBe(true);
+    expect(leadOutsideChart("ifs", run, 3, now)).toBe(false);
+    expect(leadOutsideChart("aifs", run, 0, now)).toBe(false);
+    expect(leadOutsideChart("aigfs", run, 0, now + 3600)).toBe(true);
+  });
+  it("toggles all supplying runs and marks older hour zero as past", async () => {
+    const status = fixture();
+    const hrrr = status.models[0];
+    const latest = { ...hrrr.runs[0], init_time: "2026-10-21T02:00:00" };
+    hrrr.runs = [
+      latest,
+      { ...latest, init_time: "2026-10-21T01:00:00", roles: ["complete"] },
+      { ...latest, init_time: "2026-10-21T00:00:00", roles: ["long"] },
+    ];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(status)));
+    vi.setSystemTime(new Date("2026-10-21T02:30:00Z"));
+    render(<Dashboard />);
+    await screen.findByRole("heading", { name: "HRRR" });
+    const article = screen
+      .getByRole("heading", { name: "HRRR" })
+      .closest("article")!;
+    const toggle = screen.getByRole("checkbox", {
+      name: "Show all displayed initializations",
+    });
+    expect(toggle).not.toBeChecked();
+    expect(article.querySelectorAll("progress")).toHaveLength(1);
+    fireEvent.click(toggle);
+    expect(article.querySelectorAll("progress")).toHaveLength(3);
+    expect(article.querySelector('[data-state="ingested"]')).toHaveAttribute(
+      "data-past",
+      "false",
+    );
+    expect(
+      article.querySelectorAll('[data-past="true"]').length,
+    ).toBeGreaterThan(0);
+    fireEvent.click(toggle);
+    expect(article.querySelectorAll("progress")).toHaveLength(1);
   });
   it("only marks the exact active initialization and lead, never a published or queued hour", () => {
     const m = fixture().models[1],

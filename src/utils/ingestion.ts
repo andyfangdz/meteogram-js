@@ -258,6 +258,21 @@ export function displayedRuns(model: ModelIngestion): IngestionRun[] {
   );
 }
 
+/** Match the forecast adapter's current-window cutoff, including coarse models. */
+export function leadOutsideChart(
+  model: IngestionModel,
+  run: IngestionRun,
+  lead: number,
+  now: number,
+) {
+  const cadence =
+    (model === "aifs" || model === "aigfs" ? 6 : model === "ifs" ? 3 : 1) *
+    3600;
+  return (
+    epoch(run.init_time) + lead * 3600 < Math.floor(now / cadence) * cadence
+  );
+}
+
 function leadInterval(run: IngestionRun, lead: number): [number, number] {
   const hours = [...run.expected_leads].sort((a, b) => a - b);
   const index = hours.indexOf(lead);

@@ -598,3 +598,22 @@
   color: #172c3c;
   border: 1px solid #7896a5;
 }
+
+.initToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.initToggle input {
+  accent-color: #126e82;
+}
+.coverage > [data-past="true"],
+.legend .past {
+  background: #e7ecf0;
+  border: 1px solid #c1cbd4;
+  color: #687b8d;
+}
