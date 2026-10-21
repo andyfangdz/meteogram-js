@@ -11,6 +11,35 @@ import {
 } from "@/utils/native-weather";
 
 describe("native meteorological adapter", () => {
+  it("labels direct ECMWF and mixed native acquisition without changing values", () => {
+    const raw = nativeFixture("aifs", "2026-10-18T12:00:00");
+    const now = Date.parse("2026-10-18T14:00:00Z");
+    const reference = transformNativeForecast(
+      parseNativeForecast(raw, "aifs"),
+      now,
+    );
+    const direct = transformNativeForecast(
+      parseNativeForecast(
+        { ...raw, source_providers: ["ecmwf", "dynamical"] },
+        "aifs",
+      ),
+      now,
+    );
+    expect(direct.data).toEqual(reference.data);
+    expect(direct.source).toMatchObject({
+      provider: "ecmwf",
+      nativeProviders: ["ecmwf", "dynamical"],
+    });
+    expect(() =>
+      parseNativeForecast({ ...raw, source_providers: ["unknown"] }, "aifs"),
+    ).toThrow(/provider/);
+    expect(() =>
+      parseNativeForecast(
+        { ...nativeFixture(), source_providers: ["ecmwf"] },
+        "hrrr",
+      ),
+    ).toThrow(/provider/);
+  });
   it("uses UTC timestamps, preserves missing hours and finishes chart geometry", () => {
     const f = parseNativeForecast(nativeFixture(), "hrrr");
     const { data, source } = transformNativeForecast(

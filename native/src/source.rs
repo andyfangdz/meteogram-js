@@ -34,7 +34,7 @@ impl std::error::Error for SourcePending {}
 
 #[derive(Clone)]
 pub struct Source {
-    pub store: Arc<Store>,
+    pub store: Arc<SourceStore>,
     pub snapshot: String,
     pub collection: Value,
     // A Source always owns one immutable readonly snapshot. Keep only its
@@ -43,10 +43,65 @@ pub struct Source {
     coordinates: Arc<RwLock<HashMap<String, Vec<f64>>>>,
     map_slots: Arc<tokio::sync::Semaphore>,
 }
+pub enum SourceStore {
+    Icechunk(Arc<Store>),
+    Ecmwf(Arc<crate::ecmwf::DirectSource>),
+}
+impl SourceStore {
+    async fn get(&self, key: &str, range: &ByteRange) -> Result<Vec<u8>> {
+        match self {
+            Self::Icechunk(store) => Ok(store.get(key, range).await?.to_vec()),
+            Self::Ecmwf(source) => source.get(key).await,
+        }
+    }
+    async fn exists(&self, key: &str) -> Result<bool> {
+        match self {
+            Self::Icechunk(store) => Ok(store.exists(key).await?),
+            Self::Ecmwf(source) => Ok(source.exists(key)),
+        }
+    }
+    fn icechunk(&self) -> Result<&Store> {
+        match self {
+            Self::Icechunk(store) => Ok(store),
+            _ => bail!("This diagnostic requires an Icechunk source"),
+        }
+    }
+    fn validate_cached(&self, key: &str, bytes: &[u8]) -> Result<()> {
+        if let Self::Ecmwf(source) = self {
+            source.validate(key, bytes)?;
+        }
+        Ok(())
+    }
+}
 static REPOSITORIES: std::sync::OnceLock<tokio::sync::Mutex<HashMap<String, Arc<Repository>>>> =
     std::sync::OnceLock::new();
 impl Source {
+    pub fn from_ecmwf(direct: crate::ecmwf::DirectSource) -> Result<Self> {
+        let snapshot = if direct.hours.len() == 1 {
+            crate::ecmwf::DirectSource::hour_snapshot(&direct.hours[0])?
+        } else {
+            direct.snapshot()?
+        };
+        Ok(Self {
+            store: Arc::new(SourceStore::Ecmwf(Arc::new(direct))),
+            snapshot,
+            collection: json!({"id":dataset("aifs")?,"source_provider":crate::ecmwf::PROVIDER}),
+            metadata: Arc::new(RwLock::new(HashMap::new())),
+            coordinates: Arc::new(RwLock::new(HashMap::new())),
+            map_slots: Arc::new(tokio::sync::Semaphore::new(16)),
+        })
+    }
+    pub fn hour_pin(&self, pin: &Value, lead: u16) -> Result<Value> {
+        match &*self.store {
+            SourceStore::Ecmwf(direct) => direct.pin(pin, lead),
+            _ => Ok(pin.clone()),
+        }
+    }
     pub async fn open(model: &str, pin: Option<&Value>) -> Result<Self> {
+        if let Some(pin) = pin.filter(|p| p["source_provider"] == crate::ecmwf::PROVIDER) {
+            anyhow::ensure!(model == "aifs", "Direct ECMWF source only supports AIFS");
+            return Self::from_ecmwf(crate::ecmwf::DirectSource::from_pin(pin)?);
+        }
         let product = pin
             .and_then(|p| p["dataset"].as_str())
             .unwrap_or(dataset(model)?);
@@ -120,7 +175,7 @@ impl Source {
         let snapshot = session.snapshot_id().to_string();
         let store = Arc::new(Store::from_session(Arc::new(RwLock::new(session))).await);
         Ok(Self {
-            store,
+            store: Arc::new(SourceStore::Icechunk(store)),
             snapshot,
             collection,
             metadata: Arc::new(RwLock::new(HashMap::new())),
@@ -129,6 +184,9 @@ impl Source {
         })
     }
     pub async fn meta(&self, name: &str) -> Result<Value> {
+        if let SourceStore::Ecmwf(source) = &*self.store {
+            return source.meta(name);
+        }
         if let Some(value) = self.metadata.read().await.get(name) {
             return Ok(value.clone());
         }
@@ -144,6 +202,9 @@ impl Source {
         Ok(value)
     }
     pub async fn coord(&self, name: &str) -> Result<Vec<f64>> {
+        if let SourceStore::Ecmwf(source) = &*self.store {
+            return source.coord(name);
+        }
         if let Some(values) = self.coordinates.read().await.get(name) {
             return Ok(values.clone());
         }
@@ -352,7 +413,11 @@ pub(crate) fn prune_checkpointed_cache(dir: &Path, keys: &[String]) -> Result<u6
         let path = cache_path(dir, key);
         match fs::metadata(&path) {
             Ok(metadata) => {
-                fs::remove_file(path)?;
+                fs::remove_file(&path)?;
+                let checksum = path.with_extension("sha256");
+                if checksum.exists() {
+                    fs::remove_file(checksum)?;
+                }
                 removed += metadata.len();
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
@@ -379,10 +444,20 @@ fn cloud_cache_dir(out: &Path, snapshot: &str) -> Result<PathBuf> {
     fs::create_dir_all(&path)?;
     Ok(path)
 }
-async fn cached(store: &Store, dir: &Path, key: &str, bytes: &AtomicU64) -> Result<Vec<u8>> {
+async fn cached(store: &SourceStore, dir: &Path, key: &str, bytes: &AtomicU64) -> Result<Vec<u8>> {
     let p = cache_path(dir, key);
-    if p.exists() {
-        return Ok(fs::read(p)?);
+    let direct = matches!(store, SourceStore::Ecmwf(_));
+    let checksum = p.with_extension("sha256");
+    if p.exists() && (!direct || checksum.exists()) {
+        let bytes = fs::read(p)?;
+        if direct {
+            anyhow::ensure!(
+                read_json(&checksum)? == json!(crate::ecmwf::digest(&bytes)),
+                "Cached ECMWF message checksum differs"
+            );
+        }
+        store.validate_cached(key, &bytes)?;
+        return Ok(bytes);
     }
     let mut last = None;
     for attempt in 0..4 {
@@ -393,8 +468,11 @@ async fn cached(store: &Store, dir: &Path, key: &str, bytes: &AtomicU64) -> Resu
                 let tmp = p.with_extension(format!("{}.tmp", uuid::Uuid::new_v4().simple()));
                 fs::write(&tmp, &b)?;
                 fs::rename(tmp, &p)?;
+                if direct {
+                    atomic(&checksum, &json!(crate::ecmwf::digest(&b)))?;
+                }
                 bytes.fetch_add(b.len() as u64, Ordering::Relaxed);
-                return Ok(b.to_vec());
+                return Ok(b);
             }
             Err(e) => {
                 last = Some(e);
@@ -439,8 +517,10 @@ async fn fetch_hour_inner(
     let existing = out.join("metadata.json").exists();
     let old = if existing {
         read_json(out.join("metadata.json"))?
-    } else {
+    } else if pin.get("ecmwf_source").is_some() {
         pin
+    } else {
+        available.hour_pin(&pin, lead)?
     };
     anyhow::ensure!(
         old["model"] == model
@@ -454,7 +534,7 @@ async fn fetch_hour_inner(
         "Resume requires dictionary staging"
     );
     let opened;
-    let src = if existing {
+    let src = if existing || old["source_provider"] == crate::ecmwf::PROVIDER {
         let mut source = Source::open(model, Some(&old)).await?;
         source.map_slots = available.map_slots.clone();
         opened = source;
@@ -556,6 +636,16 @@ async fn fetch_hour_inner(
     );
     let leads = vec![lead];
     let mut meta = json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":src.snapshot,"cells":ids.len(),"levels":levels,"leads":leads,"variables":variables,"surface_variables":surface,"grid":grid,"units":units,"coverage":"conus","spatial_shards":1,"shard_index":0,"map_concurrency":16,"open_seconds":start.elapsed().as_secs_f64()});
+    if existing {
+        meta["open_seconds"] = old["open_seconds"].clone();
+    }
+    if old["source_provider"] == crate::ecmwf::PROVIDER {
+        meta["source_provider"] = old["source_provider"].clone();
+        meta["ecmwf_source"] = old["ecmwf_source"].clone();
+        if let Some(proofs) = old.get("source_payload_sha256") {
+            meta["source_payload_sha256"] = proofs.clone();
+        }
+    }
     meta["staging"] = json!({"encoding":crate::dictionary::ENCODING,"complete":false});
     {
         for k in ["init_time", "snapshot_id", "cells", "levels"] {
@@ -645,7 +735,7 @@ async fn fetch_hour_inner(
                 .collect();
             let references = check_references(keys, |key| {
                 let store = src.store.clone();
-                async move { Ok(store.exists(&key).await?) }
+                async move { store.exists(&key).await }
             })
             .await?;
             atomic(out.join("preflight.json"), &references)?;
@@ -750,6 +840,15 @@ async fn fetch_hour_inner(
                     .await
                     .into_iter()
                     .collect::<Result<Vec<_>>>()?;
+                if let SourceStore::Ecmwf(direct) = &*src.store {
+                    let proofs = direct.proofs();
+                    anyhow::ensure!(
+                        proofs.as_object().is_some_and(|p| p.len() == 42),
+                        "Missing ECMWF payload proofs"
+                    );
+                    meta["source_payload_sha256"] = proofs;
+                    atomic(out.join("metadata.json"), &meta)?;
+                }
                 let nc = ids.len();
                 let nl = levels.len();
                 let nf = variables.len();
@@ -985,6 +1084,10 @@ pub async fn availability_filtered(
     finished: &[String],
     floor: Option<f64>,
 ) -> Result<Availability> {
+    if model == "aifs" && std::env::var("METEOGRAM_AIFS_SOURCE").as_deref() == Ok("direct") {
+        anyhow::ensure!(product == dataset("aifs")?, "Invalid AIFS product");
+        return direct_availability(tracked, finished, floor).await;
+    }
     let source = Arc::new(Source::open(model, Some(&json!({"dataset":product}))).await?);
     let times = source.init_times().await?;
     let mut selected = times
@@ -1090,7 +1193,7 @@ pub async fn availability_filtered(
         }
         let counts = ready_hours(hours, |key| {
             let s = source.store.clone();
-            async move { Ok(s.exists(&key).await?) }
+            async move { s.exists(&key).await }
         })
         .await?;
         let cloud_ready = if model == "hrrr" {
@@ -1113,7 +1216,7 @@ pub async fn availability_filtered(
             Some(
                 ready_hours(hours, |key| {
                     let store = source.store.clone();
-                    async move { Ok(store.exists(&key).await?) }
+                    async move { store.exists(&key).await }
                 })
                 .await?
                 .into_iter()
@@ -1130,6 +1233,39 @@ pub async fn availability_filtered(
             .to_string();
         runs.push(AvailableRun {pin:json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":source.snapshot}),expected:expected.clone(),ready:counts.iter().filter(|(_,n)|*n==0).map(|(h,_)|*h).collect(),missing:counts.iter().map(|(_,n)|n).sum(),cloud_ready});
     }
+    Ok(Availability { source, runs })
+}
+
+async fn direct_availability(
+    tracked: &[String],
+    finished: &[String],
+    floor: Option<f64>,
+) -> Result<Availability> {
+    let latest = (now() as i64).div_euclid(21600) * 21600;
+    let mut times = (0..3).map(|n| latest - n * 21600).collect::<Vec<_>>();
+    for init in tracked {
+        let t = timestamp(init)? as i64;
+        if t <= latest {
+            times.push(t);
+        }
+    }
+    let complete = finished
+        .iter()
+        .map(|t| timestamp(t).map(|t| t as i64))
+        .collect::<Result<Vec<_>>>()?;
+    times.retain(|t| !complete.contains(t) && floor.is_none_or(|f| *t as f64 > f));
+    times.sort_unstable();
+    times.dedup();
+    let direct = crate::ecmwf::discover(times.clone()).await?;
+    let source = Arc::new(Source::from_ecmwf(direct)?);
+    let SourceStore::Ecmwf(direct) = &*source.store else {
+        unreachable!()
+    };
+    let runs = times.into_iter().rev().map(|init| {
+        let ready = direct.hours.iter().filter(|h|h.init == init).map(|h|h.lead).collect::<Vec<_>>();
+        let init_time = chrono::DateTime::from_timestamp(init,0).unwrap().format("%Y-%m-%dT%H:%M:%S%.9f").to_string();
+        AvailableRun {pin:json!({"model":"aifs","dataset":dataset("aifs").unwrap(),"init_time":init_time,"snapshot_id":source.snapshot,"source_provider":crate::ecmwf::PROVIDER}),expected:leads("aifs"),missing:(31-ready.len())*42,ready,cloud_ready:None}
+    }).collect();
     Ok(Availability { source, runs })
 }
 
@@ -1162,6 +1298,7 @@ pub async fn probe(model: &str, pin: &Value) -> Result<Value> {
         .map_err(anyhow::Error::msg)?;
     let reference = s
         .store
+        .icechunk()?
         .session()
         .read()
         .await
@@ -1302,7 +1439,7 @@ pub async fn fetch_cloud_coverage(out: &Path, available: &Source) -> Result<Valu
     let preflight_started = Instant::now();
     let preflight = check_references(keys.clone(), |key| {
         let store = available.store.clone();
-        async move { Ok(store.exists(&key).await?) }
+        async move { store.exists(&key).await }
     })
     .await?;
     if preflight["complete"] != true {
@@ -1473,7 +1610,7 @@ pub async fn cloud_availability(product: &str) -> Result<Value> {
                 .collect();
             let result = check_references(keys, |key| {
                 let store = src.store.clone();
-                async move { Ok(store.exists(&key).await?) }
+                async move { store.exists(&key).await }
             })
             .await?;
             hours.push(json!({"lead":hour,"references":result}));
@@ -1516,5 +1653,150 @@ mod cloud_tests {
         metas.get_mut(&name).unwrap()["dimension_names"][4] = json!("model_level");
         metas.get_mut(&name).unwrap()["chunk_grid"]["configuration"]["chunk_shape"][4] = json!(2);
         assert!(task(0, Some(0), name, &metas, 1, 2, Some(0)).is_err());
+    }
+}
+
+#[cfg(test)]
+mod ecmwf_tests {
+    use super::*;
+    #[test]
+    #[ignore = "Requires ECMWF_TEST_STAGE from live acquisition and loopback ClickHouse"]
+    fn direct_ecmwf_staged_database_roundtrip() -> Result<()> {
+        let stage =
+            PathBuf::from(std::env::var("ECMWF_TEST_STAGE").context("Set ECMWF_TEST_STAGE")?);
+        let root = tempfile::tempdir()?;
+        let (path, entry) = candidate(&root.path().join("incoming"), "aifs")?;
+        for file in fs::read_dir(&stage)? {
+            let file = file?;
+            if file.file_type()?.is_file() {
+                fs::copy(file.path(), path.join(file.file_name()))?;
+            }
+        }
+        let metadata = read_json(path.join("metadata.json"))?;
+        crate::ecmwf::check_metadata(&metadata)?;
+        let lead = metadata["leads"][0].as_u64().context("Missing lead")? as u16;
+        let shared = format!("rust_test_ecmwf_{}", uuid::Uuid::new_v4().simple());
+        let db = crate::db::Db::new()?;
+        let result = (|| -> Result<()> {
+            crate::store::load_lead(root.path(), &path, &entry.table, lead)?;
+            let proof = crate::store::validate(&path, &entry.table, DATABASE, true)?;
+            anyhow::ensure!(
+                proof["full_values_checked"] == true && proof["staged_comparison"] == true,
+                "Incomplete database comparison"
+            );
+            let first =
+                crate::incremental::attach_lead(root.path(), "aifs", &path, &entry, &shared, None)?;
+            let again =
+                crate::incremental::attach_lead(root.path(), "aifs", &path, &entry, &shared, None)?;
+            anyhow::ensure!(first == again, "Duplicate attachment changed publication");
+            let (status, payload) = crate::api::test_forecast(
+                root.path(),
+                [("model", "aifs"), ("lat", "41"), ("lon", "-74")]
+                    .into_iter()
+                    .map(|(k, v)| (k.to_owned(), v.to_owned()))
+                    .collect(),
+            );
+            anyhow::ensure!(
+                status == axum::http::StatusCode::OK
+                    && payload["source_providers"] == json!(["ecmwf"])
+                    && payload["available_leads"] == json!([lead]),
+                "Direct API provenance/forecast differs: {payload}"
+            );
+            println!(
+                "{}",
+                json!({"direct_database_roundtrip":true,"lead":lead,"full_values_checked":true,"staged_comparison":true,"idempotent_publication":true,"source_providers":payload["source_providers"]})
+            );
+            Ok(())
+        })();
+        for table in [&entry.table, &shared] {
+            db.command(&format!(
+                "DROP TABLE IF EXISTS {DATABASE}.{} SYNC",
+                ident(table)?
+            ))?;
+        }
+        result
+    }
+    #[tokio::test]
+    #[ignore = "Downloads live ECMWF and Dynamical AIFS; requires explicit initialization and output directory"]
+    async fn direct_ecmwf_live_exactness_and_resume() -> Result<()> {
+        let init = std::env::var("ECMWF_TEST_INIT").context("Set ECMWF_TEST_INIT")?;
+        let output =
+            PathBuf::from(std::env::var("ECMWF_TEST_OUTPUT").context("Set ECMWF_TEST_OUTPUT")?);
+        anyhow::ensure!(!output.exists(), "Use a fresh output directory");
+        fs::create_dir_all(&output)?;
+        let source = Source::open("aifs", None).await?;
+        let direct =
+            Source::from_ecmwf(crate::ecmwf::discover(vec![timestamp(&init)? as i64]).await?)?;
+        let SourceStore::Ecmwf(d) = &*direct.store else {
+            unreachable!()
+        };
+        anyhow::ensure!(d.hours.len() == 31, "Direct run is not complete");
+        let pin = json!({"model":"aifs","dataset":dataset("aifs")?,"init_time":init});
+        let mut reports = Vec::new();
+        for lead in [0, 102] {
+            let reference_dir = output.join(format!("dynamical-{lead}"));
+            let direct_dir = output.join(format!("direct-{lead}"));
+            let started = Instant::now();
+            let reference =
+                fetch_pressure_hour("aifs", &reference_dir, pin.clone(), lead, &source).await?;
+            let reference_seconds = started.elapsed().as_secs_f64();
+            let started = Instant::now();
+            let actual =
+                fetch_pressure_hour("aifs", &direct_dir, pin.clone(), lead, &direct).await?;
+            let direct_seconds = started.elapsed().as_secs_f64();
+            for key in [
+                "cells",
+                "levels",
+                "variables",
+                "surface_variables",
+                "grid",
+                "units",
+            ] {
+                anyhow::ensure!(
+                    reference[key] == actual[key],
+                    "Source schema differs: {key}"
+                );
+            }
+            let cells = crate::stage::load_cells(&reference_dir)?;
+            let other = crate::stage::load_cells(&direct_dir)?;
+            for (name, array) in cells {
+                anyhow::ensure!(array.bytes == other[&name].bytes, "Coordinates/IDs differ");
+            }
+            let a = crate::dictionary::Dictionary::load(&reference_dir, &reference)?;
+            let b = crate::dictionary::Dictionary::load(&direct_dir, &actual)?;
+            anyhow::ensure!(a.fields == b.fields, "Float32 palette bits differ");
+            for name in [format!("lead-{lead:03}"), format!("surface-{lead:03}")] {
+                let nc = actual["cells"].as_u64().unwrap() as usize;
+                let shape = if name.starts_with("lead-") {
+                    vec![nc, 8, 5]
+                } else {
+                    vec![nc, 2]
+                };
+                let a =
+                    crate::stage::Array::open_as(&reference_dir.join(&name), &shape, "uint16_le")?;
+                let b = crate::stage::Array::open_as(&direct_dir.join(&name), &shape, "uint16_le")?;
+                let mut av = vec![0.; shape.iter().product()];
+                let mut bv = vec![0.; shape.iter().product()];
+                a.read_into(0, &mut av)?;
+                b.read_into(0, &mut bv)?;
+                anyhow::ensure!(av == bv, "Staged spatial indices differ");
+            }
+            let resumed =
+                fetch_pressure_hour("aifs", &direct_dir, pin.clone(), lead, &direct).await?;
+            anyhow::ensure!(resumed == actual, "Resuming changed hourly metadata");
+            let values = actual["cells"].as_u64().unwrap() * 42;
+            reports.push(json!({"lead":lead,"compared_values":values,"all_bits_equal":true,"reference_seconds":reference_seconds,"direct_seconds":direct_seconds,"resume_equal":true}));
+        }
+        let path = output.join("direct-180");
+        let actual = fetch_pressure_hour("aifs", &path, pin, 180, &direct).await?;
+        anyhow::ensure!(
+            actual["staging"]["complete"] == true
+                && actual["source_payload_sha256"].as_object().unwrap().len() == 42,
+            "Missing direct source proof"
+        );
+        let report = json!({"init_time":init,"source_ready_leads":31,"comparisons":reports,"previously_missing_lead":180,"missing_lead_staged":true,"payload_proofs":42});
+        atomic(output.join("verification.json"), &report)?;
+        println!("{report}");
+        Ok(())
     }
 }

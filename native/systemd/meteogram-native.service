@@ -5,6 +5,7 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
+Environment=METEOGRAM_AIFS_SOURCE=direct
 ExecStart=%h/.local/bin/meteogram-native service --root %h/.local/share/meteogram-native --server-root %h/.local/share/meteogram-benchmark --binary %h/.local/share/meteogram-benchmark/clickhouse
 Restart=always
 RestartSec=15

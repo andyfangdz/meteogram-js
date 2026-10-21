@@ -94,7 +94,8 @@ export interface ForecastRunSource {
 }
 
 export interface WeatherSource {
-  provider: "dynamical" | "open-meteo";
+  provider: "dynamical" | "ecmwf" | "open-meteo";
+  nativeProviders?: ("dynamical" | "ecmwf")[];
   model: string;
   initializedAt?: string;
   forecastLengthHours?: number;

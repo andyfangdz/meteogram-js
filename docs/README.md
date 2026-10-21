@@ -12,6 +12,8 @@ layers and initialization-aware overlays, with Open-Meteo fallback.
 
 ## Validation records
 
+- [Direct ECMWF AIFS exactness, resume and database/API checks](benchmarks/2026-10-21-direct-ecmwf/verification.json)
+
 - [HRRR cloud cost, exact coverage and derived geometry](benchmarks/2026-10-19-cloud-cost/README.md)
 
 - [Native path cleanup and retained RRFS archive conversion](benchmarks/2026-10-18-native-cleanup/README.md)

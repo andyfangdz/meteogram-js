@@ -1,0 +1,45 @@
+{
+  "comparisons": [
+    {
+      "all_bits_equal": true,
+      "compared_values": 1045170,
+      "direct_seconds": 4.90193088,
+      "lead": 0,
+      "reference_seconds": 4.827770203,
+      "resume_equal": true
+    },
+    {
+      "all_bits_equal": true,
+      "compared_values": 1045170,
+      "direct_seconds": 4.456519806,
+      "lead": 102,
+      "reference_seconds": 2.563635352,
+      "resume_equal": true
+    }
+  ],
+  "init_time": "2026-10-21T06:00:00.000000000",
+  "missing_lead_staged": true,
+  "payload_proofs": 42,
+  "previously_missing_lead": 180,
+  "source_ready_leads": 31,
+  "database_roundtrip": {
+    "lead": 180,
+    "full_values_checked": true,
+    "staged_comparison": true,
+    "idempotent_publication": true,
+    "source_providers": ["ecmwf"]
+  },
+  "source_bytes": {
+    "required_grib_bytes_per_run": 629829231,
+    "whole_file_bytes_per_run": 1733208503,
+    "index_bytes_per_run": 918057,
+    "required_fields_per_hour": 42,
+    "note": "Uses z/9.80665, matching Dynamical; the earlier 506 MB estimate used separately packed gh and is superseded."
+  },
+  "conditions": {
+    "date": "2026-10-21",
+    "build": "debug",
+    "production_mutations_during_tests": false,
+    "scope": "Every retained cell and field for leads 0 and 102; direct acquisition plus full database/staging/API check for lead 180. Timing is diagnostic, not a controlled performance benchmark."
+  }
+}

@@ -59,14 +59,22 @@ export default function VisualizationPreferencesComponent({
             <a
               className="underline underline-offset-2"
               href={
-                source.provider === "dynamical"
-                  ? "https://dynamical.org"
-                  : "https://open-meteo.com"
+                source.provider === "ecmwf"
+                  ? "https://www.ecmwf.int/en/forecasts/datasets/open-data"
+                  : source.provider === "dynamical"
+                    ? "https://dynamical.org"
+                    : "https://open-meteo.com"
               }
               target="_blank"
               rel="noreferrer"
             >
-              {source.provider === "dynamical" ? "Dynamical" : "Open-Meteo"}
+              {source.provider === "ecmwf"
+                ? source.nativeProviders?.includes("dynamical")
+                  ? "ECMWF direct + Dynamical"
+                  : "ECMWF direct"
+                : source.provider === "dynamical"
+                  ? "Dynamical"
+                  : "Open-Meteo"}
             </a>
             {" · "}
             {source.model.toUpperCase()}

@@ -14,6 +14,7 @@ import {
 export interface NativeForecast {
   model: NativeWeatherModel;
   dataset: string;
+  source_providers?: ("dynamical" | "ecmwf")[];
   init_time: string;
   snapshot_id: string;
   grid: { latitude: number; longitude: number; cell_id: number };
@@ -184,6 +185,17 @@ export function parseNativeForecast(
       value.wind_rotation_degrees !== 0)
   ) {
     throw new Error("Unsupported native units or wind frame");
+  }
+  if (
+    value.source_providers !== undefined &&
+    (!Array.isArray(value.source_providers) ||
+      value.source_providers.length === 0 ||
+      new Set(value.source_providers).size !== value.source_providers.length ||
+      value.source_providers.some(
+        (p) => p !== "dynamical" && (p !== "ecmwf" || model !== "aifs"),
+      ))
+  ) {
+    throw new Error("Unsupported native source provider");
   }
   validateNativeClouds(value, model);
   return value as unknown as NativeForecast;
@@ -489,7 +501,12 @@ export function transformNativeForecast(
   return {
     data,
     source: {
-      provider: "dynamical",
+      provider: forecast.source_providers?.includes("ecmwf")
+        ? "ecmwf"
+        : "dynamical",
+      ...(forecast.source_providers
+        ? { nativeProviders: forecast.source_providers }
+        : {}),
       model: forecast.model,
       initializedAt: new Date(init).toISOString(),
       forecastLengthHours: forecast.expected_leads.at(-1),

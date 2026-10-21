@@ -5,6 +5,7 @@ mod cloud_geometry;
 mod clouds;
 mod db;
 mod dictionary;
+mod ecmwf;
 mod grid;
 mod incremental;
 mod ingestion;

@@ -55,6 +55,54 @@ The supervisor starts ClickHouse on loopback 18123/19000, the API on loopback
 PIDs in `service-status.json`. Use `systemctl --user stop` for managed units;
 `meteogram-native stop --root ROOT` is for a directly launched supervisor.
 
+## Direct ECMWF AIFS
+
+Set `METEOGRAM_AIFS_SOURCE=direct` on the supervisor to acquire AIFS from
+ECMWF's public Google Cloud mirror without waiting for Dynamical references.
+The supplied managed unit enables this. The default when unset is
+Dynamical; use `METEOGRAM_AIFS_SOURCE=dynamical` and restart to switch discovery
+back. Existing pinned work always resumes against its original source. This is
+an explicit source switch, not automatic failover on transport errors.
+
+The direct reader uses each step's JSON-lines index to select geopotential
+(`z`), temperature, U/V wind and specific humidity at the existing eight pressure
+levels, plus 2 m temperature/dew point. All 31 six-hour steps through 180 hours
+and all 24,885 CONUS cells remain. Geopotential is divided by 9.80665 before
+Float32 conversion to match the existing pipeline exactly; independently packed
+`gh` messages are not a bit-exact substitute.
+
+Discovery uses four concurrent requests and no weather payloads. Reads pin the
+GRIB object's GCS generation and ETag, require exact HTTP 206 byte ranges and
+validate each message's parameter, initialization, forecast time, level and
+complete grid. Persisted hourly metadata binds index hashes, object identity,
+message offsets and payload SHA-256 hashes. Staging, dictionaries, database
+validation, publication and retention are shared with the existing pipeline.
+The logical dataset identifier remains compatible with retained Dynamical runs;
+`source_provider`/`ecmwf_source` identify actual acquisition. The point API and
+site distinguish direct ECMWF, Dynamical and mixed native runs.
+
+ECMWF's public archive is rolling (currently about 12 runs); local published
+retention is unchanged. An unavailable pinned object fails closed. Do not silently
+rebind retries to a newer generation or combine initialization times.
+
+Live verification is opt-in, writes only to a fresh output directory on a disk
+with at least 20 GiB free, and retains every compared value. Choose an initialization
+still present in both sources:
+
+```sh
+ECMWF_TEST_INIT=2026-10-21T06:00:00.000000000 \
+ECMWF_TEST_OUTPUT="$HOME/.cache/aifs-direct-comparison" \
+  cargo test --manifest-path native/Cargo.toml direct_ecmwf_live_exactness_and_resume -- --ignored --nocapture
+ECMWF_TEST_STAGE="$HOME/.cache/aifs-direct-comparison/direct-180" \
+  cargo test --manifest-path native/Cargo.toml direct_ecmwf_staged_database_roundtrip -- --ignored --nocapture
+```
+
+The first test compares all retained Float32 bits, cells and staging indices for
+hours 0 and 102, checks durable resume, and acquires hour 180 directly. The second
+copies that staged hour into isolated test state, checks every stored index against
+staging, publishes twice to prove idempotence, verifies the point API, then drops
+its private test tables. It requires the loopback ClickHouse server.
+
 ## Operate
 
 ```sh
@@ -69,7 +117,7 @@ meteogram-native gc --root "$NATIVE_ROOT"
 
 `update` and `watch` ingest individual forecast hours. Availability checks open
 fresh immutable Icechunk snapshots and inspect references without downloading
-weather maps. An hour is ready only when every required pressure and surface
+weather maps, or inspect ECMWF indexes and object versions for direct AIFS. An hour is ready only when every required pressure and surface
 map is referenced. Download, decode and full validation still follow: a valid
 reference alone does not prove its object's contents.
 
@@ -264,7 +312,7 @@ pressure-only/integrated runs with fresh payloads and alternating order, checks
 identical weather staging bytes and every cloud fraction/anchor, and compares
 every reconstructed column with native coordinates. Its runtime has four
 workers and the production 16-map limit. Run database integration tests with
-`cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness`
+`cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness --skip direct_ecmwf_`
 to avoid invoking this separate live benchmark.
 
 ## Site and tunnel

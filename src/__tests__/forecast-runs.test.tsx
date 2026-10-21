@@ -47,6 +47,43 @@ function run(
 const now = Date.parse("2026-10-18T21:15Z");
 
 describe("forecast initialization overlays", () => {
+  it("overlays direct AIFS on its retained Dynamical base and preserves attribution", () => {
+    const base = transformNativeForecast(
+      parseNativeForecast(
+        run("aifs", "2026-10-18T12:00:00", [0, 6, 12, 18, 24]),
+        "aifs",
+      ),
+      now,
+    );
+    const latest = transformNativeForecast(
+      parseNativeForecast(
+        {
+          ...run("aifs", "2026-10-18T18:00:00", [0, 6]),
+          source_providers: ["ecmwf"],
+        },
+        "aifs",
+      ),
+      now,
+    );
+    const merged = mergeForecastRuns([base, latest], now);
+    expect(merged.source.provider).toBe("ecmwf");
+    expect(merged.source.nativeProviders).toEqual(["ecmwf", "dynamical"]);
+    expect(
+      merged.data.some((d) => d.initializedAt === base.source.initializedAt),
+    ).toBe(true);
+    expect(
+      merged.data.some((d) => d.initializedAt === latest.source.initializedAt),
+    ).toBe(true);
+    expect(() =>
+      mergeForecastRuns(
+        [
+          base,
+          { ...latest, source: { ...latest.source, provider: "open-meteo" } },
+        ],
+        now,
+      ),
+    ).toThrow(/providers/);
+  });
   it("overlays the newest 18-hour HRRR on the complete 48-hour run without GFS or time interpolation", () => {
     const base = run(
       "hrrr",

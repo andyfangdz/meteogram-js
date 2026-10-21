@@ -20,7 +20,7 @@ This document provides comprehensive guidance for AI agents working on this code
 
 ## Project Overview
 
-**Meteogram-js** is a Next.js 16 aviation weather visualization app. It fetches atmospheric forecast data from the optional native Dynamical/ClickHouse service with Open-Meteo fallback and renders interactive meteograms (time-height cross-sections) showing clouds, temperature, wind, and pressure.
+**Meteogram-js** is a Next.js 16 aviation weather visualization app. It fetches atmospheric forecast data from the optional native ECMWF/Dynamical/ClickHouse service with Open-Meteo fallback and renders interactive meteograms (time-height cross-sections) showing clouds, temperature, wind, and pressure.
 
 ### Tech Stack
 
@@ -274,7 +274,7 @@ yarn test:watch   # Test watch mode
 
 Native CI (`.github/workflows/native.yml`) checks formatting, Clippy with warnings
 denied and unit tests on x86. Local ARM verification also exercises the NEON
-path; use `cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness`
+path; use `cargo test -- --include-ignored --skip full_conus_live_source_cost_and_exactness --skip direct_ecmwf_`
 with the loopback ClickHouse service for database integration coverage. The separate
 ignored full-CONUS cloud benchmark requires explicit resident source paths and a
 fresh output directory; see `native/README.md`. Frontend CI lives in
@@ -366,7 +366,8 @@ measurements describe their recorded versions.
 | Checksummed Zstd weather/cloud staging and compressed coordinate indexes         | `native/src/stage.rs`                  |
 | Exact Float32 palettes, sorted spatial encoding and bounded codebook I/O         | `native/src/dictionary.rs`             |
 | UInt16 packing into 256-cell tiles, Native wire encoding and full lane/ID checks | `native/src/packed.rs`                 |
-| Pinned Icechunk reads, GRIB decoding, reference preflight and regional gathering | `native/src/source.rs`                 |
+| Pinned Icechunk/direct-source reads, GRIB decoding and regional gathering        | `native/src/source.rs`                 |
+| Direct AIFS indexes, version-pinned GRIB ranges, identity and payload proofs     | `native/src/ecmwf.rs`                  |
 | Source-declared spherical Lambert projection and nearest-cell resolution         | `native/src/grid.rs`                   |
 | Bounded hourly ingestion, full database validation and ownership-aware GC        | `native/src/store.rs`                  |
 | Public ingestion snapshot (bounded event tail, sanitized operational data)       | `native/src/ingestion.rs`              |
@@ -388,10 +389,30 @@ measurements describe their recorded versions.
 
 One persistent 60-second poller ingests individual forecast hours. `watch.lock`
 prevents duplicate pollers; `update.lock` covers each poll's recovery, source
-reads, loading and publication. Each hour pins an immutable Icechunk snapshot.
+reads, loading and publication. Each hour pins an immutable Icechunk snapshot,
+or an ECMWF object generation and checksummed index for direct AIFS acquisition.
 All required pressure/surface references must exist before downloading maps,
 and source shape, initialization, grid and every gathered value are
 validated. Native units are retained for the site adapter’s schema validation. A new location request never downloads source maps.
+
+AIFS can read ECMWF Open Data directly with `METEOGRAM_AIFS_SOURCE=direct`
+(the managed service enables this); unset it or use `dynamical` for the legacy
+reader. Discovery checks all 42 required fields in each six-hour step through
+180 hours, with four concurrent index/object-metadata requests. GRIB ranges
+pin GCS generation and ETag and require exact 206 ranges. Every message checks
+initialization, valid time, parameter, level and the complete 0.25-degree grid;
+cache files and retained per-hour payload proofs carry SHA-256 hashes. The
+logical dataset ID stays `ecmwf-aifs-single-forecast-virtual` for compatible
+retained runs; `source_provider=ecmwf_open_data_v1` and `ecmwf_source` distinguish
+the acquisition and bind the hourly `ecmwf-<SHA256>` snapshot identity. Old
+Icechunk-pinned work resumes with its original reader. Use geopotential `z`
+divided by 9.80665, not separately packed `gh`, to preserve existing Float32
+height values. Unit conversion and longitude/north-up normalization precede
+Float32 conversion, as in the Icechunk path. Direct and Dynamical hours may
+share a run only after normal schema/grid checks; source attribution is retained
+per child and exposed as `source_providers` by the API. The frontend permits
+AIFS overlays across those two native providers and labels mixed acquisition.
+The live tests require explicit source/output paths; see `native/README.md`.
 
 HRRR polls the hourly 18-hour product (19 leads), with the 48-hour product
 (49 leads) for 00/06/12/18 UTC cycles. RRFS retains 85 hourly leads through

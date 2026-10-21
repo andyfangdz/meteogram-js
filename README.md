@@ -136,7 +136,7 @@ guides from dated investigations and rollout evidence.
 ### Acknowledgments
 
 - Forecast data provided by [Open‑Meteo](https://open-meteo.com/). Elevation data via Open‑Meteo Elevation API.
-- Native NOAA/ECMWF forecast data is distributed through [Dynamical](https://dynamical.org/).
+- Native forecasts use [Dynamical](https://dynamical.org/) and direct [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data) for AIFS; the source badge identifies acquisition.
 
 ### License
 

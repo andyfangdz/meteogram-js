@@ -251,6 +251,7 @@ pub fn pressure_levels(model: &str) -> Vec<u16> {
     }
 }
 fn check_schema(m: &Value, partial: bool) -> Result<()> {
+    crate::ecmwf::check_metadata(m)?;
     let model = m["model"].as_str().context("Missing model")?;
     dataset(model)?;
     let levels = pressure_levels(model);

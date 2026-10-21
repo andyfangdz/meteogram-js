@@ -68,6 +68,7 @@ async fn authenticate(State(expected): State<[u8; 32]>, request: Request, next: 
     next.run(request).await
 }
 struct Model {
+    source_providers: Vec<&'static str>,
     meta: Value,
     ids: Vec<u32>,
     lat: Vec<f64>,
@@ -127,7 +128,17 @@ fn model(root: &Path, e: &Entry, cache: &crate::runs::BookCache) -> Result<Model
     anyhow::ensure!(ids.windows(2).all(|w| w[0] < w[1]), "Unsorted cell ids");
     let books = crate::runs::load_books(root, e, &meta, Some(cache))?;
     let clouds = crate::clouds::readers(root, &meta)?;
+    let mut source_providers = std::collections::BTreeSet::new();
+    for book in crate::runs::books(&meta)? {
+        let (_, _, child) = crate::runs::book_entry(root, &book)?;
+        source_providers.insert(if child["source_provider"] == crate::ecmwf::PROVIDER {
+            "ecmwf"
+        } else {
+            "dynamical"
+        });
+    }
     Ok(Model {
+        source_providers: source_providers.into_iter().collect(),
         clouds,
         meta,
         ids,
@@ -202,6 +213,7 @@ fn forecast(app: &App, q: HashMap<String, String>) -> (StatusCode, Value) {
             .copied()
             .collect::<Vec<_>>();
         let mut payload = json!({"model":name,"dataset":m.meta["dataset"],"init_time":m.meta["init_time"],"snapshot_id":m.meta["snapshot_id"],"requested":{"latitude":lat,"longitude":lon},"grid":{"cell_id":cell,"latitude":m.lat[i],"longitude":m.lon[i]},"levels_hpa":m.meta["levels"],"units":m.meta["units"],"fields":fields,"rows":rows,"native_wind_frame":if grid_relative(&name){"grid-relative"}else{"earth-relative"},"query_ms":elapsed,"revision":e.revision,"forecast_complete":missing.is_empty(),"available_leads":have,"expected_leads":expected,"missing_leads":missing});
+        payload["source_providers"] = json!(m.source_providers);
         payload["lead_sources"] = json!(crate::runs::books(&m.meta)?
             .iter()
             .map(|b| json!({"lead":b.lead,"snapshot_id":b.snapshot_id}))
@@ -409,6 +421,7 @@ mod auth_tests {
             cache.insert(
                 revision.to_owned(),
                 Arc::new(Model {
+                    source_providers: vec![],
                     meta: json!({}),
                     ids: vec![],
                     lat: vec![],

@@ -23,7 +23,13 @@ export function mergeForecastRuns(
     usable.some(
       (run) =>
         run.source.model !== usable[0].source.model ||
-        run.source.provider !== usable[0].source.provider,
+        (run.source.provider !== usable[0].source.provider &&
+          !(
+            run.source.model === "aifs" &&
+            [run.source.provider, usable[0].source.provider].every(
+              (p) => p === "ecmwf" || p === "dynamical",
+            )
+          )),
     )
   ) {
     throw new Error("Cannot combine different forecast models/providers");
@@ -111,6 +117,21 @@ export function mergeForecastRuns(
   }
   const distinct = Array.from(byInitialization.values());
   const source = { ...distinct[0].source };
+  if (
+    used.some(
+      (run) => run.source.nativeProviders || run.source.provider === "ecmwf",
+    )
+  ) {
+    const providers = used.flatMap(
+      (run) =>
+        run.source.nativeProviders ??
+        (run.source.provider === "dynamical" || run.source.provider === "ecmwf"
+          ? [run.source.provider]
+          : []),
+    );
+    source.nativeProviders = Array.from(new Set(providers));
+    if (source.nativeProviders.includes("ecmwf")) source.provider = "ecmwf";
+  }
   const nativeHours = data.filter((d) => d.nativeCloudLayers).length;
   const modeled = data.filter((d) => d.cloudMethod === "model").length;
   source.cloudMethod =

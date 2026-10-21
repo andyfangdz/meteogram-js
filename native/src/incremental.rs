@@ -344,7 +344,8 @@ async fn ingest(
     lead: u16,
     source: Arc<source::Source>,
 ) -> Result<()> {
-    let (w, journal) = new_work(root, model, pin, lead)?;
+    let pinned = source.hour_pin(pin, lead)?;
+    let (w, journal) = new_work(root, model, &pinned, lead)?;
     let path = work_path(root, &w)?;
     let metadata = path.join("metadata.json");
     let ready = metadata.exists()
