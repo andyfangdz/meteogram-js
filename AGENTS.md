@@ -471,8 +471,9 @@ new poll clears it. The client breathes only that exact dataset/init/lead, stops
 on stale/failed status, and uses a static outline for reduced-motion preferences.
 An incomplete newest initialization is shown with its complete base; HRRR keeps
 a distinct retained 48-hour base visible even when the newest short run is complete.
-Every model uses larger numbered forecast-hour cells in 24-column rows (12 on
-smaller screens), including both weather and cloud strips.
+Every model uses numbered forecast-hour cells in responsive rows with a 23px
+minimum cell width, including weather and cloud strips. Grids span the model
+section width; telemetry sits above them and measurement notes are expandable.
 Source check age is displayed, with a warning after three minutes. Missing source
 references are dashed; unchecked source state is hatched, not labeled missing.
 

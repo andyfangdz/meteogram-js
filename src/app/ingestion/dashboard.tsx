@@ -104,8 +104,7 @@ function ModelRow({
       style={{ "--model-color": meta.color } as CSSProperties}
     >
       <header className={styles.modelHeader}>
-        <h2>{meta.name}</h2>
-        <p>{meta.detail}</p>
+        <h2 title={meta.detail}>{meta.name}</h2>
         <span
           className={`${styles.badge} ${focus?.complete && !(live && data.active) ? styles.complete : ""}`}
         >
@@ -149,10 +148,6 @@ function ModelRow({
             {data.model === "hrrr" && (
               <Coverage run={run} clouds model={data} live={live} />
             )}
-            <div className={styles.horizon}>
-              <span>Numbers are forecast lead hours</span>
-              <span>+{Math.max(...run.expected_leads)}h</span>
-            </div>
           </div>
         ))}
         {data.model === "hrrr" && (
@@ -388,6 +383,7 @@ export default function IngestionDashboard() {
               <small>Refreshes every 5s</small>
             </section>
             <div className={styles.legend}>
+              <span>Forecast lead hours</span>
               {Object.entries(LABEL).map(([state, label]) => (
                 <span key={state}>
                   <i className={styles[state]} />
@@ -435,23 +431,26 @@ export default function IngestionDashboard() {
               </span>
               <span>{data.last_cycle.waiting ?? "—"} waiting</span>
             </section>
-            <footer className={styles.footer}>
-              <p>
-                Ingestion lag starts when all required source references are
-                first observed ready, and ends after publication. It includes
-                queue time; polling adds up to one cycle of uncertainty. A dash
-                means no measured publication in the last hour. Run age includes
-                upstream production time.
-              </p>
-              <p>
-                Each segment is one forecast time. HRRR clouds require all 50
-                levels and geometry anchors. Source waits are availability
-                delays, counted separately from failures. Completed runs may no
-                longer be checked upstream. Source checked{" "}
-                {utcTime(data.source_checked_at)}. Snapshot{" "}
-                {utcTime(data.generated_at)}.
-              </p>
-            </footer>
+            <details className={styles.metricHelp}>
+              <summary>About these metrics</summary>
+              <footer className={styles.footer}>
+                <p>
+                  Ingestion lag starts when all required source references are
+                  first observed ready, and ends after publication. It includes
+                  queue time; polling adds up to one cycle of uncertainty. A
+                  dash means no measured publication in the last hour. Run age
+                  includes upstream production time.
+                </p>
+                <p>
+                  Each segment is one forecast time. HRRR clouds require all 50
+                  levels and geometry anchors. Source waits are availability
+                  delays, counted separately from failures. Completed runs may
+                  no longer be checked upstream. Source checked{" "}
+                  {utcTime(data.source_checked_at)}. Snapshot{" "}
+                  {utcTime(data.generated_at)}.
+                </p>
+              </footer>
+            </details>
           </>
         ) : !error ? (
           <p className={styles.loading}>Loading model progress…</p>

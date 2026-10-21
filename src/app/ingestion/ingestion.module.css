@@ -30,14 +30,14 @@
 .main {
   max-width: 1360px;
   margin: auto;
-  padding: 24px 20px;
+  padding: 18px 20px;
 }
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 .header h1 {
   font-size: 28px;
@@ -142,25 +142,28 @@
 }
 .model {
   display: grid;
-  grid-template-columns: 128px minmax(0, 1fr) 310px;
-  gap: 12px 24px;
-  padding: 18px 20px 9px;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 10px 24px;
+  padding: 12px 16px 6px;
   border-bottom: 1px solid var(--line);
 }
 .model:last-child {
   border-bottom: 0;
 }
 .modelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   border-left: 3px solid var(--model-color);
   padding-left: 12px;
-  align-self: start;
+  align-self: center;
 }
 .modelHeader h2 {
   font-size: 23px;
   font-weight: 700;
   letter-spacing: -0.6px;
   line-height: 1.15;
-  margin: 0 0 5px;
+  margin: 0;
 }
 .modelHeader p {
   font-size: 11px;
@@ -181,12 +184,13 @@
 }
 .run {
   min-width: 0;
+  grid-column: 1/-1;
 }
 .runHeading {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-size: 11px;
   color: var(--muted);
 }
@@ -196,10 +200,10 @@
 }
 .coverageRow {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
-  gap: 6px;
-  margin-top: 5px;
+  gap: 7px;
+  margin-top: 4px;
 }
 .stripLabel {
   width: 46px;
@@ -214,12 +218,12 @@
 }
 .coverage {
   display: grid;
-  grid-template-columns: repeat(24, minmax(0, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(23px, 1fr));
+  gap: 3px;
   min-width: 0;
 }
 .coverage > span {
-  height: 23px;
+  height: 20px;
   min-width: 0;
   border-radius: 1px;
   display: flex;
@@ -249,20 +253,13 @@
   );
   border: 1px solid #bbc7d0;
 }
-.horizon {
-  display: flex;
-  justify-content: space-between;
-  color: var(--muted);
-  font-size: 9px;
-  margin: 5px 0 0;
-}
 .upstream {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .cloudNote {
   font-size: 10px;
   line-height: 1.6;
-  margin: 9px 0 0;
+  margin: 6px 0 0;
   color: var(--muted);
 }
 .cloudNote strong {
@@ -271,16 +268,20 @@
   margin-right: 5px;
 }
 .cloudNote span {
-  display: block;
+  white-space: nowrap;
 }
 .telemetry {
-  padding-left: 20px;
-  border-left: 1px solid #e6edf2;
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28px;
 }
 .numbers {
   display: grid;
-  grid-template-columns: 1.2fr 1.2fr 0.8fr 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(4, auto);
+  gap: 22px;
   margin: 0;
 }
 .numbers dt {
@@ -290,7 +291,7 @@
   margin-bottom: 4px;
 }
 .numbers dd {
-  font-size: 19px;
+  font-size: 16px;
   line-height: 1.2;
   font-weight: 600;
   margin: 0;
@@ -300,13 +301,13 @@
 .activity {
   display: flex;
   align-items: center;
-  gap: 13px;
-  margin-top: 12px;
+  gap: 12px;
+  width: 260px;
 }
 .sparkline {
   display: flex;
   align-items: end;
-  height: 24px;
+  height: 20px;
   gap: 3px;
   flex: 1;
 }
@@ -328,7 +329,7 @@
   color: #b23f49;
 }
 .details {
-  grid-column: 2/-1;
+  grid-column: 1/-1;
   font-size: 10px;
   color: var(--muted);
 }
@@ -409,25 +410,53 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
 }
-@media (max-width: 1050px) {
+.coverageRow .coverage {
+  grid-column: 2;
+  grid-row: 1;
+}
+.coverageRow .count {
+  grid-column: 3;
+  grid-row: 1;
+}
+.metricHelp {
+  font-size: 11px;
+  color: var(--muted);
+}
+.metricHelp summary {
+  cursor: pointer;
+  padding: 4px 0;
+}
+.metricHelp summary:focus-visible {
+  outline: 3px solid #126e82;
+  outline-offset: 3px;
+}
+@media (max-width: 1000px) {
   .model {
-    grid-template-columns: 104px minmax(0, 1fr) 260px;
-    gap: 12px 16px;
-    padding: 16px 14px 8px;
+    grid-template-columns: 175px minmax(0, 1fr);
+    gap: 8px 16px;
+  }
+  .modelHeader {
+    gap: 8px;
+  }
+  .modelHeader h2 {
+    font-size: 21px;
   }
   .telemetry {
-    padding-left: 12px;
+    gap: 14px;
   }
-  .numbers dd {
-    font-size: 16px;
+  .numbers {
+    gap: 12px;
   }
-  .numbers dt {
-    font-size: 9px;
+  .activity {
+    width: auto;
+  }
+  .sparkline {
+    display: none;
   }
 }
-@media (max-width: 760px) {
+@media (max-width: 650px) {
   .main {
-    padding: 18px 14px;
+    padding: 14px 12px;
   }
   .header {
     align-items: start;
@@ -438,6 +467,7 @@
   }
   .header p {
     max-width: 220px;
+    font-size: 10px;
     line-height: 1.5;
   }
   .controls {
@@ -451,9 +481,9 @@
     font-size: 10px;
   }
   .overview {
-    gap: 8px 16px;
+    gap: 8px 14px;
     flex-wrap: wrap;
-    padding: 9px 12px;
+    padding: 8px 10px;
     font-size: 11px;
   }
   .overview strong {
@@ -468,59 +498,56 @@
     font-size: 10px;
   }
   .model {
-    grid-template-columns: 90px minmax(0, 1fr);
-    gap: 12px;
-  }
-  .modelHeader h2 {
-    font-size: 21px;
-  }
-  .telemetry {
-    grid-column: 2;
-    border: 0;
-    padding: 0;
-  }
-  .numbers dt {
-    font-size: 10px;
-  }
-  .numbers dd {
-    font-size: 18px;
-  }
-  .details {
-    grid-column: 1/-1;
-  }
-  .footer {
     grid-template-columns: 1fr;
     gap: 8px;
-  }
-}
-@media (max-width: 460px) {
-  .model {
-    grid-template-columns: 1fr;
-    padding: 14px 12px 8px;
-  }
-  .modelHeader {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .modelHeader h2,
-  .modelHeader p {
-    margin: 0;
+    padding: 10px 10px 5px;
   }
   .modelHeader .badge {
     margin-left: auto;
   }
   .telemetry {
     grid-column: 1;
+    grid-row: auto;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+  .numbers {
+    flex: 1;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .activity {
+    width: 100%;
+  }
+  .activity p br {
+    display: none;
+  }
+  .activity p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .coverageRow {
+    grid-template-columns: 1fr auto;
+    gap: 4px;
+  }
+  .coverageRow .coverage {
+    grid-column: 1/-1;
+    grid-row: 2;
+  }
+  .coverageRow .count {
+    grid-column: 2;
+    grid-row: 1;
   }
   .details summary > span {
     float: none;
-    display: block;
-    margin-top: 4px;
+    margin-left: 8px;
+    font-size: 9px;
   }
-  .header p {
-    font-size: 10px;
+  .footer {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 
@@ -550,21 +577,7 @@
     outline-width: 3px;
   }
 }
-@media (max-width: 1050px) {
-  .coverage {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-}
 
 .legend .active {
   animation: none;
-}
-
-.coverageRow .coverage {
-  grid-column: 1/-1;
-  grid-row: 2;
-}
-.coverageRow .count {
-  grid-column: 2;
-  grid-row: 1;
 }
