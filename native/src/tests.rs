@@ -887,6 +887,44 @@ fn old_failure_evidence_expires_but_published_revisions_remain() {
     assert!(!old.exists());
 }
 #[test]
+fn bulk_cleanup_preserves_live_children_and_shared_tables() {
+    let root = tempfile::tempdir().unwrap();
+    let (live, entry) = candidate_fixture(root.path(), 6);
+    let mut c = Catalog::default();
+    c.current.insert("gfs".into(), entry.clone());
+    atomic(root.path().join("catalog.json"), &c).unwrap();
+    let references = crate::runs::references(root.path(), &c, true).unwrap();
+    // Expired evidence must not override live parent/child references.
+    for e in &references {
+        atomic(
+            descriptor(root.path(), e).unwrap().join("discarded.json"),
+            &json!({"time":0}),
+        )
+        .unwrap();
+    }
+    for i in 0..256 {
+        let p = root.path().join("revisions").join(format!("expired_{i}"));
+        atomic(p.join("discarded.json"), &json!({"time":0})).unwrap();
+    }
+    let orphan = root.path().join("revisions/orphan");
+    let mut alias = entry.clone();
+    alias.revision = "orphan".into();
+    alias.owned = true;
+    atomic(orphan.join("entry.json"), &alias).unwrap();
+    fs::write(orphan.join("values.dict.zst"), b"unused").unwrap();
+    let count = store::sweep_unreferenced(root.path()).unwrap();
+    assert_eq!(count, references.len() + 257);
+    assert!(live.exists());
+    for e in references {
+        assert!(descriptor(root.path(), &e).unwrap().exists());
+    }
+    assert!(!root.path().join("revisions/expired_0").exists());
+    assert!(!root.path().join("revisions/expired_255").exists());
+    assert!(orphan.join("discarded.json").exists());
+    assert!(!orphan.join("values.dict.zst").exists());
+}
+
+#[test]
 fn unknown_catalog_version_is_rejected() {
     let root = tempfile::tempdir().unwrap();
     let c = Catalog {

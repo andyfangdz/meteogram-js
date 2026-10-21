@@ -826,13 +826,28 @@ pub fn collect(root: &Path, grace: f64) -> Result<()> {
     atomic(root.join("catalog.json"), &c)?;
     Ok(())
 }
+/// Caller holds update.lock: publication must not change this protection snapshot.
+pub fn sweep_unreferenced(root: &Path) -> Result<usize> {
+    let references = crate::runs::references(root, &catalog(root)?, true)?;
+    let mut examined = 0;
+    for file in fs::read_dir(root.join("revisions"))? {
+        let path = file?.path();
+        if path.is_dir() {
+            discard_with_references(&path, &references)?;
+            examined += 1;
+        }
+    }
+    Ok(examined)
+}
 pub fn discard(root: &Path, path: &Path) -> Result<()> {
-    let c = catalog(root)?;
+    let references = crate::runs::references(root, &catalog(root)?, true)?;
+    discard_with_references(path, &references)
+}
+fn discard_with_references(path: &Path, references: &[Entry]) -> Result<()> {
     let name = path
         .file_name()
         .context("No revision name")?
         .to_string_lossy();
-    let references = crate::runs::references(root, &c, true)?;
     if references.iter().any(|e| e.revision == name) {
         return Ok(());
     }

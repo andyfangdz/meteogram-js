@@ -1,0 +1,1063 @@
+{
+  "captured_at": "2026-10-21T03:21:08.850773+00:00",
+  "before": {
+    "revision_directories": 3071,
+    "discarded_directories": 2162,
+    "updater_read_characters_after_about_ten_minutes": 214963083742,
+    "updater_physical_read_bytes": 128020480,
+    "note": "rchar includes cache reads; not network traffic or physical disk I/O. The live updater was traversing revisions during cleanup."
+  },
+  "catalog_before": {
+    "version": 1,
+    "generation": 2902,
+    "current": {
+      "aifs": {
+        "revision": "aifs_20261021032024_4c8fc43a",
+        "database": "meteogram_native",
+        "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+        "owned": true
+      },
+      "gfs": {
+        "revision": "gfs_20261021032030_471d582b",
+        "database": "meteogram_native",
+        "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+        "owned": true
+      },
+      "hrrr": {
+        "revision": "hrrr_20261021032054_66a67e8f",
+        "database": "meteogram_native",
+        "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+        "owned": true
+      },
+      "rrfs": {
+        "revision": "rrfs_20261021032049_10ea0269",
+        "database": "meteogram_native",
+        "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+        "owned": true
+      }
+    },
+    "previous": {
+      "aifs": {
+        "revision": "aifs_20261020212046_b17db59c",
+        "database": "meteogram_native",
+        "table": "aifs_run_5c1e694807954ae1bcb65f33333ed19a",
+        "owned": true
+      },
+      "gfs": {
+        "revision": "gfs_20261019204100_f75c3991",
+        "database": "meteogram_native",
+        "table": "gfs_run_04cb19b1478e48c2937bc66e6d34be05",
+        "owned": true
+      },
+      "hrrr": {
+        "revision": "hrrr_20261020004829_73165a20",
+        "database": "meteogram_native",
+        "table": "hrrr_run_b4936ab29d974e12977291ebc877903f",
+        "owned": true
+      },
+      "rrfs": {
+        "revision": "rrfs_20261019113135_27f02549",
+        "database": "meteogram_native",
+        "table": "rrfs_run_81da4c15d0354963a655f4d365b0d47a",
+        "owned": true
+      }
+    },
+    "retired": [
+      {
+        "revision": "aifs_20261021030759_3bf2d926",
+        "database": "meteogram_native",
+        "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+        "owned": true,
+        "retired_at": 1792552809.815042
+      },
+      {
+        "revision": "gfs_20261021030751_e30a331e",
+        "database": "meteogram_native",
+        "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+        "owned": true,
+        "retired_at": 1792552822.6266737
+      },
+      {
+        "revision": "rrfs_20261021025541_a057a8b0",
+        "database": "meteogram_native",
+        "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+        "owned": true,
+        "retired_at": 1792552823.99334
+      },
+      {
+        "revision": "aifs_20261021032009_8e5429e5",
+        "database": "meteogram_native",
+        "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+        "owned": true,
+        "retired_at": 1792552824.5866327
+      },
+      {
+        "revision": "hrrr_20261021030757_810f1c08",
+        "database": "meteogram_native",
+        "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+        "owned": true,
+        "retired_at": 1792552827.3551414
+      },
+      {
+        "revision": "gfs_20261021032022_b48bfd07",
+        "database": "meteogram_native",
+        "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+        "owned": true,
+        "retired_at": 1792552830.2299
+      },
+      {
+        "revision": "rrfs_20261021032023_4cd9217f",
+        "database": "meteogram_native",
+        "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+        "owned": true,
+        "retired_at": 1792552850.1970181
+      },
+      {
+        "revision": "hrrr_20261021032027_8e7405ec",
+        "database": "meteogram_native",
+        "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+        "owned": true,
+        "retired_at": 1792552854.301886
+      }
+    ],
+    "complete_runs": {
+      "aifs": [
+        {
+          "revision": "aifs_20261020212046_b17db59c",
+          "database": "meteogram_native",
+          "table": "aifs_run_5c1e694807954ae1bcb65f33333ed19a",
+          "owned": true
+        },
+        {
+          "revision": "aifs_20261020173219_91f0bade",
+          "database": "meteogram_native",
+          "table": "aifs_run_582be5971e0f4be09492fa5c469cb82b",
+          "owned": true
+        }
+      ],
+      "gfs": [
+        {
+          "revision": "gfs_20261019204100_f75c3991",
+          "database": "meteogram_native",
+          "table": "gfs_run_04cb19b1478e48c2937bc66e6d34be05",
+          "owned": true
+        },
+        {
+          "revision": "gfs_20261019125022_cb619e87",
+          "database": "meteogram_native",
+          "table": "gfs_run_447ea17d97a64bdc80d596cbeedbf270",
+          "owned": true
+        }
+      ],
+      "hrrr": [
+        {
+          "revision": "hrrr_20261020004829_73165a20",
+          "database": "meteogram_native",
+          "table": "hrrr_run_b4936ab29d974e12977291ebc877903f",
+          "owned": true
+        },
+        {
+          "revision": "hrrr_20261019155029_f64df064",
+          "database": "meteogram_native",
+          "table": "hrrr_run_71ed8d3893ab4a4e91da1b29ca5d053f",
+          "owned": true
+        }
+      ],
+      "rrfs": [
+        {
+          "revision": "rrfs_20261019113135_27f02549",
+          "database": "meteogram_native",
+          "table": "rrfs_run_81da4c15d0354963a655f4d365b0d47a",
+          "owned": true
+        },
+        {
+          "revision": "rrfs_20261019034316_86f2a5e0",
+          "database": "meteogram_native",
+          "table": "rrfs_run_0a9e19bd81f748e7930bc99b771a183a",
+          "owned": true
+        }
+      ]
+    },
+    "building": {
+      "aifs": [
+        {
+          "revision": "aifs_20261021032024_4c8fc43a",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true
+        }
+      ],
+      "gfs": [
+        {
+          "revision": "gfs_20261021032030_471d582b",
+          "database": "meteogram_native",
+          "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+          "owned": true
+        },
+        {
+          "revision": "gfs_20261020213406_17e41a45",
+          "database": "meteogram_native",
+          "table": "gfs_run_27f6389e87124bdd8d65367abbfa7a6f",
+          "owned": true
+        },
+        {
+          "revision": "gfs_20261020153345_389d9ccb",
+          "database": "meteogram_native",
+          "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+          "owned": true
+        }
+      ],
+      "hrrr": [
+        {
+          "revision": "hrrr_20261021032054_66a67e8f",
+          "database": "meteogram_native",
+          "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+          "owned": true
+        },
+        {
+          "revision": "hrrr_20261021022115_b6adf068",
+          "database": "meteogram_native",
+          "table": "hrrr_run_c8cc2b0662d74a4da772a6dbdc73244e",
+          "owned": true
+        },
+        {
+          "revision": "hrrr_20261021013123_550e3d95",
+          "database": "meteogram_native",
+          "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+          "owned": true
+        }
+      ],
+      "rrfs": [
+        {
+          "revision": "rrfs_20261021032049_10ea0269",
+          "database": "meteogram_native",
+          "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+          "owned": true
+        },
+        {
+          "revision": "rrfs_20261021013141_b513f449",
+          "database": "meteogram_native",
+          "table": "rrfs_run_d034b6a994f847e99a6494a97f712868",
+          "owned": true
+        },
+        {
+          "revision": "rrfs_20261020191343_616c6fe4",
+          "database": "meteogram_native",
+          "table": "rrfs_run_170ad835080447ffb32d34c807a973b0",
+          "owned": true
+        }
+      ]
+    },
+    "hrrr_long": {
+      "revision": "hrrr_20261019093118_c9c3003e",
+      "database": "meteogram_native",
+      "table": "hrrr_run_6f5e1ce32a38463d9b067ddb2561685c",
+      "owned": true
+    },
+    "published_at": 1792552854.301888
+  },
+  "last_update_before": {
+    "completed_leads": 8,
+    "failures": [],
+    "implementation": "rust",
+    "incremental": true,
+    "started": 1792552787.5297904,
+    "time": 1792552854.7049592
+  },
+  "changes": [
+    "Reuse one protected reference graph per orphan cleanup sweep",
+    "Prioritize the most advanced source-ready fresh run per product, with HRRR long-range base first",
+    "Start the ingestion budget after discovery and add phase timing events"
+  ],
+  "validation": {
+    "unit_tests": 52,
+    "database_tests": 5,
+    "clippy": "passed",
+    "http_status": {
+      "health": 200,
+      "aifs": 200,
+      "gfs": 200,
+      "hrrr": 200,
+      "rrfs": 200
+    }
+  },
+  "effective_server_limits": [
+    {
+      "name": "max_server_memory_usage",
+      "value": "0"
+    },
+    {
+      "name": "max_server_memory_usage_to_ram_ratio",
+      "value": "0"
+    }
+  ],
+  "after": {
+    "captured_at": "2026-10-21T03:25:38.919475+00:00",
+    "last_update": {
+      "completed_leads": 11,
+      "discovery_seconds": 14.479727425,
+      "failures": [],
+      "implementation": "rust",
+      "incremental": true,
+      "ingestion_seconds": 63.517535756,
+      "maintenance_seconds": 0.923593576,
+      "started": 1792553044.4041953,
+      "time": 1792553123.3251584
+    },
+    "maintenance": [
+      {
+        "phase": "maintenance_completed",
+        "revisions_examined": 3083,
+        "seconds": 1.002714324,
+        "time": 1792552959.1021833
+      },
+      {
+        "phase": "maintenance_completed",
+        "revisions_examined": 3105,
+        "seconds": 0.923593576,
+        "time": 1792553045.3277912
+      },
+      {
+        "phase": "maintenance_completed",
+        "revisions_examined": 3127,
+        "seconds": 1.162638951,
+        "time": 1792553125.5085251
+      }
+    ],
+    "planning": [
+      {
+        "completion_targets": {
+          "ecmwf-aifs-single-forecast-virtual": [
+            24,
+            "2026-10-20T18:00:00.000000000"
+          ],
+          "noaa-gfs-forecast-virtual": [
+            82,
+            "2026-10-20T06:00:00.000000000"
+          ],
+          "noaa-hrrr-forecast-18-hour-virtual": [
+            1,
+            "2026-10-21T01:00:00.000000000"
+          ],
+          "noaa-hrrr-forecast-48-hour-virtual": [
+            5,
+            "2026-10-21T00:00:00.000000000"
+          ],
+          "noaa-rrfs-forecast-84-hour-virtual": [
+            30,
+            "2026-10-20T18:00:00.000000000"
+          ]
+        },
+        "discovery_seconds": 19.900438789,
+        "phase": "ingestion_planned",
+        "queued_leads": 615,
+        "time": 1792552979.002676
+      },
+      {
+        "completion_targets": {
+          "ecmwf-aifs-single-forecast-virtual": [
+            27,
+            "2026-10-20T18:00:00.000000000"
+          ],
+          "noaa-gfs-forecast-virtual": [
+            85,
+            "2026-10-20T06:00:00.000000000"
+          ],
+          "noaa-hrrr-forecast-18-hour-virtual": [
+            5,
+            "2026-10-21T02:00:00.000000000"
+          ],
+          "noaa-hrrr-forecast-48-hour-virtual": [
+            8,
+            "2026-10-21T00:00:00.000000000"
+          ],
+          "noaa-rrfs-forecast-84-hour-virtual": [
+            32,
+            "2026-10-20T18:00:00.000000000"
+          ]
+        },
+        "discovery_seconds": 14.479727425,
+        "phase": "ingestion_planned",
+        "queued_leads": 608,
+        "time": 1792553059.8076282
+      }
+    ],
+    "published_leads": 22,
+    "published_by_model": {
+      "aifs": 6,
+      "hrrr": 6,
+      "gfs": 6,
+      "rrfs": 4
+    },
+    "failures": [],
+    "publications": [
+      {
+        "available_leads": 25,
+        "codebook_entries": 2233285,
+        "complete": false,
+        "expected_leads": 31,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 144,
+        "model": "aifs",
+        "phase": "lead_published",
+        "revision": "aifs_20261021032301_7a39ea73",
+        "time": 1792552981.2315414
+      },
+      {
+        "available_leads": 6,
+        "codebook_entries": 2395687,
+        "complete": false,
+        "expected_leads": 49,
+        "init_time": "2026-10-21T00:00:00.000000000",
+        "lead": 5,
+        "model": "hrrr",
+        "phase": "lead_published",
+        "revision": "hrrr_20261021032320_b61fab68",
+        "time": 1792553000.416101
+      },
+      {
+        "available_leads": 83,
+        "codebook_entries": 36157643,
+        "complete": false,
+        "expected_leads": 141,
+        "init_time": "2026-10-20T06:00:00.000000000",
+        "lead": 82,
+        "model": "gfs",
+        "phase": "lead_published",
+        "revision": "gfs_20261021032321_7f08e4fc",
+        "time": 1792553001.2382522
+      },
+      {
+        "available_leads": 26,
+        "codebook_entries": 2319939,
+        "complete": false,
+        "expected_leads": 31,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 150,
+        "model": "aifs",
+        "phase": "lead_published",
+        "revision": "aifs_20261021032323_0608dad5",
+        "time": 1792553003.5335388
+      },
+      {
+        "available_leads": 31,
+        "codebook_entries": 54494766,
+        "complete": false,
+        "expected_leads": 85,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 30,
+        "model": "rrfs",
+        "phase": "lead_published",
+        "revision": "rrfs_20261021032333_4c01304f",
+        "time": 1792553013.7490344
+      },
+      {
+        "available_leads": 84,
+        "codebook_entries": 36708559,
+        "complete": false,
+        "expected_leads": 141,
+        "init_time": "2026-10-20T06:00:00.000000000",
+        "lead": 83,
+        "model": "gfs",
+        "phase": "lead_published",
+        "revision": "gfs_20261021032335_a74a5afe",
+        "time": 1792553015.4883313
+      },
+      {
+        "available_leads": 27,
+        "codebook_entries": 2408771,
+        "complete": false,
+        "expected_leads": 31,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 156,
+        "model": "aifs",
+        "phase": "lead_published",
+        "revision": "aifs_20261021032337_dcebbdd6",
+        "time": 1792553017.8547802
+      },
+      {
+        "available_leads": 7,
+        "codebook_entries": 2799436,
+        "complete": false,
+        "expected_leads": 49,
+        "init_time": "2026-10-21T00:00:00.000000000",
+        "lead": 6,
+        "model": "hrrr",
+        "phase": "lead_published",
+        "revision": "hrrr_20261021032338_d39fce1a",
+        "time": 1792553018.4852717
+      },
+      {
+        "available_leads": 85,
+        "codebook_entries": 37265372,
+        "complete": false,
+        "expected_leads": 141,
+        "init_time": "2026-10-20T06:00:00.000000000",
+        "lead": 84,
+        "model": "gfs",
+        "phase": "lead_published",
+        "revision": "gfs_20261021032349_476d9a1d",
+        "time": 1792553029.82259
+      },
+      {
+        "available_leads": 32,
+        "codebook_entries": 56236006,
+        "complete": false,
+        "expected_leads": 85,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 31,
+        "model": "rrfs",
+        "phase": "lead_published",
+        "revision": "rrfs_20261021032358_8fd413e0",
+        "time": 1792553038.9390163
+      },
+      {
+        "available_leads": 8,
+        "codebook_entries": 3206721,
+        "complete": false,
+        "expected_leads": 49,
+        "init_time": "2026-10-21T00:00:00.000000000",
+        "lead": 7,
+        "model": "hrrr",
+        "phase": "lead_published",
+        "revision": "hrrr_20261021032402_c835c2da",
+        "time": 1792553042.881522
+      },
+      {
+        "available_leads": 28,
+        "codebook_entries": 2497499,
+        "complete": false,
+        "expected_leads": 31,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 162,
+        "model": "aifs",
+        "phase": "lead_published",
+        "revision": "aifs_20261021032422_931e05fd",
+        "time": 1792553062.2441628
+      },
+      {
+        "available_leads": 9,
+        "codebook_entries": 3620031,
+        "complete": false,
+        "expected_leads": 49,
+        "init_time": "2026-10-21T00:00:00.000000000",
+        "lead": 8,
+        "model": "hrrr",
+        "phase": "lead_published",
+        "revision": "hrrr_20261021032440_77069b12",
+        "time": 1792553080.4169614
+      },
+      {
+        "available_leads": 86,
+        "codebook_entries": 37827181,
+        "complete": false,
+        "expected_leads": 141,
+        "init_time": "2026-10-20T06:00:00.000000000",
+        "lead": 85,
+        "model": "gfs",
+        "phase": "lead_published",
+        "revision": "gfs_20261021032441_0d8dd991",
+        "time": 1792553081.9269311
+      },
+      {
+        "available_leads": 29,
+        "codebook_entries": 2582635,
+        "complete": false,
+        "expected_leads": 31,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 168,
+        "model": "aifs",
+        "phase": "lead_published",
+        "revision": "aifs_20261021032444_1fe0e60a",
+        "time": 1792553084.3188534
+      },
+      {
+        "available_leads": 33,
+        "codebook_entries": 58008913,
+        "complete": false,
+        "expected_leads": 85,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 32,
+        "model": "rrfs",
+        "phase": "lead_published",
+        "revision": "rrfs_20261021032452_8b975195",
+        "time": 1792553092.9721167
+      },
+      {
+        "available_leads": 87,
+        "codebook_entries": 38395473,
+        "complete": false,
+        "expected_leads": 141,
+        "init_time": "2026-10-20T06:00:00.000000000",
+        "lead": 86,
+        "model": "gfs",
+        "phase": "lead_published",
+        "revision": "gfs_20261021032454_08048b5c",
+        "time": 1792553095.091055
+      },
+      {
+        "available_leads": 30,
+        "codebook_entries": 2665099,
+        "complete": false,
+        "expected_leads": 31,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 174,
+        "model": "aifs",
+        "phase": "lead_published",
+        "revision": "aifs_20261021032457_832aa90f",
+        "time": 1792553097.4940948
+      },
+      {
+        "available_leads": 10,
+        "codebook_entries": 4037989,
+        "complete": false,
+        "expected_leads": 49,
+        "init_time": "2026-10-21T00:00:00.000000000",
+        "lead": 9,
+        "model": "hrrr",
+        "phase": "lead_published",
+        "revision": "hrrr_20261021032458_af4b342b",
+        "time": 1792553098.9207475
+      },
+      {
+        "available_leads": 88,
+        "codebook_entries": 38957690,
+        "complete": false,
+        "expected_leads": 141,
+        "init_time": "2026-10-20T06:00:00.000000000",
+        "lead": 87,
+        "model": "gfs",
+        "phase": "lead_published",
+        "revision": "gfs_20261021032509_d384a838",
+        "time": 1792553109.7597263
+      },
+      {
+        "available_leads": 34,
+        "codebook_entries": 59791235,
+        "complete": false,
+        "expected_leads": 85,
+        "init_time": "2026-10-20T18:00:00.000000000",
+        "lead": 33,
+        "model": "rrfs",
+        "phase": "lead_published",
+        "revision": "rrfs_20261021032517_60b37ba2",
+        "time": 1792553117.6619608
+      },
+      {
+        "available_leads": 11,
+        "codebook_entries": 4459803,
+        "complete": false,
+        "expected_leads": 49,
+        "init_time": "2026-10-21T00:00:00.000000000",
+        "lead": 10,
+        "model": "hrrr",
+        "phase": "lead_published",
+        "revision": "hrrr_20261021032522_55bf139d",
+        "time": 1792553122.7034416
+      }
+    ],
+    "catalog": {
+      "version": 1,
+      "generation": 2924,
+      "current": {
+        "aifs": {
+          "revision": "aifs_20261021032457_832aa90f",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true
+        },
+        "gfs": {
+          "revision": "gfs_20261021032030_471d582b",
+          "database": "meteogram_native",
+          "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+          "owned": true
+        },
+        "hrrr": {
+          "revision": "hrrr_20261021032054_66a67e8f",
+          "database": "meteogram_native",
+          "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+          "owned": true
+        },
+        "rrfs": {
+          "revision": "rrfs_20261021032049_10ea0269",
+          "database": "meteogram_native",
+          "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+          "owned": true
+        }
+      },
+      "previous": {
+        "aifs": {
+          "revision": "aifs_20261020212046_b17db59c",
+          "database": "meteogram_native",
+          "table": "aifs_run_5c1e694807954ae1bcb65f33333ed19a",
+          "owned": true
+        },
+        "gfs": {
+          "revision": "gfs_20261019204100_f75c3991",
+          "database": "meteogram_native",
+          "table": "gfs_run_04cb19b1478e48c2937bc66e6d34be05",
+          "owned": true
+        },
+        "hrrr": {
+          "revision": "hrrr_20261020004829_73165a20",
+          "database": "meteogram_native",
+          "table": "hrrr_run_b4936ab29d974e12977291ebc877903f",
+          "owned": true
+        },
+        "rrfs": {
+          "revision": "rrfs_20261019113135_27f02549",
+          "database": "meteogram_native",
+          "table": "rrfs_run_81da4c15d0354963a655f4d365b0d47a",
+          "owned": true
+        }
+      },
+      "retired": [
+        {
+          "revision": "aifs_20261021030759_3bf2d926",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792552809.815042
+        },
+        {
+          "revision": "gfs_20261021030751_e30a331e",
+          "database": "meteogram_native",
+          "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+          "owned": true,
+          "retired_at": 1792552822.6266737
+        },
+        {
+          "revision": "rrfs_20261021025541_a057a8b0",
+          "database": "meteogram_native",
+          "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+          "owned": true,
+          "retired_at": 1792552823.99334
+        },
+        {
+          "revision": "aifs_20261021032009_8e5429e5",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792552824.5866327
+        },
+        {
+          "revision": "hrrr_20261021030757_810f1c08",
+          "database": "meteogram_native",
+          "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+          "owned": true,
+          "retired_at": 1792552827.3551414
+        },
+        {
+          "revision": "gfs_20261021032022_b48bfd07",
+          "database": "meteogram_native",
+          "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+          "owned": true,
+          "retired_at": 1792552830.2299
+        },
+        {
+          "revision": "rrfs_20261021032023_4cd9217f",
+          "database": "meteogram_native",
+          "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+          "owned": true,
+          "retired_at": 1792552850.1970181
+        },
+        {
+          "revision": "hrrr_20261021032027_8e7405ec",
+          "database": "meteogram_native",
+          "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+          "owned": true,
+          "retired_at": 1792552854.301886
+        },
+        {
+          "revision": "aifs_20261021032024_4c8fc43a",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792552981.2259946
+        },
+        {
+          "revision": "hrrr_20261021013123_550e3d95",
+          "database": "meteogram_native",
+          "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+          "owned": true,
+          "retired_at": 1792553000.4107034
+        },
+        {
+          "revision": "gfs_20261020153345_389d9ccb",
+          "database": "meteogram_native",
+          "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+          "owned": true,
+          "retired_at": 1792553001.2338011
+        },
+        {
+          "revision": "aifs_20261021032301_7a39ea73",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792553003.5238094
+        },
+        {
+          "revision": "rrfs_20261021013141_b513f449",
+          "database": "meteogram_native",
+          "table": "rrfs_run_d034b6a994f847e99a6494a97f712868",
+          "owned": true,
+          "retired_at": 1792553013.7444372
+        },
+        {
+          "revision": "gfs_20261021032321_7f08e4fc",
+          "database": "meteogram_native",
+          "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+          "owned": true,
+          "retired_at": 1792553015.4836006
+        },
+        {
+          "revision": "aifs_20261021032323_0608dad5",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792553017.85021
+        },
+        {
+          "revision": "hrrr_20261021032320_b61fab68",
+          "database": "meteogram_native",
+          "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+          "owned": true,
+          "retired_at": 1792553018.4803612
+        },
+        {
+          "revision": "gfs_20261021032335_a74a5afe",
+          "database": "meteogram_native",
+          "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+          "owned": true,
+          "retired_at": 1792553029.8147953
+        },
+        {
+          "revision": "rrfs_20261021032333_4c01304f",
+          "database": "meteogram_native",
+          "table": "rrfs_run_d034b6a994f847e99a6494a97f712868",
+          "owned": true,
+          "retired_at": 1792553038.9337268
+        },
+        {
+          "revision": "hrrr_20261021032338_d39fce1a",
+          "database": "meteogram_native",
+          "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+          "owned": true,
+          "retired_at": 1792553042.8718815
+        },
+        {
+          "revision": "aifs_20261021032337_dcebbdd6",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792553062.2354708
+        },
+        {
+          "revision": "hrrr_20261021032402_c835c2da",
+          "database": "meteogram_native",
+          "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+          "owned": true,
+          "retired_at": 1792553080.4114923
+        },
+        {
+          "revision": "gfs_20261021032349_476d9a1d",
+          "database": "meteogram_native",
+          "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+          "owned": true,
+          "retired_at": 1792553081.9203632
+        },
+        {
+          "revision": "aifs_20261021032422_931e05fd",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792553084.3145041
+        },
+        {
+          "revision": "rrfs_20261021032358_8fd413e0",
+          "database": "meteogram_native",
+          "table": "rrfs_run_d034b6a994f847e99a6494a97f712868",
+          "owned": true,
+          "retired_at": 1792553092.9642646
+        },
+        {
+          "revision": "gfs_20261021032441_0d8dd991",
+          "database": "meteogram_native",
+          "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+          "owned": true,
+          "retired_at": 1792553095.0840948
+        },
+        {
+          "revision": "aifs_20261021032444_1fe0e60a",
+          "database": "meteogram_native",
+          "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+          "owned": true,
+          "retired_at": 1792553097.4882855
+        },
+        {
+          "revision": "hrrr_20261021032440_77069b12",
+          "database": "meteogram_native",
+          "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+          "owned": true,
+          "retired_at": 1792553098.9116573
+        },
+        {
+          "revision": "gfs_20261021032454_08048b5c",
+          "database": "meteogram_native",
+          "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+          "owned": true,
+          "retired_at": 1792553109.7510278
+        },
+        {
+          "revision": "rrfs_20261021032452_8b975195",
+          "database": "meteogram_native",
+          "table": "rrfs_run_d034b6a994f847e99a6494a97f712868",
+          "owned": true,
+          "retired_at": 1792553117.6563594
+        },
+        {
+          "revision": "hrrr_20261021032458_af4b342b",
+          "database": "meteogram_native",
+          "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+          "owned": true,
+          "retired_at": 1792553122.6952105
+        }
+      ],
+      "complete_runs": {
+        "aifs": [
+          {
+            "revision": "aifs_20261020212046_b17db59c",
+            "database": "meteogram_native",
+            "table": "aifs_run_5c1e694807954ae1bcb65f33333ed19a",
+            "owned": true
+          },
+          {
+            "revision": "aifs_20261020173219_91f0bade",
+            "database": "meteogram_native",
+            "table": "aifs_run_582be5971e0f4be09492fa5c469cb82b",
+            "owned": true
+          }
+        ],
+        "gfs": [
+          {
+            "revision": "gfs_20261019204100_f75c3991",
+            "database": "meteogram_native",
+            "table": "gfs_run_04cb19b1478e48c2937bc66e6d34be05",
+            "owned": true
+          },
+          {
+            "revision": "gfs_20261019125022_cb619e87",
+            "database": "meteogram_native",
+            "table": "gfs_run_447ea17d97a64bdc80d596cbeedbf270",
+            "owned": true
+          }
+        ],
+        "hrrr": [
+          {
+            "revision": "hrrr_20261020004829_73165a20",
+            "database": "meteogram_native",
+            "table": "hrrr_run_b4936ab29d974e12977291ebc877903f",
+            "owned": true
+          },
+          {
+            "revision": "hrrr_20261019155029_f64df064",
+            "database": "meteogram_native",
+            "table": "hrrr_run_71ed8d3893ab4a4e91da1b29ca5d053f",
+            "owned": true
+          }
+        ],
+        "rrfs": [
+          {
+            "revision": "rrfs_20261019113135_27f02549",
+            "database": "meteogram_native",
+            "table": "rrfs_run_81da4c15d0354963a655f4d365b0d47a",
+            "owned": true
+          },
+          {
+            "revision": "rrfs_20261019034316_86f2a5e0",
+            "database": "meteogram_native",
+            "table": "rrfs_run_0a9e19bd81f748e7930bc99b771a183a",
+            "owned": true
+          }
+        ]
+      },
+      "building": {
+        "aifs": [
+          {
+            "revision": "aifs_20261021032457_832aa90f",
+            "database": "meteogram_native",
+            "table": "aifs_run_728063b6d9d44e68b544754636074e59",
+            "owned": true
+          }
+        ],
+        "gfs": [
+          {
+            "revision": "gfs_20261021032030_471d582b",
+            "database": "meteogram_native",
+            "table": "gfs_run_d36e1cf527374f168e574e9bfd2b6c09",
+            "owned": true
+          },
+          {
+            "revision": "gfs_20261020213406_17e41a45",
+            "database": "meteogram_native",
+            "table": "gfs_run_27f6389e87124bdd8d65367abbfa7a6f",
+            "owned": true
+          },
+          {
+            "revision": "gfs_20261021032509_d384a838",
+            "database": "meteogram_native",
+            "table": "gfs_run_2421f73928f64c1faf90097ff7e19ad5",
+            "owned": true
+          }
+        ],
+        "hrrr": [
+          {
+            "revision": "hrrr_20261021032054_66a67e8f",
+            "database": "meteogram_native",
+            "table": "hrrr_run_8af30eae91dd4a0a8a51259e77ab87fb",
+            "owned": true
+          },
+          {
+            "revision": "hrrr_20261021022115_b6adf068",
+            "database": "meteogram_native",
+            "table": "hrrr_run_c8cc2b0662d74a4da772a6dbdc73244e",
+            "owned": true
+          },
+          {
+            "revision": "hrrr_20261021032522_55bf139d",
+            "database": "meteogram_native",
+            "table": "hrrr_run_1fb4351bcf3147298ae07819baa8d487",
+            "owned": true
+          }
+        ],
+        "rrfs": [
+          {
+            "revision": "rrfs_20261021032049_10ea0269",
+            "database": "meteogram_native",
+            "table": "rrfs_run_568de5fb6cb04e37925f4e186feeb1ae",
+            "owned": true
+          },
+          {
+            "revision": "rrfs_20261021032517_60b37ba2",
+            "database": "meteogram_native",
+            "table": "rrfs_run_d034b6a994f847e99a6494a97f712868",
+            "owned": true
+          },
+          {
+            "revision": "rrfs_20261020191343_616c6fe4",
+            "database": "meteogram_native",
+            "table": "rrfs_run_170ad835080447ffb32d34c807a973b0",
+            "owned": true
+          }
+        ]
+      },
+      "hrrr_long": {
+        "revision": "hrrr_20261019093118_c9c3003e",
+        "database": "meteogram_native",
+        "table": "hrrr_run_6f5e1ce32a38463d9b067ddb2561685c",
+        "owned": true
+      },
+      "published_at": 1792553122.6952124
+    }
+  }
+}

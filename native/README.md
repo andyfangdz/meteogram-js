@@ -102,6 +102,20 @@ as soon as its first hour passes validation. The site overlays it on retained
 complete runs and independently checks sufficient continuous coverage before
 selecting native data.
 
+
+Cleanup resolves and validates the protected catalog references once per sweep,
+under the update lock, then reuses that snapshot for all orphan revisions. Never
+rebuild the complete reference graph for each discarded directory: accumulated
+failure evidence otherwise makes every poll spend minutes reading metadata.
+The scheduler favors the most advanced fully source-ready, fresh run per product
+before newer partial runs; HRRR's 48-hour base takes precedence over short runs.
+Progress is read from durable manifests on each poll, so restarts preserve that
+completion preference. Source discovery and maintenance do not consume the
+budget for starting ingestion. Events and `last-update.json` record maintenance,
+discovery and ingestion timings for diagnosis.
+The cleanup regression and live recovery measurements are recorded in
+`../docs/benchmarks/2026-10-20-ingestion-recovery/verification.json`.
+
 ## Storage and publication
 
 Every model uses `lead_partition_tiles_v1`: one shared table per
@@ -146,8 +160,11 @@ source maps are removed only after staged arrays and checkpoints are durable.
 After publication, weather staging is removed; serving codebooks, coordinates,
 cloud files and validation evidence remain.
 
-The database process ceiling is 12 GiB; each query is capped at 2 GiB. Periodic
-allocator purges and consumed-page discard hints bound memory. Optional input
+The database server and per-query memory ceilings are disabled in `server.xml`
+(`max_server_memory_usage`, `max_server_memory_usage_to_ram_ratio` and
+`max_memory_usage` are zero). Rebuild/install and restart after changing this
+embedded template. Periodic allocator purges and consumed-page discard hints
+reduce memory pressure. Optional input
 prefetch runs only with 18 GiB of headroom beyond its input; otherwise reads
 stream normally.
 

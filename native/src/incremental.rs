@@ -11,7 +11,7 @@ use futures::{stream, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
-    collections::{BTreeMap, HashSet},
+    collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
     sync::{
@@ -374,6 +374,43 @@ async fn ingest(
     .await??;
     Ok(())
 }
+// Progress acts as a durable completion preference across polls and restarts.
+// A newer initialization must not displace a runnable, more advanced forecast.
+type CompletionTargets = BTreeMap<String, (usize, String)>;
+fn prefer_completion(
+    targets: &mut CompletionTargets,
+    product: &str,
+    init: &str,
+    have: usize,
+) -> Result<()> {
+    let replace = match targets.get(product) {
+        None => true,
+        Some((old_have, old_init)) => {
+            have > *old_have || (have == *old_have && timestamp(init)? > timestamp(old_init)?)
+        }
+    };
+    if replace {
+        targets.insert(product.to_owned(), (have, init.to_owned()));
+    }
+    Ok(())
+}
+fn completion_rank(pin: &Value, targets: &CompletionTargets) -> u8 {
+    let product = pin["dataset"].as_str().unwrap();
+    if targets
+        .get(product)
+        .is_some_and(|(_, init)| pin["init_time"] == *init)
+    {
+        // Complete the HRRR long-range base before spending its budget on short runs.
+        if product == "noaa-hrrr-forecast-48-hour-virtual" {
+            0
+        } else {
+            1
+        }
+    } else {
+        2
+    }
+}
+
 pub async fn poll(root: PathBuf, models: Vec<String>, budget_seconds: u64) -> Result<i32> {
     poll_with_stop(
         root,
@@ -390,26 +427,21 @@ async fn poll_with_stop(
     stop: Arc<AtomicBool>,
 ) -> Result<i32> {
     let _lock = Lock::acquire(&root, "update", true, true)?;
+    let maintenance_started = Instant::now();
+    let began = now();
     let r = root.clone();
-    tokio::task::spawn_blocking(move || -> Result<()> {
+    let examined = tokio::task::spawn_blocking(move || -> Result<usize> {
         recover(&r)?;
         store::collect(&r, 600.)?;
-        let c = catalog(&r)?;
-        let keep = runs::references(&r, &c, true)?
-            .into_iter()
-            .map(|e| e.revision)
-            .collect::<HashSet<_>>();
-        for file in fs::read_dir(r.join("revisions"))? {
-            let p = file?.path();
-            if p.is_dir() && !keep.contains(p.file_name().unwrap().to_str().context("Revision")?) {
-                store::discard(&r, &p)?;
-            }
-        }
-        Ok(())
+        store::sweep_unreferenced(&r)
     })
     .await??;
-    let started = Instant::now();
-    let began = now();
+    let maintenance_seconds = maintenance_started.elapsed().as_secs_f64();
+    event(
+        &root,
+        json!({"phase":"maintenance_completed","seconds":maintenance_seconds,"revisions_examined":examined}),
+    )?;
+    let discovery_started = Instant::now();
     let c = catalog(&root)?;
     let mut products = Vec::new();
     for model in &models {
@@ -476,6 +508,7 @@ async fn poll_with_stop(
     let mut queues: BTreeMap<String, Vec<(Value, u16, Arc<source::Source>)>> = BTreeMap::new();
     let mut failures = Vec::new();
     let mut availability = Vec::new();
+    let mut completion = BTreeMap::new();
     for (model, product, result) in checks {
         match result {
             Err(e)=>failures.push(json!({"model":model,"dataset":product,"phase":"availability","error":format!("{e:#}")})),
@@ -487,6 +520,11 @@ async fn poll_with_stop(
                 let t=timestamp(init)?;
                 availability.push(json!({"model":model,"dataset":product,"init_time":init,"snapshot_id":check.source.snapshot,"ready_leads":run.ready,"expected_leads":run.expected,"missing_references":run.missing,"payload_reads":0}));
                 if known.as_ref().is_some_and(|(_,m)|complete(m).unwrap_or(false)) || (known.is_none() && floor.is_some_and(|old|t<=old)) {continue;}
+                let mut full = run.pin.clone();
+                full["leads"] = json!(run.expected);
+                if run.ready == run.expected && freshness(&full)?["available"] == true {
+                    prefer_completion(&mut completion, &product, init, have.len())?;
+                }
                 for lead in run.ready {
                     if !have.contains(&json!(lead)) {queues.entry(model.clone()).or_default().push((run.pin.clone(),lead,check.source.clone()));}
                 }
@@ -499,12 +537,23 @@ async fn poll_with_stop(
     )?;
     for jobs in queues.values_mut() {
         jobs.sort_by(|(a, ha, _), (b, hb, _)| {
-            timestamp(b["init_time"].as_str().unwrap())
-                .unwrap()
-                .total_cmp(&timestamp(a["init_time"].as_str().unwrap()).unwrap())
+            completion_rank(a, &completion)
+                .cmp(&completion_rank(b, &completion))
+                .then_with(|| {
+                    timestamp(b["init_time"].as_str().unwrap())
+                        .unwrap()
+                        .total_cmp(&timestamp(a["init_time"].as_str().unwrap()).unwrap())
+                })
                 .then(ha.cmp(hb))
         });
     }
+    let discovery_seconds = discovery_started.elapsed().as_secs_f64();
+    // Discovery/cleanup must not consume the time reserved for starting ingestion.
+    let started = Instant::now();
+    event(
+        &root,
+        json!({"phase":"ingestion_planned","discovery_seconds":discovery_seconds,"completion_targets":completion,"queued_leads":queues.values().map(Vec::len).sum::<usize>()}),
+    )?;
     // Two regional extractors plus one global-model extractor keep small
     // GFS/AIFS hour updates moving while the large native grids download.
     let regional_gate = Arc::new(tokio::sync::Semaphore::new(2));
@@ -534,7 +583,7 @@ async fn poll_with_stop(
     }
     atomic(
         root.join("last-update.json"),
-        &json!({"started":began,"time":now(),"completed_leads":completed,"failures":failures,"incremental":true,"implementation":"rust"}),
+        &json!({"started":began,"time":now(),"completed_leads":completed,"failures":failures,"maintenance_seconds":maintenance_seconds,"discovery_seconds":discovery_seconds,"ingestion_seconds":started.elapsed().as_secs_f64(),"incremental":true,"implementation":"rust"}),
     )?;
     Ok(if failures.is_empty() { 0 } else { 1 })
 }
@@ -584,4 +633,44 @@ pub async fn watch(root: PathBuf, poll_seconds: f64) -> Result<()> {
     }
     signal.abort();
     Ok(())
+}
+
+#[cfg(test)]
+mod scheduling_tests {
+    use super::*;
+
+    #[test]
+    fn newer_runs_do_not_starve_a_completion_in_progress() {
+        let product = "noaa-gfs-forecast-virtual";
+        let older = "2026-10-20T06:00:00";
+        let newer = "2026-10-20T12:00:00";
+        for have in 82..141 {
+            // Rebuild from durable progress each poll, including after restart.
+            let mut targets = CompletionTargets::new();
+            prefer_completion(&mut targets, product, newer, 0).unwrap();
+            prefer_completion(&mut targets, product, older, have).unwrap();
+            assert_eq!(targets[product].1, older);
+            assert!(
+                completion_rank(&json!({"dataset":product,"init_time":older}), &targets)
+                    < completion_rank(&json!({"dataset":product,"init_time":newer}), &targets)
+            );
+        }
+        let mut targets = CompletionTargets::new();
+        prefer_completion(&mut targets, product, older, 0).unwrap();
+        prefer_completion(&mut targets, product, newer, 0).unwrap();
+        assert_eq!(targets[product].1, newer);
+    }
+
+    #[test]
+    fn hrrr_long_base_gets_capacity_before_hourly_churn() {
+        let long = dataset("hrrr").unwrap();
+        let mut targets = CompletionTargets::new();
+        prefer_completion(&mut targets, long, "2026-10-21T00:00:00", 5).unwrap();
+        prefer_completion(&mut targets, HRRR_SHORT, "2026-10-21T01:00:00", 18).unwrap();
+        let long = json!({"dataset":long,"init_time":"2026-10-21T00:00:00"});
+        let short = json!({"dataset":HRRR_SHORT,"init_time":"2026-10-21T01:00:00"});
+        let newest = json!({"dataset":HRRR_SHORT,"init_time":"2026-10-21T02:00:00"});
+        assert!(completion_rank(&long, &targets) < completion_rank(&short, &targets));
+        assert!(completion_rank(&short, &targets) < completion_rank(&newest, &targets));
+    }
 }

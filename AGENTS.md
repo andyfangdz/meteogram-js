@@ -410,6 +410,20 @@ starting more hours; active hours drain before releasing the update lock.
 Durable journals and checkpoints resume interrupted hours. An unpublished
 partition can be retried without changing any already published hour.
 
+
+Cleanup resolves and validates the protected catalog references once per sweep,
+under the update lock, then reuses that snapshot for all orphan revisions. Never
+rebuild the complete reference graph for each discarded directory: accumulated
+failure evidence otherwise makes every poll spend minutes reading metadata.
+The scheduler favors the most advanced fully source-ready, fresh run per product
+before newer partial runs; HRRR's 48-hour base takes precedence over short runs.
+Progress is read from durable manifests on each poll, so restarts preserve that
+completion preference. Source discovery and maintenance do not consume the
+budget for starting ingestion. Events and `last-update.json` record maintenance,
+discovery and ingestion timings for diagnosis.
+The cleanup regression and live recovery measurements are recorded in
+`docs/benchmarks/2026-10-20-ingestion-recovery/verification.json`.
+
 Every model uses `lead_partition_tiles_v1`: one shared table per
 model/dataset/initialization, partitioned by
 `(lead_hour, intDiv(tile_id,128))`. Each tile contains 256 adjacent native cells
@@ -460,8 +474,12 @@ requested. Published audits use private descriptor copies, preserving the
 existing proof until a successful atomic replacement. Do not substitute a row
 count, persisted success flag or source-only check for full value validation.
 
-The loopback database has a 12 GiB process ceiling and a 2 GiB per-query ceiling.
-Periodic allocator purges and consumed-page discard hints keep memory bounded.
+The loopback database has no configured server or per-query memory ceiling, as
+requested on 2026-10-19. In `native/server.xml`, `max_server_memory_usage`,
+`max_server_memory_usage_to_ram_ratio` and profile `max_memory_usage` are all zero.
+The template is embedded in the Rust executable and rewritten at service startup;
+rebuild/install the executable and restart the unit to persist configuration changes.
+Periodic allocator purges and consumed-page discard hints reduce memory pressure.
 Optional staged-input prefetch reserves 18 GiB beyond input bytes; otherwise it
 streams. Source staging keeps a 20 GiB free-space floor. Cloud producers and
 resident conversion check a conservative bound for both cloud data/index pairs
