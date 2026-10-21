@@ -581,3 +581,20 @@
 .legend .active {
   animation: none;
 }
+
+/* Overlay visibility is independent of ingestion state. */
+.coverage > .superseded,
+.legend .superseded {
+  background: repeating-linear-gradient(135deg, #d5dce1 0 3px, #eef1f4 3px 6px);
+  color: #435261;
+  border: 1px solid #a6b2bd;
+  text-decoration: line-through;
+}
+.coverage > .partlySuperseded,
+.legend .partlySuperseded {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 4px, #ffffffa6 4px 7px),
+    var(--model-color, #568599);
+  color: #172c3c;
+  border: 1px solid #7896a5;
+}

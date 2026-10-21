@@ -784,3 +784,11 @@ persistence. See `native/README.md` for setup and certificate limitations.
 | Contour lines         | `src/app/components/weather-lines.tsx` |
 | Type definitions      | `src/types/weather.ts`                 |
 | Tests                 | `src/__tests__/*.test.ts`              |
+
+Ingestion coverage rows retain each distinct initialization selected by the point
+provider (latest, latest complete and long), plus the newest source candidate.
+HRRR can therefore show three supplying runs. All models mark published intervals
+fully or partly superseded by newer published weather using absolute valid-time
+overlap and native cadence, not lead-number equality or source readiness. Cloud
+visibility follows the winning weather initialization even before its cloud
+supplement arrives. Hatching does not change stored data or publication counts.

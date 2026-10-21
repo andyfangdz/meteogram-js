@@ -232,21 +232,74 @@ export function latestCloud(runs: IngestionRun[]) {
   return { run, lead, valid: epoch(run.init_time) + lead * 3600 };
 }
 
-/** Display the newest initialization and the complete run supplying its base. */
+/** Show source progress plus every distinct initialization selected by the forecast API. */
 export function displayedRuns(model: ModelIngestion): IngestionRun[] {
   const newest = newestRun(model.runs);
   if (!newest) return [];
-  const different = (r: IngestionRun) =>
-    epoch(r.init_time) < epoch(newest.init_time);
-  const base = model.runs.find((r) => r.roles.includes("long") && different(r));
-  const previous = !newest.complete
-    ? (model.runs.find((r) => r.roles.includes("complete") && different(r)) ??
-      newestRun(
-        model.runs.filter((r) => different(r) && r.available_leads.length > 0),
-      ))
-    : undefined;
-  const companion = base ?? previous;
-  return companion ? [newest, companion] : [newest];
+  const selected = model.runs.filter(
+    (run) =>
+      run === newest ||
+      run.roles.some((role) => ["latest", "complete", "long"].includes(role)),
+  );
+  const byInit = new Map<number, IngestionRun>();
+  for (const run of selected) {
+    const init = epoch(run.init_time);
+    const prior = byInit.get(init);
+    if (
+      !prior ||
+      Math.max(...run.expected_leads) > Math.max(...prior.expected_leads) ||
+      (Math.max(...run.expected_leads) === Math.max(...prior.expected_leads) &&
+        run.available_leads.length > prior.available_leads.length)
+    )
+      byInit.set(init, run);
+  }
+  return [...byInit.values()].sort(
+    (a, b) => epoch(b.init_time) - epoch(a.init_time),
+  );
+}
+
+function leadInterval(run: IngestionRun, lead: number): [number, number] {
+  const hours = [...run.expected_leads].sort((a, b) => a - b);
+  const index = hours.indexOf(lead);
+  const step =
+    (hours[index + 1] ?? lead + (lead - (hours[index - 1] ?? lead - 1))) - lead;
+  const start = epoch(run.init_time) + lead * 3600;
+  return [start, start + step * 3600];
+}
+
+/** Publication, not source readiness, wins overlays; clouds follow the weather run.
+ * Union intervals so a coarse sample can be only partially superseded.
+ */
+export function leadSupersession(
+  model: ModelIngestion,
+  run: IngestionRun,
+  lead: number,
+): "none" | "full" | "partial" {
+  if (!run.available_leads.includes(lead)) return "none";
+  const [start, end] = leadInterval(run, lead);
+  const intervals = displayedRuns(model)
+    .filter(
+      (other) =>
+        epoch(other.init_time) > epoch(run.init_time) &&
+        other.freshness.available &&
+        other.roles.some((role) =>
+          ["latest", "complete", "long"].includes(role),
+        ),
+    )
+    .flatMap((other) =>
+      other.available_leads.map((h) => leadInterval(other, h)),
+    )
+    .filter(([a, b]) => a < end && b > start)
+    .sort(([a], [b]) => a - b);
+  let covered = 0,
+    cursor = start;
+  for (const [a, b] of intervals) {
+    const left = Math.max(start, a, cursor),
+      right = Math.min(end, b);
+    if (right > left) covered += right - left;
+    cursor = Math.max(cursor, right);
+  }
+  return covered === 0 ? "none" : covered >= end - start ? "full" : "partial";
 }
 export function isActiveLead(
   model: ModelIngestion,

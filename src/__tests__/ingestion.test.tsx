@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import {
   displayedRuns,
+  leadSupersession,
   isActiveLead,
   latestCloud,
   leadState,
@@ -77,7 +78,7 @@ describe("ingestion status", () => {
     gfs.runs.push(old);
     expect(displayedRuns(gfs)).toEqual([gfs.runs[0], old]);
     gfs.runs[0].complete = true;
-    expect(displayedRuns(gfs)).toEqual([gfs.runs[0]]);
+    expect(displayedRuns(gfs)).toEqual([gfs.runs[0], old]);
     const hrrr = fixture().models[0];
     hrrr.runs[0].complete = true;
     const long = { ...old, roles: ["long"], dataset: "long" };
@@ -90,6 +91,52 @@ describe("ingestion status", () => {
     expect(displayedRuns(ifs)).toEqual([ifs.runs[0], ifsLong]);
     long.init_time = hrrr.runs[0].init_time;
     expect(displayedRuns(hrrr)).toEqual([hrrr.runs[0]]);
+  });
+  it("shows all three HRRR overlay initializations and deduplicates shared roles", () => {
+    const model = fixture().models[0];
+    const latest = model.runs[0];
+    latest.init_time = "2026-10-21T02:00:00";
+    const complete = {
+      ...latest,
+      init_time: "2026-10-21T01:00:00",
+      roles: ["complete"],
+      complete: true,
+    };
+    const long = {
+      ...latest,
+      init_time: "2026-10-21T00:00:00",
+      roles: ["long"],
+      complete: true,
+    };
+    model.runs.push(complete, long);
+    expect(displayedRuns(model)).toEqual([latest, complete, long]);
+    complete.roles.push("long");
+    model.runs.pop();
+    expect(displayedRuns(model)).toEqual([latest, complete]);
+  });
+  it("marks only published newer intervals, preserving gaps and partial coarse samples", () => {
+    for (const model of fixture().models) {
+      const older = model.runs[0];
+      older.roles = ["complete"];
+      older.expected_leads = [0, 3, 6, 9];
+      older.available_leads = [0, 3, 6, 9];
+      const newer = {
+        ...older,
+        init_time: "2026-10-21T01:00:00",
+        roles: ["latest"],
+        expected_leads: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        available_leads: [0, 2, 3, 4],
+        source_ready: [0, 1, 2, 3, 4, 5, 6],
+        cloud_leads: [],
+      };
+      model.runs.push(newer);
+      expect(leadSupersession(model, older, 0)).toBe("partial");
+      expect(leadSupersession(model, older, 3)).toBe("full");
+      expect(leadSupersession(model, older, 6)).toBe("none");
+      expect(leadSupersession(model, newer, 0)).toBe("none");
+      newer.freshness = { available: false };
+      expect(leadSupersession(model, older, 3)).toBe("none");
+    }
   });
   it("only marks the exact active initialization and lead, never a published or queued hour", () => {
     const m = fixture().models[1],

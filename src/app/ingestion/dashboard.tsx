@@ -15,6 +15,7 @@ import {
   isActiveLead,
   latestCloud,
   leadState,
+  leadSupersession,
   parseIngestionStatus,
   queuedLeads,
   utcTime,
@@ -64,13 +65,24 @@ function Coverage({
             live && isActiveLead(model, run, h)
               ? "active"
               : leadState(run, h, clouds);
+          const supersession = have.includes(h)
+            ? leadSupersession(model, run, h)
+            : "none";
+          const overlay =
+            supersession === "full"
+              ? "Hidden by a newer initialization"
+              : supersession === "partial"
+                ? "Partly hidden by a newer initialization"
+                : "";
+          const description = `${LABEL[state]}${overlay ? `; ${overlay}` : ""}`;
           return (
             <span
               key={h}
-              className={styles[state]}
-              title={`${utcTime(run.init_time)} · +${h}h: ${LABEL[state]}`}
+              className={`${styles[state]} ${supersession === "full" ? styles.superseded : supersession === "partial" ? styles.partlySuperseded : ""}`}
+              title={`${utcTime(run.init_time)} · +${h}h · valid ${utcTime(epoch(run.init_time) + h * 3600)}: ${description}`}
               data-state={state}
-              aria-label={`+${h}h: ${LABEL[state]}`}
+              data-supersession={supersession}
+              aria-label={`+${h}h: ${description}`}
             >
               {h}
             </span>
@@ -392,7 +404,20 @@ export default function IngestionDashboard() {
                   {label}
                 </span>
               ))}
+              <span>
+                <i className={styles.superseded} />
+                Hidden by newer init
+              </span>
+              <span>
+                <i className={styles.partlySuperseded} />
+                Partly hidden by newer init
+              </span>
             </div>
+            <p className={styles.cloudNote}>
+              Runs are shown newest first. Hatched times remain stored but are
+              hidden in the forecast by newer published data; source-ready times
+              do not supersede them.
+            </p>
             {sourceStale && (
               <p className={styles.alert}>
                 Source checks are{" "}
