@@ -238,10 +238,7 @@ export function displayedRuns(model: ModelIngestion): IngestionRun[] {
   if (!newest) return [];
   const different = (r: IngestionRun) =>
     epoch(r.init_time) < epoch(newest.init_time);
-  const base =
-    model.model === "hrrr"
-      ? model.runs.find((r) => r.roles.includes("long") && different(r))
-      : undefined;
+  const base = model.runs.find((r) => r.roles.includes("long") && different(r));
   const previous = !newest.complete
     ? (model.runs.find((r) => r.roles.includes("complete") && different(r)) ??
       newestRun(

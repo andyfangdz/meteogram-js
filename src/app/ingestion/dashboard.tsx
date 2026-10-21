@@ -132,7 +132,7 @@ function ModelRow({
                 {index === 0
                   ? "Newest run"
                   : run.roles.includes("long")
-                    ? "48-hour base"
+                    ? `${run.expected_leads.at(-1)}-hour base`
                     : run.complete
                       ? "Complete base"
                       : "Previous run"}
@@ -229,8 +229,8 @@ function ModelRow({
             {complete && !complete.freshness.available
               ? " (outside freshness window)"
               : ""}
-            {data.model === "hrrr"
-              ? ` · 48-hour base: ${long ? utcTime(long.init_time) : "Not available"}`
+            {data.model === "hrrr" || data.model === "ifs"
+              ? ` · ${data.model === "hrrr" ? 48 : 180}-hour base: ${long ? utcTime(long.init_time) : "Not available"}`
               : ""}
             . Lag based on {data.lag_samples} publications in the last hour.
           </p>

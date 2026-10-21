@@ -83,6 +83,11 @@ describe("ingestion status", () => {
     const long = { ...old, roles: ["long"], dataset: "long" };
     hrrr.runs.push(long);
     expect(displayedRuns(hrrr)).toEqual([hrrr.runs[0], long]);
+    const ifs = fixture().models.find((m) => m.model === "ifs")!;
+    ifs.runs[0].complete = true;
+    const ifsLong = { ...long, expected_leads: [0, 180] };
+    ifs.runs.push(ifsLong);
+    expect(displayedRuns(ifs)).toEqual([ifs.runs[0], ifsLong]);
     long.init_time = hrrr.runs[0].init_time;
     expect(displayedRuns(hrrr)).toEqual([hrrr.runs[0]]);
   });
