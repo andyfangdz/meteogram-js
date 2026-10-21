@@ -22,6 +22,16 @@ use std::{
     time::Instant,
 };
 use tokio::sync::RwLock;
+/// Expected upstream incompleteness, distinct from transport/schema/storage errors.
+#[derive(Debug)]
+pub struct SourcePending(pub &'static str);
+impl std::fmt::Display for SourcePending {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} data not yet available", self.0)
+    }
+}
+impl std::error::Error for SourcePending {}
+
 #[derive(Clone)]
 pub struct Source {
     pub store: Arc<Store>,
@@ -639,11 +649,9 @@ async fn fetch_hour_inner(
             })
             .await?;
             atomic(out.join("preflight.json"), &references)?;
-            anyhow::ensure!(
-                references["complete"] == true,
-                "Incomplete source references: {}",
-                references
-            );
+            if references["complete"] != true {
+                return Err(SourcePending("Source").into());
+            }
             let cache = out.join("source-cache");
             fs::create_dir_all(&cache)?;
             let ids = Arc::new(ids);
@@ -932,6 +940,7 @@ pub struct AvailableRun {
     pub expected: Vec<u16>,
     pub ready: Vec<u16>,
     pub missing: usize,
+    pub cloud_ready: Option<Vec<u16>>,
 }
 pub struct Availability {
     pub source: Arc<Source>,
@@ -1035,6 +1044,12 @@ pub async fn availability_filtered(
     {
         metas.insert(name.clone(), source.meta(&name).await?);
     }
+    if model == "hrrr" {
+        for field in crate::clouds::FIELDS {
+            let name = format!("model_level/{field}");
+            metas.insert(name.clone(), source.meta(&name).await?);
+        }
+    }
     let expected = product_leads(model, product);
     let mut runs = Vec::new();
     for (init, t) in selected {
@@ -1078,11 +1093,42 @@ pub async fn availability_filtered(
             async move { Ok(s.exists(&key).await?) }
         })
         .await?;
+        let cloud_ready = if model == "hrrr" {
+            let hours = expected
+                .iter()
+                .map(|hour| {
+                    let lead = source_leads
+                        .iter()
+                        .position(|v| v == hour)
+                        .context("Cloud lead axis")?;
+                    Ok((
+                        *hour,
+                        cloud_tasks(&metas, init, lead)?
+                            .into_iter()
+                            .map(|t| t.key)
+                            .collect(),
+                    ))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            Some(
+                ready_hours(hours, |key| {
+                    let store = source.store.clone();
+                    async move { Ok(store.exists(&key).await?) }
+                })
+                .await?
+                .into_iter()
+                .filter(|(_, n)| *n == 0)
+                .map(|(h, _)| h)
+                .collect(),
+            )
+        } else {
+            None
+        };
         let init_time = chrono::DateTime::from_timestamp(t as i64, 0)
             .context("Invalid init")?
             .format("%Y-%m-%dT%H:%M:%S%.9f")
             .to_string();
-        runs.push(AvailableRun {pin:json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":source.snapshot}),expected:expected.clone(),ready:counts.iter().filter(|(_,n)|*n==0).map(|(h,_)|*h).collect(),missing:counts.iter().map(|(_,n)|n).sum()});
+        runs.push(AvailableRun {pin:json!({"model":model,"dataset":product,"init_time":init_time,"snapshot_id":source.snapshot}),expected:expected.clone(),ready:counts.iter().filter(|(_,n)|*n==0).map(|(h,_)|*h).collect(),missing:counts.iter().map(|(_,n)|n).sum(),cloud_ready});
     }
     Ok(Availability { source, runs })
 }
@@ -1259,10 +1305,9 @@ pub async fn fetch_cloud_coverage(out: &Path, available: &Source) -> Result<Valu
         async move { Ok(store.exists(&key).await?) }
     })
     .await?;
-    anyhow::ensure!(
-        preflight["complete"] == true,
-        "Incomplete cloud references: {preflight}"
-    );
+    if preflight["complete"] != true {
+        return Err(SourcePending("Cloud").into());
+    }
     let preflight_seconds = preflight_started.elapsed().as_secs_f64();
     let cache = cloud_cache_dir(out, &available.snapshot)?;
     let count = Arc::new(AtomicU64::new(0));

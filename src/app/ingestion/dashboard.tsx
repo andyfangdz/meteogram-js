@@ -9,8 +9,14 @@ import {
   type CSSProperties,
 } from "react";
 import {
+  duration,
+  epoch,
   focusRun,
+  latestCloud,
+  leadState,
+  newestRun,
   parseIngestionStatus,
+  queuedLeads,
   utcTime,
   type IngestionRun,
   type IngestionStatus,
@@ -19,235 +25,224 @@ import {
 import styles from "./ingestion.module.css";
 
 const META = {
-  hrrr: {
-    name: "HRRR",
-    detail: "Regional · hourly forecasts",
-    color: "#087f8c",
-  },
-  gfs: {
-    name: "GFS",
-    detail: "Global · hourly / 3-hour forecasts",
-    color: "#3668b0",
-  },
-  aifs: {
-    name: "AIFS",
-    detail: "Global AI · 6-hour forecasts",
-    color: "#8061ab",
-  },
-  rrfs: {
-    name: "RRFS",
-    detail: "Regional · hourly forecasts",
-    color: "#b46c20",
-  },
+  hrrr: { name: "HRRR", detail: "Hourly regional", color: "#126e82" },
+  gfs: { name: "GFS", detail: "Global · 1–3h steps", color: "#3867a8" },
+  aifs: { name: "AIFS", detail: "Global AI · 6h steps", color: "#795aa0" },
+  rrfs: { name: "RRFS", detail: "Hourly regional", color: "#99651d" },
 };
-function RunCoverage({ run }: { run: IngestionRun }) {
-  const have = new Set(run.available_leads);
-  const ready = run.source_ready === null ? null : new Set(run.source_ready);
+const LABEL = {
+  ingested: "Published",
+  ready: "Ready at source",
+  waiting: "Source not available",
+  unknown: "Source status unknown",
+};
+function Coverage({
+  run,
+  clouds = false,
+}: {
+  run: IngestionRun;
+  clouds?: boolean;
+}) {
+  const have = clouds ? run.cloud_leads : run.available_leads;
   return (
-    <div
-      className={styles.coverage}
-      style={
-        {
-          "--coverage-count": Math.min(49, run.expected_leads.length),
-        } as CSSProperties
-      }
-      role="img"
-      aria-label={`${have.size} of ${run.expected_leads.length} forecast times ingested. Missing: ${run.missing_leads.map((h) => `+${h}h`).join(", ") || "none"}.`}
-    >
-      {run.expected_leads.map((h) => (
-        <span
-          key={h}
-          title={`+${h}h · ${have.has(h) ? "Ingested" : ready?.has(h) ? "Ready at source" : ready ? "Waiting for source" : "Not ingested; source status unknown"}`}
-          className={
-            have.has(h)
-              ? styles.ingested
-              : ready?.has(h)
-                ? styles.ready
-                : styles.waiting
-          }
-        />
-      ))}
+    <div className={styles.coverageRow}>
+      <span className={styles.stripLabel}>{clouds ? "Clouds" : "Weather"}</span>
+      <div
+        className={styles.coverage}
+        role="img"
+        aria-label={`${clouds ? "Cloud" : "Weather"} coverage: ${have.length} of ${run.expected_leads.length} forecast times published`}
+      >
+        {run.expected_leads.map((h) => {
+          const state = leadState(run, h, clouds);
+          return (
+            <span
+              key={h}
+              className={styles[state]}
+              title={`+${h}h: ${LABEL[state]}`}
+            />
+          );
+        })}
+      </div>
+      <span className={styles.count}>
+        {have.length}/{run.expected_leads.length}
+      </span>
     </div>
   );
 }
-function ModelCard({ data }: { data: ModelIngestion }) {
+function ModelRow({ data, now }: { data: ModelIngestion; now: number }) {
   const meta = META[data.model];
-  const focus = focusRun(data);
-  const latest = data.runs.find((r) => r.roles.includes("latest"));
+  const focus = focusRun(data) ?? newestRun(data.runs);
+  const newest = newestRun(data.runs);
   const complete = data.runs.find((r) => r.roles.includes("complete"));
   const long = data.runs.find((r) => r.roles.includes("long"));
+  const cloud = latestCloud(data.runs);
+  const queue = data.runs.reduce((n, r) => n + queuedLeads(r), 0);
   const peak = Math.max(1, ...data.activity);
   return (
     <article
-      className={styles.card}
+      className={styles.model}
       style={{ "--model-color": meta.color } as CSSProperties}
     >
-      <header className={styles.cardHeader}>
-        <div>
-          <h2>
-            <span className={styles.modelDot} />
-            {meta.name}
-          </h2>
-          <p>{meta.detail}</p>
-        </div>
+      <header className={styles.modelHeader}>
+        <h2>{meta.name}</h2>
+        <p>{meta.detail}</p>
         <span
           className={`${styles.badge} ${focus?.complete ? styles.complete : ""}`}
         >
-          {!focus ? "No data" : focus.complete ? "Run complete" : "Catching up"}
+          {!focus
+            ? "No data"
+            : focus.complete
+              ? "Complete"
+              : queue
+                ? "Ingesting"
+                : "Waiting for source"}
         </span>
       </header>
-      <div className={styles.focusLabel}>
-        {focus?.target ? "Completing this run" : "Newest retained run"}
-        <span>{focus ? utcTime(focus.init_time) : "—"}</span>
-      </div>
-      <div className={styles.progressHeading}>
-        <strong>
-          {focus?.available_leads.length ?? 0}
-          <small> / {focus?.expected_leads.length ?? "—"}</small>
-        </strong>
-        <span>forecast times ingested</span>
-        <b>
-          {focus
-            ? Math.round(
-                (100 * focus.available_leads.length) /
-                  focus.expected_leads.length,
-              )
-            : 0}
-          %
-        </b>
-      </div>
-      <progress
-        className={styles.progress}
-        aria-label={`${meta.name} ingestion progress`}
-        max={focus?.expected_leads.length || 1}
-        value={focus?.available_leads.length || 0}
-      />
-      {focus ? (
-        <>
-          <RunCoverage run={focus} />
-          <div className={styles.horizon}>
-            <span>+0h</span>
-            <span>+{Math.max(...focus.expected_leads)}h forecast horizon</span>
-          </div>
-        </>
-      ) : (
-        <p>No run has been published yet.</p>
-      )}
-      <dl className={styles.runFacts}>
-        <div>
-          <dt>Newest run</dt>
-          <dd>
-            {latest ? utcTime(latest.init_time) : "Not available"}
-            {latest && (
-              <small>
-                {latest.available_leads.length}/{latest.expected_leads.length}{" "}
-                ingested
-              </small>
-            )}
-          </dd>
+      <div className={styles.run}>
+        <div className={styles.runHeading}>
+          <strong>{focus?.target ? "Target run" : "Published run"}</strong>
+          <span>{focus ? utcTime(focus.init_time) : "Not available"}</span>
         </div>
-        <div>
-          <dt>Latest complete</dt>
-          <dd>
-            {complete ? utcTime(complete.init_time) : "Not available"}
-            <small>
-              {complete
-                ? complete.freshness.available
-                  ? "Within freshness window"
-                  : "Outside freshness window"
-                : "Waiting for a complete run"}
-            </small>
-          </dd>
-        </div>
-        {data.model === "hrrr" && (
-          <div>
-            <dt>48-hour base</dt>
-            <dd>
-              {long ? utcTime(long.init_time) : "Not available"}
-              <small>
-                {long
-                  ? long.freshness.available
-                    ? "Within freshness window"
-                    : "Outside freshness window"
-                  : "Waiting for a complete long run"}
-              </small>
-            </dd>
+        {focus && (
+          <>
+            <progress
+              className={styles.srOnly}
+              aria-label={`${meta.name} ingestion progress`}
+              max={focus.expected_leads.length}
+              value={focus.available_leads.length}
+            />
+            <Coverage run={focus} />
+            {data.model === "hrrr" && <Coverage run={focus} clouds />}
+            <div className={styles.horizon}>
+              <span>Forecast lead +0h</span>
+              <span>+{Math.max(...focus.expected_leads)}h</span>
+            </div>
+          </>
+        )}
+        {newest && newest !== focus && (
+          <div className={styles.upstream}>
+            <div className={styles.runHeading}>
+              <strong>Newest source run</strong>
+              <span>{utcTime(newest.init_time)}</span>
+            </div>
+            <Coverage run={newest} />
+            {data.model === "hrrr" && <Coverage run={newest} clouds />}
           </div>
         )}
-      </dl>
-      <div className={styles.activityHeader}>
-        <span>Last 60 minutes</span>
-        <strong>
-          {data.published_last_hour} published <span>·</span>{" "}
-          {data.failed_last_hour} failed attempts
-        </strong>
+        {data.model === "hrrr" && (
+          <p className={styles.cloudNote}>
+            <strong>Latest cloud data</strong>{" "}
+            {cloud ? (
+              <>
+                {utcTime(cloud.run.init_time)} run, through +{cloud.lead}h{" "}
+                <span>(valid {utcTime(cloud.valid)})</span>
+              </>
+            ) : (
+              "Not observed yet"
+            )}
+          </p>
+        )}
       </div>
-      <div
-        className={styles.sparkline}
-        role="img"
-        aria-label={`${data.published_last_hour} forecast times published in the last hour, in five-minute intervals`}
-      >
-        {data.activity.map((count, i) => (
-          <div
-            key={i}
-            title={`${60 - i * 5}–${55 - i * 5} minutes ago: ${count} published`}
-          >
-            <span
-              style={{
-                height: `${Math.max(3, (100 * count) / peak)}%`,
-                opacity: count ? 1 : 0.15,
-              }}
-            />
+      <div className={styles.telemetry}>
+        <dl className={styles.numbers}>
+          <div title="Most recent measured source-ready to publication delay. Includes queue and processing time; observed at polling cadence.">
+            <dt>Ingestion lag</dt>
+            <dd>{duration(data.lag_seconds)}</dd>
           </div>
-        ))}
+          <div title="Median source-ready to publication delay over measured publications in the last hour.">
+            <dt>Median / 1h</dt>
+            <dd>{duration(data.median_lag_seconds)}</dd>
+          </div>
+          <div title="Forecast times with all required source references ready, but not yet published.">
+            <dt>Queued</dt>
+            <dd>{queue}</dd>
+          </div>
+          <div title="Time since the initialization of the displayed target or published run; includes upstream production time.">
+            <dt>Run age</dt>
+            <dd>
+              {focus
+                ? duration(Math.max(0, now - epoch(focus.init_time)))
+                : "—"}
+            </dd>
+          </div>
+        </dl>
+        <div className={styles.activity}>
+          <div
+            className={styles.sparkline}
+            role="img"
+            aria-label={`${data.published_last_hour} forecast times published in the last hour`}
+          >
+            {data.activity.map((n, i) => (
+              <span
+                key={i}
+                title={`${60 - i * 5}–${55 - i * 5} minutes ago: ${n} published`}
+                style={{
+                  height: `${Math.max(5, (n / peak) * 100)}%`,
+                  opacity: n ? 1 : 0.15,
+                }}
+              />
+            ))}
+          </div>
+          <p>
+            <strong>{data.published_last_hour}</strong> published / 1h
+            <br />
+            <span>{data.waiting_last_hour} source waits</span>
+            <span className={data.failed_last_hour ? styles.errorText : ""}>
+              {" "}
+              · {data.failed_last_hour} failures
+            </span>
+          </p>
+        </div>
       </div>
-      <div className={styles.horizon}>
-        <span>60 min ago</span>
-        <span>Now</span>
-      </div>
-      <p className={styles.lastPublication}>
-        Last publication: {utcTime(data.last_publication)}
-      </p>
-      {data.last_failure && (
-        <p className={styles.failure}>
-          {data.last_failure.reason} · {utcTime(data.last_failure.time)}
-        </p>
-      )}
       <details className={styles.details}>
         <summary>
-          Inspect retained runs <span>{data.runs.length}</span>
+          Run details{" "}
+          <span>Last publication {utcTime(data.last_publication)}</span>
         </summary>
-        <div className={styles.tableScroll}>
-          <table>
-            <thead>
-              <tr>
-                <th>Initialization (UTC)</th>
-                <th>Progress</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.runs.map((r) => (
-                <tr key={r.dataset + r.init_time}>
-                  <td>{utcTime(r.init_time).replace(" UTC", "")}</td>
-                  <td>
-                    {r.available_leads.length}/{r.expected_leads.length}
-                  </td>
-                  <td>
-                    {r.target
-                      ? "Completion target"
-                      : r.roles.includes("long")
-                        ? "48-hour base"
-                        : r.roles.includes("complete")
-                          ? "Complete"
-                          : r.roles.includes("latest")
-                            ? "Newest"
-                            : "Building"}
-                  </td>
+        <div className={styles.detailBody}>
+          <p>
+            Latest complete:{" "}
+            {complete ? utcTime(complete.init_time) : "Not available"}
+            {complete && !complete.freshness.available
+              ? " (outside freshness window)"
+              : ""}
+            {data.model === "hrrr"
+              ? ` · 48-hour base: ${long ? utcTime(long.init_time) : "Not available"}`
+              : ""}
+            . Lag based on {data.lag_samples} publications in the last hour.
+          </p>
+          {data.last_failure && (
+            <p className={styles.errorText}>
+              {data.last_failure.reason}: {utcTime(data.last_failure.time)}
+            </p>
+          )}
+          <div className={styles.tableScroll}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Run initialization (UTC)</th>
+                  <th>Published</th>
+                  <th>Source ready</th>
+                  <th>Role</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.runs.map((r) => (
+                  <tr key={r.dataset + r.init_time}>
+                    <td>{utcTime(r.init_time)}</td>
+                    <td>
+                      {r.available_leads.length}/{r.expected_leads.length}
+                    </td>
+                    <td>{r.source_ready?.length ?? "Not checked"}</td>
+                    <td>
+                      {r.roles.join(", ")}
+                      {r.target ? ", target" : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </details>
     </article>
@@ -257,6 +252,7 @@ export default function IngestionDashboard() {
   const [data, setData] = useState<IngestionStatus | null>(null);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [clock, setClock] = useState(() => Date.now() / 1000);
   const request = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
     if (request.current) return;
@@ -286,6 +282,7 @@ export default function IngestionDashboard() {
   useEffect(() => {
     void refresh();
     const timer = setInterval(() => {
+      setClock(Date.now() / 1000);
       if (!document.hidden) void refresh();
     }, 30000);
     return () => {
@@ -294,41 +291,33 @@ export default function IngestionDashboard() {
       request.current = null;
     };
   }, [refresh]);
-  const stale = data !== null && Date.now() / 1000 - data.generated_at > 90;
-  const published =
-    data?.models.reduce((n, m) => n + m.published_last_hour, 0) ?? 0;
-  const failures =
-    data?.models.reduce((n, m) => n + m.failed_last_hour, 0) ?? 0;
-  const complete =
-    data?.models.filter((m) =>
-      m.runs.some((r) => r.roles.includes("latest") && r.complete),
-    ).length ?? 0;
-  const seconds = (n: number | null | undefined) =>
-    n == null ? "—" : `${n.toFixed(1)}s`;
+  const stale = data !== null && clock - data.generated_at > 90;
+  const sourceStale =
+    data !== null &&
+    (data.source_checked_at === null || clock - data.source_checked_at > 180);
+  const sum = (
+    key: "published_last_hour" | "waiting_last_hour" | "failed_last_hour",
+  ) => data?.models.reduce((n, m) => n + m[key], 0) ?? 0;
   return (
     <div className={styles.page}>
       <nav className={styles.nav} aria-label="Page navigation">
-        <Link href="/" className={styles.brand}>
-          Meteogram<span>/</span>
-          <span>Ingestion</span>
-        </Link>
-        <Link href="/">Back to forecasts ↗</Link>
+        <Link href="/">Meteogram</Link>
+        <Link href="/">Back to forecasts</Link>
       </nav>
       <main className={styles.main}>
-        <header className={styles.hero}>
+        <header className={styles.header}>
           <div>
-            <p className={styles.eyebrow}>FORECAST OPERATIONS</p>
-            <h1>From source to forecast.</h1>
-            <p className={styles.intro}>
-              Live CONUS ingestion across four weather models. Follow each run
-              as forecast hours are validated and published.
-            </p>
+            <h1>Forecast ingestion</h1>
+            <p>CONUS source availability and publication. All times UTC.</p>
           </div>
-          <div className={styles.liveBox}>
+          <div className={styles.controls}>
             <span
-              className={`${styles.liveStatus} ${!data?.worker_running || error || stale ? styles.offline : ""}`}
+              className={
+                error || stale || !data?.worker_running
+                  ? styles.offline
+                  : styles.live
+              }
             >
-              <i />
               {error
                 ? "Status unavailable"
                 : stale
@@ -339,15 +328,9 @@ export default function IngestionDashboard() {
                       ? "Updater running"
                       : "No recent updater heartbeat"}
             </span>
-            <button
-              type="button"
-              onClick={() => void refresh()}
-              disabled={refreshing}
-            >
-              {refreshing ? "Refreshing…" : "Refresh status"}{" "}
-              <span aria-hidden="true">↻</span>
+            <button onClick={() => void refresh()} disabled={refreshing}>
+              {refreshing ? "Refreshing…" : "Refresh status"}
             </button>
-            <small>Refreshes every 30 seconds · all times UTC</small>
           </div>
         </header>
         <div
@@ -362,110 +345,81 @@ export default function IngestionDashboard() {
         </div>
         {data ? (
           <>
-            <section className={styles.metrics} aria-label="Ingestion overview">
-              <div>
-                <span>Published in the last hour</span>
-                <strong>
-                  {published}
-                  <small> forecast times</small>
-                </strong>
-              </div>
-              <div>
-                <span>Newest runs complete</span>
-                <strong>
-                  {complete}
-                  <small> / 4 models</small>
-                </strong>
-              </div>
-              <div>
-                <span>Failed attempts · last hour</span>
-                <strong className={failures ? styles.warning : ""}>
-                  {failures}
-                  <small>{failures ? " recorded" : " recorded failures"}</small>
-                </strong>
-              </div>
-              <div>
-                <span>Last cycle published</span>
-                <strong>
-                  {data.last_cycle.published ?? "—"}
-                  <small> forecast times</small>
-                </strong>
-              </div>
-            </section>
-            <div className={styles.sectionHeading}>
-              <h2>Model progress</h2>
-              <div className={styles.legend}>
-                <span>
-                  <i className={styles.ingested} />
-                  Ingested
-                </span>
-                <span>
-                  <i className={styles.ready} />
-                  Ready at source
-                </span>
-                <span>
-                  <i className={styles.waiting} />
-                  Waiting / unknown
-                </span>
-              </div>
-            </div>
             <section
-              className={styles.grid}
+              className={styles.overview}
+              aria-label="Last hour activity"
+            >
+              <span>Last hour</span>
+              <span>
+                <strong>{sum("published_last_hour")}</strong> published
+              </span>
+              <span>
+                <strong>{sum("waiting_last_hour")}</strong> source waits
+              </span>
+              <span className={sum("failed_last_hour") ? styles.errorText : ""}>
+                <strong>{sum("failed_last_hour")}</strong> failures
+              </span>
+              <small>Refreshes every 30s</small>
+            </section>
+            <div className={styles.legend}>
+              {Object.entries(LABEL).map(([state, label]) => (
+                <span key={state}>
+                  <i className={styles[state]} />
+                  {label}
+                </span>
+              ))}
+            </div>
+            {sourceStale && (
+              <p className={styles.alert}>
+                Source checks are{" "}
+                {data.source_checked_at
+                  ? `${duration(Math.max(0, clock - data.source_checked_at))} old`
+                  : "not recorded yet"}
+                . Strips show the last observed availability.
+              </p>
+            )}
+            <section
+              className={styles.models}
               aria-label="Model ingestion progress"
             >
               {data.models.map((m) => (
-                <ModelCard key={m.model} data={m} />
+                <ModelRow key={m.model} data={m} now={data.generated_at} />
               ))}
             </section>
-            <section className={styles.pipeline}>
-              <div>
-                <p className={styles.eyebrow}>LAST FINISHED CYCLE</p>
-                <h2>Time spent preparing each update</h2>
-                <p>
-                  {utcTime(data.last_cycle.time)} ·{" "}
-                  {data.last_cycle.failures ?? "—"} recorded failures
-                </p>
-              </div>
-              <dl>
-                <div>
-                  <dt>Cleanup</dt>
-                  <dd>{seconds(data.last_cycle.maintenance_seconds)}</dd>
-                </div>
-                <div>
-                  <dt>Source discovery</dt>
-                  <dd>{seconds(data.last_cycle.discovery_seconds)}</dd>
-                </div>
-                <div>
-                  <dt>Ingestion</dt>
-                  <dd>{seconds(data.last_cycle.ingestion_seconds)}</dd>
-                </div>
-              </dl>
+            <section className={styles.cycle} aria-label="Last completed cycle">
+              <strong>Last cycle</strong>
+              <span>{utcTime(data.last_cycle.time)}</span>
+              <span>
+                Cleanup {duration(data.last_cycle.maintenance_seconds)}
+              </span>
+              <span>
+                Discovery {duration(data.last_cycle.discovery_seconds)}
+              </span>
+              <span>
+                Ingestion {duration(data.last_cycle.ingestion_seconds)}
+              </span>
+              <span>{data.last_cycle.waiting ?? "—"} waiting</span>
             </section>
             <footer className={styles.footer}>
               <p>
-                A completion target can be older than the newest run. The
-                updater finishes ready forecasts before moving on. Each square
-                represents a forecast time, not an elapsed hour; model cadences
-                differ. Source readiness covers pressure and surface fields;
-                HRRR cloud data can arrive later.
+                Ingestion lag starts when all required source references are
+                first observed ready, and ends after publication. It includes
+                queue time; polling adds up to one cycle of uncertainty. A dash
+                means no measured publication in the last hour. Run age includes
+                upstream production time.
               </p>
               <p>
-                Snapshot: {utcTime(data.generated_at)}. Activity counts reflect
-                recorded attempts in the last hour, not server uptime. Forecast
-                pages apply their own coverage checks and may use Open-Meteo
-                while native data catches up.
+                Each segment is one forecast time. HRRR clouds require all 50
+                levels and geometry anchors. Source waits are availability
+                delays, counted separately from failures. Completed runs may no
+                longer be checked upstream. Source checked{" "}
+                {utcTime(data.source_checked_at)}. Snapshot{" "}
+                {utcTime(data.generated_at)}.
               </p>
             </footer>
           </>
         ) : !error ? (
-          <div className={styles.loading} aria-label="Loading model status">
-            {["HRRR", "GFS", "AIFS", "RRFS"].map((m) => (
-              <div key={m}>
-                <h2>{m}</h2>
-                <p>Loading forecast progress…</p>
-              </div>
-            ))}
-          </div>
+          <p className={styles.loading}>Loading model progress…</p>
         ) : null}
       </main>
     </div>

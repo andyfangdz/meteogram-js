@@ -10,6 +10,8 @@ export interface IngestionRun {
   target: boolean;
   roles: string[];
   source_ready: number[] | null;
+  cloud_ready: number[] | null;
+  cloud_leads: number[];
   freshness: { available: boolean };
 }
 export interface ModelIngestion {
@@ -17,6 +19,10 @@ export interface ModelIngestion {
   runs: IngestionRun[];
   published_last_hour: number;
   failed_last_hour: number;
+  waiting_last_hour: number;
+  lag_seconds: number | null;
+  median_lag_seconds: number | null;
+  lag_samples: number;
   activity: number[];
   last_publication: number | null;
   last_failure: { time: number; reason: string } | null;
@@ -26,10 +32,12 @@ export interface IngestionStatus {
   worker_running: boolean;
   heartbeat: number | null;
   plan_at: number | null;
+  source_checked_at: number | null;
   last_cycle: {
     time: number | null;
     published: number | null;
     failures: number | null;
+    waiting: number | null;
     maintenance_seconds: number | null;
     discovery_seconds: number | null;
     ingestion_seconds: number | null;
@@ -83,11 +91,13 @@ export function parseIngestionStatus(value: unknown): IngestionStatus {
     typeof value.worker_running !== "boolean" ||
     !optional(value.heartbeat) ||
     !optional(value.plan_at) ||
+    !optional(value.source_checked_at) ||
     !object(value.last_cycle) ||
     ![
       "time",
       "published",
       "failures",
+      "waiting",
       "maintenance_seconds",
       "discovery_seconds",
       "ingestion_seconds",
@@ -109,6 +119,10 @@ export function parseIngestionStatus(value: unknown): IngestionStatus {
       !Array.isArray(m.runs) ||
       !number(m.published_last_hour) ||
       !number(m.failed_last_hour) ||
+      !number(m.waiting_last_hour) ||
+      !optional(m.lag_seconds) ||
+      !optional(m.median_lag_seconds) ||
+      !number(m.lag_samples) ||
       !optional(m.last_publication) ||
       !Array.isArray(m.activity) ||
       m.activity.length !== 12 ||
@@ -145,6 +159,11 @@ export function parseIngestionStatus(value: unknown): IngestionStatus {
         !Array.isArray(r.roles) ||
         !r.roles.every((v) => typeof v === "string") ||
         !(r.source_ready === null || hours(r.source_ready)) ||
+        !(r.cloud_ready === null || hours(r.cloud_ready)) ||
+        !hours(r.cloud_leads) ||
+        !r.cloud_leads.every((h) =>
+          (r.available_leads as number[]).includes(h),
+        ) ||
         !object(r.freshness) ||
         typeof r.freshness.available !== "boolean"
       )
@@ -152,4 +171,49 @@ export function parseIngestionStatus(value: unknown): IngestionStatus {
     }
   }
   return value as unknown as IngestionStatus;
+}
+
+export function epoch(value: string) {
+  return (
+    Date.parse(value + (/Z$|[+-]\d\d:\d\d$/.test(value) ? "" : "Z")) / 1000
+  );
+}
+export function duration(seconds: number | null) {
+  if (seconds === null) return "—";
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+}
+export function newestRun(runs: IngestionRun[]) {
+  return runs.reduce<IngestionRun | undefined>(
+    (latest, run) =>
+      !latest || epoch(run.init_time) > epoch(latest.init_time) ? run : latest,
+    undefined,
+  );
+}
+export function leadState(run: IngestionRun, hour: number, clouds = false) {
+  if ((clouds ? run.cloud_leads : run.available_leads).includes(hour))
+    return "ingested";
+  const ready = clouds ? run.cloud_ready : run.source_ready;
+  return ready === null
+    ? "unknown"
+    : ready.includes(hour)
+      ? "ready"
+      : "waiting";
+}
+export function queuedLeads(run: IngestionRun) {
+  return (run.source_ready ?? []).filter(
+    (h) =>
+      !run.available_leads.includes(h) &&
+      (run.cloud_ready === null || run.cloud_ready.includes(h)),
+  ).length;
+}
+export function latestCloud(runs: IngestionRun[]) {
+  const run = newestRun(
+    runs.filter((r) => r.cloud_leads.length || r.cloud_ready?.length),
+  );
+  if (!run) return null;
+  const leads = [...run.cloud_leads, ...(run.cloud_ready ?? [])];
+  const lead = Math.max(...leads);
+  return { run, lead, valid: epoch(run.init_time) + lead * 3600 };
 }

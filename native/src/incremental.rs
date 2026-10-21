@@ -507,7 +507,13 @@ async fn poll_with_stop(
         .await;
     let mut queues: BTreeMap<String, Vec<(Value, u16, Arc<source::Source>)>> = BTreeMap::new();
     let mut failures = Vec::new();
+    let prior_availability = if root.join("availability.json").exists() {
+        read_json(root.join("availability.json"))?
+    } else {
+        json!({"sources":[]})
+    };
     let mut availability = Vec::new();
+    let mut waiting = 0usize;
     let mut completion = BTreeMap::new();
     for (model, product, result) in checks {
         match result {
@@ -518,7 +524,22 @@ async fn poll_with_stop(
                 let have=known.as_ref().map(|(_,m)|m["leads"].as_array().unwrap().clone()).unwrap_or_default();
                 let floor=c.complete_runs.get(&model).filter(|v|v.len()>=2).map(|v|read_json(descriptor(&root,&v[1])?.join("metadata.json"))).transpose()?.map(|m|timestamp(m["init_time"].as_str().unwrap())).transpose()?;
                 let t=timestamp(init)?;
-                availability.push(json!({"model":model,"dataset":product,"init_time":init,"snapshot_id":check.source.snapshot,"ready_leads":run.ready,"expected_leads":run.expected,"missing_references":run.missing,"payload_reads":0}));
+                let prior = prior_availability["sources"].as_array().and_then(|sources| sources.iter().find(|s| s["dataset"] == product && s["init_time"] == init));
+                let mut ready_at = serde_json::Map::new();
+                for lead in &run.ready {
+                    if run.cloud_ready.as_ref().is_none_or(|cloud| cloud.contains(lead)) {
+                        let key = lead.to_string();
+                        let first = prior.and_then(|p| p["ready_at"][&key].as_f64()).unwrap_or_else(now);
+                        ready_at.insert(key, json!(first));
+                    } else if !have.contains(&json!(lead)) {
+                        waiting += 1;
+                        let already_waiting = prior.is_some_and(|p| p["ready_leads"].as_array().is_some_and(|v| v.contains(&json!(lead))) && p["cloud_ready"].as_array().is_some_and(|v| !v.contains(&json!(lead))));
+                        if !already_waiting {
+                            event(&root, json!({"phase":"lead_waiting","detail":{"model":model,"init_time":init,"lead":lead,"reason":"Cloud data not yet available"}}))?;
+                        }
+                    }
+                }
+                availability.push(json!({"model":model,"dataset":product,"init_time":init,"snapshot_id":check.source.snapshot,"ready_leads":run.ready,"cloud_ready":run.cloud_ready,"ready_at":ready_at,"expected_leads":run.expected,"missing_references":run.missing,"payload_reads":0}));
                 if known.as_ref().is_some_and(|(_,m)|complete(m).unwrap_or(false)) || (known.is_none() && floor.is_some_and(|old|t<=old)) {continue;}
                 let mut full = run.pin.clone();
                 full["leads"] = json!(run.expected);
@@ -526,7 +547,11 @@ async fn poll_with_stop(
                     prefer_completion(&mut completion, &product, init, have.len())?;
                 }
                 for lead in run.ready {
-                    if !have.contains(&json!(lead)) {queues.entry(model.clone()).or_default().push((run.pin.clone(),lead,check.source.clone()));}
+                    if !have.contains(&json!(lead)) && run.cloud_ready.as_ref().is_none_or(|cloud| cloud.contains(&lead)) {
+                        let mut pin = run.pin.clone();
+                        pin["source_ready_at"] = ready_at[&lead.to_string()].clone();
+                        queues.entry(model.clone()).or_default().push((pin,lead,check.source.clone()));
+                    }
                 }
             }
         }
@@ -561,29 +586,37 @@ async fn poll_with_stop(
     let results=stream::iter(queues).map(|(model,jobs)| {
         let root=root.clone();let gate=if grid_relative(&model){regional_gate.clone()}else{global_gate.clone()};let stop=stop.clone();
         async move {
-            let mut completed=0;let mut errors=Vec::new();
+            let mut completed=0;let mut errors=Vec::new();let mut deferred=0;
             for (pin,lead,src) in jobs {
                 if stop.load(Ordering::Relaxed) || started.elapsed()>=Duration::from_secs(budget_seconds) {break;}
                 let permit=gate.clone().acquire_owned().await.unwrap();
                 if stop.load(Ordering::Relaxed) || started.elapsed()>=Duration::from_secs(budget_seconds) {drop(permit);break;}
                 match ingest(&root,&model,&pin,lead,src).await {
-                    Ok(())=>completed+=1,
+                    Ok(())=>{
+                        completed+=1;
+                        event(&root,json!({"phase":"lead_ingested","model":model,"dataset":pin["dataset"],"init_time":pin["init_time"],"lead":lead,"lag_seconds":pin["source_ready_at"].as_f64().map(|t|(now()-t).max(0.))}))?;
+                    },
+                    Err(e) if e.downcast_ref::<source::SourcePending>().is_some()=>{
+                        deferred+=1;
+                        event(&root,json!({"phase":"lead_waiting","detail":{"model":model,"init_time":pin["init_time"],"lead":lead,"reason":e.to_string()}}))?;
+                    },
                     Err(e)=>{let error=json!({"model":model,"init_time":pin["init_time"],"lead":lead,"error":format!("{e:#}")});event(&root,json!({"phase":"lead_failed","detail":error}))?;errors.push(error);}
                 }
                 drop(permit);
             }
-            Ok::<_,anyhow::Error>((completed,errors))
+            Ok::<_,anyhow::Error>((completed,errors,deferred))
         }
     }).buffer_unordered(4).collect::<Vec<_>>().await;
     let mut completed = 0;
     for result in results {
-        let (count, errors) = result?;
+        let (count, errors, deferred) = result?;
+        waiting += deferred;
         completed += count;
         failures.extend(errors);
     }
     atomic(
         root.join("last-update.json"),
-        &json!({"started":began,"time":now(),"completed_leads":completed,"failures":failures,"maintenance_seconds":maintenance_seconds,"discovery_seconds":discovery_seconds,"ingestion_seconds":started.elapsed().as_secs_f64(),"incremental":true,"implementation":"rust"}),
+        &json!({"started":began,"time":now(),"completed_leads":completed,"waiting_leads":waiting,"failures":failures,"maintenance_seconds":maintenance_seconds,"discovery_seconds":discovery_seconds,"ingestion_seconds":started.elapsed().as_secs_f64(),"incremental":true,"implementation":"rust"}),
     )?;
     Ok(if failures.is_empty() { 0 } else { 1 })
 }

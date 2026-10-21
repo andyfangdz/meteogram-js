@@ -442,10 +442,30 @@ native authenticated `/ingestion` endpoint, caching for 15 seconds. Credentials
 never reach the browser. Failures retain the last snapshot with an explicit warning.
 The native `ingestion.rs` reads catalog summaries and a bounded 4 MiB event tail,
 never scans forecast tables or downloads source data. It returns all four models,
-completion targets, retained runs, recent publication/failure counts, five-minute
-activity buckets and last-cycle timings. Raw errors, host paths and process IDs
-are excluded. Source readiness describes pressure/surface references, not HRRR
-cloud readiness. Status timestamps and forecast initializations are UTC.
+completion targets, retained and unpublished source runs, separate publication/wait/
+failure counts, five-minute activity buckets and last-cycle timings. HRRR has
+separate pressure/surface and cloud readiness strips; published cloud leads come
+from validated child metadata. The latest cloud initialization and its maximum
+available valid time are shown separately. Raw errors, host paths and process IDs
+are excluded. Status timestamps and forecast initializations are UTC.
+
+The poller checks all 53 HRRR cloud references alongside weather availability,
+using the same immutable source snapshot and bounded metadata reads. Only leads
+with both weather and cloud references ready enter HRRR's ingestion queue.
+`SourcePending` represents incomplete references; it emits `lead_waiting`, never
+`lead_failed`, and does not make the poll fail. Other source, schema, transport
+and storage errors remain failures. Historical exact incomplete-reference errors
+are reclassified only in the dashboard summary; event history is not rewritten.
+New cloud-wait transitions are recorded once while the observed state persists.
+
+`availability.json` retains first-observed all-fields-ready timestamps per active
+run/lead across polls. Successful ingestion emits `lead_ingested` with observed
+source-ready-to-publication lag (including queue time). The dashboard shows latest
+and median lag from measured publications in the last hour, sample counts,
+queued leads, throughput and initialization age. Lag is not source publication
+latency and has polling uncertainty; absent measurements are null, never zero.
+Source check age is displayed, with a warning after three minutes. Missing source
+references are dashed; unchecked source state is hatched, not labeled missing.
 
 ### Storage and validation invariants
 

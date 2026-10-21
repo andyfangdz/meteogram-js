@@ -331,8 +331,17 @@ These observations do not establish a long-term uptime or ingestion-latency SLA.
 The site’s `/ingestion` page polls its own `/api/ingestion` proxy every 30 seconds.
 The proxy uses the existing server-only API credentials and a 15-second cache.
 The native authenticated `/ingestion` endpoint returns sanitized catalog/run
-progress, completion targets, a bounded last-hour activity summary and cycle
-phase timings. It reads at most 4 MiB of event history per request, skips torn
+progress, unpublished source runs, completion targets, a bounded last-hour activity
+summary and cycle phase timings. Cloud readiness is checked separately from
+pressure/surface readiness; HRRR queues only hours with all required references.
+Expected incompleteness emits `lead_waiting` and does not fail the poll. Historical
+incomplete-reference events are displayed as waits without rewriting logs.
+`availability.json` persists each active hour's first all-fields-ready observation;
+`lead_ingested` records queue-inclusive publication lag. The page reports latest
+and median measured lag over the last hour, samples, queued hours, throughput,
+run age and HRRR's latest available cloud initialization/horizon. Missing
+observations are unknown rather than zero. Dashed segments mean unavailable
+source data, and hatching means unchecked source state. It reads at most 4 MiB of event history per request, skips torn
 records and future timestamps, and never queries weather arrays or downloads
 maps. Failure categories exclude raw upstream errors and host details. Tests
 cover redaction, missing history, partial records, UTC formatting, proxy auth,
