@@ -16,6 +16,12 @@ export interface IngestionRun {
 }
 export interface ModelIngestion {
   model: IngestionModel;
+  active: {
+    dataset: string;
+    init_time: string;
+    lead: number;
+    started_at: number;
+  } | null;
   runs: IngestionRun[];
   published_last_hour: number;
   failed_last_hour: number;
@@ -65,16 +71,6 @@ export function utcTime(value: string | number | null) {
     }).format(date) + " UTC"
   );
 }
-export function focusRun(model: ModelIngestion) {
-  return (
-    model.runs.find(
-      (r) =>
-        r.target && r.expected_leads.length === 49 && model.model === "hrrr",
-    ) ??
-    model.runs.find((r) => r.target) ??
-    model.runs.find((r) => r.roles.includes("latest"))
-  );
-}
 export function parseIngestionStatus(value: unknown): IngestionStatus {
   const object = (v: unknown): v is Record<string, unknown> =>
     typeof v === "object" && v !== null;
@@ -117,6 +113,16 @@ export function parseIngestionStatus(value: unknown): IngestionStatus {
       !INGESTION_MODELS.includes(m.model as IngestionModel) ||
       names.has(m.model) ||
       !Array.isArray(m.runs) ||
+      !(
+        m.active === null ||
+        (object(m.active) &&
+          typeof m.active.dataset === "string" &&
+          typeof m.active.init_time === "string" &&
+          Number.isFinite(epoch(m.active.init_time)) &&
+          number(m.active.lead) &&
+          Number.isInteger(m.active.lead) &&
+          number(m.active.started_at))
+      ) ||
       !number(m.published_last_hour) ||
       !number(m.failed_last_hour) ||
       !number(m.waiting_last_hour) ||
@@ -216,4 +222,37 @@ export function latestCloud(runs: IngestionRun[]) {
   const leads = [...run.cloud_leads, ...(run.cloud_ready ?? [])];
   const lead = Math.max(...leads);
   return { run, lead, valid: epoch(run.init_time) + lead * 3600 };
+}
+
+/** Display the newest initialization and the complete run supplying its base. */
+export function displayedRuns(model: ModelIngestion): IngestionRun[] {
+  const newest = newestRun(model.runs);
+  if (!newest) return [];
+  const different = (r: IngestionRun) =>
+    epoch(r.init_time) < epoch(newest.init_time);
+  const base =
+    model.model === "hrrr"
+      ? model.runs.find((r) => r.roles.includes("long") && different(r))
+      : undefined;
+  const previous = !newest.complete
+    ? (model.runs.find((r) => r.roles.includes("complete") && different(r)) ??
+      newestRun(
+        model.runs.filter((r) => different(r) && r.available_leads.length > 0),
+      ))
+    : undefined;
+  const companion = base ?? previous;
+  return companion ? [newest, companion] : [newest];
+}
+export function isActiveLead(
+  model: ModelIngestion,
+  run: IngestionRun,
+  lead: number,
+) {
+  return (
+    model.active !== null &&
+    model.active.dataset === run.dataset &&
+    epoch(model.active.init_time) === epoch(run.init_time) &&
+    model.active.lead === lead &&
+    !run.available_leads.includes(lead)
+  );
 }

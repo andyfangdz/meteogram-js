@@ -11,10 +11,10 @@ import {
 import {
   duration,
   epoch,
-  focusRun,
+  displayedRuns,
+  isActiveLead,
   latestCloud,
   leadState,
-  newestRun,
   parseIngestionStatus,
   queuedLeads,
   utcTime,
@@ -32,6 +32,7 @@ const META = {
 };
 const LABEL = {
   ingested: "Published",
+  active: "Ingesting now",
   ready: "Ready at source",
   waiting: "Source not available",
   unknown: "Source status unknown",
@@ -39,9 +40,13 @@ const LABEL = {
 function Coverage({
   run,
   clouds = false,
+  model,
+  live,
 }: {
   run: IngestionRun;
   clouds?: boolean;
+  model: ModelIngestion;
+  live: boolean;
 }) {
   const have = clouds ? run.cloud_leads : run.available_leads;
   return (
@@ -53,13 +58,20 @@ function Coverage({
         aria-label={`${clouds ? "Cloud" : "Weather"} coverage: ${have.length} of ${run.expected_leads.length} forecast times published`}
       >
         {run.expected_leads.map((h) => {
-          const state = leadState(run, h, clouds);
+          const state =
+            live && isActiveLead(model, run, h)
+              ? "active"
+              : leadState(run, h, clouds);
           return (
             <span
               key={h}
               className={styles[state]}
-              title={`+${h}h: ${LABEL[state]}`}
-            />
+              title={`${utcTime(run.init_time)} · +${h}h: ${LABEL[state]}`}
+              data-state={state}
+              aria-label={`+${h}h: ${LABEL[state]}`}
+            >
+              {h}
+            </span>
           );
         })}
       </div>
@@ -69,10 +81,18 @@ function Coverage({
     </div>
   );
 }
-function ModelRow({ data, now }: { data: ModelIngestion; now: number }) {
+function ModelRow({
+  data,
+  now,
+  live,
+}: {
+  data: ModelIngestion;
+  now: number;
+  live: boolean;
+}) {
   const meta = META[data.model];
-  const focus = focusRun(data) ?? newestRun(data.runs);
-  const newest = newestRun(data.runs);
+  const runs = displayedRuns(data);
+  const focus = runs[0];
   const complete = data.runs.find((r) => r.roles.includes("complete"));
   const long = data.runs.find((r) => r.roles.includes("long"));
   const cloud = latestCloud(data.runs);
@@ -87,54 +107,60 @@ function ModelRow({ data, now }: { data: ModelIngestion; now: number }) {
         <h2>{meta.name}</h2>
         <p>{meta.detail}</p>
         <span
-          className={`${styles.badge} ${focus?.complete ? styles.complete : ""}`}
+          className={`${styles.badge} ${focus?.complete && !(live && data.active) ? styles.complete : ""}`}
         >
           {!focus
             ? "No data"
-            : focus.complete
-              ? "Complete"
-              : queue
-                ? "Ingesting"
-                : "Waiting for source"}
+            : live && data.active
+              ? `Ingesting +${data.active.lead}h`
+              : focus.complete
+                ? "Complete"
+                : queue
+                  ? "Queued"
+                  : "Waiting for source"}
         </span>
       </header>
       <div className={styles.run}>
-        <div className={styles.runHeading}>
-          <strong>{focus?.target ? "Target run" : "Published run"}</strong>
-          <span>{focus ? utcTime(focus.init_time) : "Not available"}</span>
-        </div>
-        {focus && (
-          <>
+        {runs.map((run, index) => (
+          <div
+            className={index ? styles.upstream : undefined}
+            key={run.dataset + run.init_time}
+          >
+            <div className={styles.runHeading}>
+              <strong>
+                {index === 0
+                  ? "Newest run"
+                  : run.roles.includes("long")
+                    ? "48-hour base"
+                    : run.complete
+                      ? "Complete base"
+                      : "Previous run"}
+                {run.target ? " · target" : ""}
+              </strong>
+              <span>{utcTime(run.init_time)}</span>
+            </div>
             <progress
               className={styles.srOnly}
-              aria-label={`${meta.name} ingestion progress`}
-              max={focus.expected_leads.length}
-              value={focus.available_leads.length}
+              aria-label={`${meta.name} ${index ? "base" : "newest"} ingestion progress`}
+              max={run.expected_leads.length}
+              value={run.available_leads.length}
             />
-            <Coverage run={focus} />
-            {data.model === "hrrr" && <Coverage run={focus} clouds />}
+            <Coverage run={run} model={data} live={live} />
+            {data.model === "hrrr" && (
+              <Coverage run={run} clouds model={data} live={live} />
+            )}
             <div className={styles.horizon}>
-              <span>Forecast lead +0h</span>
-              <span>+{Math.max(...focus.expected_leads)}h</span>
+              <span>Numbers are forecast lead hours</span>
+              <span>+{Math.max(...run.expected_leads)}h</span>
             </div>
-          </>
-        )}
-        {newest && newest !== focus && (
-          <div className={styles.upstream}>
-            <div className={styles.runHeading}>
-              <strong>Newest source run</strong>
-              <span>{utcTime(newest.init_time)}</span>
-            </div>
-            <Coverage run={newest} />
-            {data.model === "hrrr" && <Coverage run={newest} clouds />}
           </div>
-        )}
+        ))}
         {data.model === "hrrr" && (
           <p className={styles.cloudNote}>
             <strong>Latest cloud data</strong>{" "}
             {cloud ? (
               <>
-                {utcTime(cloud.run.init_time)} run, through +{cloud.lead}h{" "}
+                {utcTime(cloud.run.init_time)} run, latest lead +{cloud.lead}h{" "}
                 <span>(valid {utcTime(cloud.valid)})</span>
               </>
             ) : (
@@ -284,7 +310,7 @@ export default function IngestionDashboard() {
     const timer = setInterval(() => {
       setClock(Date.now() / 1000);
       if (!document.hidden) void refresh();
-    }, 30000);
+    }, 5000);
     return () => {
       clearInterval(timer);
       request.current?.abort();
@@ -359,7 +385,7 @@ export default function IngestionDashboard() {
               <span className={sum("failed_last_hour") ? styles.errorText : ""}>
                 <strong>{sum("failed_last_hour")}</strong> failures
               </span>
-              <small>Refreshes every 30s</small>
+              <small>Refreshes every 5s</small>
             </section>
             <div className={styles.legend}>
               {Object.entries(LABEL).map(([state, label]) => (
@@ -383,7 +409,16 @@ export default function IngestionDashboard() {
               aria-label="Model ingestion progress"
             >
               {data.models.map((m) => (
-                <ModelRow key={m.model} data={m} now={data.generated_at} />
+                <ModelRow
+                  key={m.model}
+                  data={m}
+                  now={data.generated_at}
+                  live={
+                    !error &&
+                    data.worker_running &&
+                    clock - data.generated_at < 10
+                  }
+                />
               ))}
             </section>
             <section className={styles.cycle} aria-label="Last completed cycle">

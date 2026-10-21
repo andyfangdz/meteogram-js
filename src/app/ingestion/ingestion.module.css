@@ -195,9 +195,10 @@
   font-weight: 550;
 }
 .coverageRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 5px;
 }
 .stripLabel {
@@ -213,15 +214,19 @@
 }
 .coverage {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(5px, 1fr));
-  gap: 2px;
-  flex: 1;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 4px;
   min-width: 0;
 }
 .coverage > span {
-  height: 12px;
+  height: 23px;
   min-width: 0;
   border-radius: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  line-height: 1;
 }
 .ingested {
   background: var(--model-color);
@@ -249,7 +254,7 @@
   justify-content: space-between;
   color: var(--muted);
   font-size: 9px;
-  margin: 5px 51px 0 54px;
+  margin: 5px 0 0;
 }
 .upstream {
   margin-top: 12px;
@@ -517,4 +522,49 @@
   .header p {
     font-size: 10px;
   }
+}
+
+.coverage > .ingested {
+  color: #fff;
+}
+.active {
+  background: var(--model-color);
+  color: #fff;
+  outline: 2px solid var(--model-color);
+  outline-offset: 1px;
+  animation: breathe 1.8s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .active {
+    animation: none;
+    outline-style: double;
+    outline-width: 3px;
+  }
+}
+@media (max-width: 1050px) {
+  .coverage {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+.legend .active {
+  animation: none;
+}
+
+.coverageRow .coverage {
+  grid-column: 1/-1;
+  grid-row: 2;
+}
+.coverageRow .count {
+  grid-column: 2;
+  grid-row: 1;
 }

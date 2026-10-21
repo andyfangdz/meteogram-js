@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import {
-  focusRun,
+  displayedRuns,
+  isActiveLead,
   latestCloud,
   leadState,
   queuedLeads,
@@ -30,6 +31,7 @@ const fixture = (): IngestionStatus => ({
   },
   models: INGESTION_MODELS.map((model) => ({
     model,
+    active: null,
     runs: [
       {
         init_time: "2026-10-21T00:00:00",
@@ -64,6 +66,44 @@ afterEach(() => {
   vi.useRealTimers();
 });
 describe("ingestion status", () => {
+  it("shows a complete base for an incomplete newest run, and retains HRRR long overlays", () => {
+    const gfs = fixture().models[1];
+    const old = {
+      ...gfs.runs[0],
+      init_time: "2026-10-20T18:00:00",
+      complete: true,
+      roles: ["complete"],
+    };
+    gfs.runs.push(old);
+    expect(displayedRuns(gfs)).toEqual([gfs.runs[0], old]);
+    gfs.runs[0].complete = true;
+    expect(displayedRuns(gfs)).toEqual([gfs.runs[0]]);
+    const hrrr = fixture().models[0];
+    hrrr.runs[0].complete = true;
+    const long = { ...old, roles: ["long"], dataset: "long" };
+    hrrr.runs.push(long);
+    expect(displayedRuns(hrrr)).toEqual([hrrr.runs[0], long]);
+    long.init_time = hrrr.runs[0].init_time;
+    expect(displayedRuns(hrrr)).toEqual([hrrr.runs[0]]);
+  });
+  it("only marks the exact active initialization and lead, never a published or queued hour", () => {
+    const m = fixture().models[1],
+      run = m.runs[0];
+    expect(isActiveLead(m, run, 2)).toBe(false);
+    m.active = {
+      dataset: run.dataset,
+      init_time: run.init_time,
+      lead: 2,
+      started_at: 1792552999,
+    };
+    expect(isActiveLead(m, run, 2)).toBe(true);
+    expect(
+      isActiveLead(m, { ...run, init_time: "2026-10-20T18:00:00" }, 2),
+    ).toBe(false);
+    expect(isActiveLead(m, run, 1)).toBe(false);
+    run.available_leads.push(2);
+    expect(isActiveLead(m, run, 2)).toBe(false);
+  });
   it("distinguishes unavailable clouds from ready weather and unknown source status", () => {
     const run = fixture().models[0].runs[0];
     expect(leadState(run, 2)).toBe("ready");
@@ -101,15 +141,8 @@ describe("ingestion status", () => {
     expect(() => parseIngestionStatus(data)).toThrow();
     expect(() => parseIngestionStatus({ ...fixture(), models: [] })).toThrow();
   });
-  it("interprets native timestamps as UTC and prefers the long HRRR target", () => {
+  it("interprets native timestamps as UTC", () => {
     expect(utcTime("2026-10-21T00:00:00")).toContain("00:00 UTC");
-    const model = fixture().models[0];
-    model.runs.push({
-      ...model.runs[0],
-      dataset: "long",
-      expected_leads: Array.from({ length: 49 }, (_, i) => i),
-    });
-    expect(focusRun(model)?.dataset).toBe("long");
   });
   it("keeps authentication on the server and returns a generic unavailable response", async () => {
     vi.stubEnv("METEOGRAM_API_URL", "https://weather.example");
@@ -138,6 +171,15 @@ describe("ingestion status", () => {
         screen.getByRole("heading", { name: model.toUpperCase() }),
       ).toBeInTheDocument();
     expect(screen.getAllByRole("progressbar")).toHaveLength(4);
+    for (const model of INGESTION_MODELS) {
+      const article = screen
+        .getByRole("heading", { name: model.toUpperCase() })
+        .closest("article")!;
+      const cells = article.querySelectorAll("[data-state]");
+      expect([...cells].map((cell) => cell.textContent)).toEqual(
+        model === "hrrr" ? ["0", "1", "2", "0", "1", "2"] : ["0", "1", "2"],
+      );
+    }
     fetcher.mockResolvedValue(new Response("Unavailable", { status: 503 }));
     fireEvent.click(screen.getByRole("button", { name: /Refresh status/ }));
     expect(

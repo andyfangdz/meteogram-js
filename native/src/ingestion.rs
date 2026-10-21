@@ -75,6 +75,35 @@ fn public_run(root: &Path, entry: &Entry, roles: &[&str], availability: &Value) 
     apply_source(&mut summary, availability);
     Ok(summary)
 }
+fn active_lead(events: &[Value], service: &Value, model: &str, time: f64) -> Value {
+    let fresh = service["time"]
+        .as_f64()
+        .is_some_and(|t| (0. ..10.).contains(&(time - t)));
+    if !fresh || service["children"]["update"]["running"] != true {
+        return Value::Null;
+    }
+    for event in events.iter().rev() {
+        if event["time"].as_f64().is_none_or(|t| t > time) {
+            continue;
+        }
+        if event["phase"] == "ingestion_planned" {
+            break;
+        }
+        if event["model"] != model {
+            continue;
+        }
+        if event["phase"] == "lead_finished" {
+            break;
+        }
+        if event["phase"] == "lead_started" {
+            if event["worker_pid"] != service["children"]["update"]["pid"] {
+                break;
+            }
+            return json!({"dataset":event["dataset"],"init_time":event["init_time"],"lead":event["lead"],"started_at":event["time"]});
+        }
+    }
+    Value::Null
+}
 pub fn snapshot(root: &Path) -> Result<Value> {
     let time = now();
     let events = recent_events(root)?;
@@ -185,7 +214,7 @@ pub fn snapshot(root: &Path) -> Result<Value> {
         } else {
             Some((lags[(lags.len() - 1) / 2] + lags[lags.len() / 2]) / 2.)
         };
-        models.push(json!({"model":name,"runs":summaries,"published_last_hour":buckets.iter().sum::<u64>(),"activity":buckets,"failed_last_hour":failed,"waiting_last_hour":waiting,"lag_seconds":latest_lag,"median_lag_seconds":median,"lag_samples":lags.len(),"last_publication":last_publication,"last_failure":last_failure}));
+        models.push(json!({"model":name,"runs":summaries,"active":active_lead(&events,&service,name,time),"published_last_hour":buckets.iter().sum::<u64>(),"activity":buckets,"failed_last_hour":failed,"waiting_last_hour":waiting,"lag_seconds":latest_lag,"median_lag_seconds":median,"lag_samples":lags.len(),"last_publication":last_publication,"last_failure":last_failure}));
     }
     let heartbeat = service["time"].as_f64();
     let running = heartbeat.is_some_and(|t| (0. ..30.).contains(&(time - t)))
@@ -198,6 +227,26 @@ pub fn snapshot(root: &Path) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn active_hours_require_a_live_matching_worker_and_clear_on_finish_or_restart() {
+        let t = now();
+        let mut service = json!({"time":t,"children":{"update":{"pid":42,"running":true}}});
+        let start = json!({"phase":"lead_started","time":t-2.,"model":"gfs","dataset":"gfs","init_time":"2026-10-21T12:00:00","lead":7,"worker_pid":42});
+        let mut events = vec![start.clone()];
+        let active = active_lead(&events, &service, "gfs", t);
+        assert_eq!(active["lead"], 7);
+        assert!(active.get("worker_pid").is_none());
+        assert!(active_lead(&events, &service, "hrrr", t).is_null());
+        events.push(json!({"phase":"lead_finished","time":t-1.,"model":"gfs"}));
+        assert!(active_lead(&events, &service, "gfs", t).is_null());
+        events = vec![start];
+        service["children"]["update"]["pid"] = json!(43);
+        assert!(active_lead(&events, &service, "gfs", t).is_null());
+        service["children"]["update"]["pid"] = json!(42);
+        assert!(active_lead(&events, &service, "gfs", t + 11.).is_null());
+        events.push(json!({"phase":"ingestion_planned","time":t-1.}));
+        assert!(active_lead(&events, &service, "gfs", t).is_null());
+    }
     #[test]
     fn source_waits_are_not_failures_and_lag_uses_measured_publications() {
         let root = tempfile::tempdir().unwrap();

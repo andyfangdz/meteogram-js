@@ -591,7 +591,10 @@ async fn poll_with_stop(
                 if stop.load(Ordering::Relaxed) || started.elapsed()>=Duration::from_secs(budget_seconds) {break;}
                 let permit=gate.clone().acquire_owned().await.unwrap();
                 if stop.load(Ordering::Relaxed) || started.elapsed()>=Duration::from_secs(budget_seconds) {drop(permit);break;}
-                match ingest(&root,&model,&pin,lead,src).await {
+                event(&root,json!({"phase":"lead_started","model":model,"dataset":pin["dataset"],"init_time":pin["init_time"],"lead":lead,"worker_pid":std::process::id()}))?;
+                let outcome = ingest(&root,&model,&pin,lead,src).await;
+                event(&root,json!({"phase":"lead_finished","model":model,"dataset":pin["dataset"],"init_time":pin["init_time"],"lead":lead,"worker_pid":std::process::id()}))?;
+                match outcome {
                     Ok(())=>{
                         completed+=1;
                         event(&root,json!({"phase":"lead_ingested","model":model,"dataset":pin["dataset"],"init_time":pin["init_time"],"lead":lead,"lag_seconds":pin["source_ready_at"].as_f64().map(|t|(now()-t).max(0.))}))?;

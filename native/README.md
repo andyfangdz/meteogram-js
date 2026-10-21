@@ -328,8 +328,8 @@ These observations do not establish a long-term uptime or ingestion-latency SLA.
 
 ### Public ingestion dashboard
 
-The site’s `/ingestion` page polls its own `/api/ingestion` proxy every 30 seconds.
-The proxy uses the existing server-only API credentials and a 15-second cache.
+The site’s `/ingestion` page polls its own `/api/ingestion` proxy every five seconds.
+The proxy uses the existing server-only API credentials without response caching.
 The native authenticated `/ingestion` endpoint returns sanitized catalog/run
 progress, unpublished source runs, completion targets, a bounded last-hour activity
 summary and cycle phase timings. Cloud readiness is checked separately from
@@ -346,3 +346,10 @@ records and future timestamps, and never queries weather arrays or downloads
 maps. Failure categories exclude raw upstream errors and host details. Tests
 cover redaction, missing history, partial records, UTC formatting, proxy auth,
 completion semantics and stale snapshot handling.
+
+Active ingestion is bracketed by `lead_started` / `lead_finished` events after an
+extractor slot is acquired. The API checks the current worker identity and fresh
+heartbeat before returning an active dataset/init/lead, without exposing the PID.
+The UI breathes that timestep only, with a static reduced-motion alternative.
+Incomplete runs show their complete base, and HRRR short runs retain the separate
+48-hour base even after completion. All models show individual lead-hour numbers, including HRRR cloud cells.

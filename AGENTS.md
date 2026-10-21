@@ -435,10 +435,10 @@ only the manifest's validated hours, so unfinished partitions remain invisible.
 ### Ingestion dashboard
 
 `/ingestion` is an independent public Next.js dashboard, linked from the weather
-navigation. `src/app/ingestion/dashboard.tsx` polls `/api/ingestion` every 30 seconds;
+navigation. `src/app/ingestion/dashboard.tsx` polls `/api/ingestion` every five seconds;
 `src/utils/ingestion.ts` validates the response and handles UTC display. The server
 route uses existing `METEOGRAM_API_URL` / `METEOGRAM_API_TOKEN` settings to fetch the
-native authenticated `/ingestion` endpoint, caching for 15 seconds. Credentials
+native authenticated `/ingestion` endpoint with no response caching. Credentials
 never reach the browser. Failures retain the last snapshot with an explicit warning.
 The native `ingestion.rs` reads catalog summaries and a bounded 4 MiB event tail,
 never scans forecast tables or downloads source data. It returns all four models,
@@ -464,6 +464,15 @@ source-ready-to-publication lag (including queue time). The dashboard shows late
 and median lag from measured publications in the last hour, sample counts,
 queued leads, throughput and initialization age. Lag is not source publication
 latency and has polling uncertainty; absent measurements are null, never zero.
+`lead_started` / `lead_finished` events bracket active work after acquiring an
+extractor slot. The public active hour is emitted only for the current worker PID
+and a heartbeat under ten seconds old; the PID stays private. A finished hour or
+new poll clears it. The client breathes only that exact dataset/init/lead, stops
+on stale/failed status, and uses a static outline for reduced-motion preferences.
+An incomplete newest initialization is shown with its complete base; HRRR keeps
+a distinct retained 48-hour base visible even when the newest short run is complete.
+Every model uses larger numbered forecast-hour cells in 24-column rows (12 on
+smaller screens), including both weather and cloud strips.
 Source check age is displayed, with a warning after three minutes. Missing source
 references are dashed; unchecked source state is hatched, not labeled missing.
 

@@ -15,14 +15,14 @@ export async function GET() {
       throw new Error("Invalid native API URL");
     const token = process.env.METEOGRAM_API_TOKEN;
     const response = await fetch(url, {
-      next: { revalidate: 15 },
+      cache: "no-store",
       signal: AbortSignal.timeout(8000),
       redirect: "error",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error("Native status unavailable");
     return Response.json(parseIngestionStatus(await response.json()), {
-      headers: { "Cache-Control": "public, s-maxage=15, max-age=0" },
+      headers: { "Cache-Control": "no-store" },
     });
   } catch {
     return Response.json(
