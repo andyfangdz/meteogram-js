@@ -1261,7 +1261,7 @@ async fn direct_availability(
     let SourceStore::Ecmwf(direct) = &*source.store else {
         unreachable!()
     };
-    let runs = times.into_iter().rev().map(|init| {
+    let runs = direct.available_times().into_iter().rev().map(|init| {
         let ready = direct.hours.iter().filter(|h|h.init == init).map(|h|h.lead).collect::<Vec<_>>();
         let init_time = chrono::DateTime::from_timestamp(init,0).unwrap().format("%Y-%m-%dT%H:%M:%S%.9f").to_string();
         AvailableRun {pin:json!({"model":"aifs","dataset":dataset("aifs").unwrap(),"init_time":init_time,"snapshot_id":source.snapshot,"source_provider":crate::ecmwf::PROVIDER}),expected:leads("aifs"),missing:(31-ready.len())*42,ready,cloud_ready:None}

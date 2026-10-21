@@ -228,6 +228,14 @@ fn validate_hour(hour: &Hour) -> Result<()> {
     Ok(())
 }
 impl DirectSource {
+    /// Candidate cycle times are discovery probes, not evidence of published runs.
+    pub fn available_times(&self) -> Vec<i64> {
+        self.times
+            .iter()
+            .copied()
+            .filter(|t| self.hours.iter().any(|h| h.init == *t))
+            .collect()
+    }
     pub fn new(hours: Vec<Hour>, mut times: Vec<i64>) -> Result<Self> {
         for hour in &hours {
             validate_hour(hour)?;
@@ -610,7 +618,9 @@ mod tests {
             index_sha256: "a".repeat(64),
             fields: parse(&index()).unwrap(),
         };
-        let source = DirectSource::new(vec![hour.clone()], vec![hour.init]).unwrap();
+        let source =
+            DirectSource::new(vec![hour.clone()], vec![hour.init, hour.init + 21600]).unwrap();
+        assert_eq!(source.available_times(), vec![hour.init]);
         let pin = source
             .pin(
                 &json!({"model":"aifs","init_time":"2026-10-21T06:00:00"}),

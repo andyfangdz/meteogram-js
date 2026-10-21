@@ -398,7 +398,8 @@ validated. Native units are retained for the site adapter’s schema validation.
 AIFS can read ECMWF Open Data directly with `METEOGRAM_AIFS_SOURCE=direct`
 (the managed service enables this); unset it or use `dynamical` for the legacy
 reader. Discovery checks all 42 required fields in each six-hour step through
-180 hours, with four concurrent index/object-metadata requests. GRIB ranges
+180 hours, with four concurrent index/object-metadata requests. Candidate cycle
+times with no ready source hour are probes, not advertised forecast runs. GRIB ranges
 pin GCS generation and ETag and require exact 206 ranges. Every message checks
 initialization, valid time, parameter, level and the complete 0.25-degree grid;
 cache files and retained per-hour payload proofs carry SHA-256 hashes. The
