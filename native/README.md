@@ -102,7 +102,6 @@ as soon as its first hour passes validation. The site overlays it on retained
 complete runs and independently checks sufficient continuous coverage before
 selecting native data.
 
-
 Cleanup resolves and validates the protected catalog references once per sweep,
 under the update lock, then reuses that snapshot for all orphan revisions. Never
 rebuild the complete reference graph for each discarded directory: accumulated
@@ -326,3 +325,15 @@ source metadata or hourly codebooks. `observe` records bounded fixed-point
 availability/content/resource observations. `benchmark` measures current
 point-query latency; report its cache/concurrency/timing conditions with results.
 These observations do not establish a long-term uptime or ingestion-latency SLA.
+
+### Public ingestion dashboard
+
+The site’s `/ingestion` page polls its own `/api/ingestion` proxy every 30 seconds.
+The proxy uses the existing server-only API credentials and a 15-second cache.
+The native authenticated `/ingestion` endpoint returns sanitized catalog/run
+progress, completion targets, a bounded last-hour activity summary and cycle
+phase timings. It reads at most 4 MiB of event history per request, skips torn
+records and future timestamps, and never queries weather arrays or downloads
+maps. Failure categories exclude raw upstream errors and host details. Tests
+cover redaction, missing history, partial records, UTC formatting, proxy auth,
+completion semantics and stale snapshot handling.

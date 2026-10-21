@@ -318,6 +318,7 @@ pub async fn serve(root: PathBuf, port: u16) -> Result<()> {
         .route("/forecast", get(handle))
         .route("/health", get(health))
         .route("/runs", get(list_runs))
+        .route("/ingestion", get(ingestion_status))
         .with_state(app);
     if let Some(token) = token {
         let digest: [u8; 32] = Sha256::digest(token.as_bytes()).into();
@@ -327,6 +328,20 @@ pub async fn serve(root: PathBuf, port: u16) -> Result<()> {
     println!("Rust native forecast API listening on 127.0.0.1:{port}");
     axum::serve(listener, router).await?;
     Ok(())
+}
+async fn ingestion_status(State(app): State<App>) -> (StatusCode, Json<Value>) {
+    tokio::task::spawn_blocking(move || match crate::ingestion::snapshot(&app.root) {
+        Ok(value) => (StatusCode::OK, Json(value)),
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({"error":"Ingestion status unavailable"})),
+        ),
+    })
+    .await
+    .unwrap_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(json!({"error":"Ingestion status unavailable"})),
+    ))
 }
 async fn list_runs(
     State(app): State<App>,
@@ -422,7 +437,7 @@ mod auth_tests {
         let token = "test-only-token-with-at-least-32-characters";
         let hash: [u8; 32] = Sha256::digest(token.as_bytes()).into();
         let mut router = Router::new();
-        for path in ["/health", "/forecast", "/runs"] {
+        for path in ["/health", "/forecast", "/runs", "/ingestion"] {
             router = router.route(path, get(|| async { StatusCode::OK }));
         }
         let router = router.layer(middleware::from_fn_with_state(hash, authenticate));
@@ -430,7 +445,7 @@ mod auth_tests {
         let port = listener.local_addr().unwrap().port();
         let task = tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
         let client = reqwest::Client::builder().no_proxy().build().unwrap();
-        for path in ["/health", "/forecast", "/runs"] {
+        for path in ["/health", "/forecast", "/runs", "/ingestion"] {
             let url = format!("http://127.0.0.1:{port}{path}");
             for value in [None, Some("Bearer wrong"), Some("Basic invalid")] {
                 let mut request = client.get(&url);

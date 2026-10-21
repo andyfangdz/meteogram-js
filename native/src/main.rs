@@ -7,6 +7,7 @@ mod db;
 mod dictionary;
 mod grid;
 mod incremental;
+mod ingestion;
 mod observe;
 mod packed;
 mod runs;

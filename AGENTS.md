@@ -369,6 +369,7 @@ measurements describe their recorded versions.
 | Pinned Icechunk reads, GRIB decoding, reference preflight and regional gathering | `native/src/source.rs`                 |
 | Source-declared spherical Lambert projection and nearest-cell resolution         | `native/src/grid.rs`                   |
 | Bounded hourly ingestion, full database validation and ownership-aware GC        | `native/src/store.rs`                  |
+| Public ingestion snapshot (bounded event tail, sanitized operational data)       | `native/src/ingestion.rs`              |
 | Availability polling, durable hourly recovery and partition attachment           | `native/src/incremental.rs`            |
 | Immutable manifests/books, retention, publication, rollback and status           | `native/src/runs.rs`                   |
 | HRRR model-level clouds, provenance, cloud-only upgrades and point reads         | `native/src/clouds.rs`                 |
@@ -410,7 +411,6 @@ starting more hours; active hours drain before releasing the update lock.
 Durable journals and checkpoints resume interrupted hours. An unpublished
 partition can be retried without changing any already published hour.
 
-
 Cleanup resolves and validates the protected catalog references once per sweep,
 under the update lock, then reuses that snapshot for all orphan revisions. Never
 rebuild the complete reference graph for each discarded directory: accumulated
@@ -431,6 +431,21 @@ for exactly one forecast hour. A private hourly table passes full validation
 before its spatial partitions attach to the shared table. Another complete
 check and staged samples precede atomic manifest publication. Readers query
 only the manifest's validated hours, so unfinished partitions remain invisible.
+
+### Ingestion dashboard
+
+`/ingestion` is an independent public Next.js dashboard, linked from the weather
+navigation. `src/app/ingestion/dashboard.tsx` polls `/api/ingestion` every 30 seconds;
+`src/utils/ingestion.ts` validates the response and handles UTC display. The server
+route uses existing `METEOGRAM_API_URL` / `METEOGRAM_API_TOKEN` settings to fetch the
+native authenticated `/ingestion` endpoint, caching for 15 seconds. Credentials
+never reach the browser. Failures retain the last snapshot with an explicit warning.
+The native `ingestion.rs` reads catalog summaries and a bounded 4 MiB event tail,
+never scans forecast tables or downloads source data. It returns all four models,
+completion targets, retained runs, recent publication/failure counts, five-minute
+activity buckets and last-cycle timings. Raw errors, host paths and process IDs
+are excluded. Source readiness describes pressure/surface references, not HRRR
+cloud readiness. Status timestamps and forecast initializations are UTC.
 
 ### Storage and validation invariants
 
@@ -622,8 +637,8 @@ Tests live in `native-weather.test.ts` and `native-provider.test.ts`, with a
 native response fixture in `__helpers__/nativeForecast.ts`.
 
 The Rust API reads the token from `METEOGRAM_API_TOKEN`, an explicit token file,
-or `<root>/api-token`. A configured invalid file fails startup. All three routes
-(`/health`, `/runs`, `/forecast`) require bearer auth when configured; native
+or `<root>/api-token`. A configured invalid file fails startup. All four routes
+(`/health`, `/runs`, `/forecast`, `/ingestion`) require bearer auth when configured; native
 verification clients load that same token. API wind rotation comes from the
 selected grid cell's actual source projection, never a hardcoded HRRR angle.
 

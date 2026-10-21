@@ -20,6 +20,7 @@ import {
   Switch,
 } from "@heroui/react";
 import { WeatherModel, ParcelMode } from "../../types/weather";
+import Link from "next/link";
 import LocationDropdown from "./location-dropdown";
 import ModelDropdown from "./model-dropdown";
 import ParcelModeDropdown from "./parcel-mode-dropdown";
@@ -312,7 +313,7 @@ export default function Nav({
       setShowParcelBuoyancy,
       parcelMode,
       setParcelMode,
-    ]
+    ],
   );
 
   return (
@@ -328,7 +329,15 @@ export default function Nav({
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           />
           <NavbarBrand>
-            <p className="font-bold text-inherit">Meteogram</p>
+            <div>
+              <p className="font-bold text-inherit">Meteogram</p>
+              <Link
+                href="/ingestion"
+                className="text-xs text-default-500 hover:text-default-900"
+              >
+                Ingestion status ↗
+              </Link>
+            </div>
           </NavbarBrand>
         </NavbarContent>
 
