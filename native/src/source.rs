@@ -112,10 +112,8 @@ impl Source {
                 pin.is_none_or(|p| p.get("snapshot_id").is_none()),
                 "Direct model requires its pinned source descriptor"
             );
-            let latest = (now() as i64).div_euclid(21600) * 21600;
             return Self::from_ecmwf(
-                crate::ecmwf::discover_model(model, (0..3).map(|n| latest - n * 21600).collect())
-                    .await?,
+                crate::ecmwf::discover_model(model, direct_cycles(now() as i64)).await?,
             );
         }
         let product = pin
@@ -1262,6 +1260,12 @@ pub async fn availability_filtered(
     Ok(Availability { source, runs })
 }
 
+fn direct_cycles(at: i64) -> Vec<i64> {
+    let latest = at.div_euclid(21600) * 21600;
+    // The newest two cycles may still be unpublished at rollover. Keep the
+    // preceding complete short cycle and 180-hour IFS baseline discoverable.
+    (0..4).map(|n| latest - n * 21600).collect()
+}
 async fn direct_availability(
     model: &str,
     tracked: &[String],
@@ -1269,7 +1273,7 @@ async fn direct_availability(
     floor: Option<f64>,
 ) -> Result<Availability> {
     let latest = (now() as i64).div_euclid(21600) * 21600;
-    let mut times = (0..3).map(|n| latest - n * 21600).collect::<Vec<_>>();
+    let mut times = direct_cycles(now() as i64);
     for init in tracked {
         let t = timestamp(init)? as i64;
         if t <= latest {
@@ -1832,6 +1836,15 @@ mod ecmwf_tests {
         atomic(output.join("verification.json"), &report)?;
         println!("{report}");
         Ok(())
+    }
+    #[test]
+    fn direct_cycle_rollover_keeps_the_previous_long_baseline_discoverable() {
+        let at = timestamp("2026-10-21T18:01:00").unwrap() as i64;
+        let cycles = direct_cycles(at);
+        assert_eq!(cycles.len(), 4);
+        assert!(cycles.contains(&(timestamp("2026-10-21T00:00:00").unwrap() as i64)));
+        assert!(cycles.contains(&(timestamp("2026-10-21T06:00:00").unwrap() as i64)));
+        assert_eq!(cycle_leads("ifs", cycles[3]).last(), Some(&180));
     }
     #[tokio::test]
     #[ignore = "Requires DIRECT_TEST_INIT, fresh DIRECT_TEST_OUTPUT, network and loopback ClickHouse"]

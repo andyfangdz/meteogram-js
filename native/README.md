@@ -56,6 +56,8 @@ PIDs in `service-status.json`. Use `systemctl --user stop` for managed units;
 
 ## Operational IFS and AIGFS
 
+Direct-source discovery probes four six-hour cycles, retaining the prior complete
+short cycle and long IFS baseline when newer cycles are still unpublished at rollover.
 IFS uses ECMWF Open Data's 0.25° deterministic `ifs/0p25/oper` files directly.
 It retains three-hour steps through 144 hours and six-hour steps through 180 hours
 for 00/12 UTC cycles (55 leads). The 06/18 UTC cycles end at 144 hours (49 leads).

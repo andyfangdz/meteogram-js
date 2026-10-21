@@ -415,6 +415,8 @@ per child and exposed as `source_providers` by the API. The frontend permits
 AIFS overlays across those two native providers and labels mixed acquisition.
 The live tests require explicit source/output paths; see `native/README.md`.
 
+Direct-source discovery probes four six-hour cycles, retaining the prior complete
+short cycle and long IFS baseline when newer cycles are still unpublished at rollover.
 IFS and AIGFS always use direct 0.25° source grids. IFS reads ECMWF `ifs/0p25/oper`
 with AIFS's eight pressure levels and fields. Its 00/12 UTC runs retain 55 leads:
 three-hour steps through 144, then six-hour steps through 180. Its 06/18 UTC runs
